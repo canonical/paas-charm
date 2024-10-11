@@ -8,8 +8,8 @@ from functools import wraps
 
 import ops
 
-from paas_app_charmer.charm_state import CharmState
-from paas_app_charmer.exceptions import CharmConfigInvalidError
+from paas_charm.charm_state import CharmState
+from paas_charm.exceptions import CharmConfigInvalidError
 
 logger = logging.getLogger(__name__)
 

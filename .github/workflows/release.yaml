@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
-      url: https://pypi.org/p/paas-app-charmer
+      url: https://pypi.org/p/paas-charm
     permissions:
       id-token: write
     if: github.event_name == 'workflow_dispatch'

@@ -13,10 +13,10 @@ import pytest
 from ops.testing import ExecArgs, ExecResult, Harness
 
 from examples.django.charm.src.charm import DjangoCharm
-from paas_app_charmer._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_app_charmer._gunicorn.workload_config import create_workload_config
-from paas_app_charmer._gunicorn.wsgi_app import WsgiApp
-from paas_app_charmer.charm_state import CharmState
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
+from paas_charm._gunicorn.wsgi_app import WsgiApp
+from paas_charm.charm_state import CharmState
 
 from .constants import DEFAULT_LAYER
 

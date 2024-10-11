@@ -82,8 +82,8 @@ through below.
     - The environment variables, configuration etc. that would be made available
       to the app
     - An example for how to use the integration within an app
-  * The proposed implementation in `paas-app-charmer`. Take a look at
-    [`charm.py`](paas_app_charmer/_gunicorn/charm.py) for `gunicorn` based
+  * The proposed implementation in `paas-app`. Take a look at
+    [`charm.py`](paas_charm/_gunicorn/charm.py) for `gunicorn` based
     frameworks for integration examples.
 1. Update the
   [reference](https://juju.is/docs/sdk/charmcraft-extension-flask-framework)
@@ -124,7 +124,7 @@ below.
   framework.
 1. Raise a pull request to this repository adding a new parent class that can be
   used by the app charms. The following is the
-  [example for flask](./paas_app_charmer/flask/charm.py).
+  [example for flask](./paas_charm/flask/charm.py).
 1. Raise a pull request to
   [charmcraft](https://github.com/canonical/charmcraft) adding a new extension
   and profile for the framework. This is the flask

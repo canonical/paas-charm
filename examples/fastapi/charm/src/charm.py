@@ -9,10 +9,10 @@ import typing
 
 import ops
 
-import paas_app_charmer.fastapi
+import paas_charm.fastapi
 
 
-class FastAPICharm(paas_app_charmer.fastapi.Charm):
+class FastAPICharm(paas_charm.fastapi.Charm):
     """FastAPI Charm service."""
 
     def __init__(self, *args: typing.Any) -> None:

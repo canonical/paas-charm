@@ -13,11 +13,11 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from paas_app_charmer._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_app_charmer._gunicorn.workload_config import create_workload_config
-from paas_app_charmer._gunicorn.wsgi_app import WsgiApp
-from paas_app_charmer.charm_state import CharmState
-from paas_app_charmer.utils import enable_pebble_log_forwarding
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
+from paas_charm._gunicorn.wsgi_app import WsgiApp
+from paas_charm.charm_state import CharmState
+from paas_charm.utils import enable_pebble_log_forwarding
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 

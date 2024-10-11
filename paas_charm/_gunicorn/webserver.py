@@ -14,14 +14,14 @@ import typing
 import ops
 from ops.pebble import ExecError, PathError
 
-from paas_app_charmer._gunicorn.workload_config import (
+from paas_charm._gunicorn.workload_config import (
     APPLICATION_ERROR_LOG_FILE_FMT,
     APPLICATION_LOG_FILE_FMT,
     STATSD_HOST,
 )
-from paas_app_charmer.app import WorkloadConfig
-from paas_app_charmer.exceptions import CharmConfigInvalidError
-from paas_app_charmer.utils import enable_pebble_log_forwarding
+from paas_charm.app import WorkloadConfig
+from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.utils import enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
 

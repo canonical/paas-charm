@@ -13,7 +13,7 @@ import pytest
 from ops.testing import Harness
 
 from examples.flask.src.charm import FlaskCharm
-from paas_app_charmer.database_migration import DatabaseMigrationStatus
+from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 

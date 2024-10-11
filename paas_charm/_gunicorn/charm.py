@@ -4,11 +4,11 @@
 """The base charm class for all charms."""
 import logging
 
-from paas_app_charmer._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_app_charmer._gunicorn.workload_config import create_workload_config
-from paas_app_charmer._gunicorn.wsgi_app import WsgiApp
-from paas_app_charmer.app import App, WorkloadConfig
-from paas_app_charmer.charm import PaasCharm
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
+from paas_charm._gunicorn.wsgi_app import WsgiApp
+from paas_charm.app import App, WorkloadConfig
+from paas_charm.charm import PaasCharm
 
 logger = logging.getLogger(__name__)
 

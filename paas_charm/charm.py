@@ -13,16 +13,16 @@ from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
-from paas_app_charmer.app import App, WorkloadConfig
-from paas_app_charmer.charm_state import CharmState
-from paas_app_charmer.charm_utils import block_if_invalid_config
-from paas_app_charmer.database_migration import DatabaseMigration, DatabaseMigrationStatus
-from paas_app_charmer.databases import make_database_requirers
-from paas_app_charmer.exceptions import CharmConfigInvalidError
-from paas_app_charmer.observability import Observability
-from paas_app_charmer.rabbitmq import RabbitMQRequires
-from paas_app_charmer.secret_storage import KeySecretStorage
-from paas_app_charmer.utils import build_validation_error_message, config_get_with_secret
+from paas_charm.app import App, WorkloadConfig
+from paas_charm.charm_state import CharmState
+from paas_charm.charm_utils import block_if_invalid_config
+from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
+from paas_charm.databases import make_database_requirers
+from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.observability import Observability
+from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.utils import build_validation_error_message, config_get_with_secret
 
 logger = logging.getLogger(__name__)
 
