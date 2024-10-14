@@ -3,7 +3,7 @@
 [project]
 name = "paas-charm"
 version = "1.0.0"
-description = "Companion library for PaaS app charmer."
+description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
     {name = "Canonical IS DevOps team", email="is-devops-team@canonical.com"},
