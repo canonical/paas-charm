@@ -355,14 +355,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if relation:
                 relation_app_data = relation.data[relation.app]
                 relation_unit_data = self._redis.relation_data
-                try:
-                    redis_hostname = str(
-                        relation_app_data.get("leader-host", relation_unit_data["hostname"])
-                    )
-                    redis_port = int(relation_unit_data["port"])
-                    redis_url = f"redis://{redis_hostname}:{redis_port}"
-                except KeyError:
-                    redis_url = None
+                if relation_unit_data:
+                    try:
+                        redis_hostname = str(
+                            relation_app_data.get("leader-host", relation_unit_data["hostname"])
+                        )
+                        redis_port = int(relation_unit_data["port"])
+                        redis_url = f"redis://{redis_hostname}:{redis_port}"
+                    except KeyError:
+                        redis_url = None
 
         return CharmState.from_charm(
             config=config,
