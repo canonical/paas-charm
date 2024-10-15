@@ -3,7 +3,9 @@
 
 """Deprecated entrypoints for charms.
 
-This module can be removed when paas_charm>=2.0
+This module can be removed when paas_charm>=2.0.
+
+It has to be maintained for the life cycle of bases 22.04 and 24.04.
 """
 
 import warnings
