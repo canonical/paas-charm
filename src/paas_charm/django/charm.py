@@ -80,9 +80,13 @@ class Charm(GunicornBase):
 
         The method is overridden to inject the base_url, that can be an ingress URL or a k8s svc
         url, to the list of allowed hosts.
+
+        Returns:
+             Framework related configurations.
         """
         base_model = super().get_framework_config()
-        base_model.allowed_hosts.append(self._base_url)
+        # base_model can be downcasted to a DjangoConfig, and allowed_hosts is really a list.
+        base_model.allowed_hosts.append(self._base_url)  # type: ignore
         return base_model
 
     def is_ready(self) -> bool:
