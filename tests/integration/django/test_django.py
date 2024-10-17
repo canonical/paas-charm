@@ -50,7 +50,9 @@ async def test_django_database_migration(django_app, get_unit_ips):
     "update_config, expected_settings",
     [
         pytest.param(
-            {"django-allowed-hosts": "*,test"}, {"ALLOWED_HOSTS": ["*", "test"]}, id="allowed-host"
+            {"django-allowed-hosts": "*,test"},
+            {"ALLOWED_HOSTS": ["*", "test", "http://django-k8s.testing:8000"]},
+            id="allowed-host",
         ),
         pytest.param({"django-secret-key": "test"}, {"SECRET_KEY": "test"}, id="secret-key"),
     ],
