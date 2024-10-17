@@ -21,20 +21,31 @@ from paas_charm.charm_state import CharmState
 from .constants import DEFAULT_LAYER
 
 TEST_DJANGO_CONFIG_PARAMS = [
-    pytest.param({}, {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": "[]"}, id="default"),
+    pytest.param(
+        {},
+        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]'},
+        id="default",
+    ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
-        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["test.local"]'},
+        {
+            "DJANGO_SECRET_KEY": "test",
+            "DJANGO_ALLOWED_HOSTS": '["test.local", "http://django-k8s.None:8000"]',
+        },
         id="allowed-hosts",
     ),
     pytest.param(
         {"django-debug": True},
-        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": "[]", "DJANGO_DEBUG": "true"},
+        {
+            "DJANGO_SECRET_KEY": "test",
+            "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]',
+            "DJANGO_DEBUG": "true",
+        },
         id="debug",
     ),
     pytest.param(
         {"django-secret-key": "foobar"},
-        {"DJANGO_SECRET_KEY": "foobar", "DJANGO_ALLOWED_HOSTS": "[]"},
+        {"DJANGO_SECRET_KEY": "foobar", "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]'},
         id="secret-key",
     ),
 ]

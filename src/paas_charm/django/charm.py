@@ -8,7 +8,7 @@ import secrets
 import typing
 
 import ops
-from pydantic import ConfigDict, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, validator
 
 from paas_charm._gunicorn.charm import GunicornBase
 from paas_charm.framework import FrameworkConfig
@@ -74,6 +74,16 @@ class Charm(GunicornBase):
             Return the directory with COS related files.
         """
         return str((pathlib.Path(__file__).parent / "cos").absolute())
+
+    def get_framework_config(self) -> BaseModel:
+        """Return the framework related configurations.
+
+        The method is overridden to inject the base_url, that can be an ingress URL or a k8s svc
+        url, to the list of allowed hosts.
+        """
+        base_model = super().get_framework_config()
+        base_model.allowed_hosts.append(self._base_url)
+        return base_model
 
     def is_ready(self) -> bool:
         """Check if the charm is ready to start the workload application.
