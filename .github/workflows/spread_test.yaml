@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           check-latest: true
+          go-version: 'stable'
 
       - name: Install spread
         run: |
