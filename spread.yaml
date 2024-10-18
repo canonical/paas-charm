@@ -50,7 +50,7 @@ backends:
       system=$(echo "${SPREAD_SYSTEM}" | tr . -)
       instance_name="spread-${SPREAD_BACKEND}-${instance_num}-${system}"
 
-      multipass launch -vv --cpus 2 --disk 20G --memory 4G --name "${instance_name}" \
+      multipass launch -vv --cpus 4 --disk 30G --memory 6G --name "${instance_name}" \
         --cloud-init tests/spread/lib/cloud-config.yaml "${multipass_image}"
 
       # Get the IP from the instance
@@ -82,7 +82,6 @@ backends:
         exit 1
       fi
       # echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
-      whoami
       echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/99-spread-users
       ADDRESS localhost:22
 
@@ -116,7 +115,8 @@ suites:
       # CHARMCRAFT_CHANNEL/charmcraft_next: latest/candidate
       CHARMCRAFT_CHANNEL/charmcraft_edge: latest/edge
 
-    prepare: |
+    # prepare: |
+    prepare-each: |
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       DEBIAN_FRONTEND=noninteractive apt-get update -y
@@ -133,7 +133,8 @@ suites:
 
       juju add-model testing
 
-    restore: |
+    # restore: |
+    restore-each: |
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       # rm -f "$PROJECT_PATH"/*.charm

@@ -16,7 +16,7 @@ execute: |
   juju deploy ./flask-hello-world_ubuntu-22.04-amd64.charm flask-hello-world \
    --resource flask-app-image=localhost:32000/flask-hello-world:0.1
 
-  timeout 650 juju wait-for application flask-hello-world
+  juju wait-for application flask-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications."flask-hello-world".address') && echo $UNIT_IP
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"

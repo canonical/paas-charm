@@ -21,11 +21,8 @@ execute: |
 
   juju integrate postgresql-k8s django-hello-world
 
-  timeout 650 juju wait-for application django-hello-world
+  juju wait-for application django-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications.django-hello-world".address') && echo $UNIT_IP
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"
   [[ \"$(curl --fail "${UNIT_IP}:8000")\" =~ "The install worked successfully!" ]]
-
-restore: |
-  lxc list --all-projects | tail -n +3 | grep -v "\-\-\-" |  awk ' { print "lxc delete --project " $2 " " $4 " --force" }'  | bash -x
