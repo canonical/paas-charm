@@ -10,11 +10,12 @@ execute: |
   mkdir charm
   cd charm
   charmcraft init --profile django-framework --name django-hello-world
+  echo "requires: {postgresql: {interface: postgresql_client, optional: false, limit: 1}}" >> charmcraft.yaml
+
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft pack
 
   juju deploy postgresql-k8s --trust --channel=latest/edge
-
   juju deploy ./django-hello-world_ubuntu-22.04-amd64.charm django-hello-world \
    --resource django-app-image=localhost:32000/django-hello-world:0.1
 
@@ -26,3 +27,5 @@ execute: |
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"
   [[ \"$(curl --fail "${UNIT_IP}:8000")\" =~ "The install worked successfully!" ]]
 
+restore: |
+  lxc list --all-projects | tail -n +3 | grep -v "\-\-\-" |  awk ' { print "lxc delete --project " $2 " " $4 " --force" }'  | bash -x
