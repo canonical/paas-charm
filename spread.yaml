@@ -23,6 +23,8 @@ environment:
   PROJECT_PATH: /home/spread/proj
   CRAFT_TEST_LIB_PATH: /home/spread/proj/tests/spread/lib
 
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:$CRAFT_TEST_LIB_PATH/tools
+
 backends:
   multipass:
     type: adhoc
@@ -79,7 +81,9 @@ backends:
         FATAL "this back-end only works inside GitHub CI"
         exit 1
       fi
-      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
+      # echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
+      whoami
+      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/99-spread-users
       ADDRESS localhost:22
 
     discard: |
