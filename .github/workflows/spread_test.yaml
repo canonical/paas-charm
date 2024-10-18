@@ -24,6 +24,8 @@ jobs:
 
       - name: Run tests
         run: |
+          sudo adduser --gecos "" --disabled-password ubuntu
+          echo "ubuntu:ubuntu" | sudo chpasswd
           spread github-ci:
 
       - name: Tmate debugging session
