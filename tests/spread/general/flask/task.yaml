@@ -1,0 +1,24 @@
+summary: Smoke test for flask-framework
+
+execute: |
+  rockcraft init --profile flask-framework --name flask-hello-world
+  ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true rockcraft pack
+  rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
+   oci-archive:flask-hello-world_0.1_amd64.rock \
+   docker://localhost:32000/flask-hello-world:0.1
+
+  mkdir charm
+  cd charm
+  charmcraft init --profile flask-framework --name flask-hello-world
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft pack
+
+  juju deploy ./flask-hello-world_ubuntu-22.04-amd64.charm flask-hello-world \
+   --resource flask-app-image=localhost:32000/flask-hello-world:0.1
+
+  juju wait-for application flask-hello-world
+
+  UNIT_IP=$(juju status --format json | jq -r '.applications."flask-hello-world".address') && echo $UNIT_IP
+  retry -n 5 --wait 2 curl --fail "${UNIT_IP}:8000"
+  [[ \"$(curl --fail "${UNIT_IP}:8000")\" =~ "Hello, world" ]]
+

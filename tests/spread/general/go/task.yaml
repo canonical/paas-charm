@@ -1,0 +1,23 @@
+summary: Smoke test for go-framework
+
+execute: |
+  rockcraft init --profile go-framework --name go-hello-world
+  ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true rockcraft pack
+  rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
+   oci-archive:go-hello-world_0.1_amd64.rock \
+   docker://localhost:32000/go-hello-world:0.1
+
+  mkdir charm
+  cd charm
+  charmcraft init --profile go-framework --name go-hello-world
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft pack
+
+  juju deploy ./go-hello-world_amd64.charm go-hello-world \
+   --resource app-image=localhost:32000/go-hello-world:0.1
+
+  juju wait-for application go-hello-world
+
+  UNIT_IP=$(juju status --format json | jq -r '.applications."go-hello-world".address') && echo $UNIT_IP
+  retry -n 5 --wait 2 curl --fail "${UNIT_IP}:8080"
+  [[ \"$(curl --fail "${UNIT_IP}:8080")\" =~ "Hello, world" ]]
