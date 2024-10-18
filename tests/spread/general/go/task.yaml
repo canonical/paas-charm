@@ -16,7 +16,7 @@ execute: |
   juju deploy ./go-hello-world_amd64.charm go-hello-world \
    --resource app-image=localhost:32000/go-hello-world:0.1
 
-  juju wait-for application go-hello-world
+  timeout 650 juju wait-for application go-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications."go-hello-world".address') && echo $UNIT_IP
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8080"

@@ -21,7 +21,7 @@ execute: |
 
   juju integrate postgresql-k8s django-hello-world
 
-  juju wait-for application django-hello-world
+  timeout 650 juju wait-for application django-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications.django-hello-world".address') && echo $UNIT_IP
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"
