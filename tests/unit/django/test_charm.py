@@ -23,14 +23,14 @@ from .constants import DEFAULT_LAYER
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {},
-        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]'},
+        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]'},
         id="default",
     ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
         {
             "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["test.local", "http://django-k8s.None:8000"]',
+            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
         },
         id="allowed-hosts",
     ),
@@ -38,14 +38,14 @@ TEST_DJANGO_CONFIG_PARAMS = [
         {"django-debug": True},
         {
             "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]',
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
             "DJANGO_DEBUG": "true",
         },
         id="debug",
     ),
     pytest.param(
         {"django-secret-key": "foobar"},
-        {"DJANGO_SECRET_KEY": "foobar", "DJANGO_ALLOWED_HOSTS": '["http://django-k8s.None:8000"]'},
+        {"DJANGO_SECRET_KEY": "foobar", "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]'},
         id="secret-key",
     ),
 ]
@@ -153,3 +153,52 @@ def test_required_database_integration(harness_no_integrations: Harness):
     assert harness.model.unit.status == ops.BlockedStatus(
         "Django requires a database integration to work"
     )
+
+
+def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness):
+    """
+    arrange: Deploy a Django charm without an ingress integration
+    act: Add a new ingress integration
+    assert: The allowed hosts env var should match the url of the ingress integration
+    act: Update the url in the ingress integration
+    assert: The allowed hosts env var should match the new url of the ingress integration
+    """
+    postgresql_relation_data = {
+        "database": "test-database",
+        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
+    container = harness.model.unit.get_container("django-app")
+    container.add_layer("a_layer", DEFAULT_LAYER)
+    harness.set_model_name("flask-model")
+    harness.begin_with_initial_hooks()
+
+    # The initial allowed hosts matches the k8s service name.
+    plan = container.get_plan()
+    env = plan.to_dict()["services"]["django"]["environment"]
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.flask-model"]'
+
+    # Add a relation and the allowed hosts should be updated to the ingress url
+    harness.add_network("10.0.0.10", endpoint="ingress")
+    relation_id = harness.add_relation(
+        "ingress",
+        "nginx-ingress-integrator",
+        app_data={"ingress": '{"url": "http://oldjuju.test/"}'},
+    )
+
+    plan = container.get_plan()
+    env = plan.to_dict()["services"]["django"]["environment"]
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["oldjuju.test"]'
+
+    # Updating the ingress url to a new url should update the allowed hosts.
+    harness.update_relation_data(
+        relation_id,
+        app_or_unit="nginx-ingress-integrator",
+        key_values={"ingress": '{"url": "http://newjuju.test/"}'},
+    )
+
+    plan = container.get_plan()
+    env = plan.to_dict()["services"]["django"]["environment"]
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["newjuju.test"]'

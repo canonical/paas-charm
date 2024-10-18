@@ -6,6 +6,7 @@ import logging
 import pathlib
 import secrets
 import typing
+from urllib.parse import urlsplit
 
 import ops
 from pydantic import BaseModel, ConfigDict, Field, validator
@@ -85,8 +86,9 @@ class Charm(GunicornBase):
              Framework related configurations.
         """
         base_model = super().get_framework_config()
+        url = urlsplit(self._base_url)
         # base_model can be downcasted to a DjangoConfig, and allowed_hosts is really a list.
-        base_model.allowed_hosts.append(self._base_url)  # type: ignore
+        base_model.allowed_hosts.append(url.hostname)  # type: ignore
         return base_model
 
     def is_ready(self) -> bool:
