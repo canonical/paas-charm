@@ -1,3 +1,4 @@
+# shellcheck disable=all
 
 export PATH=/snap/bin:$PROJECT_PATH/tests/spread/lib/tools:$PATH
 export CONTROLLER_NAME="craft-test-$PROVIDER"
