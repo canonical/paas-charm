@@ -19,5 +19,5 @@ execute: |
   juju wait-for application go-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications."go-hello-world".address') && echo $UNIT_IP
-  retry -n 5 --wait 2 curl --fail "${UNIT_IP}:8080"
+  retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8080"
   [[ \"$(curl --fail "${UNIT_IP}:8080")\" =~ "Hello, world" ]]

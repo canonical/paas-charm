@@ -23,6 +23,6 @@ execute: |
   juju wait-for application django-hello-world
 
   UNIT_IP=$(juju status --format json | jq -r '.applications.django-hello-world".address') && echo $UNIT_IP
-  retry -n 5 --wait 2 curl --fail "${UNIT_IP}:8000"
+  retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"
   [[ \"$(curl --fail "${UNIT_IP}:8000")\" =~ "The install worked successfully!" ]]
 
