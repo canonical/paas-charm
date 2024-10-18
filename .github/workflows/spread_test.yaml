@@ -5,11 +5,10 @@ on:
     branches:
     - master
   pull_request:
-    branches:
-    - master
+  workflow_dispatch:
 
 jobs:
-  run-tests:
+  run-spread-tests:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
