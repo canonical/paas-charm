@@ -150,6 +150,26 @@ suites:
       # delete all lxc instances, as they tend to occupy a lot of space
       lxc list --all-projects | tail -n +3 | grep -v "\-\-\-" |  awk ' { print "lxc delete --project " $2 " " $4 " --force" }'  | bash -x
 
+  tests/spread/scenario/:
+    summary: Charm scenario smoke tests without juju/k8s
+
+    systems:
+      - ubuntu-22.04*
+
+    prepare: |
+      set -e
+      . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
+      DEBIAN_FRONTEND=noninteractive apt-get update -y
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
+      pip3 install tox
+
+      install_charmcraft
+
+    restore: |
+      set -e
+      . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
+      restore_charmcraft
+
 exclude:
   - .git
   - .tox
