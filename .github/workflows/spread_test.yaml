@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spread_job: ['github-ci:ubuntu-22.04-amd64:tests/spread/', 'github-ci:ubuntu-22.04-amd64:tests/scenario/']
+        spread_job: ['github-ci:ubuntu-22.04-amd64:tests/spread/', 'github-ci:ubuntu-22.04-amd64:tests/spread/scenario/']
     steps:
       - uses: actions/checkout@v2
 
