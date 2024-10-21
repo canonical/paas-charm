@@ -70,11 +70,6 @@ backends:
           password: spread
           workers: 1
 
-      - ubuntu-20.04:
-          username: spread
-          password: spread
-          workers: 1
-
   github-ci:
     type: adhoc
 
@@ -118,8 +113,7 @@ suites:
       # CHARMCRAFT_CHANNEL/charmcraft_next: latest/candidate
       CHARMCRAFT_CHANNEL/charmcraft_edge: latest/edge
 
-    # prepare: |
-    prepare-each: |
+    prepare: |
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       DEBIAN_FRONTEND=noninteractive apt-get update -y
@@ -134,10 +128,11 @@ suites:
 
       bootstrap_juju
 
+    prepare-each: |
+      set -e
       juju add-model testing
 
-    # restore: |
-    restore-each: |
+    restore: |
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       # rm -f "$PROJECT_PATH"/*.charm
@@ -148,6 +143,12 @@ suites:
       restore_rockcraft
       restore_microk8s
       restore_lxd
+
+    restore-each: |
+      set -e
+      juju destroy-model --no-prompt --destroy-storage --force --no-wait testing
+      # delete all lxc instances, as they tend to occupy a lot of space
+      lxc list --all-projects | tail -n +3 | grep -v "\-\-\-" |  awk ' { print "lxc delete --project " $2 " " $4 " --force" }'  | bash -x
 
 exclude:
   - .git
