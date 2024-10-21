@@ -15,14 +15,19 @@ execute: |
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft pack
 
-  juju deploy postgresql-k8s --trust --channel=latest/edge
+  juju deploy postgresql-k8s --channel 14/stable --trust
+
   juju deploy ./django-hello-world_ubuntu-22.04-amd64.charm django-hello-world \
    --resource django-app-image=localhost:32000/django-hello-world:0.1
+
+  # once the django-allowed-hosts base url is ready, we could use directly something like
+  # curl --fail django-hello-world.testing:8000 --resolve django-hello-world.testing:8000:${UNIT_IP}
+  juju config django-hello-world django-allowed-hosts='*' django-debug=true
 
   juju integrate postgresql-k8s django-hello-world
 
   juju wait-for application django-hello-world
 
-  UNIT_IP=$(juju status --format json | jq -r '.applications.django-hello-world".address') && echo $UNIT_IP
+  UNIT_IP=$(juju status --format json | jq -r '.applications."django-hello-world".address') && echo $UNIT_IP
   retry -n 20 --wait 2 curl --fail "${UNIT_IP}:8000"
   [[ \"$(curl --fail "${UNIT_IP}:8000")\" =~ "The install worked successfully!" ]]
