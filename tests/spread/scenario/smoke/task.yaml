@@ -1,0 +1,24 @@
+summary: Scenario test for flask-framework
+
+environment:
+  PROFILE_NAME/flask: flask
+  PROFILE_NAME/django: django
+  PROFILE_NAME/go: go
+  PROFILE_NAME/fastapi: fastapi
+
+
+execute: |
+  set -e
+  charmcraft init --profile ${PROFILE_NAME}-framework --name hello-world --force
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
+
+  # expand charmcraft.yaml, as it is not expanded by ops testing
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft expand-extensions > charmcraft-expanded.yaml
+  mv charmcraft-expanded.yaml charmcraft.yaml
+
+  tox -c task_tox.ini -e unit
+
+restore: |
+  rm charmcraft.yaml
+  rm requirements.txt
+  rm -rf ./src

@@ -6,14 +6,15 @@
 
 import scenario
 import scenario.errors
-from charm import FlaskHelloWorldCharm
+from charm import HelloWorldCharm
 
 
 def test_smoke():
     """The only goal of this test is a smoke test, that is, that the charm does not raise."""
-    ctx = scenario.Context(FlaskHelloWorldCharm)
+    ctx = scenario.Context(HelloWorldCharm)
+    container_name = next(iter(ctx.charm_spec.meta['containers'].keys()))
     container = scenario.Container(
-        name='flask-app',
+        name=container_name,
         can_connect=True,
     )
     state_in = scenario.State(containers={container})

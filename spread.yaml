@@ -148,6 +148,7 @@ suites:
       set -e
       juju destroy-model --no-prompt --destroy-storage --force --no-wait testing
       # delete all lxc instances, as they tend to occupy a lot of space
+      # TODO USE JSON?
       lxc list --all-projects | tail -n +3 | grep -v "\-\-\-" |  awk ' { print "lxc delete --project " $2 " " $4 " --force" }'  | bash -x
 
   tests/spread/scenario/:
