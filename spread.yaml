@@ -6,6 +6,11 @@ project: paas-charm
 environment:
   PROVIDER: microk8s
   CHARMCRAFT_CHANNEL: latest/edge
+  CHARMCRAFT_REPOSITORY: $(HOST:echo $CHARMCRAFT_REPOSITORY)
+  # CHARMCRAFT_REPOSITORY: https://github.com/canonical/charmcraft.git
+  CHARMCRAFT_BRANCH: main
+  # PAAS_CHARM_BRANCH: $(HOST:echo $GITHUB_SHA)
+  PAAS_CHARM_BRANCH: 4f05187b15d3e55ad0b401f95af02045aba6d418
   ROCKCRAFT_CHANNEL: latest/edge
   JUJU_CHANNEL: 3/stable
   LXD_CHANNEL: latest/stable
@@ -117,7 +122,7 @@ suites:
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       DEBIAN_FRONTEND=noninteractive apt-get update -y
-      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip jq
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip git jq
       pip3 install tox
 
       install_lxd
@@ -161,15 +166,17 @@ suites:
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       DEBIAN_FRONTEND=noninteractive apt-get update -y
-      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip git jq
       pip3 install tox
 
+      install_lxd
       install_charmcraft
 
     restore: |
       set -e
       . "$CRAFT_TEST_LIB_PATH"/test-helpers.sh
       restore_charmcraft
+      restore_lxd
 
 exclude:
   - .git

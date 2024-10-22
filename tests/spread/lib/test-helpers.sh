@@ -40,8 +40,21 @@ install_microk8s() {
 
 
 install_charmcraft() {
-    snap install charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
-    snap refresh charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
+    if [ ! -z "$CHARMCRAFT_REPOSITORY" ]; then
+	echo "Compiling charmcraft from source"
+	snap install snapcraft --classic
+	# where are we?
+	git clone "$CHARMCRAFT_REPOSITORY" --branch "$CHARMCRAFT_BRANCH" charmcraftrepo
+	cd charmcraftrepo
+	snapcraft --use-lxd -o charmcraft.snap
+	snap install ./charmcraft.snap --classic --dangerous
+	cd ..
+	snap remove --purge snapcraft
+	rm -rf ./charmcraftrepo
+    else
+	snap install charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
+	snap refresh charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
+    fi
 }
 
 install_rockcraft() {

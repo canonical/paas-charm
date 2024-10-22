@@ -12,6 +12,12 @@ execute: |
   charmcraft init --profile django-framework --name django-hello-world
   echo "requires: {postgresql: {interface: postgresql_client, optional: false, limit: 1}}" >> charmcraft.yaml
 
+  if [ ! -z "$PAAS_CHARM_BRANCH" ]; then
+      echo Using paas_charm $PAAS_CHARM_BRANCH
+      echo "parts: {0-git: {plugin: nil, build-packages: [git]}}" >> charmcraft.yaml
+      sed -i "s~paas-charm.*~paas-charm @ git+https://github.com/canonical/paas-charm@${PAAS_CHARM_BRANCH}~" requirements.txt
+  fi
+
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft fetch-libs
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=true charmcraft pack
 
