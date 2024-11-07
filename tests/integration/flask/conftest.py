@@ -75,6 +75,7 @@ async def build_charm_fixture(charm_file: str, tmp_path_factory) -> str:
             "foo-bool": {"type": "boolean"},
             "foo-dict": {"type": "string"},
             "application-root": {"type": "string"},
+            "webserver-worker-class": {"type": "string"},
         },
         tmp_path_factory.mktemp("flask"),
     )

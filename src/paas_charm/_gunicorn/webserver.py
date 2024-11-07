@@ -32,6 +32,7 @@ class WebserverConfig:
 
     Attributes:
         workers: The number of workers to use for the web server, or None if not specified.
+        worker_class: The method of workers to use for the web server, or sync if not specified.
         threads: The number of threads per worker to use for the web server,
             or None if not specified.
         keepalive: The time to wait for requests on a Keep-Alive connection,
@@ -40,11 +41,12 @@ class WebserverConfig:
     """
 
     workers: int | None = None
+    worker_class: str | None = None
     threads: int | None = None
     keepalive: datetime.timedelta | None = None
     timeout: datetime.timedelta | None = None
 
-    def items(self) -> typing.Iterable[tuple[str, int | datetime.timedelta | None]]:
+    def items(self) -> typing.Iterable[tuple[str, str | int | datetime.timedelta | None]]:
         """Return the dataclass values as an iterable of the key-value pairs.
 
         Returns:
@@ -52,6 +54,7 @@ class WebserverConfig:
         """
         return {
             "workers": self.workers,
+            "worker_class": self.worker_class,
             "threads": self.threads,
             "keepalive": self.keepalive,
             "timeout": self.timeout,
@@ -70,9 +73,12 @@ class WebserverConfig:
         keepalive = config.get("webserver-keepalive")
         timeout = config.get("webserver-timeout")
         workers = config.get("webserver-workers")
+        worker_class = config.get("webserver-worker-class")
+
         threads = config.get("webserver-threads")
         return cls(
             workers=int(typing.cast(str, workers)) if workers is not None else None,
+            worker_class=str(typing.cast(str, worker_class)) if worker_class is not None else None,
             threads=int(typing.cast(str, threads)) if threads is not None else None,
             keepalive=(
                 datetime.timedelta(seconds=int(keepalive)) if keepalive is not None else None
@@ -111,14 +117,16 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         """
         config_entries = []
         for setting, setting_value in self._webserver_config.items():
-            setting_value = typing.cast(None | int | datetime.timedelta, setting_value)
+            setting_value = typing.cast(None | str | int | datetime.timedelta, setting_value)
             if setting_value is None:
                 continue
             setting_value = (
                 setting_value
-                if isinstance(setting_value, int)
+                if isinstance(setting_value, (int, str))
                 else int(setting_value.total_seconds())
             )
+            if isinstance(setting_value, str):
+                setting_value = f"'{setting_value}'"
             config_entries.append(f"{setting} = {setting_value}")
         if enable_pebble_log_forwarding():
             access_log = "'-'"
