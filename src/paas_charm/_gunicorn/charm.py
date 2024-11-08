@@ -51,10 +51,12 @@ class GunicornBase(PaasCharm):
 
         if _webserver_config.worker_class:
             if "gevent" != typing.cast(str, _webserver_config.worker_class):
-                raise CharmConfigInvalidError("Only 'gevent' and 'sync' are allowed.")
+                logger.error("Only 'gevent' and 'sync' are allowed. https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/%s-framework/#parts-%s-framework-async-dependencies", self._framework_name, self._framework_name)
+                raise CharmConfigInvalidError(f"Only 'gevent' and 'sync' are allowed. https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/{self._framework_name}-framework/#parts-{self._framework_name}-framework-async-dependencies")
 
             if not self.check_gevent_package():
-                raise CharmConfigInvalidError("gunicorn[gevent] must be installed in the rock.")
+                logger.error("gunicorn[gevent] must be installed in the rock. https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/%s-framework/#parts-%s-framework-async-dependencies", self._framework_name, self._framework_name)
+                raise CharmConfigInvalidError(f"gunicorn[gevent] must be installed in the rock. https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/{self._framework_name}-framework/#parts-{self._framework_name}-framework-async-dependencies")
 
         return _webserver_config
 
