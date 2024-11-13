@@ -349,29 +349,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
-        redis_url = None
-        if self._redis:
-            relation = self.model.get_relation(self._redis.relation_name)
-            if relation:
-                relation_app_data = relation.data[relation.app]
-                relation_unit_data = self._redis.relation_data
-                if relation_unit_data:
-                    try:
-                        redis_hostname = str(
-                            relation_app_data.get("leader-host", relation_unit_data["hostname"])
-                        )
-                        redis_port = int(relation_unit_data["port"])
-                        redis_url = f"redis://{redis_hostname}:{redis_port}"
-                    except KeyError:
-                        redis_url = None
-
         return CharmState.from_charm(
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
             secret_storage=self._secret_storage,
             database_requirers=self._database_requirers,
-            redis_uri=redis_url,
+            redis_uri=self._redis.url if self._redis is not None else None,
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
