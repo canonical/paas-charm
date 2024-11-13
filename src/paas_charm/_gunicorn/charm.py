@@ -32,8 +32,8 @@ class GunicornBase(PaasCharm):
         Returns:
             True if gevent is installed.
         """
-        ddddd = self._container.exec(["pip", "list"])
-        list_output = ddddd.wait_output()[0]
+        pip_list_command = self._container.exec(["pip", "list"])
+        list_output = pip_list_command.wait_output()[0]
         return "gevent" in list_output
 
     def create_webserver_config(self) -> WebserverConfig:
@@ -45,13 +45,13 @@ class GunicornBase(PaasCharm):
         Raises:
             CharmConfigInvalidError: if the charm configuration is not valid.
         """
-        _webserver_config: WebserverConfig = WebserverConfig.from_charm_config(dict(self.config))
+        webserver_config: WebserverConfig = WebserverConfig.from_charm_config(dict(self.config))
 
-        if _webserver_config.worker_class == "sync":
-            _webserver_config.worker_class = None
+        if webserver_config.worker_class == "sync":
+            webserver_config.worker_class = None
 
-        if _webserver_config.worker_class:
-            if "gevent" != typing.cast(str, _webserver_config.worker_class):
+        if webserver_config.worker_class:
+            if "gevent" != typing.cast(str, webserver_config.worker_class):
                 logger.error(
                     "Only 'gevent' and 'sync' are allowed. "
                     "https://documentation.ubuntu.com/rockcraft"
@@ -85,7 +85,7 @@ class GunicornBase(PaasCharm):
                     "framework-async-dependencies"
                 )
 
-        return _webserver_config
+        return webserver_config
 
     def _create_app(self) -> App:
         """Build an App instance for the Gunicorn based charm.

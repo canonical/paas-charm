@@ -2,4 +2,3 @@ cosl
 jsonschema >=4.19,<4.20
 ops >= 2.6
 pydantic==2.9.2
-websockets < 14.0
