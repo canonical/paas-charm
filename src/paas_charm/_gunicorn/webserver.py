@@ -10,6 +10,7 @@ import shlex
 import signal
 import textwrap
 import typing
+from enum import Enum
 
 import ops
 from ops.pebble import ExecError, PathError
@@ -24,6 +25,22 @@ from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
+
+
+class WorkerClassEnum(str, Enum):
+    """Enumeration class defining async modes.
+
+    Attributes:
+        SYNC (str): String representation of worker class.
+        GEVENT (Enum): Enumeration representation of worker class.
+
+    Args:
+        str (str): String representation of worker class.
+        Enum (Enum): Enumeration representation of worker class.
+    """
+
+    SYNC = "sync"
+    GEVENT = "gevent"
 
 
 @dataclasses.dataclass
@@ -41,12 +58,14 @@ class WebserverConfig:
     """
 
     workers: int | None = None
-    worker_class: str | None = None
+    worker_class: WorkerClassEnum | None = None
     threads: int | None = None
     keepalive: datetime.timedelta | None = None
     timeout: datetime.timedelta | None = None
 
-    def items(self) -> typing.Iterable[tuple[str, str | int | datetime.timedelta | None]]:
+    def items(
+        self,
+    ) -> typing.Iterable[tuple[str, str | WorkerClassEnum | int | datetime.timedelta | None]]:
         """Return the dataclass values as an iterable of the key-value pairs.
 
         Returns:
@@ -61,7 +80,9 @@ class WebserverConfig:
         }.items()
 
     @classmethod
-    def from_charm_config(cls, config: dict[str, int | float | str | bool]) -> "WebserverConfig":
+    def from_charm_config(
+        cls, config: dict[str, WorkerClassEnum | int | float | str | bool]
+    ) -> "WebserverConfig":
         """Create a WebserverConfig object from a charm state object.
 
         Args:
@@ -78,7 +99,9 @@ class WebserverConfig:
         threads = config.get("webserver-threads")
         return cls(
             workers=int(typing.cast(str, workers)) if workers is not None else None,
-            worker_class=str(typing.cast(str, worker_class)) if worker_class is not None else None,
+            worker_class=(
+                typing.cast(WorkerClassEnum, worker_class) if worker_class is not None else None
+            ),
             threads=int(typing.cast(str, threads)) if threads is not None else None,
             keepalive=(
                 datetime.timedelta(seconds=int(keepalive)) if keepalive is not None else None
@@ -117,16 +140,18 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         """
         config_entries = []
         for setting, setting_value in self._webserver_config.items():
-            setting_value = typing.cast(None | str | int | datetime.timedelta, setting_value)
+            setting_value = typing.cast(
+                None | str | WorkerClassEnum | int | datetime.timedelta, setting_value
+            )
             if setting_value is None:
                 continue
             setting_value = (
                 setting_value
-                if isinstance(setting_value, (int, str))
+                if isinstance(setting_value, (int, WorkerClassEnum, str))
                 else int(setting_value.total_seconds())
             )
-            if isinstance(setting_value, str):
-                setting_value = f"'{setting_value}'"
+            if isinstance(setting_value, (WorkerClassEnum, str)):
+                setting_value = f"'{str(setting_value)}'"
             config_entries.append(f"{setting} = {setting_value}")
         if enable_pebble_log_forwarding():
             access_log = "'-'"

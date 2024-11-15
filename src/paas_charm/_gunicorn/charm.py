@@ -4,9 +4,8 @@
 """The base charm class for all charms."""
 
 import logging
-import typing
 
-from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig, WorkerClassEnum
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App, WorkloadConfig
@@ -37,53 +36,46 @@ class GunicornBase(PaasCharm):
         return "gevent" in list_output
 
     def create_webserver_config(self) -> WebserverConfig:
-        """Create a WebserverConfig instance from the charm config.
+        """Validate worker_class and create a WebserverConfig instance from the charm config.
 
         Returns:
-            A new WebserverConfig instance.
+            A validated WebserverConfig instance.
 
         Raises:
             CharmConfigInvalidError: if the charm configuration is not valid.
         """
         webserver_config: WebserverConfig = WebserverConfig.from_charm_config(dict(self.config))
+        if not webserver_config.worker_class:
+            return webserver_config
 
-        if webserver_config.worker_class == "sync":
-            webserver_config.worker_class = None
+        doc_link =  "https://documentation.ubuntu.com/rockcraft" + \
+                    f"/en/latest/reference/extensions/{self._framework_name}-framework" + \
+                    f"/#parts-{self._framework_name}-framework-async-dependencies"
 
-        if webserver_config.worker_class:
-            if "gevent" != typing.cast(str, webserver_config.worker_class):
-                logger.error(
-                    "Only 'gevent' and 'sync' are allowed. "
-                    "https://documentation.ubuntu.com/rockcraft"
-                    "/en/latest/reference/extensions/%s-framework"
-                    "/#parts-%s-framework-async-dependencies",
-                    self._framework_name,
-                    self._framework_name,
-                )
-                raise CharmConfigInvalidError(
-                    "Only 'gevent' and 'sync' are allowed. "
-                    "https://documentation.ubuntu.com/rockcraft/en/latest"
-                    f"/reference/extensions/{self._framework_name}-"
-                    f"framework/#parts-{self._framework_name}-"
-                    "framework-async-dependencies"
-                )
+        worker_class = None
+        try:
+            worker_class = WorkerClassEnum(webserver_config.worker_class)
+        except ValueError:
+            logger.error(
+                "Only 'gevent' and 'sync' are allowed. %s",
+                doc_link,
+            )
+            raise CharmConfigInvalidError(
+                f"Only 'gevent' and 'sync' are allowed. {doc_link}"
+            )
 
-            if not self.check_gevent_package():
-                logger.error(
-                    "gunicorn[gevent] must be installed in the rock. "
-                    "https://documentation.ubuntu.com/rockcraft"
-                    "/en/latest/reference/extensions/%s-framework"
-                    "/#parts-%s-framework-async-dependencies",
-                    self._framework_name,
-                    self._framework_name,
-                )
-                raise CharmConfigInvalidError(
-                    "gunicorn[gevent] must be installed in the rock. "
-                    "https://documentation.ubuntu.com/rockcraft/en/latest"
-                    f"/reference/extensions/{self._framework_name}-"
-                    f"framework/#parts-{self._framework_name}-"
-                    "framework-async-dependencies"
-                )
+        # If the worker_class = sync is the default.
+        if worker_class is WorkerClassEnum.SYNC:
+            return webserver_config
+
+        if not self.check_gevent_package():
+            logger.error(
+                "gunicorn[gevent] must be installed in the rock. %s",
+                doc_link,
+            )
+            raise CharmConfigInvalidError(
+                f"gunicorn[gevent] must be installed in the rock. {doc_link}"
+            )
 
         return webserver_config
 
