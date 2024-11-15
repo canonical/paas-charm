@@ -48,21 +48,23 @@ class GunicornBase(PaasCharm):
         if not webserver_config.worker_class:
             return webserver_config
 
-        doc_link =  "https://documentation.ubuntu.com/rockcraft" + \
-                    f"/en/latest/reference/extensions/{self._framework_name}-framework" + \
-                    f"/#parts-{self._framework_name}-framework-async-dependencies"
+        doc_link = (
+            "https://documentation.ubuntu.com/rockcraft"
+            + f"/en/latest/reference/extensions/{self._framework_name}-framework"
+            + f"/#parts-{self._framework_name}-framework-async-dependencies"
+        )
 
         worker_class = None
         try:
             worker_class = WorkerClassEnum(webserver_config.worker_class)
-        except ValueError:
+        except ValueError as exc:
             logger.error(
                 "Only 'gevent' and 'sync' are allowed. %s",
                 doc_link,
             )
             raise CharmConfigInvalidError(
                 f"Only 'gevent' and 'sync' are allowed. {doc_link}"
-            )
+            ) from exc
 
         # If the worker_class = sync is the default.
         if worker_class is WorkerClassEnum.SYNC:

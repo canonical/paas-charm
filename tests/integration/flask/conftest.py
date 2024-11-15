@@ -34,6 +34,7 @@ def fixture_test_async_flask_image(pytestconfig: Config):
         raise ValueError("the following arguments are required: --test-async-flask-image")
     return test_flask_image
 
+
 @pytest.fixture(scope="module", name="test_flask_image")
 def fixture_test_flask_image(pytestconfig: Config):
     """Return the --test-flask-image test parameter."""
@@ -41,6 +42,7 @@ def fixture_test_flask_image(pytestconfig: Config):
     if not test_flask_image:
         raise ValueError("the following arguments are required: --test-flask-image")
     return test_flask_image
+
 
 @pytest.fixture(scope="module", name="test_db_flask_image")
 def fixture_test_db_flask_image(pytestconfig: Config):

@@ -69,17 +69,23 @@ async def test_workers_and_scheduler_services(
     except asyncio.TimeoutError:
         assert False, "Failed to get 2 workers and 1 scheduler"
 
+
 @pytest.mark.parametrize(
     "worker_class, expected_result",
     [
-        ("eventlet", 'blocked'),
-        ("gevent", 'active'),
-        ("sync", 'active'),
+        ("eventlet", "blocked"),
+        ("gevent", "active"),
+        ("sync", "active"),
     ],
 )
 @pytest.mark.usefixtures("flask_async_app")
 async def test_async_workers(
-    ops_test: OpsTest, model: Model, flask_async_app: Application, get_unit_ips, worker_class: str, expected_result: bool
+    ops_test: OpsTest,
+    model: Model,
+    flask_async_app: Application,
+    get_unit_ips,
+    worker_class: str,
+    expected_result: bool,
 ):
     """
     arrange: Flask is deployed with async enabled rock.
@@ -94,14 +100,19 @@ async def test_async_workers(
 @pytest.mark.parametrize(
     "worker_class, expected_result",
     [
-        ("gevent", 'blocked'),
-        ("eventlet", 'blocked'),
-        ("sync", 'active'),
+        ("gevent", "blocked"),
+        ("eventlet", "blocked"),
+        ("sync", "active"),
     ],
 )
 @pytest.mark.usefixtures("flask_app")
 async def test_async_workers_fail(
-    ops_test: OpsTest, model: Model, flask_app: Application, get_unit_ips, worker_class: str, expected_result: str
+    ops_test: OpsTest,
+    model: Model,
+    flask_app: Application,
+    get_unit_ips,
+    worker_class: str,
+    expected_result: str,
 ):
     """
     arrange: Flask is deployed with async not enabled rock.
