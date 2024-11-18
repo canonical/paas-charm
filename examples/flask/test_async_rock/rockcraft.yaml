@@ -14,8 +14,8 @@ extensions:
 
 parts:
   flask-framework/async-dependencies:
-    plugin: python
-    source: .
+    python-packages:
+    - gunicorn[gevent]
 
 services:
   celery-worker:
