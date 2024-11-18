@@ -31,6 +31,7 @@ def fixture_django_app_image(pytestconfig: Config):
         raise ValueError("the following arguments are required: --django-app-image")
     return image
 
+
 @pytest.fixture(scope="module", name="django_async_app_image")
 def fixture_django_async_app_image(pytestconfig: Config):
     """Return the --django-async-app-image test parameter."""
@@ -84,7 +85,9 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
 
 
 @pytest_asyncio.fixture(scope="module", name="django_async_app")
-async def django_async_app_fixture(charm_file: str, model: Model, django_async_app_image: str, postgresql_k8s):
+async def django_async_app_fixture(
+    charm_file: str, model: Model, django_async_app_image: str, postgresql_k8s
+):
     """Build and deploy the async django charm."""
     app_name = "django-async-k8s"
 
@@ -101,6 +104,7 @@ async def django_async_app_fixture(charm_file: str, model: Model, django_async_a
     await model.integrate(app_name, "postgresql-k8s")
     await model.wait_for_idle(status="active")
     return app
+
 
 @pytest_asyncio.fixture
 async def update_config(model: Model, request: FixtureRequest, django_app: Application):
