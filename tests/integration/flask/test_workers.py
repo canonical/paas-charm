@@ -79,7 +79,7 @@ async def test_workers_and_scheduler_services(
     ],
 )
 @pytest.mark.usefixtures("flask_async_app")
-async def test_async_workers(
+async def test_async_workers_config(
     ops_test: OpsTest,
     model: Model,
     flask_async_app: Application,
@@ -106,7 +106,7 @@ async def test_async_workers(
     ],
 )
 @pytest.mark.usefixtures("flask_app")
-async def test_async_workers_fail(
+async def test_async_workers_config_fail(
     ops_test: OpsTest,
     model: Model,
     flask_app: Application,
