@@ -48,11 +48,7 @@ class GunicornBase(PaasCharm):
         if not webserver_config.worker_class:
             return webserver_config
 
-        doc_link = (
-            "https://documentation.ubuntu.com/rockcraft"
-            + f"/en/latest/reference/extensions/{self._framework_name}-framework"
-            + f"/#parts-{self._framework_name}-framework-async-dependencies"
-        )
+        doc_link = f"https://bit.ly/{self._framework_name}-async-doc"
 
         worker_class = None
         try:
