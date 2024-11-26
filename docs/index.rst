@@ -1,24 +1,16 @@
-Starter pack
-============
+12-Factor app support in Charmcraft and Rockcraft
+=================================================
 
-**A single sentence that says what the product is, succinctly and memorably.**
-Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-dolore magna aliqua.
+**Coordinated pairs of Rockcraft and Charmcraft profiles designed to give you
+the content you need to generate rocks and charms for 12-Factor applications.**
 
 **A paragraph of one to three short sentences, that describe what the product
-does.** Urna cursus eget nunc scelerisque viverra mauris in. Nibh mauris
-cursus mattis molestie a iaculis at vestibulum rhoncus est pellentesque
-elit. Diam phasellus vestibulum lorem sed.
+does.** 
 
 **A third paragraph of similar length, this time explaining what need the
-product meets.** Dui ut ornare lectus sit amet est. Nunc sed augue lacus
-viverra vitae congue eu consequat ac libero id faucibus nisl tincidunt eget
-nullam.
+product meets.**
 
-**Finally, a paragraph that describes whom the product is useful for.** Nunc
-non blandit massa enim nec dui nunc mattis enim. Ornare arcu odio ut sem
-nulla pharetra diam porttitor leo a diam sollicitudin tempor id eu. Ipsum
-dolor sit amet consectetur adipiscing elit pellentesque habitant.
+**Finally, a paragraph that describes whom the product is useful for.** 
 
 ---------
 
@@ -50,14 +42,16 @@ dolor sit amet consectetur adipiscing elit pellentesque habitant.
 Project and community
 ---------------------
 
-Example Project is a member of the Ubuntu family. It’s an open source project that warmly welcomes community projects, contributions, suggestions, fixes and constructive feedback.
+The 12-Factor app project is a member of the Ubuntu family. It’s an open source
+project that warmly welcomes community projects, contributions, suggestions,
+fixes and constructive feedback.
 
-* Code of conduct
-* Get support
-* Join our online chat
+* `Code of conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
+* `Get support <https://discourse.charmhub.io/>`_
+* `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
 * Contribute
 * Roadmap
-* Thinking about using Example Product for your next project? Get in touch!
+* Thinking about using 12-Factor app rocks and charms in your next project? Get in touch!
 
 
 .. toctree::
