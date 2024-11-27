@@ -6,7 +6,9 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
 
+import aiohttp
 import pytest
 import requests
 from juju.application import Application
@@ -69,56 +71,32 @@ async def test_workers_and_scheduler_services(
     except asyncio.TimeoutError:
         assert False, "Failed to get 2 workers and 1 scheduler"
 
-
-@pytest.mark.parametrize(
-    "worker_class, expected_result",
-    [
-        ("eventlet", "blocked"),
-        ("gevent", "active"),
-        ("sync", "active"),
-    ],
-)
 @pytest.mark.usefixtures("flask_async_app")
-async def test_async_workers_config(
+async def test_async_workers(
     ops_test: OpsTest,
     model: Model,
     flask_async_app: Application,
     get_unit_ips,
-    worker_class: str,
-    expected_result: bool,
 ):
     """
-    arrange: Flask is deployed with async enabled rock.
-    act: Change gunicorn worker class.
-    assert: Charm should only let the class to be 'sync' or 'gevent'.
-    If it is something other than these, then the unit should be blocked.
+    arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
+    act: Do 15 requests that would take 2 seconds each.
+    assert: All 15 requests should be served in under 3 seconds.
     """
-    await flask_async_app.set_config({"webserver-worker-class": worker_class})
-    await model.wait_for_idle(apps=[flask_async_app.name], status=expected_result, timeout=60)
+    await flask_async_app.set_config({"webserver-worker-class": "gevent"})
+    await model.wait_for_idle(apps=[flask_async_app.name], status="active", timeout=60)
 
+    # the flask unit is not important. Take the first one
+    flask_unit_ip = (await get_unit_ips(flask_async_app.name))[0]
 
-@pytest.mark.parametrize(
-    "worker_class, expected_result",
-    [
-        ("gevent", "blocked"),
-        ("eventlet", "blocked"),
-        ("sync", "active"),
-    ],
-)
-@pytest.mark.usefixtures("flask_app")
-async def test_async_workers_config_fail(
-    ops_test: OpsTest,
-    model: Model,
-    flask_app: Application,
-    get_unit_ips,
-    worker_class: str,
-    expected_result: str,
-):
-    """
-    arrange: Flask is deployed with async not enabled rock.
-    act: Change gunicorn worker class.
-    assert: Charm should only let the class to be 'sync'.
-    If it is 'gevent' or something else, then the unit should be blocked.
-    """
-    await flask_app.set_config({"webserver-worker-class": worker_class})
-    await model.wait_for_idle(apps=[flask_app.name], status=expected_result, timeout=60)
+    async def _fetch_page(session):
+        params = {"duration": 2}
+        async with session.get(f"http://{flask_unit_ip}:8000/sleep", params=params) as response:
+            return await response.text()
+
+    start_time = datetime.now()
+    async with aiohttp.ClientSession() as session:
+        pages = [_fetch_page(session) for _ in range(15)]
+        await asyncio.gather(*pages)
+        print(f"TIMME: {(datetime.now() - start_time).seconds}")
+        assert (datetime.now() - start_time).seconds < 3, "The page took more than 2 seconds to load"

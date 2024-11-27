@@ -31,9 +31,11 @@ class GunicornBase(PaasCharm):
         Returns:
             True if gevent is installed.
         """
-        pip_list_command = self._container.exec(["pip", "list"])
+        pip_list_command = self._container.exec(
+            ["python3", "-c", "'import gevent;print(gevent.__version__)'"]
+        )
         list_output = pip_list_command.wait_output()[0]
-        return "gevent" in list_output
+        return "ModuleNotFoundError" not in list_output
 
     def create_webserver_config(self) -> WebserverConfig:
         """Validate worker_class and create a WebserverConfig instance from the charm config.

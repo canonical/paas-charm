@@ -1,10 +1,1 @@
 Flask
-PyMySQL
-PyMySQL[rsa]
-PyMySQL[ed25519]
-psycopg[binary]
-pymongo
-redis[hiredis]
-boto3
-pika
-celery
