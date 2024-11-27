@@ -27,9 +27,11 @@ class FrameworkConfig(pydantic.BaseModel):
         """
         # Bandit thinks the following are secrets which they are not
         secret_key_field = "secret_key"  # nosec B105
-        if secret_key_field not in cls.model_fields:
+        # Mypy thinks model_fields does not have get attribute
+        if not cls.model_fields.get(secret_key_field, None):  # type: ignore
             secret_key_field = "app_secret_key"  # nosec B105
-        secret_key_config_name = cls.model_fields[secret_key_field].alias
+        # Mypy thinks model_fields does not have get attribute
+        secret_key_config_name = cls.model_fields.get(secret_key_field).alias  # type: ignore
         if not secret_key_config_name:
             raise NotImplementedError("framework configuration secret_key field has no alias")
         secret_key_id_config_name = f"{secret_key_config_name}-id"
