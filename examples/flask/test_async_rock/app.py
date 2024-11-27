@@ -9,6 +9,8 @@ import time
 from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
+
+
 @app.route("/")
 def hello_world():
     return "Hello, World!"
@@ -19,4 +21,3 @@ def sleep():
     duration_seconds = int(request.args.get("duration"))
     time.sleep(duration_seconds)
     return ""
-

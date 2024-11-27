@@ -71,6 +71,7 @@ async def test_workers_and_scheduler_services(
     except asyncio.TimeoutError:
         assert False, "Failed to get 2 workers and 1 scheduler"
 
+
 @pytest.mark.usefixtures("flask_async_app")
 async def test_async_workers(
     ops_test: OpsTest,
@@ -99,4 +100,6 @@ async def test_async_workers(
         pages = [_fetch_page(session) for _ in range(15)]
         await asyncio.gather(*pages)
         print(f"TIMME: {(datetime.now() - start_time).seconds}")
-        assert (datetime.now() - start_time).seconds < 3, "The page took more than 2 seconds to load"
+        assert (
+            datetime.now() - start_time
+        ).seconds < 3, "The page took more than 2 seconds to load"
