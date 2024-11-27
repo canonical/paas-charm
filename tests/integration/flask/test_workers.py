@@ -99,7 +99,6 @@ async def test_async_workers(
     async with aiohttp.ClientSession() as session:
         pages = [_fetch_page(session) for _ in range(15)]
         await asyncio.gather(*pages)
-        print(f"TIMME: {(datetime.now() - start_time).seconds}")
         assert (
             datetime.now() - start_time
-        ).seconds < 3, "The page took more than 2 seconds to load"
+        ).seconds < 3, "Async workers for Flask are not working!"

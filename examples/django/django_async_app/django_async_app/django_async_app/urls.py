@@ -20,13 +20,9 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from testing.views import environ, get_settings, login, sleep, user_count
+from testing.views import sleep
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("settings/<str:name>", get_settings, name="get_settings"),
-    path("len/users", user_count, name="user_count"),
-    path("environ", environ, name="environ"),
     path("sleep", sleep, name="sleep"),
-    path("login", login, name="login"),
 ]
