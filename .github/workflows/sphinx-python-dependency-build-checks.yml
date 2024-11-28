@@ -42,7 +42,7 @@ jobs:
         working-directory: "docs"
         run: |
           set -ex
-          make -f docs/Makefile.sp \
+          make -f Makefile.sp \
             sp-install \
             PIPOPTS="--no-binary :all:" \
             || ( cat docs/.sphinx/venv/pip_install.log && exit 1 )
