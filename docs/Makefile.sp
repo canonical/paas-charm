@@ -6,14 +6,14 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SPHINXDIR       = docs/.sphinx
+SOURCEDIR       = docs
+SPHINXDIR       = $(SOURCEDIR)/.sphinx
 VENVDIR         = $(SPHINXDIR)/venv
-SPHINXOPTS      ?= -c . -d $(SPHINXDIR)/.doctrees -j auto
+SPHINXOPTS      ?= -c $(SOURCEDIR) -d $(SPHINXDIR)/.doctrees -j auto
 SPHINXBUILD     ?= $(VENVDIR)/bin/sphinx-build
-SOURCEDIR       = .
-BUILDDIR        = docs/_build
+BUILDDIR        = $(SOURCEDIR)/_build
 PA11Y           = $(SPHINXDIR)/node_modules/pa11y/bin/pa11y.js --config $(SPHINXDIR)/pa11y.json
-VENV         	   = $(VENVDIR)/bin/activate
+VENV            = $(VENVDIR)/bin/activate
 TARGET          = *
 ALLFILES        =  *.rst **/*.rst
 METRICSDIR      = $(SOURCEDIR)/.sphinx/metrics
