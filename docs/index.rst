@@ -18,11 +18,11 @@ product meets.**
 
 ..  grid:: 1 1 2 2
 
-   ..  grid-item:: :doc:`Tutorial </index>`
+   ..  grid-item:: :doc:`Tutorial <tutorial/index>`
 
        **Start here**: a hands-on introduction to Example Product for new users
 
-   ..  grid-item:: :doc:`How-to guides </index>`
+   ..  grid-item:: :doc:`How-to guides <how-to/index>`
 
       **Step-by-step guides** covering key operations and common tasks
 
@@ -33,7 +33,7 @@ product meets.**
 
       **Technical information** - specifications, APIs, architecture
 
-   .. grid-item:: :doc:`Explanation </index>`
+   .. grid-item:: :doc:`Explanation <explanation/index>`
 
       **Discussion and clarification** of key topics
 
@@ -58,5 +58,7 @@ fixes and constructive feedback.
    :hidden:
    :maxdepth: 2
 
-   self
-   contributing
+   Home <self>
+   Tutorial <tutorial/index>
+   How to <how-to/index>
+   Explanation <explanation/index>

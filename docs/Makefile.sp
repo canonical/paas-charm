@@ -6,7 +6,7 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SOURCEDIR       = docs
+SOURCEDIR       = .
 SPHINXDIR       = .sphinx
 VENVDIR         = $(SPHINXDIR)/venv
 SPHINXOPTS      ?= -c . -d $(SPHINXDIR)/.doctrees -j auto
