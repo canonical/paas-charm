@@ -12,10 +12,10 @@ from typing import Optional
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
 
-from paas_app_charmer.databases import get_uri
-from paas_app_charmer.exceptions import CharmConfigInvalidError
-from paas_app_charmer.secret_storage import KeySecretStorage
-from paas_app_charmer.utils import build_validation_error_message
+from paas_charm.databases import get_uri
+from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 

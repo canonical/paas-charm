@@ -5,7 +5,7 @@
 
 import pathlib
 
-from paas_app_charmer.app import WorkloadConfig
+from paas_charm.app import WorkloadConfig
 
 STATSD_HOST = "localhost:9125"
 APPLICATION_LOG_FILE_FMT = "/var/log/{framework}/access.log"

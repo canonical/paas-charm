@@ -9,10 +9,10 @@ import typing
 
 import ops
 
-import paas_app_charmer.go
+import paas_charm.go
 
 
-class GoCharm(paas_app_charmer.go.Charm):
+class GoCharm(paas_charm.go.Charm):
     """Go Charm service."""
 
     def __init__(self, *args: typing.Any) -> None:

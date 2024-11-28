@@ -44,7 +44,7 @@ async def charm_file_fixture(
         charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/django/charm")
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "paas_app_charmer")
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
     return inject_charm_config(
         charm_file,
         {

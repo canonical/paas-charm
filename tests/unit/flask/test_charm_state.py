@@ -8,9 +8,9 @@ from secrets import token_hex
 
 import pytest
 
-from paas_app_charmer.charm_state import CharmState, S3Parameters
-from paas_app_charmer.exceptions import CharmConfigInvalidError
-from paas_app_charmer.flask.charm import Charm, FlaskConfig
+from paas_charm.charm_state import CharmState, S3Parameters
+from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.flask.charm import Charm, FlaskConfig
 
 from .constants import SAML_APP_RELATION_DATA_EXAMPLE
 

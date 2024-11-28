@@ -9,7 +9,7 @@ import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
-from paas_app_charmer.utils import enable_pebble_log_forwarding
+from paas_charm.utils import enable_pebble_log_forwarding
 
 
 class Observability(ops.Object):

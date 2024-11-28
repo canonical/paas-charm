@@ -43,7 +43,7 @@ async def charm_file_fixture(
         charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/fastapi/charm")
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "paas_app_charmer")
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
     return pathlib.Path(charm_file).absolute()
 
 

@@ -9,12 +9,12 @@ import typing
 
 import ops
 
-import paas_app_charmer.flask
+import paas_charm.flask
 
 logger = logging.getLogger(__name__)
 
 
-class FlaskCharm(paas_app_charmer.flask.Charm):
+class FlaskCharm(paas_charm.flask.Charm):
     """Flask Charm service."""
 
     def __init__(self, *args: typing.Any) -> None:

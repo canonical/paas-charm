@@ -7,10 +7,10 @@ import logging
 
 import ops
 
-from paas_app_charmer._gunicorn.webserver import GunicornWebserver
-from paas_app_charmer.app import App, WorkloadConfig
-from paas_app_charmer.charm_state import CharmState
-from paas_app_charmer.database_migration import DatabaseMigration
+from paas_charm._gunicorn.webserver import GunicornWebserver
+from paas_charm.app import App, WorkloadConfig
+from paas_charm.charm_state import CharmState
+from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
 

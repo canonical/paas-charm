@@ -5,7 +5,7 @@
 
 """Module __init__."""
 
-from paas_app_charmer import exceptions
+from paas_charm import exceptions
 
 # Try the charm library imports to check whether they are present
 try:

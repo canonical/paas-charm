@@ -1,4 +1,4 @@
-# PaaS App Charmer
+# PaaS Charm
 
 Easily deploy and operate your Flask or Django applications and associated
 infrastructure, such as databases and ingress, using open source tooling. This
@@ -8,7 +8,7 @@ developed by Canonical, the creators of Ubuntu.
 
 Have you ever created an application and then wanted to deploy it for your users
 only to either be forced to use a proprietary public cloud platform or manage
-the deployment and operations yourself? PaaS App Charmer will take your
+the deployment and operations yourself? PaaS Charm will take your
 application and create an OCI image using Rockcraft and operations code using
 Charmcraft for you. The full suite of tools is open source so you can see
 exactly how it works and even contribute! After creating the app charm and
@@ -64,7 +64,7 @@ Additional resources:
 
 ## Contributing
 
-Is there something missing from the PaaS App Charmer framework? PaaS App Charmer
+Is there something missing from the PaaS Charm framework? PaaS Charm
 welcomes contributions! This section covers how to add a new integration and a
 new framework.
 
@@ -77,13 +77,13 @@ through below.
   [charm topic on discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
   * The integration you intend add
-  * For each of the frameworks that PaaS App Charmer supports:
+  * For each of the frameworks that PaaS Charm supports:
     - The commonly used package(s) to make use of the integration
     - The environment variables, configuration etc. that would be made available
       to the app
     - An example for how to use the integration within an app
-  * The proposed implementation in `paas-app-charmer`. Take a look at
-    [`charm.py`](paas_app_charmer/_gunicorn/charm.py) for `gunicorn` based
+  * The proposed implementation in `paas-app`. Take a look at
+    [`charm.py`](paas_charm/_gunicorn/charm.py) for `gunicorn` based
     frameworks for integration examples.
 1. Update the
   [reference](https://juju.is/docs/sdk/charmcraft-extension-flask-framework)
@@ -113,7 +113,7 @@ below.
   * How the configuration options of the charm map to environment variables,
     configurations or another method of passing the information to the app
   * The requirements and conventions for how users need to configure their app
-    to work with PaaS App Charmer
+    to work with PaaS Charm
   * Which web server to use
 1. Raise a pull request to [rockcraft](https://github.com/canonical/rockcraft)
   adding a new extension and profile for the framework. This is the flask
@@ -124,7 +124,7 @@ below.
   framework.
 1. Raise a pull request to this repository adding a new parent class that can be
   used by the app charms. The following is the
-  [example for flask](./paas_app_charmer/flask/charm.py).
+  [example for flask](./paas_charm/flask/charm.py).
 1. Raise a pull request to
   [charmcraft](https://github.com/canonical/charmcraft) adding a new extension
   and profile for the framework. This is the flask

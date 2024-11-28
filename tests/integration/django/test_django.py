@@ -23,7 +23,7 @@ from juju.model import Model
 async def test_django_webserver_timeout(django_app, get_unit_ips, timeout):
     """
     arrange: build and deploy the django charm, and change the gunicorn timeout configuration.
-    act: send long-running requests to the django application managed by the flask charm.
+    act: send long-running requests to the django application managed by the django charm.
     assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
     """
     safety_timeout = timeout + 3
@@ -50,7 +50,9 @@ async def test_django_database_migration(django_app, get_unit_ips):
     "update_config, expected_settings",
     [
         pytest.param(
-            {"django-allowed-hosts": "*,test"}, {"ALLOWED_HOSTS": ["*", "test"]}, id="allowed-host"
+            {"django-allowed-hosts": "test"},
+            {"ALLOWED_HOSTS": ["test", "django-k8s.testing"]},
+            id="allowed-host",
         ),
         pytest.param({"django-secret-key": "test"}, {"SECRET_KEY": "test"}, id="secret-key"),
     ],
@@ -66,7 +68,11 @@ async def test_django_charm_config(django_app, expected_settings, get_unit_ips):
     for unit_ip in await get_unit_ips(django_app.name):
         for setting, value in expected_settings.items():
             url = f"http://{unit_ip}:8000/settings/{setting}"
-            assert value == requests.get(url, timeout=5).json()
+            # it is necessary to specify a host header if the IP or '*' is not in ALLOWED_HOSTS
+            assert (
+                value
+                == requests.get(url, headers={"Host": "django-k8s.testing"}, timeout=5).json()
+            )
 
 
 async def test_django_create_superuser(django_app, get_unit_ips, run_action):

@@ -8,8 +8,8 @@ import pathlib
 import ops
 from pydantic import ConfigDict, Field, field_validator
 
-from paas_app_charmer._gunicorn.charm import GunicornBase
-from paas_app_charmer.framework import FrameworkConfig
+from paas_charm._gunicorn.charm import GunicornBase
+from paas_charm.framework import FrameworkConfig
 
 logger = logging.getLogger(__name__)
 

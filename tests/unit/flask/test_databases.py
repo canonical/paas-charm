@@ -7,7 +7,7 @@ import unittest.mock
 
 import pytest
 
-from paas_app_charmer.databases import get_uri
+from paas_charm.databases import get_uri
 
 DATABASE_GET_URI_TEST_PARAMS = [
     (

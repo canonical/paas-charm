@@ -9,12 +9,12 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from paas_app_charmer._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_app_charmer._gunicorn.workload_config import create_workload_config
-from paas_app_charmer._gunicorn.wsgi_app import WsgiApp
-from paas_app_charmer.charm_state import CharmState
-from paas_app_charmer.database_migration import DatabaseMigration, DatabaseMigrationStatus
-from paas_app_charmer.exceptions import CharmConfigInvalidError
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
+from paas_charm._gunicorn.wsgi_app import WsgiApp
+from paas_charm.charm_state import CharmState
+from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
+from paas_charm.exceptions import CharmConfigInvalidError
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 

@@ -6,12 +6,13 @@ import logging
 import pathlib
 import secrets
 import typing
+from urllib.parse import urlsplit
 
 import ops
-from pydantic import ConfigDict, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, validator
 
-from paas_app_charmer._gunicorn.charm import GunicornBase
-from paas_app_charmer.framework import FrameworkConfig
+from paas_charm._gunicorn.charm import GunicornBase
+from paas_charm.framework import FrameworkConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class DjangoConfig(FrameworkConfig):
 
     debug: bool | None = Field(alias="django-debug", default=None)
     secret_key: str | None = Field(alias="django-secret-key", default=None, min_length=1)
-    allowed_hosts: str | None = Field(alias="django-allowed-hosts", default=[])
+    allowed_hosts: str | list[str] | None = Field(alias="django-allowed-hosts", default=[])
 
     model_config = ConfigDict(extra="ignore")
 
@@ -74,6 +75,21 @@ class Charm(GunicornBase):
             Return the directory with COS related files.
         """
         return str((pathlib.Path(__file__).parent / "cos").absolute())
+
+    def get_framework_config(self) -> BaseModel:
+        """Return the framework related configurations.
+
+        The method is overridden to inject the base_url, that can be an ingress URL or a k8s svc
+        url, to the list of allowed hosts.
+
+        Returns:
+             Framework related configurations.
+        """
+        base_model = super().get_framework_config()
+        url = urlsplit(self._base_url)
+        # base_model can be downcasted to a DjangoConfig, and allowed_hosts is really a list.
+        base_model.allowed_hosts.append(url.hostname)  # type: ignore
+        return base_model
 
     def is_ready(self) -> bool:
         """Check if the charm is ready to start the workload application.
