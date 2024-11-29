@@ -13,6 +13,3 @@ images=$(find . -type d -path './.sphinx' -prune -o -name '*.html' -exec cat {} 
 echo "Summarising metrics for build files (.html)..."
 echo -e "\tlinks: $links"
 echo -e "\timages: $images"
-
-# Copyright 2024 Canonical Ltd.
-# See LICENSE file for licensing details.
