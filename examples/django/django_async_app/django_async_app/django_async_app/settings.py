@@ -31,7 +31,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "secret")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "true") == "true"
 
-ALLOWED_HOSTS = json.loads(os.environ.get("DJANGO_ALLOWED_HOSTS", '["*"]'))
+ALLOWED_HOSTS = json.loads(os.environ["DJANGO_ALLOWED_HOSTS"])
 
 
 INSTALLED_APPS = [

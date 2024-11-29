@@ -5,6 +5,8 @@
 
 import logging
 
+from ops.pebble import ExecError, ExecProcess
+
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig, WorkerClassEnum
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
@@ -24,18 +26,6 @@ class GunicornBase(PaasCharm):
         return create_workload_config(
             framework_name=self._framework_name, unit_name=self.unit.name
         )
-
-    def check_gevent_package(self) -> bool:
-        """Check that gevent is installed.
-
-        Returns:
-            True if gevent is installed.
-        """
-        pip_list_command = self._container.exec(
-            ["python3", "-c", "'import gevent;print(gevent.__version__)'"]
-        )
-        list_output = pip_list_command.wait_output()[0]
-        return "ModuleNotFoundError" not in list_output
 
     def create_webserver_config(self) -> WebserverConfig:
         """Validate worker_class and create a WebserverConfig instance from the charm config.
@@ -68,7 +58,7 @@ class GunicornBase(PaasCharm):
         if worker_class is WorkerClassEnum.SYNC:
             return webserver_config
 
-        if not self.check_gevent_package():
+        if not self._check_gevent_package():
             logger.error(
                 "gunicorn[gevent] must be installed in the rock. %s",
                 doc_link,
@@ -100,3 +90,19 @@ class GunicornBase(PaasCharm):
             webserver=webserver,
             database_migration=self._database_migration,
         )
+
+    def _check_gevent_package(self) -> bool:
+        """Check that gevent is installed.
+
+        Returns:
+            True if gevent is installed.
+        """
+        try:
+            check_gevent_process: ExecProcess = self._container.exec(
+                ["python3", "-c", "import gevent"]
+            )
+            check_gevent_process.wait_output()
+            return True
+        except ExecError as cmd_error:
+            logger.warning("gunicorn[gevent] install check failed: %s", cmd_error)
+            return False

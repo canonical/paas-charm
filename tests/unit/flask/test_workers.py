@@ -9,7 +9,7 @@ from secrets import token_hex
 
 import ops
 import pytest
-from ops.testing import Harness
+from ops.testing import ExecResult, Harness
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, LAYER_WITH_WORKER
 
@@ -40,18 +40,21 @@ def test_worker(harness: Harness):
 
 
 @pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message",
+    "worker_class, expected_status, expected_message, exec_res",
     [
         (
             "eventlet",
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/flask-async-doc",
+            1,
         ),
-        ("gevent", "active", ""),
-        ("sync", "active", ""),
+        ("gevent", "active", "", 0),
+        ("sync", "active", "", 0),
     ],
 )
-def test_async_workers_config(harness: Harness, worker_class, expected_status, expected_message):
+def test_async_workers_config(
+    harness: Harness, worker_class, expected_status, expected_message, exec_res
+):
     """
     arrange: Prepare a unit and run initial hooks.
     act: Set the `webserver-worker-class` config.
@@ -63,9 +66,10 @@ def test_async_workers_config(harness: Harness, worker_class, expected_status, e
 
     harness.handle_exec(
         container.name,
-        ["python3", "-c", "'import gevent;print(gevent.__version__)'"],
-        result="Gevent",
+        ["python3", "-c", "import gevent"],
+        result=ExecResult(exit_code=exec_res),
     )
+
     harness.begin_with_initial_hooks()
     harness.update_config({"webserver-worker-class": worker_class})
     assert harness.model.unit.status == ops.StatusBase.from_name(
@@ -74,23 +78,25 @@ def test_async_workers_config(harness: Harness, worker_class, expected_status, e
 
 
 @pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message",
+    "worker_class, expected_status, expected_message, exec_res",
     [
         (
             "eventlet",
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/flask-async-doc",
+            1,
         ),
         (
             "gevent",
             "blocked",
             "gunicorn[gevent] must be installed in the rock. https://bit.ly/flask-async-doc",
+            1,
         ),
-        ("sync", "active", ""),
+        ("sync", "active", "", 0),
     ],
 )
 def test_async_workers_config_fail(
-    harness: Harness, worker_class, expected_status, expected_message
+    harness: Harness, worker_class, expected_status, expected_message, exec_res
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -103,8 +109,8 @@ def test_async_workers_config_fail(
 
     harness.handle_exec(
         container.name,
-        ["python3", "-c", "'import gevent;print(gevent.__version__)'"],
-        result="ModuleNotFoundError",
+        ["python3", "-c", "import gevent"],
+        result=ExecResult(exit_code=exec_res),
     )
     harness.begin_with_initial_hooks()
     harness.update_config({"webserver-worker-class": worker_class})
