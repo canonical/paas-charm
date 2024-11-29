@@ -30,6 +30,7 @@ Code of conduct
 When contributing, you must abide by the
 `Ubuntu Code of Conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_.
 
+.. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
 Licence and copyright
 ---------------------
@@ -42,10 +43,10 @@ Releases and versions
 
 .. TODO: Add your release and versioning details or drop if excessive
 
-ACME uses `semantic versioning <https://semver.org/>`_;
+The 12-factor project uses `semantic versioning <https://semver.org/>`_;
 major releases occur once or twice a year.
 
-The release notes can be found `TODO: here <https://example.com>`_.
+The release notes can be found `here <https://github.com/canonical/paas-charm/blob/main/CHANGELOG.md>`_.
 
 
 Environment setup
@@ -59,13 +60,13 @@ Submissions
 
 .. TODO: Suggest your own PR process or drop if excessive
 
-If you want to address an issue or a bug in ACME,
+If you want to address an issue or a bug in the 12-factor project,
 notify in advance the people involved to avoid confusion;
 also, reference the issue or bug number when you submit the changes.
 
 - `Fork
   <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks>`_
-  our `GitHub repository <https://github.com/canonical/ACME>`_
+  our `GitHub repository <https://github.com/canonical/paas-charm>`_
   and add the changes to your fork,
   properly structuring your commits,
   providing detailed commit messages
@@ -111,26 +112,9 @@ Commit structure and messages
 
 Use separate commits for each logical change,
 and for changes to different components.
-Prefix your commit messages with names of components they affect,
-using the code tree structure,
-e.g. start a commit that updates the ACME service with ``ACME/service:``.
 
 Use `conventional commits <https://www.conventionalcommits.org/>`_
 to ensure consistency across the project:
-
-.. code-block:: none
-
-   Ensure correct permissions and ownership for the content mounts
-    
-    * Work around an ACME issue regarding empty dirs:
-      https://github.com/canonical/ACME/issues/12345
-    
-    * Ensure the source directory is owned by the user running a container.
-
-   Links:
-   - ...
-   - ...
-
 
 Such structure makes it easier to review contributions
 and simplifies porting fixes to other branches.
@@ -160,20 +144,6 @@ Formatting and linting
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. TODO: Update with your linting configuration setup or drop if excessive
-
-ACME relies on these formatting and linting tools:
-
-- `TODO: Tool 1 <http://example.com>`_
-- `TODO: Tool 2 <http://example.com>`_
-
-
-To configure and run them:
-
-.. code-block:: console
-
-   TODO: lint command 1
-   TODO: lint command 2
-
 
 Structure
 ~~~~~~~~~
@@ -247,7 +217,7 @@ the documentation employs the `Diátaxis <https://diataxis.fr/>`_ approach.
 
 To run the documentation locally before submitting your changes:
 
-.. code-block:: console
+.. code-block:: bash
 
    make run
 
@@ -260,7 +230,7 @@ to verify spelling, validate links and suggest inclusive language.
 
 You can (and should) run the same checks locally:
 
-.. code-block:: console
+.. code-block:: bash
 
    make spelling
    make linkcheck
