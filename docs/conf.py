@@ -8,7 +8,7 @@ import ast
 # just go through the items marked 'TODO'.
 #
 # A complete list of built-in Sphinx configuration values:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+# https://www.sphinx-doc.org/
 #
 # Our starter pack uses the custom Canonical Sphinx extension
 # to keep all documentation based on it consistent and on brand:
@@ -95,7 +95,7 @@ ogp_image = \
 
 
 # Dictionary of values to pass into the Sphinx context for all pages:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_context
+# https://www.sphinx-doc.org/
 
 html_context = {
     # Product page URL; can be different from product docs URL
@@ -211,8 +211,8 @@ linkcheck_anchors_ignore_for_url = [r"https://github\.com/.*"]
 # myst_enable_extensions = set()
 
 
-# Custom Sphinx extensions; see
-# https://www.sphinx-doc.org/en/master/usage/extensions/index.html
+# Custom Sphinx extensions; see "Extensions" on
+# https://www.sphinx-doc.org/
 
 # NOTE: The canonical_sphinx extension is required for the starter pack.
 #       It automatically enables the following extensions:
