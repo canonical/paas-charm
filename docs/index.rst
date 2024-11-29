@@ -14,7 +14,8 @@ product meets.**
 
 ---------
 
-:h2:`In this documentation`
+In this documentation
+---------------------
 
 ..  grid:: 1 1 2 2
 
@@ -51,7 +52,8 @@ fixes and constructive feedback.
 * `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
 * Contribute
 * Roadmap
-* Thinking about using 12-Factor app rocks and charms in your next project? Get in touch!
+
+Thinking about using 12-Factor app rocks and charms in your next project? Get in touch!
 
 
 .. toctree::

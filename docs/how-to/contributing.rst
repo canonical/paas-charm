@@ -38,16 +38,6 @@ Licence and copyright
 
 .. TODO: Update with your license details or drop if excessive
 
-By default, all contributions to ACME are made under the AGPLv3 licence.
-See the `licence <https://github.com/canonical/ACME/blob/main/COPYING>`_
-in the ACME GitHub repository for details.
-
-All contributors must sign the `Canonical contributor licence agreement
-<https://ubuntu.com/legal/contributors>`_,
-which grants Canonical permission to use the contributions.
-The author of a change remains the copyright owner of their code
-(no copyright assignment occurs).
-
 
 Releases and versions
 ---------------------
@@ -64,19 +54,6 @@ Environment setup
 -----------------
 
 .. TODO: Update with your prerequisites or drop if excessive
-
-To work on the project, you need the following prerequisites:
-
-- `TODO: Prerequisite 1 <http://example.com>`_
-- `TODO: Prerequisite 2 <http://example.com>`_
-
-
-To install and configure these tools:
-
-.. code-block:: console
-
-   TODO: prerequisite command 1
-   TODO: prerequisite command 2
 
 
 Submissions
@@ -258,7 +235,7 @@ To run the tests locally before submitting your changes:
 Documentation
 -------------
 
-ACME's documentation is stored in the ``docs`` directory of the repository.
+The documentation is stored in the ``docs`` directory of the repository.
 It is based on the `Canonical starter pack
 <https://canonical-starter-pack.readthedocs-hosted.com/latest/>`_
 and hosted on `Read the Docs <https://about.readthedocs.com/>`_.
