@@ -1,3 +1,6 @@
+.. Copyright 2024 Canonical Ltd.
+.. See LICENSE file for licensing details.
+
 .. TODO: Replace all mentions of ACME with your project name
 .. TODO: Update all sections containing TODOs; make sure no TODOs are left
 

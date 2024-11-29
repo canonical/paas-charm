@@ -1,3 +1,6 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 # This Makefile stub allows you to customize starter pack (SP) targets.
 # Consider this file as a bridge between your project
 # and the starter pack's predefined targets that reside in Makefile.sp.
