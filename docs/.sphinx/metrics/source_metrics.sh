@@ -1,6 +1,3 @@
-# Copyright 2024 Canonical Ltd.
-# See LICENSE file for licensing details.
-
 #!/bin/bash
 # shellcheck disable=all
 
@@ -67,3 +64,6 @@ else
     echo -e "\treadability: $readabilityAverage"
     echo -e "\treadable: $readable"
 fi
+
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
