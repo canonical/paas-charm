@@ -188,7 +188,8 @@ redirects = {}
 
 linkcheck_ignore = [
     "http://127.0.0.1:8000",
-    "https://github.com/canonical/ACME/*"
+    "https://github.com/canonical/ACME/*",
+    "https://matrix.to/#/#12-factor-charms:ubuntu.com"
 ]
 
 
