@@ -58,9 +58,8 @@ Thinking about using 12-Factor app rocks and charms in your next project? Get in
 
 .. toctree::
    :hidden:
-   :maxdepth: 2
+   :maxdepth: 1
 
-   Home <self>
    Tutorial <tutorial/index>
    How to <how-to/index>
    Explanation <explanation/index>
