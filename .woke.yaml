@@ -3,3 +3,6 @@ ignore_files:
   - examples/fastapi/charm/lib/charms/redis_k8s/v0/redis.py
   - examples/flask/lib/charms/redis_k8s/v0/redis.py
   - examples/go/charm/lib/charms/redis_k8s/v0/redis.py
+  - docs/doc-cheat-sheet-myst.md
+  - docs/doc-cheat-sheet.rst
+  - docs/.sphinx/latex_elements_template.txt
