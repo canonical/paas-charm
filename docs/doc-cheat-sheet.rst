@@ -52,15 +52,17 @@ Start a code block::
      code:
        - example: true
 
+Demonstrate a code block:
+
 .. code::
 
-     # Demonstrate a code block
      code:
        - example: true
 
+Demonstrate a code block (yaml):
+
 .. code:: yaml
 
-     # Demonstrate a code block
      code:
        - example: true
 

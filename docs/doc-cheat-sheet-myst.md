@@ -25,11 +25,19 @@ Also see the [MyST documentation](https://myst-parser.readthedocs.io/en/latest/i
 
 ## H2 heading
 
+Content.
+
 ### H3 heading
+
+Content.
 
 #### H4 heading
 
+Content.
+
 ##### H5 heading
+
+Content.
 
 ## Inline formatting
 
@@ -47,14 +55,16 @@ Start a code block:
     code:
       - example: true
 
+Demonstrate a code block:
+
 ```
-# Demonstrate a code block
 code:
   - example: true
 ```
 
+Demonstrate a code block (yaml):
+
 ```yaml
-# Demonstrate a code block
 code:
   - example: true
 ```
@@ -99,6 +109,8 @@ Term 2
 : Definition
 
 ## Tables
+
+Demonstrate different kinds of tables.
 
 ## Markdown tables
 

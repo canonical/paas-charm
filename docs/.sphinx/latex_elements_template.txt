@@ -3,9 +3,9 @@
     'pointsize': '11pt',
     'fncychap': '',
     'preamble': r'''
-%\usepackage{charter}
-%\usepackage[defaultsans]{lato}
-%\usepackage{inconsolata}
+% \usepackage{charter}
+% \usepackage[defaultsans]{lato}
+% \usepackage{inconsolata}
 \setmainfont[UprightFont = *-R, BoldFont = *-B, ItalicFont=*-RI, Extension = .ttf]{Ubuntu}
 \setmonofont[UprightFont = *-R, BoldFont = *-B, ItalicFont=*-RI, Extension = .ttf]{UbuntuMono}
 \usepackage[most]{tcolorbox}
