@@ -1,3 +1,6 @@
+.. Copyright 2024 Canonical Ltd.
+.. See LICENSE file for licensing details.
+
 .. _build-a-rock-for-a-flask-application:
 
 Build a rock for an Async Flask application
