@@ -25,10 +25,19 @@ def cwd():
 
 @pytest.fixture(scope="module", name="django_app_image")
 def fixture_django_app_image(pytestconfig: Config):
-    """Return the --flask-app-image test parameter."""
+    """Return the --django-app-image test parameter."""
     image = pytestconfig.getoption("--django-app-image")
     if not image:
         raise ValueError("the following arguments are required: --django-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="django_async_app_image")
+def fixture_django_async_app_image(pytestconfig: Config):
+    """Return the --django-async-app-image test parameter."""
+    image = pytestconfig.getoption("--django-async-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --django-async-app-image")
     return image
 
 
@@ -49,6 +58,7 @@ async def charm_file_fixture(
         charm_file,
         {
             "allowed-hosts": {"type": "string"},
+            "webserver-worker-class": {"type": "string"},
         },
         tmp_path_factory.mktemp("django"),
     )
@@ -61,6 +71,28 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
 
     resources = {
         "django-app-image": django_app_image,
+    }
+    app = await model.deploy(
+        charm_file,
+        application_name=app_name,
+        config={"django-allowed-hosts": "*"},
+        resources=resources,
+        series="jammy",
+    )
+    await model.integrate(app_name, "postgresql-k8s")
+    await model.wait_for_idle(status="active")
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="django_async_app")
+async def django_async_app_fixture(
+    charm_file: str, model: Model, django_async_app_image: str, postgresql_k8s
+):
+    """Build and deploy the async django charm."""
+    app_name = "django-async-k8s"
+
+    resources = {
+        "django-app-image": django_async_app_image,
     }
     app = await model.deploy(
         charm_file,

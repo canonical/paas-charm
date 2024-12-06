@@ -1,0 +1,13 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: test-async-flask
+summary: A flask async worker test app
+description: OCI image for the async worker test flask app
+version: "0.1"
+base: ubuntu@22.04
+license: Apache-2.0
+platforms:
+  amd64:
+
+extensions:
+  - flask-framework

@@ -33,7 +33,7 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
         ),
     ],
 )
-def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock):
+def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock, container_mock):
     """
     arrange: create the Flask app object with a controlled charm state.
     act: none.
@@ -48,7 +48,7 @@ def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
-        container=unittest.mock.MagicMock(),
+        container=container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=unittest.mock.MagicMock(),
@@ -110,6 +110,7 @@ def test_http_proxy(
     expected: typing.Dict[str, str],
     monkeypatch,
     database_migration_mock,
+    container_mock,
 ):
     """
     arrange: set juju charm http proxy related environment variables.
@@ -125,7 +126,7 @@ def test_http_proxy(
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
-        container=unittest.mock.MagicMock(),
+        container=container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=unittest.mock.MagicMock(),
@@ -162,6 +163,7 @@ def test_http_proxy(
 def test_integrations_env(
     monkeypatch,
     database_migration_mock,
+    container_mock,
     integrations,
     expected_vars,
 ):
@@ -178,7 +180,7 @@ def test_integrations_env(
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
-        container=unittest.mock.MagicMock(),
+        container=container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=unittest.mock.MagicMock(),

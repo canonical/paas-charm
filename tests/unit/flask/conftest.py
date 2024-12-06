@@ -42,7 +42,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         return ops.testing.ExecResult(1)
 
     check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["flask"]["command"]),
+        *shlex.split(DEFAULT_LAYER["services"]["flask"]["command"].split("-k")[0]),
         "--check-config",
     ]
     harness.handle_exec(
@@ -61,4 +61,14 @@ def database_migration_mock():
     mock = unittest.mock.MagicMock()
     mock.status = DatabaseMigrationStatus.PENDING
     mock.script = None
+    return mock
+
+
+@pytest.fixture
+def container_mock():
+    """Create a mock instance for the Container."""
+    mock = unittest.mock.MagicMock()
+    pull_result = unittest.mock.MagicMock()
+    pull_result.read.return_value = str(DEFAULT_LAYER["services"]).replace("'", '"')
+    mock.pull.return_value = pull_result
     return mock

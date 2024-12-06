@@ -6,7 +6,9 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
 
+import aiohttp
 import pytest
 import requests
 from juju.application import Application
@@ -68,3 +70,35 @@ async def test_workers_and_scheduler_services(
         )
     except asyncio.TimeoutError:
         assert False, "Failed to get 2 workers and 1 scheduler"
+
+
+@pytest.mark.usefixtures("flask_async_app")
+async def test_async_workers(
+    ops_test: OpsTest,
+    model: Model,
+    flask_async_app: Application,
+    get_unit_ips,
+):
+    """
+    arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
+    act: Do 15 requests that would take 2 seconds each.
+    assert: All 15 requests should be served in under 3 seconds.
+    """
+    await flask_async_app.set_config({"webserver-worker-class": "gevent"})
+    await model.wait_for_idle(apps=[flask_async_app.name], status="active", timeout=60)
+
+    # the flask unit is not important. Take the first one
+    flask_unit_ip = (await get_unit_ips(flask_async_app.name))[0]
+
+    async def _fetch_page(session):
+        params = {"duration": 2}
+        async with session.get(f"http://{flask_unit_ip}:8000/sleep", params=params) as response:
+            return await response.text()
+
+    start_time = datetime.now()
+    async with aiohttp.ClientSession() as session:
+        pages = [_fetch_page(session) for _ in range(15)]
+        await asyncio.gather(*pages)
+        assert (
+            datetime.now() - start_time
+        ).seconds < 3, "Async workers for Flask are not working!"

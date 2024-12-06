@@ -87,6 +87,16 @@ def database_migration_mock():
     return mock
 
 
+@pytest.fixture
+def container_mock():
+    """Create a mock instance for the Container."""
+    mock = unittest.mock.MagicMock()
+    pull_result = unittest.mock.MagicMock()
+    pull_result.read.return_value = str(DEFAULT_LAYER["services"]).replace("'", '"')
+    mock.pull.return_value = pull_result
+    return mock
+
+
 def _build_harness(meta=None):
     """Create a harness instance with the specified metadata."""
     harness = Harness(DjangoCharm, meta=meta)
@@ -104,7 +114,7 @@ def _build_harness(meta=None):
         return ops.testing.ExecResult(1)
 
     check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["django"]["command"]),
+        *shlex.split(DEFAULT_LAYER["services"]["django"]["command"].split("-k")[0]),
         "--check-config",
     ]
     harness.handle_exec(
