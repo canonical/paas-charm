@@ -35,7 +35,7 @@ When contributing, you must abide by the
 
 .. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
-Licence and copyright
+License and copyright
 ---------------------
 
 .. TODO: Update with your license details or drop if excessive
@@ -94,7 +94,7 @@ Describing pull requests
 To be properly considered, reviewed and merged,
 your pull request must provide the following details:
 
-- **Title**: Summarise the change in a short, descriptive title.
+- **Title**: Summarize the change in a short, descriptive title.
 
 - **Description**: Explain the problem that your pull request solves.
   Mention any new features, bug fixes or refactoring.
@@ -155,9 +155,9 @@ Structure
   Check that coupled code elements, files and directories are adjacent.
   For instance, store test data close to the corresponding test code.
 
-- **Group variable declaration and initialisation**:
-  Declare and initialise variables together
-  to improve code organisation and readability.
+- **Group variable declaration and initialization**:
+  Declare and initialize variables together
+  to improve code organization and readability.
 
 - **Split large expressions**:
   Break down large expressions
@@ -177,7 +177,7 @@ Structure
   Drop unused or obsolete code and comments.
   This promotes a cleaner code base and reduces confusion.
 
-- **Normalise symmetries**:
+- **Normalize symmetries**:
   Treat identical operations consistently, using a uniform approach.
   This also improves consistency and readability.
 
