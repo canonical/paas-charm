@@ -12,8 +12,3 @@ platforms:
 
 extensions:
   - django-framework
-
-parts:
-  django-framework/async-dependencies:
-    python-packages:
-    - gunicorn[gevent]

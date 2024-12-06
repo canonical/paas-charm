@@ -11,9 +11,3 @@ platforms:
 
 extensions:
   - flask-framework
-
-parts:
-  flask-framework/async-dependencies:
-    python-packages:
-    - gunicorn[gevent]
-

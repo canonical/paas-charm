@@ -58,7 +58,7 @@ class WebserverConfig:
     """
 
     workers: int | None = None
-    worker_class: WorkerClassEnum | None = None
+    worker_class: WorkerClassEnum | None = WorkerClassEnum.SYNC
     threads: int | None = None
     keepalive: datetime.timedelta | None = None
     timeout: datetime.timedelta | None = None
@@ -95,7 +95,6 @@ class WebserverConfig:
         timeout = config.get("webserver-timeout")
         workers = config.get("webserver-workers")
         worker_class = config.get("webserver-worker-class")
-
         threads = config.get("webserver-threads")
         return cls(
             workers=int(typing.cast(str, workers)) if workers is not None else None,
@@ -143,15 +142,15 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             setting_value = typing.cast(
                 None | str | WorkerClassEnum | int | datetime.timedelta, setting_value
             )
+            if setting == "worker_class":
+                continue
             if setting_value is None:
                 continue
             setting_value = (
                 setting_value
-                if isinstance(setting_value, (int, WorkerClassEnum, str))
+                if isinstance(setting_value, (int, str))
                 else int(setting_value.total_seconds())
             )
-            if isinstance(setting_value, (WorkerClassEnum, str)):
-                setting_value = f"'{str(setting_value)}'"
             config_entries.append(f"{setting} = {setting_value}")
         if enable_pebble_log_forwarding():
             access_log = "'-'"
@@ -206,7 +205,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         self._container.push(webserver_config_path, self._config)
         if current_webserver_config == self._config:
             return
-        check_config_command = shlex.split(command)
+        check_config_command = shlex.split(command.split("-k")[0])
         check_config_command.append("--check-config")
         exec_process = self._container.exec(
             check_config_command,

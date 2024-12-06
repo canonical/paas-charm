@@ -42,7 +42,7 @@ class GunicornBase(PaasCharm):
 
         doc_link = f"https://bit.ly/{self._framework_name}-async-doc"
 
-        worker_class = None
+        worker_class = WorkerClassEnum.SYNC
         try:
             worker_class = WorkerClassEnum(webserver_config.worker_class)
         except ValueError as exc:
