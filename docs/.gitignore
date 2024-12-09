@@ -15,6 +15,3 @@ __pycache__
 .sphinx/styles/*
 .sphinx/vale.ini
 sp-docs/_build
-doc-cheat-sheet-myst.md
-doc-cheat-sheet.rst
-.sphinx/latex_elements_template.txt

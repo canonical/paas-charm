@@ -163,8 +163,3 @@ cython_debug/
 *.rock
 !examples/**/lib
 
-# Docs-related files
-docs/doc-cheat-sheet-myst.md
-docs/doc-cheat-sheet.rst
-docs/.sphinx/latex_elements_template.txt
-
