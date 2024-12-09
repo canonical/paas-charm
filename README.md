@@ -57,10 +57,12 @@ Read the
 for more!
 
 Additional resources:
+
 * [Tutorial to build a rock for a Flask application](https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/)
 * [Charmcraft `flask-framework` reference](https://juju.is/docs/sdk/charmcraft-extension-flask-framework)
 * [Charmcraft `flask-framework` how to guides](https://juju.is/docs/sdk/build-a-paas-charm)
-* [Rockcraft `flask-framework` reference](https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/)
+* [Rockcraft`flask-framework`
+   reference](https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/)
 
 ## Contributing
 
@@ -76,15 +78,19 @@ through below.
 1. Please write a proposal on the
   [charm topic on discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
+
   * The integration you intend add
   * For each of the frameworks that PaaS Charm supports:
+
     - The commonly used package(s) to make use of the integration
     - The environment variables, configuration etc. that would be made available
       to the app
     - An example for how to use the integration within an app
+
   * The proposed implementation in `paas-app`. Take a look at
     [`charm.py`](paas_charm/_gunicorn/charm.py) for `gunicorn` based
     frameworks for integration examples.
+
 1. Update the
   [reference](https://juju.is/docs/sdk/charmcraft-extension-flask-framework)
   with the new integration
@@ -101,6 +107,7 @@ below.
 1. Please write a proposal on the
   [charm topic on discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
+
   * The programming language and framework you are thinking of
   * Create an example `rockcraft.yaml` file and build a working OCI image. To
     see an example for `flask`, install Rockcraft and run
@@ -115,6 +122,7 @@ below.
   * The requirements and conventions for how users need to configure their app
     to work with PaaS Charm
   * Which web server to use
+
 1. Raise a pull request to [rockcraft](https://github.com/canonical/rockcraft)
   adding a new extension and profile for the framework. This is the flask
   [profile](https://github.com/canonical/rockcraft/blob/fdd2dee18c81b12f25e6624a5a48f9f1ac9fdb90/rockcraft/commands/init.py#L79)
