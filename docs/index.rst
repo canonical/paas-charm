@@ -4,16 +4,23 @@
 12-Factor app support in Charmcraft and Rockcraft
 =================================================
 
-**Coordinated pairs of Rockcraft and Charmcraft profiles designed to give you
-the content you need to generate rocks and charms for 12-Factor applications.**
+**A simple way to deploy and operate 12-Factor web applications.**
 
-**A paragraph of one to three short sentences, that describe what the product
-does.** 
+The ``paas-charm`` library provides support in Rockcraft and
+Charmcraft to create the OCI image (rocks) and packaged software
+(charms) necessary to quickly deploy your web application.
 
-**A third paragraph of similar length, this time explaining what need the
-product meets.**
+For developers and web application operators, this toolkit
+provides the support to deploy, integrate, operate and manage
+your web application to production. 
 
-**Finally, a paragraph that describes whom the product is useful for.** 
+The documentation is located in three places:
+
+1. This site: Documentation related to development
+2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
+   Documentation related to the OCI image containers
+3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
+   Documentation related to the packaged software (charms)
 
 ---------
 
