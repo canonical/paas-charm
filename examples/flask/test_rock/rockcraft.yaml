@@ -25,3 +25,10 @@ services:
     startup: enabled
     user: _daemon_
     working-dir: /flask/app
+
+parts:
+  flask-framework/dependencies:
+    override-stage: |
+      pip install opentelemetry-distro
+      craftctl default
+      opentelemetry-bootstrap
