@@ -26,7 +26,7 @@ import ast
 #
 # TODO: Update with the official name of your project or product
 
-project = "12-Factor app support in Charmcraft and Rockcraft"
+project = "12-Factor app support"
 author = "Canonical Ltd."
 
 
@@ -72,7 +72,7 @@ copyright = "%s CC-BY-SA, %s" % (datetime.date.today().year, author)
 # NOTE: The Open Graph Protocol (OGP) enhances page display in a social graph
 #       and is used by social media platforms; see https://ogp.me/
 
-ogp_site_url = "https://canonical-starter-pack.readthedocs-hosted.com/"
+ogp_site_url = ""
 
 
 # Preview name of the documentation website
