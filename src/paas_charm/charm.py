@@ -125,7 +125,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._rabbitmq = None
 
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            logger.error("REQUESTING TRACING((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))")
             self._tracing = TracingEndpointRequirer(self, relation_name="tracing", protocols=["otlp_http"])
             self.framework.observe(self._tracing.on.endpoint_changed, self._on_tracing_relation_changed)
             self.framework.observe(self._tracing.on.endpoint_removed, self._on_tracing_relation_broken)
@@ -500,11 +499,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
         """Handle tracing relation changed event."""
-        logger.error("Tracing relation changed")
         self.restart()
 
     @block_if_invalid_config
     def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
         """Handle tracing relation broken event."""
-        logger.error("Tracing relation broken")
         self.restart()
