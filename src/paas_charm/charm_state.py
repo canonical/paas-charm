@@ -89,7 +89,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_uri: str  | None = None,
+        tracing_relation_data: typing.MutableMapping[str, str] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -104,7 +104,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_uri: The tracing uri provided by the Tempo coordinator charm.
+            tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+            and charm name.
             base_url: Base URL for the service.
 
         Return:
@@ -125,7 +126,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
-            tracing_uri=tracing_uri,
+            tracing_relation_data=tracing_relation_data,
         )
         return cls(
             framework=framework,
@@ -212,7 +213,8 @@ class IntegrationsState:
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
-        tracing_uri: The tracing uri provided by the Tempo coordinator charm.
+        tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+        and charm name.
     """
 
     redis_uri: str | None = None
@@ -220,7 +222,7 @@ class IntegrationsState:
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
-    tracing_uri: str | None = None
+    tracing_relation_data: dict[str, str] = field(default_factory=dict)
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -232,7 +234,7 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_uri: str | None = None,
+        tracing_relation_data: typing.MutableMapping[str, str] | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -244,7 +246,8 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_uri: The tracing uri provided by the Tempo coordinator charm.
+            tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+        and charm name.
 
         Return:
             The IntegrationsState instance created.
@@ -282,7 +285,6 @@ class IntegrationsState:
         # as None while the integration is being created.
         if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
             redis_uri = None
-        logger.warning(f"TRACING URI: {tracing_uri}")
         return cls(
             redis_uri=redis_uri,
             databases_uris={
@@ -293,7 +295,7 @@ class IntegrationsState:
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
-            tracing_uri=tracing_uri,
+            tracing_relation_data=tracing_relation_data,
         )
 
 

@@ -259,13 +259,8 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
     for interface_name, uri in integrations.databases_uris.items():
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)
-    if integrations.tracing_uri:
-        tracing_envvars = _url_env_vars("TRACING", integrations.tracing_uri)
-        logger.info(f"GOT IT Tracing URI: {integrations.tracing_uri}")
-        logger.info(f"Tracing envvars: {tracing_envvars}")
-        env.update(tracing_envvars)
-    else:
-        logger.info(f"NO DICE Tracing URI: {integrations.tracing_uri}")
+    if integrations.tracing_relation_data:
+        env.update(integrations.tracing_relation_data)
 
     if integrations.s3_parameters:
         s3 = integrations.s3_parameters

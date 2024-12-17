@@ -129,11 +129,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._tracing = TracingEndpointRequirer(self, relation_name="tracing", protocols=["otlp_http"])
             self.framework.observe(self._tracing.on.endpoint_changed, self._on_tracing_relation_changed)
             self.framework.observe(self._tracing.on.endpoint_removed, self._on_tracing_relation_broken)
-            self.framework.observe(self.on[self._tracing._relation_name].relation_joined, self._on_rel_on_tracing_relation_changedation_changed)
-            self.framework.observe(self.on[self._tracing._relation_name].relation_changed, self._on_tracing_relation_changed)
-            self.framework.observe(self.on[self._tracing._relation_name].relation_broken, self._on_tracing_relation_broken)
-            if self._tracing.is_ready():
-                logger.info("TRACING ENDPOINT: %s", self._tracing.get_endpoint("otlp_http"))
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -315,7 +310,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
             if not requires["rabbitmq"].optional:
                 missing_integrations.append("rabbitmq")
-        if self._tracing and not charm_state.integrations.tracing_uri:
+        if self._tracing and not charm_state.integrations.tracing_relation_data:
             if not requires["tracing"].optional:
                 missing_integrations.append("tracing")
         return missing_integrations
@@ -372,6 +367,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+        tracing_relation_data = None
+        if self._tracing and self._tracing.is_ready():
+            tracing_relation_data = {"TRACING_URI": self._tracing.get_endpoint(protocol="otlp_http"),
+            "TRACING_SERVICE_NAME": f"{self.framework.meta.name}-charm"}
         return CharmState.from_charm(
             config=config,
             framework=self._framework_name,
@@ -382,7 +381,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
-            tracing_uri=self._tracing.get_endpoint(protocol="otlp_http") if self._tracing.is_ready() else None,
+            tracing_relation_data=tracing_relation_data,
             base_url=self._base_url,
         )
 
@@ -502,10 +501,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
         """Handle tracing relation changed event."""
         logger.error("Tracing relation changed")
-        self.restart
+        self.restart()
 
     @block_if_invalid_config
     def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
         """Handle tracing relation broken event."""
         logger.error("Tracing relation broken")
-        self.restart
+        self.restart()

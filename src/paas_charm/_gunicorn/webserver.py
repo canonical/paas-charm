@@ -130,8 +130,12 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             error_log = repr(
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
-        tracing_link = "http://grafana-agent-k8s-0.grafana-agent-k8s-endpoints.flask-model.svc.cluster.local:4318/v1/traces"
-        tracing_service_name = "flask-k8s-charm"
+        framework_environments = self._container.get_plan().to_dict()['services'][self._workload_config.framework]['environment']
+        tracing_uri = None
+        tracing_service_name = None
+        if framework_environments.get('TRACING_URI', None):
+            tracing_uri = framework_environments['TRACING_URI']
+            tracing_service_name = framework_environments['TRACING_SERVICE_NAME']
         config = textwrap.dedent(
             f"""\
                 from opentelemetry import trace
@@ -155,7 +159,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                     trace.set_tracer_provider(TracerProvider(resource=resource))
                     span_processor = BatchSpanProcessor(
                         OTLPSpanExporter(
-                            endpoint="{tracing_link}"
+                            endpoint="{tracing_uri}/v1/traces"
                         )
                     )
                     trace.get_tracer_provider().add_span_processor(span_processor)
