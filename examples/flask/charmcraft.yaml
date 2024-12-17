@@ -130,11 +130,7 @@ requires:
     interface: rabbitmq
     optional: True
     limit: 1
-  charm-tracing:
-    interface: tracing
-    limit: 1
-    optional: true
-  workload-tracing:
+  tracing:
     interface: tracing
     limit: 1
     optional: true

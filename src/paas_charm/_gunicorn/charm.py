@@ -5,7 +5,6 @@
 
 import logging
 
-from cosl import JujuTopology
 from ops.pebble import ExecError, ExecProcess
 
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
@@ -28,7 +27,7 @@ class GunicornBase(PaasCharm):
             framework_name=self._framework_name, unit_name=self.unit.name
         )
 
-    def _create_app(self, topology: JujuTopology) -> App:
+    def _create_app(self) -> App:
         """Build an App instance for the Gunicorn based charm.
 
         Returns:
@@ -48,5 +47,4 @@ class GunicornBase(PaasCharm):
             workload_config=self._workload_config,
             webserver=webserver,
             database_migration=self._database_migration,
-            juju_topology=topology,
         )

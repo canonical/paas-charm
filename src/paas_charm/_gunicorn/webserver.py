@@ -130,53 +130,37 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             error_log = repr(
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
+        tracing_link = "http://grafana-agent-k8s-0.grafana-agent-k8s-endpoints.flask-model.svc.cluster.local:4318/v1/traces"
+        tracing_service_name = "flask-k8s-charm"
         config = textwrap.dedent(
             f"""\
                 from opentelemetry import trace
-                #from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
                 from opentelemetry.sdk.resources import Resource
                 from opentelemetry.sdk.trace import TracerProvider
-                from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+                from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
                 bind = ['0.0.0.0:{self._workload_config.port}']
                 chdir = {repr(str(self._workload_config.app_dir))}
                 accesslog = {access_log}
                 errorlog = {error_log}
                 statsd_host = {repr(STATSD_HOST)}
-                """
-        )
-        config_2 = textwrap.dedent(
-            """\
                 def post_fork(server, worker):
                     resource = Resource.create(
-                        attributes={
-                            "service.name": "flask-k8s-app",
-                            "compose_service": "flask-k8s-charm",
-                            "charm_type": "FlaskCharm",
+                        attributes={{
+                            "service.name": "{tracing_service_name}",
                             "worker": worker.pid,
-                            "juju_application":"flask-k8s",
-                            "juju_model":"flask-model",
-                            "juju_model_uuid":"c66de66b-d52b-4d7b-8efe-d5b14cbd54a3",
-                            "juju_unit":"flask-k8s/0",
-                            "juju_charm":"flask-k8s",
-                        }
+                        }}
                     )
-
                     trace.set_tracer_provider(TracerProvider(resource=resource))
-                    # This uses insecure connection for the purpose of example. Please see the
-                    # OTLP Exporter documentation for other options.
                     span_processor = BatchSpanProcessor(
-                        OTLPSpanExporter(endpoint="http://grafana-agent-k8s-0.grafana-agent-k8s-endpoints.flask-model.svc.cluster.local:4318/v1/traces",
-                        # OTLPSpanExporter(endpoint="grafana-agent-k8s-0.grafana-agent-k8s-endpoints.flask-model.svc.cluster.local:4317",
-                        # insecure=True,
+                        OTLPSpanExporter(
+                            endpoint="{tracing_link}"
                         )
                     )
                     trace.get_tracer_provider().add_span_processor(span_processor)
-
                 """
         )
-        config += config_2
         config += "\n".join(config_entries)
         return config
 

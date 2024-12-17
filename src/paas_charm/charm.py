@@ -10,9 +10,7 @@ import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
 
-# from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
-from cosl import JujuTopology
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
@@ -47,6 +45,13 @@ except ImportError:
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
     )
 
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    logger.exception(
+        "Missing charm library, please run `charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+    )
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -68,7 +73,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Return an WorkloadConfig instance."""
 
     @abc.abstractmethod
-    def _create_app(self, juju_topology: JujuTopology) -> App:
+    def _create_app(self) -> App:
         """Create an App instance."""
 
     on = RedisRelationCharmEvents()
@@ -85,13 +90,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
-        # self.tracing = TracingEndpointRequirer(self,
-        #     protocols=['otlp_grpc', 'otlp_http']
-        # )
-        # if self.tracing.is_ready():
-        #     logger.info("=================== tracing[otlp_grpc]: %s", self.tracing.get_endpoint('otlp_grpc'))
-        #     logger.info("=================== tracing[otlp_http]: %s", self.tracing.get_endpoint('otlp_http'))
-
         requires = self.framework.meta.requires ######*************
         if "redis" in requires and requires["redis"].interface_name == "redis":
             self._redis = RedisRequires(charm=self, relation_name="redis")
@@ -125,6 +123,17 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(self._rabbitmq.on.departed, self._on_rabbitmq_departed)
         else:
             self._rabbitmq = None
+
+        if "tracing" in requires and requires["tracing"].interface_name == "tracing":
+            logger.error("REQUESTING TRACING((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))")
+            self._tracing = TracingEndpointRequirer(self, relation_name="tracing", protocols=["otlp_http"])
+            self.framework.observe(self._tracing.on.endpoint_changed, self._on_tracing_relation_changed)
+            self.framework.observe(self._tracing.on.endpoint_removed, self._on_tracing_relation_broken)
+            self.framework.observe(self.on[self._tracing._relation_name].relation_joined, self._on_rel_on_tracing_relation_changedation_changed)
+            self.framework.observe(self.on[self._tracing._relation_name].relation_changed, self._on_tracing_relation_changed)
+            self.framework.observe(self.on[self._tracing._relation_name].relation_broken, self._on_tracing_relation_broken)
+            if self._tracing.is_ready():
+                logger.info("TRACING ENDPOINT: %s", self._tracing.get_endpoint("otlp_http"))
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -172,8 +181,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(
             self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
         )
-        self._topology = JujuTopology.from_charm(self)
-        logger.info("-----------: %s", str(self._topology))
 
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
@@ -208,9 +215,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_config_changed(self, _: ops.EventBase) -> None:
         """Configure the application pebble service layer."""
-        # if self.tracing.is_ready():
-        #     logger.info("=================== tracing[otlp_grpc]: %s", self.tracing.get_endpoint('otlp_grpc'))
-        #     logger.info("=================== tracing[otlp_http]: %s", self.tracing.get_endpoint('otlp_http'))
         self.restart()
 
     @block_if_invalid_config
@@ -271,7 +275,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         missing_integrations = self._missing_required_integrations(charm_state)
         if missing_integrations:
-            self._create_app(self._topology).stop_all_services()
+            self._create_app().stop_all_services()
             self._database_migration.set_status_to_pending()
             message = f"missing integrations: {', '.join(missing_integrations)}"
             logger.info(message)
@@ -311,6 +315,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
             if not requires["rabbitmq"].optional:
                 missing_integrations.append("rabbitmq")
+        if self._tracing and not charm_state.integrations.tracing_uri:
+            if not requires["tracing"].optional:
+                missing_integrations.append("tracing")
         return missing_integrations
 
     def restart(self, rerun_migrations: bool = False) -> None:
@@ -326,7 +333,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         try:
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
-            self._create_app(self._topology).restart()
+            self._create_app().restart()
         except CharmConfigInvalidError as exc:
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
             return
@@ -342,8 +349,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             A dictionary representing the application environment variables.
         """
-        logger.info("-----------: %s", str(self._topology))
-        env = self._create_app(self._topology).gen_environment()
+        env = self._create_app().gen_environment()
 
         return env
 
@@ -376,6 +382,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
+            tracing_uri=self._tracing.get_endpoint(protocol="otlp_http") if self._tracing.is_ready() else None,
             base_url=self._base_url,
         )
 
@@ -490,3 +497,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
         self.restart()
+
+    @block_if_invalid_config
+    def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
+        """Handle tracing relation changed event."""
+        logger.error("Tracing relation changed")
+        self.restart
+
+    @block_if_invalid_config
+    def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
+        """Handle tracing relation broken event."""
+        logger.error("Tracing relation broken")
+        self.restart

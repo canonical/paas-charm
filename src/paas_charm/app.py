@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import List
 
 import ops
-from cosl import JujuTopology
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
@@ -81,7 +80,6 @@ class App:
         framework_config_prefix: str = "APP_",
         configuration_prefix: str = "APP_",
         integrations_prefix: str = "",
-        juju_topology: JujuTopology,
     ):
         """Construct the App instance.
 
@@ -101,7 +99,6 @@ class App:
         self.framework_config_prefix = framework_config_prefix
         self.configuration_prefix = configuration_prefix
         self.integrations_prefix = integrations_prefix
-        self._juju_topology = juju_topology
 
     def stop_all_services(self) -> None:
         """Stop all the services in the workload.
@@ -155,11 +152,6 @@ class App:
                 for k, v in framework_config.items()
             }
         )
-        if self._juju_topology:
-            env["OTEL_RESOURCE_ATTRIBUTES"] = (
-                f"juju_application={self._juju_topology.application},juju_model={self._juju_topology.model},juju_model_uuid={self._juju_topology.model_uuid},juju_unit={self._juju_topology.unit},juju_charm={self._juju_topology.charm_name}"
-            )
-            env["OTEL_EXPORTER_OTLP_PROTOCOL"] = "grpc"
 
         if self._charm_state.base_url:
             env[f"{prefix}BASE_URL"] = self._charm_state.base_url
@@ -267,6 +259,13 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
     for interface_name, uri in integrations.databases_uris.items():
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)
+    if integrations.tracing_uri:
+        tracing_envvars = _url_env_vars("TRACING", integrations.tracing_uri)
+        logger.info(f"GOT IT Tracing URI: {integrations.tracing_uri}")
+        logger.info(f"Tracing envvars: {tracing_envvars}")
+        env.update(tracing_envvars)
+    else:
+        logger.info(f"NO DICE Tracing URI: {integrations.tracing_uri}")
 
     if integrations.s3_parameters:
         s3 = integrations.s3_parameters

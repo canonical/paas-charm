@@ -6,7 +6,6 @@
 import logging
 
 import ops
-from cosl import JujuTopology
 
 from paas_charm._gunicorn.webserver import GunicornWebserver
 from paas_charm.app import App, WorkloadConfig
@@ -27,7 +26,6 @@ class WsgiApp(App):
         workload_config: WorkloadConfig,
         database_migration: DatabaseMigration,
         webserver: GunicornWebserver,
-        juju_topology: JujuTopology,
     ):
         """Construct the WsgiApp instance.
 
@@ -45,7 +43,6 @@ class WsgiApp(App):
             database_migration=database_migration,
             configuration_prefix=f"{workload_config.framework.upper()}_",
             framework_config_prefix=f"{workload_config.framework.upper()}_",
-            juju_topology=juju_topology
         )
         self._webserver = webserver
 
