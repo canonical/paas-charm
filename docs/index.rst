@@ -6,13 +6,13 @@
 
 **A simple way to deploy and operate 12-Factor web applications.**
 
-The ``paas-charm`` library provides support in Rockcraft and
-Charmcraft to create the OCI image (rocks) and packaged software
-(charms) necessary to quickly deploy your web application.
+The ``paas-charm`` library provides frameworks in Rockcraft and
+Charmcraft to create the OCI image (rock) and packaged software
+(charm) necessary to quickly deploy your web application.
 
 For developers and web application operators, this toolkit
-provides the support to deploy, integrate, operate and manage
-your web application to production. 
+supports the ability to deploy, integrate, operate and manage
+your web application for production purposes. 
 
 The documentation is located in three places:
 
