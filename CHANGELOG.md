@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2024-12-17
+
+### Changes
+
+Updated the home page for the Read the Docs site to provide relevant information
+about the project.
+
+Updated the Periodic Style Checks to point to the correct directory.
+
 ## 2024-11-29
 
 ### Changes
