@@ -57,9 +57,9 @@ config:
       type: string
     flask-secret-key-id:
       description: >-
-        This configuration is similar to `flask-secret-key`, but instead accepts a Juju user secret ID.
-        The secret should contain a single key, "value", which maps to the actual Flask secret key.
-        To create the secret, run the following command:
+        This configuration is similar to `flask-secret-key`, but instead accepts a Juju user secret ID. 
+        The secret should contain a single key, "value", which maps to the actual Flask secret key. 
+        To create the secret, run the following command: 
         `juju add-secret my-flask-secret-key value=<secret-string> && juju grant-secret my-flask-secret-key flask-k8s`,
         and use the outputted secret ID to configure this option.
       type: secret
@@ -130,10 +130,6 @@ requires:
     interface: rabbitmq
     optional: True
     limit: 1
-  tracing:
-    interface: tracing
-    limit: 1
-    optional: true
 
 resources:
   flask-app-image:

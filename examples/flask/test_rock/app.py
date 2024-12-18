@@ -55,10 +55,6 @@ def celery_init_app(app: Flask, broker_url: str) -> Celery:
 app = Flask(__name__)
 app.config.from_prefixed_env()
 
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-
-FlaskInstrumentor().instrument_app(app)
-
 broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
 # Configure Celery only if Redis is configured
 celery_app = celery_init_app(app, broker_url)

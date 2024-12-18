@@ -8,12 +8,3 @@ redis[hiredis]
 boto3
 pika
 celery
-googleapis-common-protos
-opentelemetry-api
-opentelemetry-exporter-otlp
-opentelemetry-exporter-otlp-proto-http
-opentelemetry-instrumentation
-opentelemetry-instrumentation-flask
-opentelemetry-instrumentation-wsgi
-opentelemetry-sdk
-opentelemetry-distro

@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """The base charm class for all charms."""
-
 import logging
 
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig

@@ -50,9 +50,9 @@ config:
       type: string
     django-secret-key-id:
       description: >-
-        This configuration is similar to `django-secret-key`, but instead accepts a Juju user secret ID.
-        The secret should contain a single key, "value", which maps to the actual Django secret key.
-        To create the secret, run the following command:
+        This configuration is similar to `django-secret-key`, but instead accepts a Juju user secret ID. 
+        The secret should contain a single key, "value", which maps to the actual Django secret key. 
+        To create the secret, run the following command: 
         `juju add-secret my-django-secret-key value=<secret-string> && juju grant-secret my-django-secret-key django-k8s`,
         and use the outputted secret ID to configure this option.
       type: secret
@@ -89,10 +89,6 @@ requires:
   postgresql:
     interface: postgresql_client
     optional: False
-    limit: 1
-  tracing:
-    interface: tracing
-    optional: True
     limit: 1
 resources:
   django-app-image:

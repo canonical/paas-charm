@@ -1,5 +1,4 @@
 cosl
-jsonschema
+jsonschema >=4.19,<4.20
 ops >= 2.6
-# pydantic==2.6.4
-https://github.com/canonical/paas-charm/archive/tempo-tracing.tar.gz
+pydantic==2.6.4
