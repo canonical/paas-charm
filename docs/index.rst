@@ -6,26 +6,110 @@
 
 **A simple way to deploy and operate 12-Factor web applications.**
 
-The ``paas-charm`` library provides frameworks in Rockcraft and
-Charmcraft to create the OCI image (rock) and packaged software
-(charm) necessary to quickly deploy your web application.
+With a few simple commands, this toolkit provides a way to stand up a
+fully integrated and observable Kubernetes environment for your web
+application. The solution, called 12-factor charms, provides an easy to use
+abstraction layer over existing Canonical products and it is aimed at
+application developers who create applications based on the
+`12-factor methodology. <https://12factor.net/>`_
 
-For developers and web application operators, this toolkit
-supports the ability to deploy, integrate, operate and manage
-your web application for production purposes. 
+This product page introduces the 12-factor charms in the context of
+the `Flask framework <https://flask.palletsprojects.com/en/stable/>`_.
+However, the same also applies to 12-factor applications that are built using
+the following frameworks:
+
+- Django
+- FastAPI
+- Go
+- Spring Boot (coming soon)
+
+The foundations: Juju, charms and rocks
+---------------------------------------
+
+The 12-factor charm solution uses and combines capabilities in the following
+Canonical products:
+
+- `Juju <https://juju.is>`_ is an open source orchestration engine for software
+  operators that enables the deployment, integration and lifecycle management
+  of applications at any scale, on any infrastructure using charms.
+- A `charm <https://juju.is/docs/juju/charmed-operator>`_ is an operator -
+  business logic encapsulated in reusable software packages that automate every
+  aspect of an application's life.
+- `Charmcraft <https://juju.is/docs/sdk/charmcraft>`_ is a CLI tool that makes
+  it easy and quick to initialise, package, and publish Kubernetes and
+  machine charms.
+- `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_ is a
+  tool to create rocks – a new generation of secure, stable and OCI-compliant
+  container images, based on Ubuntu.
+
+More specifically a Rockcraft framework (conceptually similar to a `snap
+extension <https://snapcraft.io/docs/snapcraft-extensions>`_) is initially
+used to facilitate the creation of a well structured, minimal and hardened
+container image, called a rock. A Charmcraft profile can then be leveraged to
+add a software operator (charm) around the aforementioned container image.
+
+Encapsulating the original 12-factor application in a charm allows it to benefit
+from the entire `charm ecosystem <https://charmhub.io/>`_, meaning that the app
+can be connected to a database, e.g. an HA Postgres, observed through a Grafana
+based observability stack, get ingress and much more.
+
+Creating a complete development environment in a few commands
+-------------------------------------------------------------
+
+Rockcraft and Charmcraft now natively support Flask. Production ready OCI
+images for Flask applications can be created using Rockcraft with 3 easy
+commands that need to be run in the root directory of the Flask application:
+
+.. code-block:: bash
+
+   sudo snap install rockcraft --classic
+   rockcraft init --profile flask-framework
+   rockcraft pack
+
+The `full getting started tutorial
+<https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_ for
+creating an OCI image for a Flask application takes you from a plain Ubuntu
+installation to a production ready OCI image for your Flask application.
+Using this tooling, Canonical's web development team was able to streamline
+the creation of their OCI images, speeding up their development and reducing
+maintenance effort.
+
+Charmcraft now also natively supports Flask. Canonical's web development team is
+using it to create charms that automate every aspect of their Flask
+application's life, including integrating with a database, preparing the tables
+in the database, integrating with observability and exposing the application
+using ingress. From the root directory of the Flask application, the Flask
+application charm can be created using 4 easy commands:
+
+.. code-block:: bash
+
+   mkdir charm & cd charm
+   sudo snap install charmcraft --classic
+   charmcraft init --profile flask-framework
+   charmcraft pack
+
+The `full getting started tutorial <https://canonical-charmcraft.
+readthedocs-hosted.com/en/latest/tutorial/flask/>`_
+for creating a charm for a Flask application takes you from a plain Ubuntu
+installation to deploying the Flask application on Kubernetes, exposing it using
+ingress and integrating it with a database.
+
+--------------
+
+The documentation for this project
+----------------------------------
 
 The documentation is located in three places:
 
-1. This site: Documentation related to development
+1. This site: Documentation related to the product
 2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
    Documentation related to the OCI image containers
 3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
    Documentation related to the packaged software (charms)
-
----------
+4. Coming soon: Documentation related to development
 
 In this documentation
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 ..  grid:: 1 1 2 2
 
