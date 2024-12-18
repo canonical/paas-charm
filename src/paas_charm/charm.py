@@ -374,7 +374,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 endpoint=self._tracing.get_endpoint(protocol="otlp_http"),
                 service_name=f"{self.framework.meta.name}-charm",
             )
-
         return CharmState.from_charm(
             config=config,
             framework=self._framework_name,
