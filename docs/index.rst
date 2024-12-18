@@ -35,9 +35,9 @@ Canonical products:
 - A `charm <https://juju.is/docs/juju/charmed-operator>`_ is an operator -
   business logic encapsulated in reusable software packages that automate every
   aspect of an application's life.
-- `Charmcraft <https://juju.is/docs/sdk/charmcraft>`_ is a CLI tool that makes
-  it easy and quick to initialise, package, and publish Kubernetes and
-  machine charms.
+- `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_
+  is a CLI tool that makes it easy and quick to initialise, package, and publish
+  Kubernetes and machine charms.
 - `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_ is a
   tool to create rocks – a new generation of secure, stable and OCI-compliant
   container images, based on Ubuntu.
@@ -66,7 +66,7 @@ commands that need to be run in the root directory of the Flask application:
    rockcraft init --profile flask-framework
    rockcraft pack
 
-The `full getting started tutorial
+The `full Rockcraft tutorial
 <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_ for
 creating an OCI image for a Flask application takes you from a plain Ubuntu
 installation to a production ready OCI image for your Flask application.
