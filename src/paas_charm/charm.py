@@ -347,9 +347,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             A dictionary representing the application environment variables.
         """
-        env = self._create_app().gen_environment()
-
-        return env
+        return self._create_app().gen_environment()
 
     def _create_charm_state(self) -> CharmState:
         """Create charm state.

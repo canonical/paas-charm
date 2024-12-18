@@ -130,43 +130,13 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             error_log = repr(
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
-        framework_environments = self._container.get_plan().to_dict()["services"][
-            self._workload_config.framework
-        ]["environment"]
-        tracing_uri = None
-        tracing_service_name = None
-        if framework_environments.get("OTEL_EXPORTER_OTLP_ENDPOINT", None):
-            tracing_uri = framework_environments["OTEL_EXPORTER_OTLP_ENDPOINT"]
-            tracing_service_name = framework_environments["OTEL_SERVICE_NAME"]
-        # check if opentelemetry stuff are installed but not here.
-        # if they are installed then use them if not go into blocked state
         config = textwrap.dedent(
             f"""\
-                from opentelemetry import trace
-                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-                from opentelemetry.sdk.resources import Resource
-                from opentelemetry.sdk.trace import TracerProvider
-                from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
                 bind = ['0.0.0.0:{self._workload_config.port}']
                 chdir = {repr(str(self._workload_config.app_dir))}
                 accesslog = {access_log}
                 errorlog = {error_log}
                 statsd_host = {repr(STATSD_HOST)}
-                def post_fork(server, worker):
-                    resource = Resource.create(
-                        attributes={{
-                            "service.name": "{tracing_service_name}",
-                            "worker": worker.pid,
-                        }}
-                    )
-                    trace.set_tracer_provider(TracerProvider(resource=resource))
-                    span_processor = BatchSpanProcessor(
-                        OTLPSpanExporter(
-                            endpoint="{tracing_uri}/v1/traces"
-                        )
-                    )
-                    trace.get_tracer_provider().add_span_processor(span_processor)
                 """
         )
         config += "\n".join(config_entries)
