@@ -20,8 +20,6 @@ import pymysql.cursors
 import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
-from opentelemetry import trace
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 
 def hostname():
@@ -56,9 +54,11 @@ def celery_init_app(app: Flask, broker_url: str) -> Celery:
 
 app = Flask(__name__)
 app.config.from_prefixed_env()
+
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
 FlaskInstrumentor().instrument_app(app)
 
-tracer = trace.get_tracer(__name__)
 broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
 # Configure Celery only if Redis is configured
 celery_app = celery_init_app(app, broker_url)

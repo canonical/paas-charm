@@ -260,7 +260,14 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)
     if integrations.tracing_relation_data:
-        env.update(integrations.tracing_relation_data)
+        env.update(
+            (k, v)
+            for k, v in (
+                ("OTEL_SERVICE_NAME", integrations.tracing_relation_data.service_name),
+                ("OTEL_EXPORTER_OTLP_ENDPOINT", integrations.tracing_relation_data.endpoint),
+            )
+            if v is not None
+        )
 
     if integrations.s3_parameters:
         s3 = integrations.s3_parameters

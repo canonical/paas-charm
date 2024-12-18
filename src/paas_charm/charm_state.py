@@ -89,7 +89,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_relation_data: typing.MutableMapping[str, str] | None = None,
+        tracing_relation_data: "TempoParameters | None" = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -222,7 +222,7 @@ class IntegrationsState:
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
-    tracing_relation_data: dict[str, str] = field(default_factory=dict)
+    tracing_relation_data: "TempoParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -234,7 +234,7 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_relation_data: typing.MutableMapping[str, str] | None = None,
+        tracing_relation_data: "TempoParameters | None" = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -297,6 +297,18 @@ class IntegrationsState:
             rabbitmq_uri=rabbitmq_uri,
             tracing_relation_data=tracing_relation_data,
         )
+
+
+class TempoParameters(BaseModel):
+    """Configuration for accessing S3 bucket.
+
+    Attributes:
+        endpoint: Tempo endpoint URL to send the traces.
+        service_name: Tempo service name for the workload.
+    """
+
+    endpoint: str | None = None
+    service_name: str | None = None
 
 
 class S3Parameters(BaseModel):

@@ -227,9 +227,7 @@ provide an *absolute* path to the certificate file instead.
 """
 import typing
 
-from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
-    encode_spans,
-)
+from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import encode_spans
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
@@ -294,29 +292,14 @@ import os
 from contextlib import contextmanager
 from contextvars import Context, ContextVar, copy_context
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Generator, List, Optional, Sequence, Type, TypeVar, Union, cast
 
 import opentelemetry
 import ops
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, Span, TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    SpanExporter,
-    SpanExportResult,
-)
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 from opentelemetry.trace import INVALID_SPAN, Tracer
 from opentelemetry.trace import get_current_span as otlp_get_current_span
 from opentelemetry.trace import (

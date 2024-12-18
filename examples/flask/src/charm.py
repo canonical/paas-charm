@@ -13,6 +13,7 @@ import paas_charm.flask
 
 logger = logging.getLogger(__name__)
 
+
 class FlaskCharm(paas_charm.flask.Charm):
     """Flask Charm service."""
 

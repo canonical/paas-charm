@@ -130,12 +130,16 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             error_log = repr(
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
-        framework_environments = self._container.get_plan().to_dict()['services'][self._workload_config.framework]['environment']
+        framework_environments = self._container.get_plan().to_dict()["services"][
+            self._workload_config.framework
+        ]["environment"]
         tracing_uri = None
         tracing_service_name = None
-        if framework_environments.get('TRACING_URI', None):
-            tracing_uri = framework_environments['TRACING_URI']
-            tracing_service_name = framework_environments['TRACING_SERVICE_NAME']
+        if framework_environments.get("OTEL_EXPORTER_OTLP_ENDPOINT", None):
+            tracing_uri = framework_environments["OTEL_EXPORTER_OTLP_ENDPOINT"]
+            tracing_service_name = framework_environments["OTEL_SERVICE_NAME"]
+        # check if opentelemetry stuff are installed but not here.
+        # if they are installed then use them if not go into blocked state
         config = textwrap.dedent(
             f"""\
                 from opentelemetry import trace

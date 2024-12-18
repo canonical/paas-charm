@@ -9,13 +9,13 @@ import typing
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
-
+from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState
+from paas_charm.charm_state import CharmState, TempoParameters
 from paas_charm.charm_utils import block_if_invalid_config
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
@@ -45,13 +45,6 @@ except ImportError:
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
     )
 
-try:
-    # pylint: disable=ungrouped-imports
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
-except ImportError:
-    logger.exception(
-        "Missing charm library, please run `charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
-    )
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -78,6 +71,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     on = RedisRelationCharmEvents()
 
+    # pylint: disable=too-many-statements
+    # disabled because we have too many possible integrations for the workload.
     def __init__(self, framework: ops.Framework, framework_name: str) -> None:
         """Initialize the instance.
 
@@ -90,7 +85,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
-        requires = self.framework.meta.requires ######*************
+        requires = self.framework.meta.requires
         if "redis" in requires and requires["redis"].interface_name == "redis":
             self._redis = RedisRequires(charm=self, relation_name="redis")
             self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
@@ -125,9 +120,16 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._rabbitmq = None
 
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            self._tracing = TracingEndpointRequirer(self, relation_name="tracing", protocols=["otlp_http"])
-            self.framework.observe(self._tracing.on.endpoint_changed, self._on_tracing_relation_changed)
-            self.framework.observe(self._tracing.on.endpoint_removed, self._on_tracing_relation_broken)
+            try:
+                self._tracing = TracingEndpointRequirer(
+                    self, relation_name="tracing", protocols=["otlp_http"]
+                )
+                # add self.framework.observe for relation changed and departed
+            except NameError:
+                self.update_app_and_unit_status(ops.BlockedStatus("Can not initialize tracing."))
+                self._tracing = None
+        else:
+            self._tracing = None
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -278,6 +280,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return True
 
+    # pylint: disable=too-many-branches
+    # disabled because we have too many possible integrations for the workload.
     # Pending to refactor all integrations
     def _missing_required_integrations(self, charm_state: CharmState) -> list[str]:  # noqa: C901
         """Get list of missing integrations that are required.
@@ -368,8 +372,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         tracing_relation_data = None
         if self._tracing and self._tracing.is_ready():
-            tracing_relation_data = {"TRACING_URI": self._tracing.get_endpoint(protocol="otlp_http"),
-            "TRACING_SERVICE_NAME": f"{self.framework.meta.name}-charm"}
+            tracing_relation_data = TempoParameters(
+                endpoint=self._tracing.get_endpoint(protocol="otlp_http"),
+                service_name=f"{self.framework.meta.name}-charm",
+            )
+
         return CharmState.from_charm(
             config=config,
             framework=self._framework_name,
@@ -494,14 +501,4 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
-        self.restart()
-
-    @block_if_invalid_config
-    def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
-        """Handle tracing relation changed event."""
-        self.restart()
-
-    @block_if_invalid_config
-    def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
-        """Handle tracing relation broken event."""
         self.restart()

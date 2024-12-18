@@ -58,3 +58,10 @@ except ImportError as import_error:
     raise exceptions.MissingCharmLibraryError(
         "Missing charm library, please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
     ) from import_error
+try:
+    import charms.tempo_coordinator_k8s.v0.tracing  # noqa: F401
+except ImportError as import_error:
+    raise exceptions.MissingCharmLibraryError(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+    ) from import_error
