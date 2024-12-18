@@ -9,7 +9,6 @@ import typing
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
-from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
@@ -43,6 +42,15 @@ try:
 except ImportError:
     logger.exception(
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
+    )
+
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    logger.exception(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
     )
 
 
@@ -120,14 +128,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._rabbitmq = None
 
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            try:
-                self._tracing = TracingEndpointRequirer(
-                    self, relation_name="tracing", protocols=["otlp_http"]
-                )
-                # add self.framework.observe for relation changed and departed
-            except NameError:
-                self.update_app_and_unit_status(ops.BlockedStatus("Can not initialize tracing."))
-                self._tracing = None
+            self._tracing = TracingEndpointRequirer(
+                self, relation_name="tracing", protocols=["otlp_http"]
+            )
+            # add self.framework.observe for relation changed and departed
         else:
             self._tracing = None
 
