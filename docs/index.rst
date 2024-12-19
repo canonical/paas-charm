@@ -91,8 +91,6 @@ for creating a charm for a Flask application takes you from a plain Ubuntu
 installation to deploying the Flask application on Kubernetes, exposing it using
 ingress and integrating it with a database.
 
---------------
-
 The documentation for this project
 ----------------------------------
 
@@ -104,32 +102,6 @@ Documentation for this project is located in a few places:
 3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
    Documentation related to the software operators (charms)
 4. Coming soon: Documentation related to development
-
-In this documentation
-~~~~~~~~~~~~~~~~~~~~~
-
-..  grid:: 1 1 2 2
-
-   ..  grid-item:: :doc:`Tutorial <tutorial/index>`
-
-       **Start here**: a hands-on introduction to Example Product for new users
-
-   ..  grid-item:: :doc:`How-to guides <how-to/index>`
-
-      **Step-by-step guides** covering key operations and common tasks
-
-.. grid:: 1 1 2 2
-   :reverse:
-
-   .. grid-item:: :doc:`Reference </index>`
-
-      **Technical information** - specifications, APIs, architecture
-
-   .. grid-item:: :doc:`Explanation <explanation/index>`
-
-      **Discussion and clarification** of key topics
-
----------
 
 Project and community
 ---------------------
