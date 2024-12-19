@@ -91,8 +91,8 @@ for creating a charm for a Flask application takes you from a plain Ubuntu
 installation to deploying the Flask application on Kubernetes, exposing it using
 ingress and integrating it with a database.
 
-The documentation for this project
-----------------------------------
+Documentation
+-------------
 
 Documentation for this project is located in a few places:
 
