@@ -9,12 +9,12 @@
 You can use a few simple commands to set up a fully integrated and observable
 Kubernetes environment for your web application. This solution, called
 12-factor charms, provides an abstraction layer over existing Canonical
-products, and it is aimed at developers who create applications based on the
-`12-factor methodology. <https://12factor.net/>`_
+products. 12-factor charms are aimed at developers who create applications based
+on the `12-factor methodology. <https://12factor.net/>`_
 
-While this page introduces the 12-factor charms in the context of
+While this page introduces 12-factor charms in the context of
 the `Flask framework <https://flask.palletsprojects.com/en/stable/>`_,
-the same methodology also applies to 12-factor applications that are built
+the same solution also applies to 12-factor applications built
 using the following frameworks:
 
 - Django
@@ -47,16 +47,17 @@ used to facilitate the creation of a well structured, minimal and hardened
 container image, called a rock. A Charmcraft profile can then be leveraged to
 add a software operator (charm) around the aforementioned container image.
 
-Encapsulating the original 12-factor application in a charm allows it to benefit
-from the entire `charm ecosystem <https://charmhub.io/>`_, meaning that the app
+Encapsulating the original 12-factor application in a charm allows your
+application to benefit from the entire
+`charm ecosystem <https://charmhub.io/>`_, meaning that the app
 can be connected to a database, e.g. an HA Postgres, observed through a Grafana
 based observability stack, get ingress and much more.
 
-Creating a complete development environment in a few commands
--------------------------------------------------------------
+Create a complete development environment in a few commands
+-----------------------------------------------------------
 
-Rockcraft and Charmcraft natively support Flask. Production-ready OCI
-images for Flask applications can be created using Rockcraft with 3 easy
+Rockcraft natively supports Flask. Production-ready OCI images for your
+Flask application can be created using Rockcraft with 3 easy
 commands that need to be run in the root directory of the Flask application:
 
 .. code-block:: bash
@@ -74,8 +75,8 @@ Charmcraft also natively supports Flask. You can use it
 to create charms that automate every aspect of your Flask
 application's life, including integrating with a database, preparing the tables
 in the database, integrating with observability and exposing the application
-using ingress. From the root directory of the Flask application, the Flask
-application charm can be created using 4 easy commands:
+using ingress. From the root directory of the Flask application, the charm for
+the application can be created using 4 easy commands:
 
 .. code-block:: bash
 
@@ -95,13 +96,13 @@ ingress and integrating it with a database.
 The documentation for this project
 ----------------------------------
 
-The documentation is located in a couple of places:
+Documentation for this project is located in a few places:
 
 1. This site: Documentation related to the product
 2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
    Documentation related to the OCI image containers
 3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
-   Documentation related to the packaged software (charms)
+   Documentation related to the software operators (charms)
 4. Coming soon: Documentation related to development
 
 In this documentation
