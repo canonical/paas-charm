@@ -4,3 +4,7 @@ CVE-2022-40897
 CVE-2024-6345
 # pebble: Calling Decoder.Decode on a message which contains deeply nested structures can cause a panic due to stack exhaustion
 CVE-2024-34156
+# pebble: Go stdlib
+CVE-2024-45338
+# go-app: Go crypto lib
+CVE-2024-45337 
