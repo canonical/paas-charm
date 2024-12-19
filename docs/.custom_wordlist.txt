@@ -1,3 +1,7 @@
 Charmcraft
+FastAPI
+lifecycle
+natively
 OCI
+Postgres
 Rockcraft
