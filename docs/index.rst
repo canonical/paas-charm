@@ -95,7 +95,7 @@ ingress and integrating it with a database.
 The documentation for this project
 ----------------------------------
 
-The documentation is located in three places:
+The documentation is located in a couple of places:
 
 1. This site: Documentation related to the product
 2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
