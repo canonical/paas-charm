@@ -67,7 +67,9 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-class App:
+# too-many-instance-attributes is disabled because this class
+# contains 1 more attributes than pylint allows
+class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager."""
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -92,6 +94,7 @@ class App:
             configuration_prefix: prefix for environment variables related to configuration.
             integrations_prefix: prefix for environment variables related to integrations.
         """
+        self.__alternate_service_command: str | None = None
         self._container = container
         self._charm_state = charm_state
         self._workload_config = workload_config
@@ -172,6 +175,16 @@ class App:
             )
         return env
 
+    @property
+    def _alternate_service_command(self) -> str | None:
+        """Specific framework operations before starting the service."""
+        return self.__alternate_service_command
+
+    @_alternate_service_command.setter
+    def _alternate_service_command(self, value: str | None) -> None:
+        """Specific framework operations before starting the service."""
+        self.__alternate_service_command = value
+
     def _prepare_service_for_restart(self) -> None:
         """Specific framework operations before restarting the service."""
 
@@ -213,6 +226,10 @@ class App:
 
         services[self._workload_config.service_name]["override"] = "replace"
         services[self._workload_config.service_name]["environment"] = self.gen_environment()
+        if self._alternate_service_command:
+            services[self._workload_config.service_name][
+                "command"
+            ] = self._alternate_service_command
 
         for service_name, service in services.items():
             normalised_service_name = service_name.lower()

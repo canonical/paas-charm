@@ -1,0 +1,14 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: django-async-app
+summary: Example Async Django application image.
+description: Example Async Django application image.
+version: "0.1"
+base: ubuntu@22.04
+license: Apache-2.0
+platforms:
+  amd64:
+
+extensions:
+  - django-framework
