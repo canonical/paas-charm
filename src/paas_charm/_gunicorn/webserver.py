@@ -139,12 +139,14 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 statsd_host = {repr(STATSD_HOST)}
                 """
         )
-        framework_environments = self._container.get_plan().to_dict()['services'][self._workload_config.framework]['environment']
-        tracing_uri = None
+        framework_environments = self._container.get_plan().to_dict()["services"][
+            self._workload_config.framework
+        ]["environment"]
+        tracing_endpoint = None
         tracing_service_name = None
-        if framework_environments.get('OTEL_EXPORTER_OTLP_ENDPOINT', None):
-            tracing_endpoint = framework_environments['OTEL_EXPORTER_OTLP_ENDPOINT']
-            tracing_service_name = framework_environments['OTEL_SERVICE_NAME']
+        if framework_environments.get("OTEL_EXPORTER_OTLP_ENDPOINT", None):
+            tracing_endpoint = framework_environments["OTEL_EXPORTER_OTLP_ENDPOINT"]
+            tracing_service_name = framework_environments["OTEL_SERVICE_NAME"]
 
             config += textwrap.dedent(
                 f"""\

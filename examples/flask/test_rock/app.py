@@ -20,9 +20,9 @@ import pymysql.cursors
 import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
-
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
 
 def hostname():
     """Get the hostname of the current machine."""
@@ -86,15 +86,16 @@ def fibonacci():
     n = int(request.args.get("n", 1))
     with tracer.start_as_current_span("root"):
         with tracer.start_as_current_span("fib_slow") as slow_span:
-            ans = fib_slow(n)
+            answer = fib_slow(n)
             slow_span.set_attribute("n", n)
-            slow_span.set_attribute("nth_fibonacci", ans)
+            slow_span.set_attribute("nth_fibonacci", answer)
         with tracer.start_as_current_span("fib_fast") as fast_span:
-            ans = fib_fast(n)
+            answer = fib_fast(n)
             fast_span.set_attribute("n", n)
-            fast_span.set_attribute("nth_fibonacci", ans)
+            fast_span.set_attribute("nth_fibonacci", answer)
 
-    return f"F({n}) is: ({ans})"
+    return f"F({n}) is: ({answer})"
+
 
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
