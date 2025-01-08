@@ -1,0 +1,25 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: fastapi-tracing-app
+summary: Example FastAPI application image.
+description: Example FastAPI application image.
+version: "0.1"
+base: ubuntu@24.04
+
+platforms:
+  amd64:
+
+extensions:
+  - fastapi-framework
+
+parts:
+  alembic:
+    plugin: dump
+    source: .
+    organize:
+      alembic: app/alembic
+      alembic.ini: app/alembic.ini
+    stage:
+    - app/alembic
+    - app/alembic.ini

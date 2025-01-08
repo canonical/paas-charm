@@ -146,7 +146,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
         )
 
-    def _init_redis(self, requires: dict[str, RelationMeta]) -> RedisRequires | None:
+    def _init_redis(self, requires: dict[str, RelationMeta]) -> "RedisRequires | None":
         """Initialize the Redis relation if its required.
 
         Args:
@@ -161,7 +161,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
         return _redis
 
-    def _init_s3(self, requires: dict[str, RelationMeta]) -> S3Requirer | None:
+    def _init_s3(self, requires: dict[str, RelationMeta]) -> "S3Requirer | None":
         """Initialize the S3 relation if its required.
 
         Args:
@@ -177,7 +177,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
         return _s3
 
-    def _init_saml(self, requires: dict[str, RelationMeta]) -> SamlRequires | None:
+    def _init_saml(self, requires: dict[str, RelationMeta]) -> "SamlRequires | None":
         """Initialize the SAML relation if its required.
 
         Args:
@@ -192,7 +192,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
         return _saml
 
-    def _init_rabbitmq(self, requires: dict[str, RelationMeta]) -> RabbitMQRequires | None:
+    def _init_rabbitmq(self, requires: dict[str, RelationMeta]) -> "RabbitMQRequires | None":
         """Initialize the RabbitMQ relation if its required.
 
         Args:
@@ -215,7 +215,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _rabbitmq
 
-    def _init_tracing(self, requires: dict[str, RelationMeta]) -> TracingEndpointRequirer | None:
+    def _init_tracing(self, requires: dict[str, RelationMeta]) -> "TracingEndpointRequirer | None":
         """Initialize the Tracing relation if its required.
 
         Args:
@@ -454,7 +454,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         tracing_relation_data = None
         if self._tracing and self._tracing.is_ready():
             tracing_relation_data = TempoParameters(
-                endpoint=self._tracing.get_endpoint(protocol="otlp_http"),
+                endpoint=f'{self._tracing.get_endpoint(protocol="otlp_http")}',
                 service_name=f"{self.framework.meta.name}-app",
             )
         return CharmState.from_charm(

@@ -1,7 +1,0 @@
-fastapi
-SQLAlchemy
-alembic
-psycopg2-binary
-opentelemetry-api
-opentelemetry-sdk
-opentelemetry-instrumentation-fastapi

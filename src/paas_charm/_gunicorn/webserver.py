@@ -174,33 +174,20 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         framework_environments = self._container.get_plan().to_dict()["services"][
             self._workload_config.framework
         ]["environment"]
-        tracing_endpoint = None
-        tracing_service_name = None
         if framework_environments.get("OTEL_EXPORTER_OTLP_ENDPOINT", None):
-            tracing_endpoint = framework_environments["OTEL_EXPORTER_OTLP_ENDPOINT"]
-            tracing_service_name = framework_environments["OTEL_SERVICE_NAME"]
-
             config += textwrap.dedent(
-                f"""\
+                """\
                     from opentelemetry import trace
-                    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+                    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                        OTLPSpanExporter,
+                    )
                     from opentelemetry.sdk.resources import Resource
                     from opentelemetry.sdk.trace import TracerProvider
                     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
                     def post_fork(server, worker):
-                        resource = Resource.create(
-                            attributes={{
-                                "service.name": "{tracing_service_name}",
-                                "worker": worker.pid,
-                            }}
-                        )
                         trace.set_tracer_provider(TracerProvider(resource=resource))
-                        span_processor = BatchSpanProcessor(
-                            OTLPSpanExporter(
-                                endpoint="{tracing_endpoint}/v1/traces"
-                            )
-                        )
+                        span_processor = BatchSpanProcessor(OTLPSpanExporter())
                         trace.get_tracer_provider().add_span_processor(span_processor)
                     """
             )
