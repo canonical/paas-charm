@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 """
-WSGI config for django_app project.
+WSGI config for django_tracing_app project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -14,6 +14,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_app.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_tracing_app.settings")
 
 application = get_wsgi_application()

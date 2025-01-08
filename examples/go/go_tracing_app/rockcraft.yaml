@@ -19,7 +19,7 @@ platforms: # The platforms this rock should be built on and run on
 # the default binary.
 # see https://documentation.ubuntu.com/rockcraft/en/stable/reference/extensions/go-framework
 # for more information.
-# +-- go_app
+# +-- go_tracing_app
 # |   |-- go.mod
 # |   |-- migrate.sh
 
