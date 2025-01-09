@@ -17,9 +17,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 app = FastAPI()
 
 set_tracer_provider(TracerProvider())
-get_tracer_provider().add_span_processor(
-    BatchSpanProcessor(OTLPSpanExporter())
-)
+get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
 get_tracer_provider().add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
 FastAPIInstrumentor.instrument_app(app)

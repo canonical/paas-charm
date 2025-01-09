@@ -171,10 +171,17 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 statsd_host = {repr(STATSD_HOST)}
                 """
         )
-        framework_environments = self._container.get_plan().to_dict()["services"][
-            self._workload_config.framework
-        ]["environment"]
-        if framework_environments.get("OTEL_EXPORTER_OTLP_ENDPOINT", None):
+        framework_environments = None
+        plan = self._container.get_plan().to_dict()
+        services = plan.get("services", None)
+        if services:
+            service_framework = services.get(self._workload_config.framework, None)
+            if service_framework:
+                framework_environments = service_framework.get("environment", None)
+
+        if framework_environments and framework_environments.get(
+            "OTEL_EXPORTER_OTLP_ENDPOINT", None
+        ):
             config += textwrap.dedent(
                 """\
                     from opentelemetry import trace
