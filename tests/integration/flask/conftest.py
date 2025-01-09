@@ -26,15 +26,6 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask")
 
 
-@pytest.fixture(scope="module", name="test_tracing_flask_image")
-def fixture_test_tracing_flask_image(pytestconfig: Config):
-    """Return the --test-flask-tracing-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-tracing-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-tracing-flask-image")
-    return test_flask_image
-
-
 @pytest.fixture(scope="module", name="test_async_flask_image")
 def fixture_test_async_flask_image(pytestconfig: Config):
     """Return the --test-async-flask-image test parameter."""

@@ -22,14 +22,6 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
 
 
-@pytest.fixture(scope="module", name="fastapi_tracing_app_image")
-def fixture_fastapi_tracing_app_image(pytestconfig: Config):
-    """Return the --fastapi-tracing-app-image test parameter."""
-    image = pytestconfig.getoption("--fastapi-tracing-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --fastapi-tracing-app-image")
-    return image
-
 @pytest.fixture(scope="module", name="fastapi_app_image")
 def fixture_fastapi_app_image(pytestconfig: Config):
     """Return the --fastapi-app-image test parameter."""
