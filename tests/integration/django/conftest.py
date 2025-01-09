@@ -26,9 +26,9 @@ def cwd():
 @pytest.fixture(scope="module", name="django_tracing_app_image")
 def fixture_django_tracing_app_image(pytestconfig: Config):
     """Return the --django-tracing-app-image test parameter."""
-    image = pytestconfig.getoption("--django-app-tracing-image")
+    image = pytestconfig.getoption("--django-tracing-app-image")
     if not image:
-        raise ValueError("the following arguments are required: --django-app-tracing-image")
+        raise ValueError("the following arguments are required: --django-tracing-app-image")
     return image
 
 
