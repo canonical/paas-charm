@@ -31,6 +31,15 @@ def fixture_go_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="go_app_tracing_image")
+def fixture_go_tracing_app_image(pytestconfig: Config):
+    """Return the --go-app-image test parameter."""
+    image = pytestconfig.getoption("--go-app-tracing-image")
+    if not image:
+        raise ValueError("the following arguments are required: --go-app-tracing-image")
+    return image
+
+
 @pytest_asyncio.fixture(scope="module", name="charm_file")
 async def charm_file_fixture(
     pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory
