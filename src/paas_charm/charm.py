@@ -157,8 +157,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _redis = None
         if "redis" in requires and requires["redis"].interface_name == "redis":
-            _redis = RedisRequires(charm=self, relation_name="redis")
-            self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
+            try:
+                _redis = RedisRequires(charm=self, relation_name="redis")
+                self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
+            except NameError:
+                logger.exception(
+                    "Missing charm library, please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
+                )
+
         return _redis
 
     def _init_s3(self, requires: dict[str, RelationMeta]) -> "S3Requirer | None":
@@ -172,9 +178,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _s3 = None
         if "s3" in requires and requires["s3"].interface_name == "s3":
-            _s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
-            self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
-            self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
+            try:
+                _s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
+                self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
+                self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
+            except NameError:
+                logger.exception(
+                    "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
+                )
         return _s3
 
     def _init_saml(self, requires: dict[str, RelationMeta]) -> "SamlRequires | None":
@@ -188,8 +199,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _saml = None
         if "saml" in requires and requires["saml"].interface_name == "saml":
-            _saml = SamlRequires(self)
-            self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
+            try:
+                _saml = SamlRequires(self)
+                self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
+            except NameError:
+                logger.exception(
+                    "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
+                )
         return _saml
 
     def _init_rabbitmq(self, requires: dict[str, RelationMeta]) -> "RabbitMQRequires | None":
@@ -226,11 +242,17 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _tracing = None
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            _tracing = TracingEndpointRequirer(
-                self, relation_name="tracing", protocols=["otlp_http"]
-            )
-            self.framework.observe(_tracing.on.endpoint_changed, self._on_tracing_relation_changed)
-            self.framework.observe(_tracing.on.endpoint_removed, self._on_tracing_relation_broken)
+            try:
+                _tracing = TracingEndpointRequirer(
+                    self, relation_name="tracing", protocols=["otlp_http"]
+                )
+                self.framework.observe(_tracing.on.endpoint_changed, self._on_tracing_relation_changed)
+                self.framework.observe(_tracing.on.endpoint_removed, self._on_tracing_relation_broken)
+            except NameError as e:
+                logger.exception(
+                    "Missing charm library, please run "
+                    "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+                )
         return _tracing
 
     def get_framework_config(self) -> BaseModel:
@@ -455,7 +477,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._tracing and self._tracing.is_ready():
             tracing_relation_data = TempoParameters(
                 endpoint=f'{self._tracing.get_endpoint(protocol="otlp_http")}',
-                service_name=f"{self.framework.meta.name}-app",
+                service_name=self.framework.meta.name,
             )
         return CharmState.from_charm(
             config=config,
