@@ -1,10 +1,10 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Initial migration
 
 Revision ID: eca6177bd16a
-Revises: 
+Revises:
 Create Date: 2023-09-05 17:12:56.303534
 
 """

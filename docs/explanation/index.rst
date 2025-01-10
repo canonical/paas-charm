@@ -1,4 +1,4 @@
-.. Copyright 2024 Canonical Ltd.
+.. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
 Explanation
@@ -10,4 +10,3 @@ on key topics related to the use and configuration of
 
 .. toctree::
    :maxdepth: 1
-

@@ -1,4 +1,4 @@
-.. Copyright 2024 Canonical Ltd.
+.. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
 12-Factor app support in Charmcraft and Rockcraft
@@ -8,12 +8,12 @@
 the content you need to generate rocks and charms for 12-Factor applications.**
 
 **A paragraph of one to three short sentences, that describe what the product
-does.** 
+does.**
 
 **A third paragraph of similar length, this time explaining what need the
 product meets.**
 
-**Finally, a paragraph that describes whom the product is useful for.** 
+**Finally, a paragraph that describes whom the product is useful for.**
 
 ---------
 
