@@ -144,6 +144,92 @@ async def flask_async_app_fixture(build_charm: str, model: Model, test_async_fla
     return app
 
 
+@pytest_asyncio.fixture(scope="module", name="flask_tracing_app")
+async def flask_tracing_app_fixture(build_charm: str, model: Model, test_tracing_flask_image: str):
+    """Build and deploy the flask charm with test-tracing-flask image."""
+    app_name = "flask-tracing-k8s"
+
+    resources = {
+        "flask-app-image": test_tracing_flask_image,
+    }
+    app = await model.deploy(
+        build_charm, resources=resources, application_name=app_name, series="jammy"
+    )
+    await model.wait_for_idle(raise_on_blocked=True)
+    return app
+
+async def deploy_and_configure_minio(ops_test: OpsTest) -> None:
+    """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
+    config = {
+        "access-key": "accesskey",
+        "secret-key": "secretkey",
+    }
+    await ops_test.model.deploy("minio", channel="edge", trust=True, config=config)
+    await ops_test.model.wait_for_idle(
+        apps=["minio"], status="active", timeout=2000, idle_period=45
+    )
+    minio_addr = await unit_address(ops_test, "minio", 0)
+
+    mc_client = Minio(
+        f"{minio_addr}:9000",
+        access_key="accesskey",
+        secret_key="secretkey",
+        secure=False,
+    )
+
+    # create tempo bucket
+    found = mc_client.bucket_exists("tempo")
+    if not found:
+        mc_client.make_bucket("tempo")
+
+    # configure s3-integrator
+    s3_integrator_app: Application = ops_test.model.applications["s3-integrator"]
+    s3_integrator_leader: Unit = s3_integrator_app.units[0]
+
+    await s3_integrator_app.set_config(
+        {
+            "endpoint": f"minio-0.minio-endpoints.{ops_test.model.name}.svc.cluster.local:9000",
+            "bucket": "tempo",
+        }
+    )
+
+    action = await s3_integrator_leader.run_action("sync-s3-credentials", **config)
+    action_result = await action.wait()
+    assert action_result.status == "completed"
+
+@pytest_asyncio.fixture(scope="module", name="tempo_app")
+async def deploy_tempo_cluster(ops_test: OpsTest):
+    """Deploys tempo in its HA version together with minio and s3-integrator."""
+    tempo_app = "tempo"
+    worker_app = "tempo-worker"
+    tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "edge"
+    tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "edge"
+    await ops_test.model.deploy(
+        tempo_worker_charm_url, application_name=worker_app, channel=worker_channel, trust=True
+    )
+    app = await ops_test.model.deploy(
+        tempo_coordinator_charm_url,
+        application_name=tempo_app,
+        channel=coordinator_channel,
+        trust=True,
+    )
+    await ops_test.model.deploy("s3-integrator", channel="edge")
+
+    await ops_test.model.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
+    await ops_test.model.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
+
+    await deploy_and_configure_minio(ops_test)
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(
+            apps=[tempo_app, worker_app, "s3-integrator"],
+            status="active",
+            timeout=2000,
+            idle_period=30,
+            # TODO: remove when https://github.com/canonical/tempo-coordinator-k8s-operator/issues/90 is fixed
+            raise_on_error=False,
+        )
+    return app
+
 @pytest_asyncio.fixture(scope="module", name="traefik_app")
 async def deploy_traefik_fixture(
     model: Model,
