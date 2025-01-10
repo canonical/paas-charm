@@ -30,7 +30,9 @@ async def test_workload_tracing(
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    await ops_test.model.integrate(f"{flask_tracing_app.name}:tracing", f"{tempo_app.name}:tracing")
+    await ops_test.model.integrate(
+        f"{flask_tracing_app.name}:tracing", f"{tempo_app.name}:tracing"
+    )
 
     await ops_test.model.wait_for_idle(
         apps=[flask_tracing_app.name, tempo_app.name], status="active", timeout=300

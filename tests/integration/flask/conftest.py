@@ -158,6 +158,7 @@ async def flask_tracing_app_fixture(build_charm: str, model: Model, test_tracing
     await model.wait_for_idle(raise_on_blocked=True)
     return app
 
+
 async def deploy_and_configure_minio(ops_test: OpsTest) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = {
@@ -197,6 +198,7 @@ async def deploy_and_configure_minio(ops_test: OpsTest) -> None:
     action_result = await action.wait()
     assert action_result.status == "completed"
 
+
 @pytest_asyncio.fixture(scope="module", name="tempo_app")
 async def deploy_tempo_cluster(ops_test: OpsTest):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
@@ -229,6 +231,7 @@ async def deploy_tempo_cluster(ops_test: OpsTest):
             raise_on_error=False,
         )
     return app
+
 
 @pytest_asyncio.fixture(scope="module", name="traefik_app")
 async def deploy_traefik_fixture(

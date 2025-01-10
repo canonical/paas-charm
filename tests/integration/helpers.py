@@ -6,10 +6,10 @@ import os
 import pathlib
 import uuid
 import zipfile
-import requests
-from tenacity import retry, stop_after_attempt, wait_exponential
 
+import requests
 import yaml
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
