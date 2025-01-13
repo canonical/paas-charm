@@ -159,10 +159,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if "redis" in requires and requires["redis"].interface_name == "redis":
             try:
                 _redis = RedisRequires(charm=self, relation_name="redis")
-                self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
+                self.framework.observe(
+                    self.on.redis_relation_updated, self._on_redis_relation_updated
+                )
             except NameError:
                 logger.exception(
-                    "Missing charm library, please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
+                    "Missing charm library,                               "
+                    "please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
                 )
 
         return _redis
@@ -184,7 +187,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
             except NameError:
                 logger.exception(
-                    "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
+                    "Missing charm library, "
+                    "please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
                 )
         return _s3
 
@@ -204,7 +208,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
             except NameError:
                 logger.exception(
-                    "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
+                    "Missing charm library, "
+                    "please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
                 )
         return _saml
 
@@ -246,9 +251,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 _tracing = TracingEndpointRequirer(
                     self, relation_name="tracing", protocols=["otlp_http"]
                 )
-                self.framework.observe(_tracing.on.endpoint_changed, self._on_tracing_relation_changed)
-                self.framework.observe(_tracing.on.endpoint_removed, self._on_tracing_relation_broken)
-            except NameError as e:
+                self.framework.observe(
+                    _tracing.on.endpoint_changed, self._on_tracing_relation_changed
+                )
+                self.framework.observe(
+                    _tracing.on.endpoint_removed, self._on_tracing_relation_broken
+                )
+            except NameError:
                 logger.exception(
                     "Missing charm library, please run "
                     "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"

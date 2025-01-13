@@ -6,13 +6,14 @@
 import os
 import pathlib
 from secrets import token_hex
-from minio import Minio
+
 import boto3
 import pytest
 import pytest_asyncio
 from botocore.config import Config as BotoConfig
 from juju.application import Application
 from juju.model import Model
+from minio import Minio
 from pytest import Config, FixtureRequest
 from pytest_operator.plugin import OpsTest
 

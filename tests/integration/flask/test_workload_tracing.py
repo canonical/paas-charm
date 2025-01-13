@@ -4,15 +4,16 @@
 """Integration tests for Flask workers and schedulers."""
 
 import asyncio
+import json
 import logging
 import time
-import json
 
 import aiohttp
 import pytest
 from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +48,8 @@ async def test_workload_tracing(
 
     async def _fetch_trace(session):
         async with session.get(
-            f"http://{tempo_host}:3200/api/search?tags=service.name={flask_tracing_app.name}") as response:
+            f"http://{tempo_host}:3200/api/search?tags=service.name={flask_tracing_app.name}"
+        ) as response:
             text = await response.text()
             return json.loads(text)["traces"]
 
