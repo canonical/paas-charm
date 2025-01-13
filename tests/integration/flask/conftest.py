@@ -6,7 +6,7 @@
 import os
 import pathlib
 from secrets import token_hex
-
+from minio import Minio
 import boto3
 import pytest
 import pytest_asyncio
@@ -159,17 +159,17 @@ async def flask_tracing_app_fixture(build_charm: str, model: Model, test_tracing
     return app
 
 
-async def deploy_and_configure_minio(ops_test: OpsTest) -> None:
+async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = {
         "access-key": "accesskey",
         "secret-key": "secretkey",
     }
-    await ops_test.model.deploy("minio", channel="edge", trust=True, config=config)
+    minio_app = await ops_test.model.deploy("minio", channel="edge", trust=True, config=config)
     await ops_test.model.wait_for_idle(
-        apps=["minio"], status="active", timeout=2000, idle_period=45
+        apps=[minio_app.name], status="active", timeout=2000, idle_period=45
     )
-    minio_addr = await unit_address(ops_test, "minio", 0)
+    minio_addr = (await get_unit_ips(minio_app.name))[0]
 
     mc_client = Minio(
         f"{minio_addr}:9000",
@@ -200,7 +200,7 @@ async def deploy_and_configure_minio(ops_test: OpsTest) -> None:
 
 
 @pytest_asyncio.fixture(scope="module", name="tempo_app")
-async def deploy_tempo_cluster(ops_test: OpsTest):
+async def deploy_tempo_cluster(ops_test: OpsTest, get_unit_ips):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
     worker_app = "tempo-worker"
@@ -220,7 +220,7 @@ async def deploy_tempo_cluster(ops_test: OpsTest):
     await ops_test.model.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
     await ops_test.model.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
 
-    await deploy_and_configure_minio(ops_test)
+    await deploy_and_configure_minio(ops_test, get_unit_ips)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
             apps=[tempo_app, worker_app, "s3-integrator"],

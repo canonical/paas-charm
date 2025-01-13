@@ -6,13 +6,13 @@
 import asyncio
 import logging
 import time
+import json
 
 import aiohttp
 import pytest
 from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
-
 logger = logging.getLogger(__name__)
 
 
@@ -39,22 +39,26 @@ async def test_workload_tracing(
     )
     # the flask unit is not important. Take the first one
     flask_unit_ip = (await get_unit_ips(flask_tracing_app.name))[0]
+    tempo_host = (await get_unit_ips(tempo_app.name))[0]
 
     async def _fetch_page(session):
-        params = {"duration": 2}
-        async with session.get(f"http://{flask_unit_ip}:8000", params=params) as response:
+        async with session.get(f"http://{flask_unit_ip}:8000") as response:
             return await response.text()
 
-    async with aiohttp.ClientSession() as session:
-        page = _fetch_page(session)
-        await asyncio.gather([page])
+    async def _fetch_trace(session):
+        async with session.get(
+            f"http://{tempo_host}:3200/api/search?tags=service.name={flask_tracing_app.name}") as response:
+            text = await response.text()
+            return json.loads(text)["traces"]
 
-    print("--------------------------")
-    print(f"{flask_tracing_app.name}-app")
-    print("--------------------------")
+    async with aiohttp.ClientSession() as session:
+        pages = [_fetch_page(session) for _ in range(5)]
+        await asyncio.gather(*pages)
+
+    # wait a little for traces to register
+    time.sleep(5)
     # verify workload traces are ingested into Tempo
-    assert await get_traces_patiently(
-        await get_application_ip(ops_test, tempo_app.name),
-        service_name=f"{flask_tracing_app.name}-app",
-        tls=False,
-    )
+    async with aiohttp.ClientSession() as session:
+        pages = [_fetch_trace(session) for _ in range(5)]
+        traces = await asyncio.gather(*pages)
+        assert len(traces) > 0

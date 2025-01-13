@@ -6,6 +6,7 @@ import os
 import pathlib
 import uuid
 import zipfile
+import json
 
 import requests
 import yaml
@@ -48,9 +49,9 @@ def inject_charm_config(charm: pathlib.Path | str, config: dict, tmp_dir: pathli
     return str(charm)
 
 
-def get_traces(tempo_host: str, service_name: str, tls=False):
+def get_traces(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API."""
-    url = f"{'https' if tls else 'http'}://{tempo_host}:3200/api/search?tags=service.name={service_name}"
+    url = f"http://{tempo_host}:3200/api/search?tags=service.name={service_name}"
     req = requests.get(
         url,
         verify=False,
@@ -61,12 +62,12 @@ def get_traces(tempo_host: str, service_name: str, tls=False):
 
 
 @retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
-async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http", tls=False):
+async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
     """Get traces directly from Tempo REST API, but also try multiple times.
 
     Useful for cases when Tempo might not return the traces immediately (its API is known for returning data in
     random order).
     """
-    traces = get_traces(tempo_host, service_name=service_name, tls=tls)
+    traces = get_traces(tempo_host, service_name=service_name)
     assert len(traces) > 0
     return traces
