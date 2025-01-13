@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 from secrets import token_hex
@@ -8,7 +8,7 @@ DEFAULT_LAYER = {
         "flask": {
             "override": "replace",
             "startup": "enabled",
-            "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app",
+            "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k sync",
             "after": ["statsd-exporter"],
             "user": "_daemon_",
         },
@@ -31,7 +31,7 @@ LAYER_WITH_WORKER = {
         "flask": {
             "override": "replace",
             "startup": "enabled",
-            "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app",
+            "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k sync",
             "after": ["statsd-exporter"],
             "user": "_daemon_",
         },

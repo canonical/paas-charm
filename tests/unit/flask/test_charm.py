@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Flask charm unit tests."""
@@ -74,7 +74,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
         },
         "override": "replace",
         "startup": "enabled",
-        "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app",
+        "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app  -k sync",
         "after": ["statsd-exporter"],
         "user": "_daemon_",
     }
