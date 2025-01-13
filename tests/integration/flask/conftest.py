@@ -160,6 +160,7 @@ async def flask_tracing_app_fixture(build_charm: str, model: Model, test_tracing
 
 
 async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:
+async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = {
         "access-key": "accesskey",
