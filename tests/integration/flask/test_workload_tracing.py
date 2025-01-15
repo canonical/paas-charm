@@ -63,4 +63,5 @@ async def test_workload_tracing(
     async with aiohttp.ClientSession() as session:
         pages = [_fetch_trace(session) for _ in range(5)]
         traces = await asyncio.gather(*pages)
+        print(traces)
         assert len(traces) > 0
