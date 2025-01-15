@@ -12,8 +12,9 @@ import aiohttp
 import pytest
 from juju.application import Application
 from juju.model import Model
-from pytest_operator.plugin import OpsTest
 from ops import JujuVersion
+from pytest_operator.plugin import OpsTest
+
 from tests.integration.helpers import get_traces_patiently
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,7 @@ def _tempo_available():
     return JujuVersion.from_environ() < JujuVersion("3.4")
 
 
-@pytest.mark.skipif(
-    _tempo_available(), reason="tempo needs juju>=3.4"
-)
+@pytest.mark.skipif(_tempo_available(), reason="tempo needs juju>=3.4")
 @pytest.mark.usefixtures("flask_tracing_app")
 @pytest.mark.usefixtures("tempo_app")
 async def test_workload_tracing(
