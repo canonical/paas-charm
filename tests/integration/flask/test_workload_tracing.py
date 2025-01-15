@@ -13,6 +13,7 @@ import pytest
 from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
+from tests.integration.helpers import get_traces_patiently
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ async def test_workload_tracing(
 
     async def _fetch_trace(session):
         async with session.get(
-            f"http://{tempo_host}:3200/api/search?tags=service.name={flask_tracing_app.name}"
+            f"http://{tempo_host}:3200/api/search?tags=service.name={flask_tracing_app.charm_name}"
         ) as response:
             text = await response.text()
             return json.loads(text)["traces"]
@@ -57,11 +58,5 @@ async def test_workload_tracing(
         pages = [_fetch_page(session) for _ in range(5)]
         await asyncio.gather(*pages)
 
-    # wait a little for traces to register
-    time.sleep(5)
     # verify workload traces are ingested into Tempo
-    async with aiohttp.ClientSession() as session:
-        pages = [_fetch_trace(session) for _ in range(5)]
-        traces = await asyncio.gather(*pages)
-        print(traces)
-        assert len(traces) > 0
+    assert await get_traces_patiently(tempo_host, flask_tracing_app.charm_name)
