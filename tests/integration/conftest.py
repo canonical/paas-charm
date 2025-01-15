@@ -91,13 +91,6 @@ async def fixture_get_unit_ips(ops_test: OpsTest):
 async def fixture_model(ops_test: OpsTest) -> Model:
     """Return the current testing juju model."""
     assert ops_test.model
-    # Check the juju version is at least 3.4 to use test workload tracing
-    current_version = JujuVersion(
-        f"{ops_test.model.info.agent_version.major}.{ops_test.model.info.agent_version.minor}.{ops_test.model.info.agent_version.patch}"
-    )
-    min_version = JujuVersion("3.4")
-    if current_version < min_version:
-        pytest.skip("Juju version is too old for Tempo")
     return ops_test.model
 
 
