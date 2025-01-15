@@ -19,7 +19,6 @@ from tests.integration.helpers import get_traces_patiently
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skip_juju_version("3.4")
 @pytest.mark.usefixtures("flask_tracing_app")
 @pytest.mark.usefixtures("tempo_app")
 async def test_workload_tracing(

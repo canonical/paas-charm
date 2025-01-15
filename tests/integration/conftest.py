@@ -91,18 +91,14 @@ async def fixture_get_unit_ips(ops_test: OpsTest):
 async def fixture_model(ops_test: OpsTest) -> Model:
     """Return the current testing juju model."""
     assert ops_test.model
+    # Check the juju version is at least 3.4 to use test workload tracing
+    current_version = JujuVersion(
+        f"{ops_test.model.info.agent_version.major}.{ops_test.model.info.agent_version.minor}.{ops_test.model.info.agent_version.patch}"
+    )
+    min_version = JujuVersion("3.4")
+    if current_version < min_version:
+        pytest.skip("Juju version is too old for Tempo")
     return ops_test.model
-
-
-@pytest.fixture(autouse=True)
-def skip_by_juju_version(request, model):
-    if request.node.get_closest_marker("skip_juju_version"):
-        current_version = JujuVersion(
-            f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
-        )
-        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
-        if current_version < min_version:
-            pytest.skip("Juju version is too old")
 
 
 @pytest.fixture(scope="module", name="external_hostname")
@@ -194,10 +190,3 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
-
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers",
-        "skip_juju_version(version): skip test if Juju version is lower than version",
-    )
