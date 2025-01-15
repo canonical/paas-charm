@@ -13,6 +13,7 @@ import pytest
 from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
+
 from tests.integration.helpers import get_traces_patiently
 
 logger = logging.getLogger(__name__)
