@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
         ("fastapi_tracing_app", 8080),
         ("go_tracing_app", 8080),
     ],
+    indirect["tracing_app"],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 async def test_workload_tracing(
@@ -48,10 +49,9 @@ async def test_workload_tracing(
     except Exception as e:
         logger.info(f"Tempo is already deployed  {e}")
 
-    tracing_app = request.getfixturevalue(tracing_app)
     idle_list = [tracing_app.name]
 
-    if tracing_app != "flask_tracing_app":
+    if tracing_app.name != "flask-tracing-k8s":
         try:
             postgresql_app = request.getfixturevalue("postgresql_k8s")
         except Exception as e:
@@ -67,7 +67,7 @@ async def test_workload_tracing(
     await ops_test.model.wait_for_idle(
         apps=[tracing_app.name, tempo_app_name], status="active", timeout=600
     )
-    # the flask unit is not important. Take the first one
+
     unit_ip = (await get_unit_ips(tracing_app.name))[0]
     tempo_host = (await get_unit_ips(tempo_app_name))[0]
 

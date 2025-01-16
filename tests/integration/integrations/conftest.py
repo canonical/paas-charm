@@ -152,7 +152,6 @@ async def django_tracing_app_fixture(
         application_name=app_name,
         series="jammy",
     )
-    # await model.wait_for_idle(raise_on_blocked=True)
     return app
 
 
@@ -172,7 +171,6 @@ async def fastapi_tracing_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    # await model.wait_for_idle(raise_on_blocked=True)
     return app
 
 
@@ -192,7 +190,6 @@ async def go_tracing_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    # await model.wait_for_idle(raise_on_blocked=True)
     return app
 
 
