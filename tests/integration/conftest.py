@@ -10,7 +10,6 @@ from juju.application import Application
 from juju.client.jujudata import FileJujuData
 from juju.juju import Juju
 from juju.model import Controller, Model
-from ops import JujuVersion
 from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)

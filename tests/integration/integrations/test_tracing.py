@@ -38,36 +38,29 @@ async def test_workload_tracing(
     get_unit_ips,
 ):
     """
-    arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
-    act: Do 15 requests that would take 2 seconds each.
-    assert: All 15 requests should be served in under 3 seconds.
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
     """
 
     try:
         tempo_app = await request.getfixturevalue("tempo_app")
     except Exception as e:
-        print(f"Tempo is already deployed  {e}")
+        logger.info(f"Tempo is already deployed  {e}")
 
-    print(f"Tempo is ready")
     tracing_app = request.getfixturevalue(tracing_app)
     idle_list = [tracing_app.name]
 
     if tracing_app != "flask_tracing_app":
-        print("Deploying postgres")
         try:
             postgresql_app = request.getfixturevalue("postgresql_k8s")
         except Exception as e:
-            print(f"Postgres is already deployed   {e}")
-        print(f"Postgres is integrating with {tracing_app} ---- name: {tracing_app.name}")
+            logger.info(f"Postgres is already deployed   {e}")
         await model.integrate(tracing_app.name, "postgresql-k8s")
         idle_list.append("postgresql-k8s")
-    print(f"{idle_list=}")
     await model.wait_for_idle(apps=idle_list, status="active", timeout=300)
-    print("ALL IDLE")
 
     tempo_app_name = "tempo"
-
-    print(f"integrating {tracing_app.name}:tracing - {tempo_app_name}:tracing")
 
     await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app_name}:tracing")
 

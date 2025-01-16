@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class TempoParameters(BaseModel):
-    """Configuration for accessing S3 bucket.
+    """Configuration for accessing Tempo service.
 
     Attributes:
         endpoint: Tempo endpoint URL to send the traces.

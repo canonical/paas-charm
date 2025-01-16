@@ -29,6 +29,7 @@ nest_asyncio.apply()
 
 @pytest.fixture(autouse=True)
 def skip_by_juju_version(request, model):
+    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
     if request.node.get_closest_marker("skip_juju_version"):
         current_version = JujuVersion(
             f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
@@ -39,6 +40,7 @@ def skip_by_juju_version(request, model):
 
 
 def pytest_configure(config):
+    """Add new marker."""
     config.addinivalue_line(
         "markers",
         "skip_juju_version(version): skip test if Juju version is lower than version",
@@ -89,7 +91,7 @@ def fixture_go_tracing_app_image(pytestconfig: Config):
 async def build_charm_file(
     pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
 ) -> str:
-    """Get the existing charm file."""
+    """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
         (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
     )
