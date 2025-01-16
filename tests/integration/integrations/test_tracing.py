@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
         ("fastapi_tracing_app", 8080),
         ("go_tracing_app", 8080),
     ],
-    indirect["tracing_app"],
+    indirect=["tracing_app"],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 async def test_workload_tracing(
