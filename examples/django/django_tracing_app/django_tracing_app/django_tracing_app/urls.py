@@ -28,6 +28,6 @@ urlpatterns = [
     path("len/users", user_count, name="user_count"),
     path("environ", environ, name="environ"),
     path("sleep", sleep, name="sleep"),
-    path("hello", my_view, name="my_view"),
+    path("", my_view, name="my_view"),
     path("login", login, name="login"),
 ]
