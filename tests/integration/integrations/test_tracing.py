@@ -20,20 +20,19 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "tracing_app, port",
+    "tracing_app_fixture, port",
     [
         ("flask_tracing_app", 8000),
         ("django_tracing_app", 8000),
         ("fastapi_tracing_app", 8080),
         ("go_tracing_app", 8080),
     ],
-    indirect=["tracing_app"],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 async def test_workload_tracing(
     ops_test: OpsTest,
     model: Model,
-    tracing_app: Application,
+    tracing_app_fixture: str,
     port: int,
     request: pytest.FixtureRequest,
     get_unit_ips,
@@ -49,6 +48,7 @@ async def test_workload_tracing(
     except Exception as e:
         logger.info(f"Tempo is already deployed  {e}")
 
+    tracing_app = request.getfixturevalue(tracing_app_fixture)
     idle_list = [tracing_app.name]
 
     if tracing_app.name != "flask-tracing-k8s":
