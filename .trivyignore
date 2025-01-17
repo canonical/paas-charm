@@ -1,3 +1,5 @@
+# ignore CVE introduced by python3-gunicorn
+CVE-2022-40897
 # pypa/setuptools: Remote code execution via download
 CVE-2024-6345
 # pebble: Calling Decoder.Decode on a message which contains deeply nested structures can cause a panic due to stack exhaustion
