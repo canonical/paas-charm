@@ -64,13 +64,6 @@ func (h mainHandler) servePostgresql(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
-// var (
-// 	fooKey     = attribute.Key("ex.com/foo")
-// 	barKey     = attribute.Key("ex.com/bar")
-// 	anotherKey = attribute.Key("ex.com/another")
-// )
-
 var tp *sdktrace.TracerProvider
 
 // initTracer creates and registers trace provider instance.
@@ -104,7 +97,6 @@ func main() {
 	ctx, span = tracer.Start(ctx, "operation")
 	defer span.End()
 	span.AddEvent("Nice operation!", trace.WithAttributes(attribute.Int("bogons", 100)))
-	// span.SetAttributes(anotherKey.String("yes"))
 	if err := service.SubOperation(ctx); err != nil {
 		panic(err)
 	}
