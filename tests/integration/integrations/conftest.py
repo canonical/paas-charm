@@ -5,12 +5,10 @@
 
 import os
 import pathlib
-from secrets import token_hex
 
 import boto3
 import pytest
 import pytest_asyncio
-from botocore.config import Config as BotoConfig
 from juju.application import Application
 from juju.model import Model
 from minio import Minio
@@ -50,147 +48,6 @@ def pytest_configure(config):
 @pytest.fixture(autouse=True)
 def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask")
-
-
-@pytest.fixture(scope="module", name="test_tracing_flask_image")
-def fixture_test_tracing_flask_image(pytestconfig: Config):
-    """Return the --test-flask-tracing-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-tracing-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-tracing-flask-image")
-    return test_flask_image
-
-
-@pytest.fixture(scope="module", name="django_tracing_app_image")
-def fixture_django_tracing_app_image(pytestconfig: Config):
-    """Return the --django-tracing-app-image test parameter."""
-    image = pytestconfig.getoption("--django-tracing-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --django-tracing-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="fastapi_tracing_app_image")
-def fixture_fastapi_tracing_app_image(pytestconfig: Config):
-    """Return the --fastapi-tracing-app-image test parameter."""
-    image = pytestconfig.getoption("--fastapi-tracing-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --fastapi-tracing-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="go_tracing_app_image")
-def fixture_go_tracing_app_image(pytestconfig: Config):
-    """Return the --go-tracing-app-image test parameter."""
-    image = pytestconfig.getoption("--go-tracing-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --go-tracing-app-image")
-    return image
-
-
-async def build_charm_file(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
-) -> str:
-    """Get the existing charm file if exists, build a new one if not."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
-    )
-
-    if not charm_file:
-        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
-        charm_file = await ops_test.build_charm(charm_location)
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    return pathlib.Path(charm_file).absolute()
-
-
-@pytest_asyncio.fixture(scope="module", name="flask_tracing_app")
-async def flask_tracing_app_fixture(
-    pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    model: Model,
-    test_tracing_flask_image: str,
-):
-    """Build and deploy the flask charm with test-tracing-flask image."""
-    app_name = "flask-tracing-k8s"
-
-    resources = {
-        "flask-app-image": test_tracing_flask_image,
-    }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
-    app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="django_tracing_app")
-async def django_tracing_app_fixture(
-    pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    model: Model,
-    django_tracing_app_image: str,
-):
-    """Build and deploy the Django charm with django-tracing-app image."""
-    app_name = "django-tracing-k8s"
-
-    resources = {
-        "django-app-image": django_tracing_app_image,
-    }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
-
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        config={"django-allowed-hosts": "*"},
-        application_name=app_name,
-        series="jammy",
-    )
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="fastapi_tracing_app")
-async def fastapi_tracing_app_fixture(
-    pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    model: Model,
-    fastapi_tracing_app_image: str,
-):
-    """Build and deploy the FastAPI charm with fastapi-tracing-app image."""
-    app_name = "fastapi-tracing-k8s"
-
-    resources = {
-        "app-image": fastapi_tracing_app_image,
-    }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="go_tracing_app")
-async def go_tracing_app_fixture(
-    pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    model: Model,
-    go_tracing_app_image: str,
-):
-    """Build and deploy the Go charm with go-tracing-app image."""
-    app_name = "go-tracing-k8s"
-
-    resources = {
-        "app-image": go_tracing_app_image,
-    }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    return app
 
 
 async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:

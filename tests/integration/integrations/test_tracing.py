@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "tracing_app_fixture, port",
     [
-        ("flask_tracing_app", 8000),
-        ("django_tracing_app", 8000),
-        ("fastapi_tracing_app", 8080),
-        ("go_tracing_app", 8080),
+        ("flask_app", 8000),
+        ("django_app", 8000),
+        ("fastapi_app", 8080),
+        ("go_app", 8080),
     ],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
@@ -51,7 +51,7 @@ async def test_workload_tracing(
     tracing_app = request.getfixturevalue(tracing_app_fixture)
     idle_list = [tracing_app.name]
 
-    if tracing_app.name != "flask-tracing-k8s":
+    if tracing_app.name != "flask-k8s":
         try:
             postgresql_app = request.getfixturevalue("postgresql_k8s")
         except Exception as e:

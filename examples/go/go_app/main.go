@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-app/internal/service"
+	"go-tracing-app/internal/service"
 	"io"
 	"log"
 	"os"
@@ -21,6 +21,12 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type mainHandler struct {
@@ -58,8 +64,51 @@ func (h mainHandler) servePostgresql(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+// var (
+// 	fooKey     = attribute.Key("ex.com/foo")
+// 	barKey     = attribute.Key("ex.com/bar")
+// 	anotherKey = attribute.Key("ex.com/another")
+// )
+
+var tp *sdktrace.TracerProvider
+
+// initTracer creates and registers trace provider instance.
+func initTracer(ctx context.Context) error {
+  exp, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to initialize stdouttrace exporter: %w", err)
+	}
+	bsp := sdktrace.NewBatchSpanProcessor(exp)
+	tp = sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSpanProcessor(bsp),
+	)
+	otel.SetTracerProvider(tp)
+	return nil
+}
+
 func main() {
-	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+	ctx := context.Background()
+	// initialize trace provider.
+	if err := initTracer(ctx); err != nil {
+		log.Panic(err)
+	}
+
+	// Create a named tracer with package path as its name.
+	tracer := tp.Tracer("example.com/go-tracing-app")
+	defer func() { _ = tp.Shutdown(ctx) }()
+
+
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "operation")
+	defer span.End()
+	span.AddEvent("Nice operation!", trace.WithAttributes(attribute.Int("bogons", 100)))
+	// span.SetAttributes(anotherKey.String("yes"))
+	if err := service.SubOperation(ctx); err != nil {
+		panic(err)
+	}
+  metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"
 	}
