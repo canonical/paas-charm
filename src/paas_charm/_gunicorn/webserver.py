@@ -8,10 +8,10 @@ import logging
 import pathlib
 import shlex
 import signal
-import textwrap
 import typing
 from enum import Enum
 
+import jinja2
 import ops
 from ops.pebble import ExecError, PathError
 
@@ -137,7 +137,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         Returns:
             The content of the Gunicorn configuration file.
         """
-        config_entries = []
+        config_entries = {}
         for setting, setting_value in self._webserver_config.items():
             setting_value = typing.cast(
                 None | str | WorkerClassEnum | int | datetime.timedelta, setting_value
@@ -146,58 +146,47 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 continue
             if setting_value is None:
                 continue
-            setting_value = (
+            config_entries[setting] = (
                 setting_value
                 if isinstance(setting_value, (int, str))
                 else int(setting_value.total_seconds())
             )
-            config_entries.append(f"{setting} = {setting_value}")
         if enable_pebble_log_forwarding():
-            access_log = "'-'"
-            error_log = "'-'"
+            access_log = "-"
+            error_log = "-"
         else:
-            access_log = repr(
+            access_log = str(
                 APPLICATION_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
-            error_log = repr(
+            error_log = str(
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
-        config = textwrap.dedent(
-            f"""\
-                bind = ['0.0.0.0:{self._workload_config.port}']
-                chdir = {repr(str(self._workload_config.app_dir))}
-                accesslog = {access_log}
-                errorlog = {error_log}
-                statsd_host = {repr(STATSD_HOST)}
-                """
-        )
+
         framework_environments = None
+        enable_tracing = False
         plan = self._container.get_plan().to_dict()
         services = plan.get("services", None)
         if services:
             service_framework = services.get(self._workload_config.framework, None)
             if service_framework:
                 framework_environments = service_framework.get("environment", None)
-
         if framework_environments and framework_environments.get(
             "OTEL_EXPORTER_OTLP_ENDPOINT", None
         ):
-            config += textwrap.dedent(
-                """\
-                    from opentelemetry import trace
-                    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-                        OTLPSpanExporter,
-                    )
-                    from opentelemetry.sdk.trace import TracerProvider
-                    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+            enable_tracing = True
 
-                    def post_fork(server, worker):
-                        trace.set_tracer_provider(TracerProvider())
-                        span_processor = BatchSpanProcessor(OTLPSpanExporter())
-                        trace.get_tracer_provider().add_span_processor(span_processor)
-                    """
-            )
-        config += "\n".join(config_entries)
+        jinja_environment = jinja2.Environment(
+            loader=jinja2.PackageLoader("paas_charm", "templates"), autoescape=True
+        )
+        config = jinja_environment.get_template("gunicorn.conf.py.j2").render(
+            workload_port=self._workload_config.port,
+            workload_app_dir=str(self._workload_config.app_dir),
+            access_log=access_log,
+            error_log=error_log,
+            statsd_host=str(STATSD_HOST),
+            enable_tracing=enable_tracing,
+            config_entries=config_entries,
+        )
         return config
 
     @property

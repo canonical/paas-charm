@@ -32,7 +32,8 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
-                workers = 10"""
+                workers = 10
+            """
         ),
         id="workers=10",
     ),
@@ -48,7 +49,8 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 statsd_host = 'localhost:9125'
                 threads = 2
                 keepalive = 4
-                timeout = 3"""
+                timeout = 3
+            """
         ),
         id="threads=2,timeout=3,keepalive=4",
     ),
@@ -62,6 +64,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
+
                 from opentelemetry import trace
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
                     OTLPSpanExporter,
