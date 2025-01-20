@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-tracing-app/internal/service"
+	"go-app/internal/service"
 	"io"
 	"log"
 	"os"
@@ -96,7 +96,7 @@ func main() {
 	}
 
 	// Create a named tracer with package path as its name.
-	tracer := tp.Tracer("example.com/go-tracing-app")
+	tracer := tp.Tracer("example.com/go-app")
 	defer func() { _ = tp.Shutdown(ctx) }()
 
 

@@ -1,6 +1,6 @@
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
-module go-tracing-app
+module go-app
 
 go 1.22.7
 

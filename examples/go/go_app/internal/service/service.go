@@ -21,7 +21,7 @@ var lemonsKey = attribute.Key("ex.com/lemons")
 func SubOperation(ctx context.Context) error {
 	// Using global provider. Alternative is to have application provide a getter
 	// for its component to get the instance of the provider.
-	tr := otel.Tracer("example.com/go-tracing-app")
+	tr := otel.Tracer("example.com/go-app")
 
 	var span trace.Span
 	_, span = tr.Start(ctx, "Sub operation...")
