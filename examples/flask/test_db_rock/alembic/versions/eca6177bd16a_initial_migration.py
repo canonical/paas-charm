@@ -4,7 +4,7 @@
 """Initial migration
 
 Revision ID: eca6177bd16a
-Revises: 
+Revises:
 Create Date: 2023-09-05 17:12:56.303534
 
 """

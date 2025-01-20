@@ -171,6 +171,32 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 statsd_host = {repr(STATSD_HOST)}
                 """
         )
+        framework_environments = None
+        plan = self._container.get_plan().to_dict()
+        services = plan.get("services", None)
+        if services:
+            service_framework = services.get(self._workload_config.framework, None)
+            if service_framework:
+                framework_environments = service_framework.get("environment", None)
+
+        if framework_environments and framework_environments.get(
+            "OTEL_EXPORTER_OTLP_ENDPOINT", None
+        ):
+            config += textwrap.dedent(
+                """\
+                    from opentelemetry import trace
+                    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                        OTLPSpanExporter,
+                    )
+                    from opentelemetry.sdk.trace import TracerProvider
+                    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+                    def post_fork(server, worker):
+                        trace.set_tracer_provider(TracerProvider())
+                        span_processor = BatchSpanProcessor(OTLPSpanExporter())
+                        trace.get_tracer_provider().add_span_processor(span_processor)
+                    """
+            )
         config += "\n".join(config_entries)
         return config
 

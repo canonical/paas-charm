@@ -8,6 +8,9 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
 
 
 def environ(request):
@@ -23,6 +26,13 @@ def get_settings(request, name):
         return JsonResponse(getattr(settings, name), safe=False)
     else:
         return JsonResponse({"error": f"settings {name!r} not found"}, status=404)
+
+
+def hello_world(request):
+    # Create a custom span
+    with tracer.start_as_current_span("custom-span"):
+        print("Hello, World!!!")
+    return HttpResponse("Hello, World!")
 
 
 def sleep(request):
