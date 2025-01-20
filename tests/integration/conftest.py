@@ -13,6 +13,7 @@ from juju.juju import Juju
 from juju.model import Controller, Model
 from pytest import Config, FixtureRequest
 from pytest_operator.plugin import OpsTest
+from tests.integration.helpers import inject_charm_config, inject_venv
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
