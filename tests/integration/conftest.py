@@ -9,6 +9,7 @@ import pytest
 import pytest_asyncio
 from juju.application import Application
 from juju.client.jujudata import FileJujuData
+from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Controller, Model
 from pytest import Config, FixtureRequest
@@ -104,6 +105,7 @@ async def django_app_fixture(
     tmp_path_factory,
     model: Model,
     django_app_image: str,
+    postgresql_k8s: Application,
 ):
     """Build and deploy the Django charm with django-app image."""
     app_name = "django-k8s"
@@ -120,6 +122,8 @@ async def django_app_fixture(
         application_name=app_name,
         series="jammy",
     )
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -130,6 +134,7 @@ async def fastapi_app_fixture(
     tmp_path_factory,
     model: Model,
     fastapi_app_image: str,
+    postgresql_k8s: Application,
 ):
     """Build and deploy the FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
@@ -139,6 +144,8 @@ async def fastapi_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -149,6 +156,7 @@ async def go_app_fixture(
     tmp_path_factory,
     model: Model,
     go_app_image: str,
+    postgresql_k8s,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "go-k8s"
@@ -158,6 +166,8 @@ async def go_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -293,10 +303,19 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
     """Deploy postgres k8s charm."""
     _, status, _ = await ops_test.juju("status", "--format", "json")
     version = json.loads(status)["model"]["version"]
-    if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
-        return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
-    else:
-        return await model.deploy("postgresql-k8s", channel="14/stable", revision=300, trust=True)
+    try:
+        if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
+            return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
+        else:
+            return await model.deploy(
+                "postgresql-k8s", channel="14/stable", revision=300, trust=True
+            )
+    except JujuError as e:
+        if 'cannot add application "postgresql-k8s": application already exists' in e.message:
+            logger.info("Application 'postgresql-k8s' already exists")
+            return model.applications["postgresql-k8s"]
+        else:
+            raise e
 
 
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")

@@ -47,29 +47,17 @@ async def test_workload_tracing(
         tempo_app = await request.getfixturevalue("tempo_app")
     except Exception as e:
         logger.info(f"Tempo is already deployed  {e}")
-
+        tempo_app = model.applications["tempo"]
     tracing_app = request.getfixturevalue(tracing_app_fixture)
-    idle_list = [tracing_app.name]
 
-    if tracing_app.name != "flask-k8s":
-        try:
-            postgresql_app = request.getfixturevalue("postgresql_k8s")
-        except Exception as e:
-            logger.info(f"Postgres is already deployed   {e}")
-        await model.integrate(tracing_app.name, "postgresql-k8s")
-        idle_list.append("postgresql-k8s")
-    await model.wait_for_idle(apps=idle_list, status="active", timeout=300)
-
-    tempo_app_name = "tempo"
-
-    await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app_name}:tracing")
+    await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app.name}:tracing")
 
     await ops_test.model.wait_for_idle(
-        apps=[tracing_app.name, tempo_app_name], status="active", timeout=600
+        apps=[tracing_app.name, tempo_app.name], status="active", timeout=600
     )
 
     unit_ip = (await get_unit_ips(tracing_app.name))[0]
-    tempo_host = (await get_unit_ips(tempo_app_name))[0]
+    tempo_host = (await get_unit_ips(tempo_app.name))[0]
 
     async def _fetch_page(session):
         async with session.get(f"http://{unit_ip}:{port}") as response:
