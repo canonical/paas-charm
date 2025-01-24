@@ -167,3 +167,46 @@ async def test_saml_integration(
             entity_id_url._replace(path="sso")
         )
         assert env["SAML_SIGNING_CERTIFICATE"] in saml_helper.CERTIFICATE.replace("\n", "")
+
+
+async def test_smtp_integration(
+    ops_test: OpsTest,
+    flask_app: Application,
+    model: Model,
+    get_unit_ips,
+    mailcatcher,
+):
+    """
+    arrange: build and deploy the flask charm. Create the s3 bucket.
+    act: Integrate the charm with the s3-integrator.
+    assert: the flask application should return in the endpoint /env
+       the correct S3 env variables.
+    """
+    smtp_config = {
+            "auth_type": "none",
+            "domain": "example.com",
+            "host": mailcatcher.host,
+            "port": mailcatcher.port,
+        }
+    smtp_integrator_app = await model.deploy(
+        "smtp-integrator",
+        channel="latest/edge",
+        config=smtp_config,
+    )
+    await model.wait_for_idle()
+    await model.add_relation(flask_app.name, f"{smtp_integrator_app.name}:smtp")
+
+    await model.wait_for_idle(
+        idle_period=30,
+        apps=[flask_app.name, smtp_integrator_app.name],
+        status="active",
+    )
+
+    for unit_ip in await get_unit_ips(flask_app.name):
+        response = requests.get(f"http://{unit_ip}:8000/env", timeout=5)
+        assert response.status_code == 200
+        env = response.json()
+        assert env["SMTP_HOST"] == smtp_config["host"]
+        assert env["SMTP_DOMAIN"] == smtp_config["domain"]
+        assert env["SMTP_PORT"] == smtp_config["port"]
+        assert env.get("SMTP_AUTH_TYPE") == None

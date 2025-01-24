@@ -7,6 +7,7 @@ import os
 import re
 import typing
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Optional
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
@@ -89,6 +90,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
+        smtp_relation_data: dict | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -103,6 +105,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
+            smtp_relation_data: Relation data from the SMTP app.
             base_url: Base URL for the service.
 
         Return:
@@ -123,6 +126,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
+            smtp_relation_data=smtp_relation_data,
         )
         return cls(
             framework=framework,
@@ -209,6 +213,7 @@ class IntegrationsState:
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
+        smtp_parameters: SMTP parameters.
     """
 
     redis_uri: str | None = None
@@ -216,8 +221,10 @@ class IntegrationsState:
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
+    smtp_parameters: "SmtpParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
+    # flake8: noqa: C901
     @classmethod
     def build(  # pylint: disable=too-many-arguments
         cls,
@@ -227,6 +234,7 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
+        smtp_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -238,6 +246,7 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
+            smtp_relation_data: smtp relation data from smtp lib.
 
         Return:
             The IntegrationsState instance created.
@@ -276,6 +285,17 @@ class IntegrationsState:
         if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
             redis_uri = None
 
+        if smtp_relation_data is not None:
+            try:
+                smtp_parameters = SmtpParameters(**smtp_relation_data)
+            except ValidationError as exc:
+                error_message = build_validation_error_message(exc)
+                raise CharmConfigInvalidError(
+                    f"Invalid Smtp configuration: {error_message}"
+                ) from exc
+        else:
+            smtp_parameters = None
+
         return cls(
             redis_uri=redis_uri,
             databases_uris={
@@ -286,6 +306,7 @@ class IntegrationsState:
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
+            smtp_parameters=smtp_parameters,
         )
 
 
@@ -364,3 +385,70 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         if not certificate:
             raise ValueError("Missing x509certs. There should be at least one certificate.")
         return certificate
+
+
+class TransportSecurity(str, Enum):
+    """Represent the transport security values.
+
+    Attributes:
+        NONE: none
+        STARTTLS: starttls
+        TLS: tls
+    """
+
+    NONE = "none"
+    STARTTLS = "starttls"
+    TLS = "tls"
+
+
+class AuthType(str, Enum):
+    """Represent the auth type values.
+
+    Attributes:
+        NONE: none
+        NOT_PROVIDED: not_provided
+        PLAIN: plain
+    """
+
+    NONE = "none"
+    NOT_PROVIDED = "not_provided"
+    PLAIN = "plain"
+
+
+class SmtpParameters(BaseModel, extra=Extra.allow):
+    """Represent the SMTP relation data.
+
+    Attributes:
+        host: The hostname or IP address of the outgoing SMTP relay.
+        port: The port of the outgoing SMTP relay.
+        user: The SMTP AUTH user to use for the outgoing SMTP relay.
+        password: The SMTP AUTH password to use for the outgoing SMTP relay.
+        password_id: The secret ID where the SMTP AUTH password for the SMTP relay is stored.
+        auth_type: The type used to authenticate with the SMTP relay.
+        transport_security: The security protocol to use for the outgoing SMTP relay.
+        domain: The domain used by the emails sent from SMTP relay.
+        skip_ssl_verify: Specifies if certificate trust verification is skipped in the SMTP relay.
+    """
+
+    host: str = Field(..., min_length=1)
+    port: int = Field(..., ge=1, le=65536)
+    user: str | None = None
+    password: str | None = None
+    password_id: str | None = None
+    auth_type: AuthType | None = None
+    transport_security: TransportSecurity | None = None
+    domain: str | None = None
+    skip_ssl_verify: str | None = False
+
+
+    @field_validator("auth_type")
+    @classmethod
+    def validate_auth_type(cls, auth_type: str, _: ValidationInfo) -> str:
+        if auth_type == AuthType.NONE:
+            return None
+
+    @field_validator("transport_security")
+    @classmethod
+    def validate_transport_security(cls, transport_security: str, _: ValidationInfo) -> str:
+        if transport_security == TransportSecurity.NONE:
+            return None

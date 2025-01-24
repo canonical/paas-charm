@@ -133,6 +133,10 @@ requires:
     interface: rabbitmq
     optional: True
     limit: 1
+  smtp:
+    interface: smtp
+    optional: True
+    limit: 1
 
 resources:
   flask-app-image:

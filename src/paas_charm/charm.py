@@ -44,6 +44,14 @@ except ImportError:
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
     )
 
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.smtp_integrator.v0.smtp import SmtpRequires
+except ImportError:
+    logger.exception(
+        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
+    )
+
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -116,6 +124,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(self._rabbitmq.on.departed, self._on_rabbitmq_departed)
         else:
             self._rabbitmq = None
+
+        if "smtp" in requires and requires["smtp"].interface_name == "smtp":
+            self._smtp = SmtpRequires(self)
+            self.framework.observe(self._smtp.on.smtp_data_available, self._on_smtp_data_available)
+        else:
+            self._smtp = None
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -267,6 +281,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         return True
 
     # Pending to refactor all integrations
+    # pylint: disable=too-many-branches
     def _missing_required_integrations(self, charm_state: CharmState) -> list[str]:  # noqa: C901
         """Get list of missing integrations that are required.
 
@@ -297,6 +312,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
             if not requires["rabbitmq"].optional:
                 missing_integrations.append("rabbitmq")
+        if self._smtp and not charm_state.integrations.smtp_parameters:
+            if not requires["smtp"].optional:
+                missing_integrations.append("smtp")
         return missing_integrations
 
     def restart(self, rerun_migrations: bool = False) -> None:
@@ -341,6 +359,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         saml_relation_data = None
         if self._saml and (saml_data := self._saml.get_relation_data()):
             saml_relation_data = saml_data.to_relation_data()
+        smtp_relation_data = None
+        if self._smtp and (smtp_data := self._smtp.get_relation_data()):
+            smtp_relation_data = smtp_data.to_relation_data()
+            logger.info(f"===========smtp_relation_data: {smtp_relation_data}")
+            if smtp_relation_data.get("password_id", None):
+                secret = self.model.get_secret(id=smtp_relation_data.password_id)
+                content = secret.get_content()
+                logger.info(f"Setting SMTP secret content: {content}")
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
             dict,
@@ -360,6 +386,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
             base_url=self._base_url,
+            smtp_relation_data=smtp_relation_data,
         )
 
     @property
@@ -472,4 +499,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_smtp_data_available(self, _: ops.HookEvent) -> None:
+        """Handle smtp data available event."""
         self.restart()
