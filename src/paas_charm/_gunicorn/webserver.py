@@ -162,19 +162,6 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
             )
 
-        framework_environments = None
-        enable_tracing = False
-        plan = self._container.get_plan().to_dict()
-        services = plan.get("services", None)
-        if services:
-            service_framework = services.get(self._workload_config.framework, None)
-            if service_framework:
-                framework_environments = service_framework.get("environment", None)
-        if framework_environments and framework_environments.get(
-            "OTEL_EXPORTER_OTLP_ENDPOINT", None
-        ):
-            enable_tracing = True
-
         jinja_environment = jinja2.Environment(
             loader=jinja2.PackageLoader("paas_charm", "templates"), autoescape=True
         )
@@ -184,7 +171,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             access_log=access_log,
             error_log=error_log,
             statsd_host=str(STATSD_HOST),
-            enable_tracing=enable_tracing,
+            enable_tracing=self._workload_config.tracing_enabled,
             config_entries=config_entries,
         )
         return config

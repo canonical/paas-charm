@@ -41,6 +41,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         metrics_target: target to scrape for metrics.
         metrics_path: path to scrape for metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
+        tracing_enabled: True if tracing should be enabled.
     """
 
     framework: str
@@ -56,6 +57,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     metrics_target: str | None = None
     metrics_path: str | None = "/metrics"
     unit_name: str
+    tracing_enabled: bool = False
 
     def should_run_scheduler(self) -> bool:
         """Return if the unit should run scheduler processes.

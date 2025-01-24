@@ -12,12 +12,15 @@ APPLICATION_LOG_FILE_FMT = "/var/log/{framework}/access.log"
 APPLICATION_ERROR_LOG_FILE_FMT = "/var/log/{framework}/error.log"
 
 
-def create_workload_config(framework_name: str, unit_name: str) -> WorkloadConfig:
+def create_workload_config(
+    framework_name: str, unit_name: str, tracing_enabled: bool = False
+) -> WorkloadConfig:
     """Create an WorkloadConfig for Gunicorn.
 
     Args:
         framework_name: framework name.
         unit_name: name of the app unit.
+        tracing_enabled: if True, tracing is enabled.
 
     Returns:
        new WorkloadConfig
@@ -37,4 +40,5 @@ def create_workload_config(framework_name: str, unit_name: str) -> WorkloadConfi
         ],
         metrics_target="*:9102",
         unit_name=unit_name,
+        tracing_enabled=tracing_enabled,
     )
