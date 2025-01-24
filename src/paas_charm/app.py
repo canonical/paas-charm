@@ -173,6 +173,13 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update({
+        "ALI_SERVERS": "kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092",
+        "ALI_USER": "relation-9",
+        "ALI_PASS": "EAO7r6EQBEmXZcRI7F3HEYxIdbK4GXdp",
+        "ALI_ROLE": "producer",
+        "ALI_TOPIC": "test-topic",
+        })
         return env
 
     @property

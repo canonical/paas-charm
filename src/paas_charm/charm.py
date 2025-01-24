@@ -7,7 +7,12 @@ import logging
 import typing
 
 import ops
-from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
+from charms.data_platform_libs.v0.data_interfaces import (
+    BootstrapServerChangedEvent,
+    DatabaseRequiresEvent,
+    KafkaRequires,
+    TopicCreatedEvent,
+)
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops.model import Container
@@ -163,6 +168,33 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(
             self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
         )
+        self._kafka = self._init_kafka(requires)
+
+    def _init_kafka(self, requires: dict[str, RelationMeta]) -> "KafkaRequires | None":
+        """Initialize the Kafka relation if its required.
+        Args:
+            requires: relation requires dictionary from metadata
+        Returns:
+            Returns the Kafka relation or None
+        """
+        _kafka = None
+        if "kafka" in requires and requires["kafka"].interface_name == "kafka":
+            try:
+                _kafka = KafkaRequires(charm=self, relation_name="kafka_client", topic=self.app.name)
+                self.framework.observe(
+                    _kafka.on.bootstrap_server_changed, self._on_kafka_bootstrap_server_changed
+                )
+                self.framework.observe(
+                    _kafka.on.topic_created, self._on_kafka_topic_created
+                )
+            except NameError:
+                logger.exception(
+                    "Missing charm library, "
+                    "please run `charmcraft fetch-lib charms.data_platform_libs.v0.data_interfaces`"
+                )
+
+        return _kafka
+
 
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
@@ -297,6 +329,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
             if not requires["rabbitmq"].optional:
                 missing_integrations.append("rabbitmq")
+        if self._kafka and not charm_state.integrations.kafka_servers:
+            if not requires["kafka"].optional:
+                missing_integrations.append("kafka")
         return missing_integrations
 
     def restart(self, rerun_migrations: bool = False) -> None:
@@ -328,7 +363,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             A dictionary representing the application environment variables.
         """
-        return self._create_app().gen_environment()
+        env = self._create_app().gen_environment()
+        env["ALI_SERVERS"] = "ALI_SERVERS"
+        env["ALI_USER"] = "ALI_USER"
+        env["ALI_PASS"] = "ALI_PASS"
+        env["ALI_ROLE"] = "ALI_ROLE"
+        env["ALI_TOPIC"] = "ALI_TOPIC"
+        return env
 
     def _create_charm_state(self) -> CharmState:
         """Create charm state.
@@ -359,6 +400,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
+            kafka_relation_data=self._kafka.fetch_relation_data() if self._kafka else None,
             base_url=self._base_url,
         )
 
@@ -472,4 +514,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_kafka_bootstrap_server_changed(self, _: ops.HookEvent) -> None:
+        """Handle kafka bootstrap server changed event."""
+        self.restart(rerun_migrations=True)
+
+    @block_if_invalid_config
+    def _on_kafka_topic_created(self, _: ops.HookEvent) -> None:
+        """Handle kafka topic created event."""
         self.restart()
