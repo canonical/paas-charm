@@ -24,7 +24,7 @@ from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, LAYER_WITH_TRACING
 GUNICORN_CONFIG_TEST_PARAMS = [
     pytest.param(
         {"workers": 10},
-        DEFAULT_LAYER,
+        False,
         textwrap.dedent(
             f"""\
                 bind = ['0.0.0.0:8000']
@@ -32,14 +32,13 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
-                workers = 10
-            """
+                workers = 10"""
         ),
         id="workers=10",
     ),
     pytest.param(
         {"threads": 2, "timeout": 3, "keepalive": 4},
-        DEFAULT_LAYER,
+        False,
         textwrap.dedent(
             f"""\
                 bind = ['0.0.0.0:8000']
@@ -49,28 +48,26 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 statsd_host = 'localhost:9125'
                 threads = 2
                 keepalive = 4
-                timeout = 3
-            """
+                timeout = 3"""
         ),
         id="threads=2,timeout=3,keepalive=4",
     ),
     pytest.param(
         {},
-        LAYER_WITH_TRACING,
+        True,
         textwrap.dedent(
             f"""\
+                from opentelemetry import trace
+                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+                from opentelemetry.sdk.trace import TracerProvider
+                from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
                 bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
 
-                from opentelemetry import trace
-                from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-                    OTLPSpanExporter,
-                )
-                from opentelemetry.sdk.trace import TracerProvider
-                from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
                 def post_fork(server, worker):
                     trace.set_tracer_provider(TracerProvider())
@@ -83,11 +80,11 @@ GUNICORN_CONFIG_TEST_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize("charm_state_params, layer, config_file", GUNICORN_CONFIG_TEST_PARAMS)
+@pytest.mark.parametrize("charm_state_params, tracing_enabled, config_file", GUNICORN_CONFIG_TEST_PARAMS)
 def test_gunicorn_config(
     harness: Harness,
     charm_state_params,
-    layer,
+    tracing_enabled,
     config_file,
     database_migration_mock,
 ) -> None:
@@ -100,14 +97,14 @@ def test_gunicorn_config(
     harness.begin()
     container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     harness.set_can_connect(FLASK_CONTAINER_NAME, True)
-    container.add_layer("default", layer)
+    container.add_layer("default", DEFAULT_LAYER)
 
     charm_state = CharmState(
         framework="flask",
         secret_key="",
         is_secret_storage_ready=True,
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0", tracing_enabled=tracing_enabled)
     webserver_config = WebserverConfig(**charm_state_params)
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
