@@ -19,6 +19,15 @@ from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    logger.exception(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+    )
+
 
 class TempoParameters(BaseModel):
     """Configuration for accessing Tempo service.
@@ -30,6 +39,27 @@ class TempoParameters(BaseModel):
 
     endpoint: str | None = None
     service_name: str | None = None
+
+    @classmethod
+    def from_charm(
+        cls, *, name: str, tracing: TracingEndpointRequirer | None
+    ) -> "TempoParameters | None":
+        """Initialize a new instance of the TempoParameters class from the associated charm.
+
+        Args:
+            name: Name of the tracing service.
+            tracing: The tracing integration object.
+
+        Return:
+            The TempoParameters instance created by the provided charm if
+            Tempo is relation is ready.
+        """
+        if tracing and tracing.is_ready():
+            return cls(
+                endpoint=f"{tracing.get_endpoint(protocol="otlp_http")}",
+                service_name=name,
+            )
+        return None
 
 
 class S3Parameters(BaseModel):
@@ -178,7 +208,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_relation_data: TempoParameters | None = None,
+        tempo_parameters: TempoParameters | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -193,7 +223,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+            tempo_parameters: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
             base_url: Base URL for the service.
 
@@ -215,7 +245,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
-            tracing_relation_data=tracing_relation_data,
+            tempo_parameters=tempo_parameters,
         )
         return cls(
             framework=framework,
@@ -302,7 +332,7 @@ class IntegrationsState:
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
-        tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+        tempo_parameters: The tracing uri provided by the Tempo coordinator charm
             and charm name.
     """
 
@@ -311,7 +341,7 @@ class IntegrationsState:
     s3_parameters: S3Parameters | None = None
     saml_parameters: SamlParameters | None = None
     rabbitmq_uri: str | None = None
-    tracing_relation_data: TempoParameters | None = None
+    tempo_parameters: TempoParameters | None = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -323,7 +353,7 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_relation_data: TempoParameters | None = None,
+        tempo_parameters: TempoParameters | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -335,7 +365,7 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_relation_data: The tracing uri provided by the Tempo coordinator charm
+            tempo_parameters: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
 
         Return:
@@ -384,5 +414,5 @@ class IntegrationsState:
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
-            tracing_relation_data=tracing_relation_data,
+            tempo_parameters=tempo_parameters,
         )

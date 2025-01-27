@@ -415,7 +415,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._saml and not charm_state.integrations.saml_parameters:
             if not requires["saml"].optional:
                 yield "saml"
-        if self._tracing and not charm_state.integrations.tracing_relation_data:
+        if self._tracing and not charm_state.integrations.tempo_parameters:
             if not requires["tracing"].optional:
                 yield "tracing"
 
@@ -482,12 +482,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
-        tracing_relation_data = None
-        if self._tracing and self._tracing.is_ready():
-            tracing_relation_data = TempoParameters(
-                endpoint=f'{self._tracing.get_endpoint(protocol="otlp_http")}',
-                service_name=self.app.name,
-            )
         return CharmState.from_charm(
             config=config,
             framework=self._framework_name,
@@ -498,7 +492,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
-            tracing_relation_data=tracing_relation_data,
+            tempo_parameters=TempoParameters.from_charm(name=self.app.name, tracing=self._tracing),
             base_url=self._base_url,
         )
 

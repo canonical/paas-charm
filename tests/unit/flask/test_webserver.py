@@ -80,7 +80,9 @@ GUNICORN_CONFIG_TEST_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize("charm_state_params, tracing_enabled, config_file", GUNICORN_CONFIG_TEST_PARAMS)
+@pytest.mark.parametrize(
+    "charm_state_params, tracing_enabled, config_file", GUNICORN_CONFIG_TEST_PARAMS
+)
 def test_gunicorn_config(
     harness: Harness,
     charm_state_params,
@@ -104,7 +106,9 @@ def test_gunicorn_config(
         secret_key="",
         is_secret_storage_ready=True,
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0", tracing_enabled=tracing_enabled)
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", tracing_enabled=tracing_enabled
+    )
     webserver_config = WebserverConfig(**charm_state_params)
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
