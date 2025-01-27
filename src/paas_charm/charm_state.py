@@ -56,7 +56,7 @@ class TempoParameters(BaseModel):
         """
         if tracing and tracing.is_ready():
             return cls(
-                endpoint=f"{tracing.get_endpoint(protocol="otlp_http")}",
+                endpoint=f"{tracing.get_endpoint(protocol='otlp_http')}",
                 service_name=name,
             )
         return None
