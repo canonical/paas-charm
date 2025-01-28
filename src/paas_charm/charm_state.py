@@ -7,6 +7,7 @@ import os
 import re
 import typing
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Optional
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
@@ -209,6 +210,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
         tempo_parameters: TempoParameters | None = None,
+        smtp_relation_data: dict | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -225,6 +227,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             rabbitmq_uri: RabbitMQ uri.
             tempo_parameters: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
+            smtp_relation_data: Relation data from the SMTP app.
             base_url: Base URL for the service.
 
         Return:
@@ -246,6 +249,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
+            smtp_relation_data=smtp_relation_data,
         )
         return cls(
             framework=framework,
@@ -334,6 +338,7 @@ class IntegrationsState:
         rabbitmq_uri: RabbitMQ uri.
         tempo_parameters: The tracing uri provided by the Tempo coordinator charm
             and charm name.
+        smtp_parameters: SMTP parameters.
     """
 
     redis_uri: str | None = None
@@ -342,8 +347,10 @@ class IntegrationsState:
     saml_parameters: SamlParameters | None = None
     rabbitmq_uri: str | None = None
     tempo_parameters: TempoParameters | None = None
+    smtp_parameters: "SmtpParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
+    # flake8: noqa: C901
     @classmethod
     def build(  # pylint: disable=too-many-arguments
         cls,
@@ -354,6 +361,7 @@ class IntegrationsState:
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
         tempo_parameters: TempoParameters | None = None,
+        smtp_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -367,6 +375,7 @@ class IntegrationsState:
             rabbitmq_uri: RabbitMQ uri.
             tempo_parameters: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
+            smtp_relation_data: smtp relation data from smtp lib.
 
         Return:
             The IntegrationsState instance created.
@@ -404,6 +413,18 @@ class IntegrationsState:
         # as None while the integration is being created.
         if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
             redis_uri = None
+
+        if smtp_relation_data is not None:
+            try:
+                smtp_parameters = SmtpParameters(**smtp_relation_data)
+            except ValidationError as exc:
+                error_message = build_validation_error_message(exc)
+                raise CharmConfigInvalidError(
+                    f"Invalid Smtp configuration: {error_message}"
+                ) from exc
+        else:
+            smtp_parameters = None
+
         return cls(
             redis_uri=redis_uri,
             databases_uris={
@@ -415,4 +436,149 @@ class IntegrationsState:
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
+            smtp_parameters=smtp_parameters,
         )
+
+
+class S3Parameters(BaseModel):
+    """Configuration for accessing S3 bucket.
+
+    Attributes:
+        access_key: AWS access key.
+        secret_key: AWS secret key.
+        region: The region to connect to the object storage.
+        storage_class: Storage Class for objects uploaded to the object storage.
+        bucket: The bucket name.
+        endpoint: The endpoint used to connect to the object storage.
+        path: The path inside the bucket to store objects.
+        s3_api_version: S3 protocol specific API signature.
+        s3_uri_style: The S3 protocol specific bucket path lookup type. Can be "path" or "host".
+        addressing_style: S3 protocol addressing style, can be "path" or "virtual".
+        attributes: The custom metadata (HTTP headers).
+        tls_ca_chain: The complete CA chain, which can be used for HTTPS validation.
+    """
+
+    access_key: str = Field(alias="access-key")
+    secret_key: str = Field(alias="secret-key")
+    region: Optional[str] = None
+    storage_class: Optional[str] = Field(alias="storage-class", default=None)
+    bucket: str
+    endpoint: Optional[str] = None
+    path: Optional[str] = None
+    s3_api_version: Optional[str] = Field(alias="s3-api-version", default=None)
+    s3_uri_style: Optional[str] = Field(alias="s3-uri-style", default=None)
+    tls_ca_chain: Optional[list[str]] = Field(alias="tls-ca-chain", default=None)
+    attributes: Optional[list[str]] = None
+
+    @property
+    def addressing_style(self) -> Optional[str]:
+        """Translates s3_uri_style to AWS addressing_style."""
+        if self.s3_uri_style == "host":
+            return "virtual"
+        # If None or "path", it does not change.
+        return self.s3_uri_style
+
+
+class SamlParameters(BaseModel, extra=Extra.allow):
+    """Configuration for accessing SAML.
+
+    Attributes:
+        entity_id: Entity Id of the SP.
+        metadata_url: URL for the metadata for the SP.
+        signing_certificate: Signing certificate for the SP.
+        single_sign_on_redirect_url: Sign on redirect URL for the SP.
+    """
+
+    entity_id: str
+    metadata_url: str
+    signing_certificate: str = Field(alias="x509certs")
+    single_sign_on_redirect_url: str = Field(alias="single_sign_on_service_redirect_url")
+
+    @field_validator("signing_certificate")
+    @classmethod
+    def validate_signing_certificate_exists(cls, certs: str, _: ValidationInfo) -> str:
+        """Validate that at least a certificate exists in the list of certificates.
+
+        It is a prerequisite that the fist certificate is the signing certificate,
+        otherwise this method would return a wrong certificate.
+
+        Args:
+            certs: Original x509certs field
+
+        Returns:
+            The validated signing certificate
+
+        Raises:
+            ValueError: If there is no certificate.
+        """
+        certificate = certs.split(",")[0]
+        if not certificate:
+            raise ValueError("Missing x509certs. There should be at least one certificate.")
+        return certificate
+
+
+class TransportSecurity(str, Enum):
+    """Represent the transport security values.
+
+    Attributes:
+        NONE: none
+        STARTTLS: starttls
+        TLS: tls
+    """
+
+    NONE = "none"
+    STARTTLS = "starttls"
+    TLS = "tls"
+
+
+class AuthType(str, Enum):
+    """Represent the auth type values.
+
+    Attributes:
+        NONE: none
+        NOT_PROVIDED: not_provided
+        PLAIN: plain
+    """
+
+    NONE = "none"
+    NOT_PROVIDED = "not_provided"
+    PLAIN = "plain"
+
+
+class SmtpParameters(BaseModel, extra=Extra.allow):
+    """Represent the SMTP relation data.
+
+    Attributes:
+        host: The hostname or IP address of the outgoing SMTP relay.
+        port: The port of the outgoing SMTP relay.
+        user: The SMTP AUTH user to use for the outgoing SMTP relay.
+        password: The SMTP AUTH password to use for the outgoing SMTP relay.
+        password_id: The secret ID where the SMTP AUTH password for the SMTP relay is stored.
+        auth_type: The type used to authenticate with the SMTP relay.
+        transport_security: The security protocol to use for the outgoing SMTP relay.
+        domain: The domain used by the emails sent from SMTP relay.
+        skip_ssl_verify: Specifies if certificate trust verification is skipped in the SMTP relay.
+    """
+
+    host: str = Field(..., min_length=1)
+    port: int = Field(..., ge=1, le=65536)
+    user: str | None = None
+    password: str | None = None
+    password_id: str | None = None
+    auth_type: AuthType | None = None
+    transport_security: TransportSecurity | None = None
+    domain: str | None = None
+    skip_ssl_verify: str | None = False
+
+
+    @field_validator("auth_type")
+    @classmethod
+    def validate_auth_type(cls, auth_type: str, _: ValidationInfo) -> str:
+        if auth_type == AuthType.NONE:
+            return None
+
+    @field_validator("transport_security")
+    @classmethod
+    def validate_transport_security(cls, transport_security: str, _: ValidationInfo) -> str:
+        if transport_security == TransportSecurity.NONE:
+            return None
