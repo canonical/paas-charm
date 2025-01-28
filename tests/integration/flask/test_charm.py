@@ -41,6 +41,7 @@ async def test_flask_is_up(
 @pytest.mark.parametrize(
     "update_config, timeout",
     [
+        pytest.param({"webserver-timeout": 3}, 3, id="timeout=9"),
         pytest.param({"webserver-timeout": 7}, 7, id="timeout=7"),
         pytest.param({"webserver-timeout": 5}, 5, id="timeout=5"),
         pytest.param({"webserver-timeout": 3}, 3, id="timeout=3"),
