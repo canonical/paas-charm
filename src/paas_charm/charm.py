@@ -52,13 +52,6 @@ except ImportError:
     logger.exception(
         "Missing charm library, please run "
         "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
-
-try:
-    # pylint: disable=ungrouped-imports
-    from charms.smtp_integrator.v0.smtp import SmtpRequires
-except ImportError:
-    logger.exception(
-        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
     )
 
 
@@ -105,12 +98,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
         self._tracing = self._init_tracing(requires)
-
-        if "smtp" in requires and requires["smtp"].interface_name == "smtp":
-            self._smtp = SmtpRequires(self)
-            self.framework.observe(self._smtp.on.smtp_data_available, self._on_smtp_data_available)
-        else:
-            self._smtp = None
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -431,9 +418,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._tracing and not charm_state.integrations.tempo_parameters:
             if not requires["tracing"].optional:
                 yield "tracing"
-        if self._smtp and not charm_state.integrations.smtp_parameters:
-            if not requires["smtp"].optional:
-                yield "smtp"
 
     def _missing_required_integrations(
         self, charm_state: CharmState
@@ -490,14 +474,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         saml_relation_data = None
         if self._saml and (saml_data := self._saml.get_relation_data()):
             saml_relation_data = saml_data.to_relation_data()
-        smtp_relation_data = None
-        if self._smtp and (smtp_data := self._smtp.get_relation_data()):
-            smtp_relation_data = smtp_data.to_relation_data()
-            logger.info(f"===========smtp_relation_data: {smtp_relation_data}")
-            if smtp_relation_data.get("password_id", None):
-                secret = self.model.get_secret(id=smtp_relation_data.password_id)
-                content = secret.get_content()
-                logger.info(f"Setting SMTP secret content: {content}")
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
             dict,
@@ -518,7 +494,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
             tempo_parameters=TempoParameters.from_charm(name=self.app.name, tracing=self._tracing),
             base_url=self._base_url,
-            smtp_relation_data=smtp_relation_data,
         )
 
     @property
@@ -641,9 +616,4 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
         """Handle tracing relation broken event."""
-        self.restart()
-
-    @block_if_invalid_config
-    def _on_smtp_data_available(self, _: ops.HookEvent) -> None:
-        """Handle smtp data available event."""
         self.restart()
