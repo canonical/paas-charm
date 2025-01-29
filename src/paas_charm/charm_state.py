@@ -19,139 +19,6 @@ from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
-try:
-    # pylint: disable=ungrouped-imports
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
-except ImportError:
-    logger.exception(
-        "Missing charm library, please run "
-        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
-    )
-
-
-class TempoParameters(BaseModel):
-    """Configuration for accessing Tempo service.
-
-    Attributes:
-        endpoint: Tempo endpoint URL to send the traces.
-        service_name: Tempo service name for the workload.
-    """
-
-    endpoint: str | None = None
-    service_name: str | None = None
-
-    @classmethod
-    def from_charm(
-        cls, *, name: str, tracing: TracingEndpointRequirer | None
-    ) -> "TempoParameters | None":
-        """Initialize a new instance of the TempoParameters class from the associated charm.
-
-        Args:
-            name: Name of the tracing service.
-            tracing: The tracing integration object.
-
-        Return:
-            The TempoParameters instance created by the provided charm if
-            Tempo is relation is ready.
-        """
-        if tracing and tracing.is_ready():
-            return cls(
-                endpoint=f"{tracing.get_endpoint(protocol='otlp_http')}",
-                service_name=name,
-            )
-        return None
-
-
-class S3Parameters(BaseModel):
-    """Configuration for accessing S3 bucket.
-
-    Attributes:
-        access_key: AWS access key.
-        secret_key: AWS secret key.
-        region: The region to connect to the object storage.
-        storage_class: Storage Class for objects uploaded to the object storage.
-        bucket: The bucket name.
-        endpoint: The endpoint used to connect to the object storage.
-        path: The path inside the bucket to store objects.
-        s3_api_version: S3 protocol specific API signature.
-        s3_uri_style: The S3 protocol specific bucket path lookup type. Can be "path" or "host".
-        addressing_style: S3 protocol addressing style, can be "path" or "virtual".
-        attributes: The custom metadata (HTTP headers).
-        tls_ca_chain: The complete CA chain, which can be used for HTTPS validation.
-    """
-
-    access_key: str = Field(alias="access-key")
-    secret_key: str = Field(alias="secret-key")
-    region: Optional[str] = None
-    storage_class: Optional[str] = Field(alias="storage-class", default=None)
-    bucket: str
-    endpoint: Optional[str] = None
-    path: Optional[str] = None
-    s3_api_version: Optional[str] = Field(alias="s3-api-version", default=None)
-    s3_uri_style: Optional[str] = Field(alias="s3-uri-style", default=None)
-    tls_ca_chain: Optional[list[str]] = Field(alias="tls-ca-chain", default=None)
-    attributes: Optional[list[str]] = None
-
-    @property
-    def addressing_style(self) -> Optional[str]:
-        """Translates s3_uri_style to AWS addressing_style."""
-        if self.s3_uri_style == "host":
-            return "virtual"
-        # If None or "path", it does not change.
-        return self.s3_uri_style
-
-
-class SamlParameters(BaseModel, extra=Extra.allow):
-    """Configuration for accessing SAML.
-
-    Attributes:
-        entity_id: Entity Id of the SP.
-        metadata_url: URL for the metadata for the SP.
-        signing_certificate: Signing certificate for the SP.
-        single_sign_on_redirect_url: Sign on redirect URL for the SP.
-    """
-
-    entity_id: str
-    metadata_url: str
-    signing_certificate: str = Field(alias="x509certs")
-    single_sign_on_redirect_url: str = Field(alias="single_sign_on_service_redirect_url")
-
-    @field_validator("signing_certificate")
-    @classmethod
-    def validate_signing_certificate_exists(cls, certs: str, _: ValidationInfo) -> str:
-        """Validate that at least a certificate exists in the list of certificates.
-
-        It is a prerequisite that the fist certificate is the signing certificate,
-        otherwise this method would return a wrong certificate.
-
-        Args:
-            certs: Original x509certs field
-
-        Returns:
-            The validated signing certificate
-
-        Raises:
-            ValueError: If there is no certificate.
-        """
-        certificate = certs.split(",")[0]
-        if not certificate:
-            raise ValueError("Missing x509certs. There should be at least one certificate.")
-        return certificate
-
-
-class ProxyConfig(BaseModel):
-    """Configuration for network access through proxy.
-
-    Attributes:
-        http_proxy: The http proxy URL.
-        https_proxy: The https proxy URL.
-        no_proxy: Comma separated list of hostnames to bypass proxy.
-    """
-
-    http_proxy: str | None = Field(default=None, pattern="https?://.+")
-    https_proxy: str | None = Field(default=None, pattern="https?://.+")
-    no_proxy: typing.Optional[str] = None
-
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
 class CharmState:  # pylint: disable=too-many-instance-attributes
@@ -208,7 +75,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_parameters: TempoParameters | None = None,
+        tempo_relation_data: dict[str, str] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -223,7 +90,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_parameters: The tracing uri provided by the Tempo coordinator charm
+            tempo_relation_data: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
             base_url: Base URL for the service.
 
@@ -245,7 +112,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
-            tempo_parameters=tempo_parameters,
+            tempo_relation_data=tempo_relation_data,
         )
         return cls(
             framework=framework,
@@ -338,10 +205,85 @@ class IntegrationsState:
 
     redis_uri: str | None = None
     databases_uris: dict[str, str] = field(default_factory=dict)
-    s3_parameters: S3Parameters | None = None
-    saml_parameters: SamlParameters | None = None
+    s3_parameters: "S3Parameters | None" = None
+    saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
-    tempo_parameters: TempoParameters | None = None
+    tempo_parameters: "TempoParameters | None" = None
+
+    @classmethod
+    def generate_saml_relation_parameters(
+        cls,
+        saml_relation_data: typing.MutableMapping[str, str] | None,
+        parameter_type: type,
+    ) -> "SamlParameters | None":
+        """Generate SAML relation parameter class from relation data.
+
+        Args:
+            saml_relation_data: Relation data.
+            parameter_type: Parameter type to use.
+
+        Return:
+            Parameter instance created.
+
+        Raises:
+            CharmConfigInvalidError: If some parameter in invalid.
+        """
+        if saml_relation_data is not None:
+            try:
+                relation_parameter = parameter_type(**saml_relation_data)
+            except ValidationError as exc:
+                error_message = build_validation_error_message(exc)
+                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
+        else:
+            relation_parameter = None
+        return relation_parameter
+
+    @classmethod
+    def generate_relation_parameters(
+        cls,
+        relation_data: dict[str, str] | None,
+        parameter_type: type,
+    ) -> "SamlParameters | S3Parameters | TempoParameters | None":
+        """Generate relation parameter class from relation data.
+
+        Args:
+            relation_data: Relation data.
+            parameter_type: Parameter type to use.
+
+        Return:
+            Parameter instance created.
+
+        Raises:
+            CharmConfigInvalidError: If some parameter in invalid.
+        """
+        if relation_data:
+            try:
+                relation_parameter = parameter_type(**relation_data)
+            except ValidationError as exc:
+                error_message = build_validation_error_message(exc)
+                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
+        else:
+            relation_parameter = None
+        return relation_parameter
+
+    @classmethod
+    def _collect_relation_parameters(
+        cls,
+        s3_connection_info: dict[str, str] | None,
+        saml_relation_data: typing.MutableMapping[str, str] | None = None,
+        tempo_relation_data: dict[str, str] | None = None,
+    ) -> typing.Generator:
+        """Collect relation parameter classes from relation data.
+
+        Args:
+            s3_connection_info: S3 relation data.
+            saml_relation_data: SAML relation data.
+            tempo_relation_data: Tempo relation data.
+
+        """
+        yield cls.generate_relation_parameters(s3_connection_info, S3Parameters)
+        yield cls.generate_saml_relation_parameters(saml_relation_data, SamlParameters)
+        yield cls.generate_relation_parameters(tempo_relation_data, TempoParameters)
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -353,7 +295,7 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_parameters: TempoParameters | None = None,
+        tempo_relation_data: dict[str, str] | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -365,40 +307,17 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_parameters: The tracing uri provided by the Tempo coordinator charm
+            tempo_relation_data: The tracing uri provided by the Tempo coordinator charm
                 and charm name.
 
         Return:
             The IntegrationsState instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
         """
-        if s3_connection_info:
-            try:
-                # s3_connection_info is not really a Dict[str, str] as stated in
-                # charms.data_platform_libs.v0.s3. It is really a
-                # Dict[str, str | list[str]].
-                # Ignoring as mypy does not work correctly with that information.
-                s3_parameters = S3Parameters(**s3_connection_info)  # type: ignore[arg-type]
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(
-                    f"Invalid S3 configuration: {error_message}"
-                ) from exc
-        else:
-            s3_parameters = None
-
-        if saml_relation_data is not None:
-            try:
-                saml_parameters = SamlParameters(**saml_relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(
-                    f"Invalid Saml configuration: {error_message}"
-                ) from exc
-        else:
-            saml_parameters = None
+        s3_parameters, saml_parameters, tempo_parameters = list(
+            cls._collect_relation_parameters(
+                s3_connection_info, saml_relation_data, tempo_relation_data
+            )
+        )
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -416,3 +335,106 @@ class IntegrationsState:
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
         )
+
+
+class TempoParameters(BaseModel):
+    """Configuration for accessing Tempo service.
+
+    Attributes:
+        endpoint: Tempo endpoint URL to send the traces.
+        service_name: Tempo service name for the workload.
+    """
+
+    endpoint: str | None = None
+    service_name: str | None = None
+
+
+class S3Parameters(BaseModel):
+    """Configuration for accessing S3 bucket.
+
+    Attributes:
+        access_key: AWS access key.
+        secret_key: AWS secret key.
+        region: The region to connect to the object storage.
+        storage_class: Storage Class for objects uploaded to the object storage.
+        bucket: The bucket name.
+        endpoint: The endpoint used to connect to the object storage.
+        path: The path inside the bucket to store objects.
+        s3_api_version: S3 protocol specific API signature.
+        s3_uri_style: The S3 protocol specific bucket path lookup type. Can be "path" or "host".
+        addressing_style: S3 protocol addressing style, can be "path" or "virtual".
+        attributes: The custom metadata (HTTP headers).
+        tls_ca_chain: The complete CA chain, which can be used for HTTPS validation.
+    """
+
+    access_key: str = Field(alias="access-key")
+    secret_key: str = Field(alias="secret-key")
+    region: Optional[str] = None
+    storage_class: Optional[str] = Field(alias="storage-class", default=None)
+    bucket: str
+    endpoint: Optional[str] = None
+    path: Optional[str] = None
+    s3_api_version: Optional[str] = Field(alias="s3-api-version", default=None)
+    s3_uri_style: Optional[str] = Field(alias="s3-uri-style", default=None)
+    tls_ca_chain: Optional[list[str]] = Field(alias="tls-ca-chain", default=None)
+    attributes: Optional[list[str]] = None
+
+    @property
+    def addressing_style(self) -> Optional[str]:
+        """Translates s3_uri_style to AWS addressing_style."""
+        if self.s3_uri_style == "host":
+            return "virtual"
+        # If None or "path", it does not change.
+        return self.s3_uri_style
+
+
+class SamlParameters(BaseModel, extra=Extra.allow):
+    """Configuration for accessing SAML.
+
+    Attributes:
+        entity_id: Entity Id of the SP.
+        metadata_url: URL for the metadata for the SP.
+        signing_certificate: Signing certificate for the SP.
+        single_sign_on_redirect_url: Sign on redirect URL for the SP.
+    """
+
+    entity_id: str
+    metadata_url: str
+    signing_certificate: str = Field(alias="x509certs")
+    single_sign_on_redirect_url: str = Field(alias="single_sign_on_service_redirect_url")
+
+    @field_validator("signing_certificate")
+    @classmethod
+    def validate_signing_certificate_exists(cls, certs: str, _: ValidationInfo) -> str:
+        """Validate that at least a certificate exists in the list of certificates.
+
+        It is a prerequisite that the fist certificate is the signing certificate,
+        otherwise this method would return a wrong certificate.
+
+        Args:
+            certs: Original x509certs field
+
+        Returns:
+            The validated signing certificate
+
+        Raises:
+            ValueError: If there is no certificate.
+        """
+        certificate = certs.split(",")[0]
+        if not certificate:
+            raise ValueError("Missing x509certs. There should be at least one certificate.")
+        return certificate
+
+
+class ProxyConfig(BaseModel):
+    """Configuration for network access through proxy.
+
+    Attributes:
+        http_proxy: The http proxy URL.
+        https_proxy: The https proxy URL.
+        no_proxy: Comma separated list of hostnames to bypass proxy.
+    """
+
+    http_proxy: str | None = Field(default=None, pattern="https?://.+")
+    https_proxy: str | None = Field(default=None, pattern="https?://.+")
+    no_proxy: typing.Optional[str] = None

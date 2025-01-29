@@ -15,7 +15,7 @@ from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, TempoParameters
+from paas_charm.charm_state import CharmState
 from paas_charm.charm_utils import block_if_invalid_config
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
@@ -474,6 +474,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         saml_relation_data = None
         if self._saml and (saml_data := self._saml.get_relation_data()):
             saml_relation_data = saml_data.to_relation_data()
+
+        tempo_relation_data = None
+        if self._tracing and self._tracing.is_ready():
+            tempo_relation_data = {
+                "service_name": self.app.name,
+                "endpoint": f"{self._tracing.get_endpoint(protocol="otlp_http")}",
+            }
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
             dict,
@@ -492,7 +499,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
-            tempo_parameters=TempoParameters.from_charm(name=self.app.name, tracing=self._tracing),
+            tempo_relation_data=tempo_relation_data,
             base_url=self._base_url,
         )
 
