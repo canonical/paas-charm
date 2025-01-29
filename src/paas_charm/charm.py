@@ -479,7 +479,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._tracing and self._tracing.is_ready():
             tempo_relation_data = {
                 "service_name": self.app.name,
-                "endpoint": f"{self._tracing.get_endpoint(protocol="otlp_http")}",
+                "endpoint": f"{self._tracing.get_endpoint(protocol='otlp_http')}",
             }
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
