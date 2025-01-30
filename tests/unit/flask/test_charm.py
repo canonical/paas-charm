@@ -361,4 +361,4 @@ def test_invalid_integration(harness: Harness):
     harness.add_relation("s3", "s3-integration", app_data=s3_relation_data)
     harness.begin_with_initial_hooks()
     assert isinstance(harness.model.unit.status, ops.BlockedStatus)
-    assert "Invalid configuration" in str(harness.model.unit.status.message)
+    assert "Invalid S3Parameters configuration" in str(harness.model.unit.status.message)

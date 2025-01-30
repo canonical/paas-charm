@@ -210,81 +210,6 @@ class IntegrationsState:
     rabbitmq_uri: str | None = None
     tempo_parameters: "TempoParameters | None" = None
 
-    @classmethod
-    def generate_saml_relation_parameters(
-        cls,
-        saml_relation_data: typing.MutableMapping[str, str] | None,
-        parameter_type: type,
-    ) -> "SamlParameters | None":
-        """Generate SAML relation parameter class from relation data.
-
-        Args:
-            saml_relation_data: Relation data.
-            parameter_type: Parameter type to use.
-
-        Return:
-            Parameter instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
-        """
-        if saml_relation_data is not None:
-            try:
-                relation_parameter = parameter_type(**saml_relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
-        else:
-            relation_parameter = None
-        return relation_parameter
-
-    @classmethod
-    def generate_relation_parameters(
-        cls,
-        relation_data: dict[str, str] | None,
-        parameter_type: type,
-    ) -> "SamlParameters | S3Parameters | TempoParameters | None":
-        """Generate relation parameter class from relation data.
-
-        Args:
-            relation_data: Relation data.
-            parameter_type: Parameter type to use.
-
-        Return:
-            Parameter instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
-        """
-        if relation_data:
-            try:
-                relation_parameter = parameter_type(**relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
-        else:
-            relation_parameter = None
-        return relation_parameter
-
-    @classmethod
-    def _collect_relation_parameters(
-        cls,
-        s3_connection_info: dict[str, str] | None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
-    ) -> typing.Generator:
-        """Collect relation parameter classes from relation data.
-
-        Args:
-            s3_connection_info: S3 relation data.
-            saml_relation_data: SAML relation data.
-            tempo_relation_data: Tempo relation data.
-
-        """
-        yield cls.generate_relation_parameters(s3_connection_info, S3Parameters)
-        yield cls.generate_saml_relation_parameters(saml_relation_data, SamlParameters)
-        yield cls.generate_relation_parameters(tempo_relation_data, TempoParameters)
-
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
     def build(  # pylint: disable=too-many-arguments
@@ -314,7 +239,7 @@ class IntegrationsState:
             The IntegrationsState instance created.
         """
         s3_parameters, saml_parameters, tempo_parameters = list(
-            cls._collect_relation_parameters(
+            collect_relation_parameters(
                 s3_connection_info, saml_relation_data, tempo_relation_data
             )
         )
@@ -438,3 +363,81 @@ class ProxyConfig(BaseModel):
     http_proxy: str | None = Field(default=None, pattern="https?://.+")
     https_proxy: str | None = Field(default=None, pattern="https?://.+")
     no_proxy: typing.Optional[str] = None
+
+
+def generate_saml_relation_parameters(
+    saml_relation_data: typing.MutableMapping[str, str] | None,
+    parameter_type: type,
+) -> "SamlParameters | None":
+    """Generate SAML relation parameter class from relation data.
+
+    Args:
+        saml_relation_data: Relation data.
+        parameter_type: Parameter type to use.
+
+    Return:
+        Parameter instance created.
+
+    Raises:
+        CharmConfigInvalidError: If some parameter in invalid.
+    """
+    if saml_relation_data is None:
+        return None
+    try:
+        return parameter_type(**saml_relation_data)
+    except ValidationError as exc:
+        error_message = build_validation_error_message(exc)
+        raise CharmConfigInvalidError(
+            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+        ) from exc
+
+
+def generate_relation_parameters(
+    relation_data: dict[str, str] | None,
+    parameter_type: type,
+) -> "SamlParameters | S3Parameters | TempoParameters | None":
+    """Generate relation parameter class from relation data.
+
+    Args:
+        relation_data: Relation data.
+        parameter_type: Parameter type to use.
+
+    Return:
+        Parameter instance created.
+
+    Raises:
+        CharmConfigInvalidError: If some parameter in invalid.
+    """
+    if not relation_data:
+        return None
+    try:
+        return parameter_type(**relation_data)
+    except ValidationError as exc:
+        error_message = build_validation_error_message(exc)
+        raise CharmConfigInvalidError(
+            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+        ) from exc
+
+
+def collect_relation_parameters(
+    s3_connection_info: dict[str, str] | None,
+    saml_relation_data: typing.MutableMapping[str, str] | None = None,
+    tempo_relation_data: dict[str, str] | None = None,
+) -> typing.Generator:
+    """Collect relation parameter classes from relation data.
+
+    Args:
+        s3_connection_info: S3 relation data.
+        saml_relation_data: SAML relation data.
+        tempo_relation_data: Tempo relation data.
+
+    Yields:
+        s3_parameters: S3 parameters.
+        saml_parameters: SAML parameters.
+        tempo_parameters: Tempo parameters.
+
+
+    """
+    yield generate_relation_parameters(s3_connection_info, S3Parameters)
+    yield generate_saml_relation_parameters(saml_relation_data, SamlParameters)
+    yield generate_relation_parameters(tempo_relation_data, TempoParameters)
