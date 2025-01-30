@@ -61,44 +61,6 @@ application to benefit from the entire
 can be connected to a database, e.g. an HA Postgres, observed through a Grafana
 based observability stack, get ingress and much more.
 
-Create a complete development environment in a few commands
------------------------------------------------------------
-
-Rockcraft natively supports Flask. Production-ready OCI images for your
-Flask application can be created using Rockcraft with 3 easy
-commands that need to be run in the root directory of the Flask application:
-
-.. code-block:: bash
-
-   sudo snap install rockcraft --classic
-   rockcraft init --profile flask-framework
-   rockcraft pack
-
-The `full Rockcraft tutorial
-<https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_ for
-creating an OCI image for a Flask application takes you from a plain Ubuntu
-installation to a production ready OCI image for your Flask application.
-
-Charmcraft also natively supports Flask. You can use it
-to create charms that automate every aspect of your Flask
-application's life, including integrating with a database, preparing the tables
-in the database, integrating with observability and exposing the application
-using ingress. From the root directory of the Flask application, the charm for
-the application can be created using 4 easy commands:
-
-.. code-block:: bash
-
-   mkdir charm & cd charm
-   sudo snap install charmcraft --classic
-   charmcraft init --profile flask-framework
-   charmcraft pack
-
-The `full getting started tutorial <https://canonical-charmcraft.
-readthedocs-hosted.com/en/latest/tutorial/flask/>`_
-for creating a charm for a Flask application takes you from a plain Ubuntu
-installation to deploying the Flask application on Kubernetes, exposing it using
-ingress and integrating it with a database.
-
 Documentation
 -------------
 
