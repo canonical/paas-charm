@@ -33,7 +33,7 @@ E = typing.TypeVar("E", bound=ops.EventBase)
 
 
 def block_if_invalid_config(
-    method: typing.Callable[[C, E], None]
+    method: typing.Callable[[C, E], None],
 ) -> typing.Callable[[C, E], None]:
     """Create a decorator that puts the charm in blocked state if the config is wrong.
 
