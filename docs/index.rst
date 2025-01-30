@@ -6,17 +6,25 @@
 
 **A simple way to deploy and operate 12-Factor web applications.**
 
-You can use a few simple commands to set up a fully integrated and observable
-Kubernetes environment for your web application. This solution, called
-12-factor charms, provides an abstraction layer over existing Canonical
-products. 12-factor charms are aimed at developers who create applications based
-on the `12-factor methodology. <https://12factor.net/>`_
+Canonical products contain built-in support for web applications.
+This solution, called 12-factor charms, provides an abstraction layer
+over existing products to provide this support.
 
-While this page introduces 12-factor charms in the context of
-the `Flask framework <https://flask.palletsprojects.com/en/stable/>`_,
-the same solution also applies to 12-factor applications built
-using the following frameworks:
+With a few simple commands, you can set up a fully integrated and observable
+Kubernetes environment for your web application. These commands create
+production-ready OCI-compliant container images and software operators wrapped
+around the container images. From there, you can deploy your web application,
+connect it to a database, observe through a Grafana based observability stack,
+get ingress and much more.
 
+12-factor charms are aimed at developers who create applications based on the
+`12-factor methodology. <https://12factor.net/>`_ Developers and operators of
+12-factor web applications can take advantage of the 12-factor charm solution
+to simplify their operations and easily deploy their applications to production.
+
+The solution applies to 12-factor applications built using the following frameworks:
+
+- Flask
 - Django
 - FastAPI
 - Go
