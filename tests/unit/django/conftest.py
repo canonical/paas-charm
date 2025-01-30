@@ -16,7 +16,7 @@ from ops.testing import Harness
 from examples.django.charm.src.charm import DjangoCharm
 from paas_charm.database_migration import DatabaseMigrationStatus
 
-from .constants import DEFAULT_LAYER
+from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -101,10 +101,9 @@ def _build_harness(meta=None):
     """Create a harness instance with the specified metadata."""
     harness = Harness(DjangoCharm, meta=meta)
     harness.set_leader()
-    container = "django-app"
-    root = harness.get_filesystem_root(container)
+    root = harness.get_filesystem_root(DJANGO_CONTAINER_NAME)
     (root / "django/app").mkdir(parents=True)
-    harness.set_can_connect(container, True)
+    harness.set_can_connect(DJANGO_CONTAINER_NAME, True)
 
     def check_config_handler(_):
         """Handle the gunicorn check config command."""
@@ -118,7 +117,7 @@ def _build_harness(meta=None):
         "--check-config",
     ]
     harness.handle_exec(
-        container,
+        DJANGO_CONTAINER_NAME,
         check_config_command,
         handler=check_config_handler,
     )

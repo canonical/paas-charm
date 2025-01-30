@@ -53,5 +53,5 @@ def test_tracing_not_activated(harness: Harness):
 
     assert harness.model.unit.status == ops.ActiveStatus()
     service_env = container.get_plan().services["flask"].environment
-    assert service_env.get("OTEL_EXPORTER_OTLP_ENDPOINT", None) is None
-    assert service_env.get("OTEL_SERVICE_NAME", None) is None
+    assert service_env.get("OTEL_EXPORTER_OTLP_ENDPOINT") is None
+    assert service_env.get("OTEL_SERVICE_NAME") is None
