@@ -66,12 +66,11 @@ Documentation
 
 Documentation for this project is located in a few places:
 
-1. This site: Documentation related to the product
+1. This site: Documentation related to the product and development
 2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
    Documentation related to the OCI image containers
 3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
    Documentation related to the software operators (charms)
-4. Coming soon: Documentation related to development
 
 Project and community
 ---------------------
