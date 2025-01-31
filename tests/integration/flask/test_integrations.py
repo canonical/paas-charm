@@ -14,6 +14,8 @@ from juju.model import Model
 from pytest_operator.plugin import OpsTest
 from saml_test_helper import SamlK8sTestHelper
 
+from tests.integration.helpers import get_mails_patiently
+
 logger = logging.getLogger(__name__)
 
 
@@ -177,10 +179,9 @@ async def test_smtp_integration(
     mailcatcher,
 ):
     """
-    arrange: build and deploy the flask charm. Create the s3 bucket.
-    act: Integrate the charm with the s3-integrator.
-    assert: the flask application should return in the endpoint /env
-       the correct S3 env variables.
+    arrange: build and deploy the flask charm. Integrate the charm with the s3-integrator.
+    act: send an email from flask charm.
+    assert: the mailcatcher should have received the email.
     """
     smtp_config = {
         "auth_type": "none",
@@ -202,11 +203,14 @@ async def test_smtp_integration(
         status="active",
     )
 
-    for unit_ip in await get_unit_ips(flask_app.name):
-        response = requests.get(f"http://{unit_ip}:8000/env", timeout=5)
-        assert response.status_code == 200
-        env = response.json()
-        assert env["SMTP_HOST"] == smtp_config["host"]
-        assert env["SMTP_DOMAIN"] == smtp_config["domain"]
-        assert env["SMTP_PORT"] == str(smtp_config["port"])
-        assert env.get("SMTP_AUTH_TYPE") == None
+    unit_ip = (await get_unit_ips(flask_app.name))[0]
+
+    response = requests.get(f"http://{unit_ip}:8000/send_mail", timeout=5)
+    assert response.status_code == 200
+    assert "Sent" in response.text
+
+    mails = await get_mails_patiently(mailcatcher.pod_ip)
+    assert mails[0]
+    assert "<tester@example.com>" in mails[0]["sender"]
+    assert mails[0]["recipients"] == ["<test@example.com>"]
+    assert mails[0]["subject"] == "hello"

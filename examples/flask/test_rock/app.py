@@ -122,7 +122,7 @@ def fibonacci():
 @app.route("/send_mail")
 def send_mail():
     if mail:
-        msg = Message("hello", recipients=["test@example.com"])
+        msg = Message("hello", sender="tester@example.com", recipients=["test@example.com"])
         msg.body = "Hello world!"
         mail.send(msg)
         return "Sent"

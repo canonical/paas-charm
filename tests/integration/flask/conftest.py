@@ -396,6 +396,7 @@ def mailcatcher(load_kube_config, ops_test: OpsTest):
     )
     v1.create_namespaced_service(namespace=namespace, body=service)
     deadline = time.time() + 300
+    pod_ip = None
     while True:
         if time.time() > deadline:
             raise TimeoutError("timeout while waiting for mailcatcher pod")
@@ -403,13 +404,13 @@ def mailcatcher(load_kube_config, ops_test: OpsTest):
             pod = v1.read_namespaced_pod(name="mailcatcher", namespace=namespace)
             if pod.status.phase == "Running":
                 logger.info("mailcatcher running at %s", pod.status.pod_ip)
+                pod_ip = pod.status.pod_ip
                 break
         except kubernetes.client.ApiException:
             pass
         logger.info("waiting for mailcatcher pod")
         time.sleep(1)
-    SmtpCredential = collections.namedtuple("SmtpCredential", "host port")
+    SmtpCredential = collections.namedtuple("SmtpCredential", "host port pod_ip")
     return SmtpCredential(
-        host=f"mailcatcher-service.{namespace}.svc.cluster.local",
-        port=1025,
+        host=f"mailcatcher-service.{namespace}.svc.cluster.local", port=1025, pod_ip=pod_ip
     )
