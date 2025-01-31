@@ -83,7 +83,7 @@ fixes and constructive feedback.
 * `Code of conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
 * `Get support <https://discourse.charmhub.io/>`_
 * `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
-* Contribute
+* :ref:`Contribute <how-to-contribute>`
 * Roadmap
 
 Thinking about using 12-Factor charms in your next project? Get in touch!
