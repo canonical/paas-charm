@@ -226,8 +226,13 @@ class IntegrationsState:
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
-        saml_parameters = generate_saml_relation_parameters(saml_relation_data, SamlParameters)
+        s3_parameters = typing.cast(
+            S3Parameters | None, generate_relation_parameters(s3_connection_info, S3Parameters)
+        )
+        saml_parameters = typing.cast(
+            SamlParameters | None,
+            generate_relation_parameters(saml_relation_data, SamlParameters, True),
+        )
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -247,42 +252,17 @@ class IntegrationsState:
         )
 
 
-def generate_saml_relation_parameters(
-    saml_relation_data: typing.MutableMapping[str, str] | None,
-    parameter_type: type,
-) -> "SamlParameters | None":
-    """Generate SAML relation parameter class from relation data.
-
-    Args:
-        saml_relation_data: Relation data.
-        parameter_type: Parameter type to use.
-
-    Return:
-        Parameter instance created.
-
-    Raises:
-        CharmConfigInvalidError: If some parameter in invalid.
-    """
-    if saml_relation_data is None:
-        return None
-    try:
-        return parameter_type(**saml_relation_data)
-    except ValidationError as exc:
-        error_message = build_validation_error_message(exc)
-        raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__} configuration: {error_message}"
-        ) from exc
-
-
 def generate_relation_parameters(
-    relation_data: dict[str, str] | None,
+    relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
     parameter_type: type,
-) -> "S3Parameters | None":
+    support_empty: bool = False,
+) -> "SamlParameters | S3Parameters | None":
     """Generate relation parameter class from relation data.
 
     Args:
         relation_data: Relation data.
         parameter_type: Parameter type to use.
+        support_empty: Support empty relation data.
 
     Return:
         Parameter instance created.
@@ -290,8 +270,11 @@ def generate_relation_parameters(
     Raises:
         CharmConfigInvalidError: If some parameter in invalid.
     """
-    if not relation_data:
+    if not support_empty and not relation_data:
         return None
+    if relation_data is None:
+        return None
+
     try:
         return parameter_type(**relation_data)
     except ValidationError as exc:
