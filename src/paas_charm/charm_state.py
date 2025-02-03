@@ -216,8 +216,6 @@ class IntegrationsState:
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
-        This functions will raise in the configuration is invalid.
-
         Args:
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
@@ -228,9 +226,8 @@ class IntegrationsState:
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters, saml_parameters = list(
-            collect_relation_parameters(s3_connection_info, saml_relation_data)
-        )
+        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
+        saml_parameters = generate_saml_relation_parameters(saml_relation_data, SamlParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -302,24 +299,6 @@ def generate_relation_parameters(
         raise CharmConfigInvalidError(
             f"Invalid {parameter_type.__name__} configuration: {error_message}"
         ) from exc
-
-
-def collect_relation_parameters(
-    s3_connection_info: dict[str, str] | None,
-    saml_relation_data: typing.MutableMapping[str, str] | None = None,
-) -> typing.Generator:
-    """Collect relation parameter classes from relation data.
-
-    Args:
-        s3_connection_info: S3 relation data.
-        saml_relation_data: SAML relation data.
-
-    Yields:
-        s3_parameters: S3 parameters.
-        saml_parameters: SAML parameters.
-    """
-    yield generate_relation_parameters(s3_connection_info, S3Parameters)
-    yield generate_saml_relation_parameters(saml_relation_data, SamlParameters)
 
 
 class ProxyConfig(BaseModel):
