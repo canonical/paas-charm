@@ -67,7 +67,7 @@ commands that need to be run in the root directory of the Flask application:
    rockcraft pack
 
 The `full Rockcraft tutorial
-<https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_ for
+<https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask.html>`_ for
 creating an OCI image for a Flask application takes you from a plain Ubuntu
 installation to a production ready OCI image for your Flask application.
 
