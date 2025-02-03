@@ -1,0 +1,8 @@
+bind = ['0.0.0.0:{{ workload_port }}']
+chdir = '{{ workload_app_dir }}'
+accesslog = '{{ access_log }}'
+errorlog = '{{ error_log }}'
+statsd_host = '{{ statsd_host }}'
+{%- for key, value in config_entries.items() %}
+{{ key }} = {{ value }}
+{%- endfor -%}
