@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.1.0 - 2025-02-04
+
+### Changes
+
+* Updated the home page for the Read the Docs site to align closer to the
+standard model for Canonical products.
+
 ## v1.1.0 - 2024-12-19
 
 ### Changes
