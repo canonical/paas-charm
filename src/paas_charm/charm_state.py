@@ -7,7 +7,7 @@ import os
 import re
 import typing
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
@@ -252,11 +252,14 @@ class IntegrationsState:
         )
 
 
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters")
+
+
 def generate_relation_parameters(
     relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
-    parameter_type: type,
+    parameter_type: Type[RelationParam],
     support_empty: bool = False,
-) -> "SamlParameters | S3Parameters | None":
+) -> "RelationParam | None":
     """Generate relation parameter class from relation data.
 
     Args:
@@ -276,7 +279,7 @@ def generate_relation_parameters(
         return None
 
     try:
-        return parameter_type(**relation_data)
+        return parameter_type.parse_obj(relation_data)
     except ValidationError as exc:
         error_message = build_validation_error_message(exc)
         raise CharmConfigInvalidError(
