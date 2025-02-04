@@ -259,7 +259,7 @@ def generate_relation_parameters(
     relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
     parameter_type: Type[RelationParam],
     support_empty: bool = False,
-) -> "RelationParam | None":
+) -> RelationParam | None:
     """Generate relation parameter class from relation data.
 
     Args:
