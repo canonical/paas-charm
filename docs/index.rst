@@ -18,8 +18,8 @@ connect it to a database, get ingress and much more.
 
 12-factor charms are aimed at developers who create applications based on the
 `12-factor methodology. <https://12factor.net/>`_ Web developers and operators
- can take advantage of 12-factor charms to simplify their operations and deploy
- their applications to production.
+can take advantage of 12-factor charms to simplify their operations and deploy
+their applications to production.
 
 The solution applies to applications built using the following frameworks:
 
