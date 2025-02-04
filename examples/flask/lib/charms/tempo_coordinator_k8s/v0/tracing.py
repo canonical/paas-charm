@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 """## Overview.
 
@@ -91,7 +91,13 @@ from typing import (
 )
 
 import pydantic
-from ops.charm import CharmBase, CharmEvents, RelationBrokenEvent, RelationEvent, RelationRole
+from ops.charm import (
+    CharmBase,
+    CharmEvents,
+    RelationBrokenEvent,
+    RelationEvent,
+    RelationRole,
+)
 from ops.framework import EventSource, Object
 from ops.model import ModelError, Relation
 from pydantic import BaseModel, Field
@@ -104,7 +110,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 4
+LIBPATCH = 5
 
 PYDEPS = ["pydantic"]
 
@@ -945,7 +951,6 @@ def charm_tracing_config(
      proceed with charm tracing (with or without tls, as appropriate)
 
     Usage:
-      If you are using charm_tracing >= v1.9:
     >>> from lib.charms.tempo_coordinator_k8s.v0.charm_tracing import trace_charm
     >>> from lib.charms.tempo_coordinator_k8s.v0.tracing import charm_tracing_config
     >>> @trace_charm(tracing_endpoint="my_endpoint", cert_path="cert_path")
@@ -955,24 +960,6 @@ def charm_tracing_config(
     >>>         self.tracing = TracingEndpointRequirer(...)
     >>>         self.my_endpoint, self.cert_path = charm_tracing_config(
     ...             self.tracing, self._cert_path)
-
-      If you are using charm_tracing < v1.9:
-    >>> from lib.charms.tempo_coordinator_k8s.v0.charm_tracing import trace_charm
-    >>> from lib.charms.tempo_coordinator_k8s.v0.tracing import charm_tracing_config
-    >>> @trace_charm(tracing_endpoint="my_endpoint", cert_path="cert_path")
-    >>> class MyCharm(...):
-    >>>     _cert_path = "/path/to/cert/on/charm/container.crt"
-    >>>     def __init__(self, ...):
-    >>>         self.tracing = TracingEndpointRequirer(...)
-    >>>         self._my_endpoint, self._cert_path = charm_tracing_config(
-    ...             self.tracing, self._cert_path)
-    >>>     @property
-    >>>     def my_endpoint(self):
-    >>>         return self._my_endpoint
-    >>>     @property
-    >>>     def cert_path(self):
-    >>>         return self._cert_path
-
     """
     if not endpoint_requirer.is_ready():
         return None, None
