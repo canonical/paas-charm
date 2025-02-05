@@ -324,7 +324,6 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
                 ("SMTP_PORT", str(smtp.port)),
                 ("SMTP_USER", smtp.user),
                 ("SMTP_PASSWORD", smtp.password),
-                # ("SMTP_PASSWORD_ID", smtp.password_id),
                 ("SMTP_AUTH_TYPE", smtp.auth_type),
                 ("SMTP_TRANSPORT_SECURITY", smtp.transport_security),
                 ("SMTP_DOMAIN", smtp.domain),
