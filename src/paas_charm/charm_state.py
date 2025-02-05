@@ -226,13 +226,8 @@ class IntegrationsState:
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters = typing.cast(
-            S3Parameters | None, generate_relation_parameters(s3_connection_info, S3Parameters)
-        )
-        saml_parameters = typing.cast(
-            SamlParameters | None,
-            generate_relation_parameters(saml_relation_data, SamlParameters, True),
-        )
+        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
+        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
