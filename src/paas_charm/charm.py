@@ -10,6 +10,7 @@ import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
+from ops import RelationMeta
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
@@ -83,39 +84,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
 
-        requires = self.framework.meta.requires
-        if "redis" in requires and requires["redis"].interface_name == "redis":
-            self._redis = RedisRequires(charm=self, relation_name="redis")
-            self.framework.observe(self.on.redis_relation_updated, self._on_redis_relation_updated)
-        else:
-            self._redis = None
-
-        if "s3" in requires and requires["s3"].interface_name == "s3":
-            self._s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
-            self.framework.observe(self._s3.on.credentials_changed, self._on_s3_credential_changed)
-            self.framework.observe(self._s3.on.credentials_gone, self._on_s3_credential_gone)
-        else:
-            self._s3 = None
-
-        if "saml" in requires and requires["saml"].interface_name == "saml":
-            self._saml = SamlRequires(self)
-            self.framework.observe(self._saml.on.saml_data_available, self._on_saml_data_available)
-        else:
-            self._saml = None
-
-        self._rabbitmq: RabbitMQRequires | None
-        if "rabbitmq" in requires and requires["rabbitmq"].interface_name == "rabbitmq":
-            self._rabbitmq = RabbitMQRequires(
-                self,
-                "rabbitmq",
-                username=self.app.name,
-                vhost="/",
-            )
-            self.framework.observe(self._rabbitmq.on.connected, self._on_rabbitmq_connected)
-            self.framework.observe(self._rabbitmq.on.ready, self._on_rabbitmq_ready)
-            self.framework.observe(self._rabbitmq.on.departed, self._on_rabbitmq_departed)
-        else:
-            self._rabbitmq = None
+        requires: dict[str, RelationMeta] = self.framework.meta.requires
+        self._redis = self._init_redis(requires)
+        self._s3 = self._init_s3(requires)
+        self._saml = self._init_saml(requires)
+        self._rabbitmq = self._init_rabbitmq(requires)
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -163,6 +136,96 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(
             self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
         )
+
+    def _init_redis(self, requires: dict[str, RelationMeta]) -> "RedisRequires | None":
+        """Initialize the Redis relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the Redis relation or None
+        """
+        _redis = None
+        if "redis" in requires and requires["redis"].interface_name == "redis":
+            try:
+                _redis = RedisRequires(charm=self, relation_name="redis")
+                self.framework.observe(
+                    self.on.redis_relation_updated, self._on_redis_relation_updated
+                )
+            except NameError:
+                logger.exception(
+                    "Missing charm library,                               "
+                    "please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
+                )
+
+        return _redis
+
+    def _init_s3(self, requires: dict[str, RelationMeta]) -> "S3Requirer | None":
+        """Initialize the S3 relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the S3 relation or None
+        """
+        _s3 = None
+        if "s3" in requires and requires["s3"].interface_name == "s3":
+            try:
+                _s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
+                self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
+                self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
+            except NameError:
+                logger.exception(
+                    "Missing charm library, "
+                    "please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
+                )
+        return _s3
+
+    def _init_saml(self, requires: dict[str, RelationMeta]) -> "SamlRequires | None":
+        """Initialize the SAML relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the SAML relation or None
+        """
+        _saml = None
+        if "saml" in requires and requires["saml"].interface_name == "saml":
+            try:
+                _saml = SamlRequires(self)
+                self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
+            except NameError:
+                logger.exception(
+                    "Missing charm library, "
+                    "please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
+                )
+        return _saml
+
+    def _init_rabbitmq(self, requires: dict[str, RelationMeta]) -> "RabbitMQRequires | None":
+        """Initialize the RabbitMQ relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the RabbitMQ relation or None
+        """
+        _rabbitmq = None
+        if "rabbitmq" in requires and requires["rabbitmq"].interface_name == "rabbitmq":
+            _rabbitmq = RabbitMQRequires(
+                self,
+                "rabbitmq",
+                username=self.app.name,
+                vhost="/",
+            )
+            self.framework.observe(_rabbitmq.on.connected, self._on_rabbitmq_connected)
+            self.framework.observe(_rabbitmq.on.ready, self._on_rabbitmq_ready)
+            self.framework.observe(_rabbitmq.on.departed, self._on_rabbitmq_departed)
+
+        return _rabbitmq
 
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
@@ -255,7 +318,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for peer integration"))
             return False
 
-        missing_integrations = self._missing_required_integrations(charm_state)
+        missing_integrations = list(self._missing_required_integrations(charm_state))
         if missing_integrations:
             self._create_app().stop_all_services()
             self._database_migration.set_status_to_pending()
@@ -266,38 +329,68 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return True
 
-    # Pending to refactor all integrations
-    def _missing_required_integrations(self, charm_state: CharmState) -> list[str]:  # noqa: C901
-        """Get list of missing integrations that are required.
+    def _missing_required_database_integrations(
+        self, requires: dict[str, RelationMeta], charm_state: CharmState
+    ) -> typing.Generator:
+        """Return required database integrations.
 
         Args:
-            charm_state: the charm state
-
-        Returns:
-            list of names of missing integrations
+            requires: relation requires dictionary from metadata
+            charm_state: current charm state
         """
-        missing_integrations = []
-        requires = self.framework.meta.requires
         for name in self._database_requirers.keys():
             if (
                 name not in charm_state.integrations.databases_uris
                 or charm_state.integrations.databases_uris[name] is None
             ):
                 if not requires[name].optional:
-                    missing_integrations.append(name)
-        if self._redis and not charm_state.integrations.redis_uri:
-            if not requires["redis"].optional:
-                missing_integrations.append("redis")
-        if self._s3 and not charm_state.integrations.s3_parameters:
-            if not requires["s3"].optional:
-                missing_integrations.append("s3")
-        if self._saml and not charm_state.integrations.saml_parameters:
-            if not requires["saml"].optional:
-                missing_integrations.append("saml")
+                    yield name
+
         if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
             if not requires["rabbitmq"].optional:
-                missing_integrations.append("rabbitmq")
-        return missing_integrations
+                yield "rabbitmq"
+
+    def _missing_required_storage_integrations(
+        self, requires: dict[str, RelationMeta], charm_state: CharmState
+    ) -> typing.Generator:
+        """Return required storage integrations.
+
+        Args:
+            requires: relation requires dictionary from metadata
+            charm_state: current charm state
+        """
+        if self._redis and not charm_state.integrations.redis_uri:
+            if not requires["redis"].optional:
+                yield "redis"
+        if self._s3 and not charm_state.integrations.s3_parameters:
+            if not requires["s3"].optional:
+                yield "s3"
+
+    def _missing_required_other_integrations(
+        self, requires: dict[str, RelationMeta], charm_state: CharmState
+    ) -> typing.Generator:
+        """Return required various integrations.
+
+        Args:
+            requires: relation requires dictionary from metadata
+            charm_state: current charm state
+        """
+        if self._saml and not charm_state.integrations.saml_parameters:
+            if not requires["saml"].optional:
+                yield "saml"
+
+    def _missing_required_integrations(
+        self, charm_state: CharmState
+    ) -> typing.Generator:  # noqa: C901
+        """Get list of missing integrations that are required.
+
+        Args:
+            charm_state: the charm state
+        """
+        requires = self.framework.meta.requires
+        yield from self._missing_required_database_integrations(requires, charm_state)
+        yield from self._missing_required_storage_integrations(requires, charm_state)
+        yield from self._missing_required_other_integrations(requires, charm_state)
 
     def restart(self, rerun_migrations: bool = False) -> None:
         """Restart or start the service if not started with the latest configuration.
