@@ -7,7 +7,7 @@ import os
 import re
 import typing
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
@@ -224,8 +224,6 @@ class IntegrationsState:
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
-        This functions will raise in the configuration is invalid.
-
         Args:
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
@@ -238,16 +236,15 @@ class IntegrationsState:
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters, saml_parameters, tempo_parameters = list(
-            collect_relation_parameters(
-                s3_connection_info, saml_relation_data, tempo_relation_data
-            )
-        )
+        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
+        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
+        tempo_parameters = generate_relation_parameters(tempo_relation_data, TempoParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
         if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
             redis_uri = None
+
         return cls(
             redis_uri=redis_uri,
             databases_uris={
@@ -260,6 +257,55 @@ class IntegrationsState:
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
         )
+
+
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters")
+
+
+def generate_relation_parameters(
+    relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
+    parameter_type: Type[RelationParam],
+    support_empty: bool = False,
+) -> RelationParam | None:
+    """Generate relation parameter class from relation data.
+
+    Args:
+        relation_data: Relation data.
+        parameter_type: Parameter type to use.
+        support_empty: Support empty relation data.
+
+    Return:
+        Parameter instance created.
+
+    Raises:
+        CharmConfigInvalidError: If some parameter in invalid.
+    """
+    if not support_empty and not relation_data:
+        return None
+    if relation_data is None:
+        return None
+
+    try:
+        return parameter_type.parse_obj(relation_data)
+    except ValidationError as exc:
+        error_message = build_validation_error_message(exc)
+        raise CharmConfigInvalidError(
+            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+        ) from exc
+
+
+class ProxyConfig(BaseModel):
+    """Configuration for network access through proxy.
+
+    Attributes:
+        http_proxy: The http proxy URL.
+        https_proxy: The https proxy URL.
+        no_proxy: Comma separated list of hostnames to bypass proxy.
+    """
+
+    http_proxy: str | None = Field(default=None, pattern="https?://.+")
+    https_proxy: str | None = Field(default=None, pattern="https?://.+")
+    no_proxy: typing.Optional[str] = None
 
 
 class TempoParameters(BaseModel):
@@ -349,95 +395,3 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         if not certificate:
             raise ValueError("Missing x509certs. There should be at least one certificate.")
         return certificate
-
-
-class ProxyConfig(BaseModel):
-    """Configuration for network access through proxy.
-
-    Attributes:
-        http_proxy: The http proxy URL.
-        https_proxy: The https proxy URL.
-        no_proxy: Comma separated list of hostnames to bypass proxy.
-    """
-
-    http_proxy: str | None = Field(default=None, pattern="https?://.+")
-    https_proxy: str | None = Field(default=None, pattern="https?://.+")
-    no_proxy: typing.Optional[str] = None
-
-
-def generate_saml_relation_parameters(
-    saml_relation_data: typing.MutableMapping[str, str] | None,
-    parameter_type: type,
-) -> "SamlParameters | None":
-    """Generate SAML relation parameter class from relation data.
-
-    Args:
-        saml_relation_data: Relation data.
-        parameter_type: Parameter type to use.
-
-    Return:
-        Parameter instance created.
-
-    Raises:
-        CharmConfigInvalidError: If some parameter in invalid.
-    """
-    if saml_relation_data is None:
-        return None
-    try:
-        return parameter_type(**saml_relation_data)
-    except ValidationError as exc:
-        error_message = build_validation_error_message(exc)
-        raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__} configuration: {error_message}"
-        ) from exc
-
-
-def generate_relation_parameters(
-    relation_data: dict[str, str] | None,
-    parameter_type: type,
-) -> "SamlParameters | S3Parameters | TempoParameters | None":
-    """Generate relation parameter class from relation data.
-
-    Args:
-        relation_data: Relation data.
-        parameter_type: Parameter type to use.
-
-    Return:
-        Parameter instance created.
-
-    Raises:
-        CharmConfigInvalidError: If some parameter in invalid.
-    """
-    if not relation_data:
-        return None
-    try:
-        return parameter_type(**relation_data)
-    except ValidationError as exc:
-        error_message = build_validation_error_message(exc)
-        raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__} configuration: {error_message}"
-        ) from exc
-
-
-def collect_relation_parameters(
-    s3_connection_info: dict[str, str] | None,
-    saml_relation_data: typing.MutableMapping[str, str] | None = None,
-    tempo_relation_data: dict[str, str] | None = None,
-) -> typing.Generator:
-    """Collect relation parameter classes from relation data.
-
-    Args:
-        s3_connection_info: S3 relation data.
-        saml_relation_data: SAML relation data.
-        tempo_relation_data: Tempo relation data.
-
-    Yields:
-        s3_parameters: S3 parameters.
-        saml_parameters: SAML parameters.
-        tempo_parameters: Tempo parameters.
-
-
-    """
-    yield generate_relation_parameters(s3_connection_info, S3Parameters)
-    yield generate_saml_relation_parameters(saml_relation_data, SamlParameters)
-    yield generate_relation_parameters(tempo_relation_data, TempoParameters)
