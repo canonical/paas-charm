@@ -6,22 +6,17 @@
 import os
 import pathlib
 
-import boto3
+import nest_asyncio
 import pytest
 import pytest_asyncio
 from juju.application import Application
 from juju.model import Model
 from minio import Minio
 from ops import JujuVersion
-from pytest import Config, FixtureRequest
+from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_charm_config, inject_venv
-
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
-
-import nest_asyncio
-
 nest_asyncio.apply()
 
 
@@ -107,11 +102,10 @@ async def deploy_tempo_cluster(ops_test: OpsTest, get_unit_ips):
         trust=True,
     )
     await ops_test.model.deploy("s3-integrator", channel="edge")
-
     await ops_test.model.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
     await ops_test.model.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
-
     await deploy_and_configure_minio(ops_test, get_unit_ips)
+
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
             apps=[tempo_app, worker_app, "s3-integrator"],

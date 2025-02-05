@@ -8,14 +8,13 @@ import pathlib
 import pytest
 import pytest_asyncio
 from juju.application import Application
-from juju.client.jujudata import FileJujuData
 from juju.errors import JujuError
 from juju.juju import Juju
-from juju.model import Controller, Model
-from pytest import Config, FixtureRequest
+from juju.model import Model
+from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.helpers import inject_venv
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ async def flask_app_fixture(
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
-    await model.wait_for_idle(raise_on_blocked=True)
+    await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
     return app
 
 
@@ -123,7 +122,9 @@ async def django_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+    )
     return app
 
 
@@ -145,7 +146,9 @@ async def fastapi_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+    )
     return app
 
 
@@ -167,7 +170,9 @@ async def go_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+    )
     return app
 
 

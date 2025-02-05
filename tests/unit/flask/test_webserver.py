@@ -19,7 +19,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState
 from paas_charm.utils import enable_pebble_log_forwarding
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, LAYER_WITH_TRACING
+from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 
 GUNICORN_CONFIG_TEST_PARAMS = [
     pytest.param(
@@ -128,6 +128,7 @@ def test_gunicorn_config(
         environment=flask_app.gen_environment(),
         command=DEFAULT_LAYER["services"]["flask"]["command"],
     )
+
     assert container.pull(f"/flask/gunicorn.conf.py").read() == config_file
 
 

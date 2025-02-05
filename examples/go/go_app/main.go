@@ -91,8 +91,6 @@ func main() {
 	// Create a named tracer with package path as its name.
 	tracer := tp.Tracer("example.com/go-app")
 	defer func() { _ = tp.Shutdown(ctx) }()
-
-
 	var span trace.Span
 	ctx, span = tracer.Start(ctx, "operation")
 	defer span.End()
@@ -100,6 +98,7 @@ func main() {
 	if err := service.SubOperation(ctx); err != nil {
 		panic(err)
 	}
+ 
   metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"

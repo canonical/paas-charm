@@ -17,7 +17,7 @@ def test_tracing_relation(harness: Harness):
     arrange: Integrate the charm with the Tempo charm.
     act: Run all initial hooks.
     assert: The flask service should have the environment variable OTEL_EXPORTER_OTLP_ENDPOINT from
-        the tracing relation. It should also have the environment variable OTEL_SERVICE_NAME set to "flask-k8s-charm".
+        the tracing relation. It should also have the environment variable OTEL_SERVICE_NAME set to "flask-k8s".
     """
     harness.set_model_name("flask-model")
     harness.add_relation(
@@ -40,7 +40,7 @@ def test_tracing_relation(harness: Harness):
 
 def test_tracing_not_activated(harness: Harness):
     """
-    arrange: Deploy the charm without a relation to the Tempo charm.
+    arrange: Deploy the flask charm without a relation to the Tempo charm.
     act: Run all initial hooks.
     assert: The flask service should not have the environment variables OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME.
     """

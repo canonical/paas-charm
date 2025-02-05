@@ -42,12 +42,13 @@ async def test_workload_tracing(
     act: Send 5 requests to the app.
     assert: Tempo should have tracing info about the app.
     """
-
     try:
         tempo_app = await request.getfixturevalue("tempo_app")
     except Exception as e:
-        logger.info(f"Tempo is already deployed  {e}")
-        tempo_app = model.applications["tempo"]
+        if "object Application can't be used in 'await' expression" not in e:
+            logger.info(f"Tempo is already deployed  {e}")
+            tempo_app = model.applications["tempo"]
+
     tracing_app = request.getfixturevalue(tracing_app_fixture)
 
     await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app.name}:tracing")

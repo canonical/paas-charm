@@ -399,6 +399,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._redis and not charm_state.integrations.redis_uri:
             if not requires["redis"].optional:
                 yield "redis"
+
         if self._s3 and not charm_state.integrations.s3_parameters:
             if not requires["s3"].optional:
                 yield "s3"
@@ -415,6 +416,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._saml and not charm_state.integrations.saml_parameters:
             if not requires["saml"].optional:
                 yield "saml"
+
         if self._tracing and not charm_state.integrations.tempo_parameters:
             if not requires["tracing"].optional:
                 yield "tracing"
@@ -481,6 +483,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 "service_name": self.app.name,
                 "endpoint": f"{self._tracing.get_endpoint(protocol='otlp_http')}",
             }
+
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
             dict,

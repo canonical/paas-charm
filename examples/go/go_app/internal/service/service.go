@@ -10,11 +10,8 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
-
-var lemonsKey = attribute.Key("ex.com/lemons")
 
 // SubOperation is an example to demonstrate the use of named tracer.
 // It creates a named tracer with its package path.
@@ -26,11 +23,11 @@ func SubOperation(ctx context.Context) error {
 	var span trace.Span
 	_, span = tr.Start(ctx, "Sub operation...")
 	defer span.End()
-	span.SetAttributes(lemonsKey.String("five"))
 	span.AddEvent("Sub span event")
 
 	return nil
 }
+
 type Service struct {
 	PostgresqlURL string
 }

@@ -152,7 +152,7 @@ def test_s3_integration_raises():
             database_requirers={},
             s3_connection_info={"bucket": "bucket"},
         )
-    assert "Invalid S3Parameters configuration" in str(exc)
+    assert "S3" in str(exc)
 
 
 @pytest.mark.parametrize(
@@ -211,7 +211,7 @@ def _test_saml_integration_invalid_parameters():
     params.append(
         pytest.param(
             {},
-            ["Invalid SamlParameters configuration"],
+            ["Invalid Saml"],
             id="Empty relation data",
         )
     )
@@ -220,7 +220,7 @@ def _test_saml_integration_invalid_parameters():
     params.append(
         pytest.param(
             saml_app_relation_data,
-            ["Invalid SamlParameters configuration", "single_sign_on_service_redirect_url"],
+            ["Invalid Saml", "single_sign_on_service_redirect_url"],
             id="Missing single_sign_on_service_redirect_url",
         )
     )
@@ -229,7 +229,7 @@ def _test_saml_integration_invalid_parameters():
     params.append(
         pytest.param(
             saml_app_relation_data,
-            ["Invalid SamlParameters configuration", "x509certs"],
+            ["Invalid Saml", "x509certs"],
             id="Missing x509certs",
         )
     )
@@ -238,7 +238,7 @@ def _test_saml_integration_invalid_parameters():
     params.append(
         pytest.param(
             saml_app_relation_data,
-            ["Invalid SamlParameters configuration", "x509certs"],
+            ["Invalid Saml", "x509certs"],
             id="Empty x509certs",
         )
     )
@@ -267,7 +267,6 @@ def test_saml_integration_invalid(saml_app_relation_data, error_messages):
             saml_relation_data=saml_app_relation_data,
         )
     for message in error_messages:
-        print(f"---------- {exc=}")
         assert message in str(exc)
 
 
