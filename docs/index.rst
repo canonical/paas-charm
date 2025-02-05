@@ -4,36 +4,31 @@
 12-Factor app support in Charmcraft and Rockcraft
 =================================================
 
-**The 12-factor charm solution is a simple way to deploy and operate
-web applications.**
+**Charmcraft and Rockcraft natively support a simple way
+to deploy and operate 12-Factor web applications.**
 
-This solution provides an abstraction layer over existing Canonical products
-to enable built-in support for 12-factor web applications.
+This support makes it easy to utilize existing Canonical products,
+such as databases, ingress and observability, in web applications.
+Flask, Django, FastAPI and Go are currently supported with additional
+frameworks coming soon.
 
 With a few simple commands, you can set up a fully integrated and observable
 Kubernetes environment for your web application. These commands create
-production-ready OCI-compliant container images and software operators wrapped
-around the container images. From there, you can deploy your web application,
-connect it to a database, get ingress and much more.
+production-ready OCI-compliant container images for your web application and
+software operators wrapped around the container images. From there, you can
+deploy your web application, connect it to a database, add ingress and
+observability and much more.
 
-12-factor charms are aimed at developers who create applications based on the
+The solution is aimed at developers who create applications based on the
 `12-factor methodology. <https://12factor.net/>`_ Web developers and operators
-can take advantage of 12-factor charms to simplify their operations and deploy
+can take advantage of the solution to simplify their operations and deploy
 their applications to production.
-
-The solution applies to applications built using the following frameworks:
-
-- Flask
-- Django
-- FastAPI
-- Go
-- Spring Boot (coming soon)
 
 The foundations: Juju, charms and rocks
 ---------------------------------------
 
-The 12-factor charm solution uses and combines capabilities from the following
-Canonical products:
+The 12-factor web application solution uses and combines capabilities from the
+following Canonical products:
 
 - `Juju <https://juju.is>`_ is an open source orchestration engine for software
   operators that enables the deployment, integration and lifecycle management
@@ -58,7 +53,7 @@ Encapsulating the original 12-factor application in a charm allows your
 application to benefit from the entire
 `charm ecosystem <https://charmhub.io/>`_, meaning that the app
 can be connected to a database, e.g. an HA Postgres, observed through a Grafana
-based observability stack, get ingress and much more.
+based observability stack, add ingress and much more.
 
 Documentation
 -------------
@@ -74,9 +69,9 @@ Documentation for this project is located in a few places:
 Project and community
 ---------------------
 
-12-Factor charms are a member of the Ubuntu family. This is an open source
-project that warmly welcomes community projects, contributions, suggestions,
-fixes and constructive feedback.
+12-Factor web support in Charmcraft and Rockcraft is a member of the Ubuntu family.
+This is an open source project that warmly welcomes community projects, contributions,
+suggestions, fixes and constructive feedback.
 
 * `Code of conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
 * `Get support <https://discourse.charmhub.io/>`_
@@ -84,7 +79,7 @@ fixes and constructive feedback.
 * :ref:`Contribute <how-to-contribute>`
 * Roadmap
 
-Thinking about using 12-Factor charms in your next project? Get in touch!
+Thinking about using this solution in your next project? Get in touch!
 
 
 .. toctree::
