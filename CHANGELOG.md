@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 * Updated the home page for the Read the Docs site to align closer to the
-standard model for Canonical products.
+  standard model for Canonical products.
 
 ## v1.1.0 - 2024-12-19
 
