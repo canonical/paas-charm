@@ -1,9 +1,3 @@
 Django
 tzdata
 psycopg2-binary
-opentelemetry-api
-opentelemetry-exporter-otlp
-opentelemetry-exporter-otlp-proto-http
-opentelemetry-instrumentation
-opentelemetry-instrumentation-wsgi
-opentelemetry-sdk

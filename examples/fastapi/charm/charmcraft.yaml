@@ -79,10 +79,6 @@ requires:
     interface: postgresql_client
     optional: True
     limit: 1
-  tracing:
-    interface: tracing
-    optional: True
-    limit: 1
   smtp:
     interface: smtp
     optional: True

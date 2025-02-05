@@ -26,33 +26,6 @@ DEFAULT_LAYER = {
     }
 }
 
-LAYER_WITH_TRACING = {
-    "services": {
-        "flask": {
-            "override": "replace",
-            "startup": "enabled",
-            "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k sync",
-            "after": ["statsd-exporter"],
-            "user": "_daemon_",
-            "environment": {
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "http://test-ip:4318",
-                "OTEL_SERVICE_NAME": "flask-k8s",
-            },
-        },
-        "statsd-exporter": {
-            "override": "merge",
-            "command": (
-                "/bin/statsd_exporter --statsd.mapping-config=/statsd-mapping.conf "
-                "--statsd.listen-udp=localhost:9125 "
-                "--statsd.listen-tcp=localhost:9125"
-            ),
-            "summary": "statsd exporter service",
-            "startup": "enabled",
-            "user": "_daemon_",
-        },
-    }
-}
-
 LAYER_WITH_WORKER = {
     "services": {
         "flask": {

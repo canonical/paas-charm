@@ -8,7 +8,7 @@ import re
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
@@ -76,7 +76,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
         smtp_relation_data: dict[str, str] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
@@ -92,8 +91,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_relation_data: The tracing uri provided by the Tempo coordinator charm
-                and charm name.
             smtp_relation_data: Relation data from smtp-integrator app.
             base_url: Base URL for the service.
 
@@ -115,7 +112,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
-            tempo_relation_data=tempo_relation_data,
             smtp_relation_data=smtp_relation_data,
         )
         return cls(
@@ -203,8 +199,6 @@ class IntegrationsState:
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
-        tempo_parameters: The tracing uri provided by the Tempo coordinator charm
-            and charm name.
         smtp_parameters: Smtp parameters.
     """
 
@@ -213,85 +207,7 @@ class IntegrationsState:
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
-    tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
-
-    @classmethod
-    def generate_saml_relation_parameters(
-        cls,
-        saml_relation_data: typing.MutableMapping[str, str] | None,
-        parameter_type: type,
-    ) -> "SamlParameters | None":
-        """Generate SAML relation parameter class from relation data.
-
-        Args:
-            saml_relation_data: Relation data.
-            parameter_type: Parameter type to use.
-
-        Return:
-            Parameter instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
-        """
-        if saml_relation_data is not None:
-            try:
-                relation_parameter = parameter_type(**saml_relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
-        else:
-            relation_parameter = None
-        return relation_parameter
-
-    @classmethod
-    def generate_relation_parameters(
-        cls,
-        relation_data: dict[str, str] | None,
-        parameter_type: type,
-    ) -> "SmtpParameters | S3Parameters | TempoParameters | None":
-        """Generate relation parameter class from relation data.
-
-        Args:
-            relation_data: Relation data.
-            parameter_type: Parameter type to use.
-
-        Return:
-            Parameter instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
-        """
-        if relation_data:
-            try:
-                relation_parameter = parameter_type(**relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(f"Invalid configuration: {error_message}") from exc
-        else:
-            relation_parameter = None
-        return relation_parameter
-
-    @classmethod
-    def _collect_relation_parameters(
-        cls,
-        s3_connection_info: dict[str, str] | None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
-        smtp_relation_data: dict[str, str] | None = None,
-    ) -> typing.Generator:
-        """Collect relation parameter classes from relation data.
-
-        Args:
-            s3_connection_info: S3 relation data.
-            saml_relation_data: SAML relation data.
-            tempo_relation_data: Tempo relation data.
-            smtp_relation_data: Relation data from the SMTP app.
-        """
-        yield cls.generate_relation_parameters(s3_connection_info, S3Parameters)
-        yield cls.generate_saml_relation_parameters(saml_relation_data, SamlParameters)
-        yield cls.generate_relation_parameters(tempo_relation_data, TempoParameters)
-        yield cls.generate_relation_parameters(smtp_relation_data, SmtpParameters)
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -303,7 +219,6 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
         smtp_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
@@ -316,23 +231,20 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_relation_data: The tracing uri provided by the Tempo coordinator charm
-                and charm name.
             smtp_relation_data: smtp relation data from smtp lib.
 
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters, saml_parameters, tempo_parameters, smtp_parameters = list(
-            cls._collect_relation_parameters(
-                s3_connection_info, saml_relation_data, tempo_relation_data, smtp_relation_data
-            )
-        )
+        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
+        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
+        smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
         if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
             redis_uri = None
+
         return cls(
             redis_uri=redis_uri,
             databases_uris={
@@ -343,21 +255,43 @@ class IntegrationsState:
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
-            tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
         )
 
 
-class TempoParameters(BaseModel):
-    """Configuration for accessing Tempo service.
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "SmtpParameters")
 
-    Attributes:
-        endpoint: Tempo endpoint URL to send the traces.
-        service_name: Tempo service name for the workload.
+
+def generate_relation_parameters(
+    relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
+    parameter_type: Type[RelationParam],
+    support_empty: bool = False,
+) -> RelationParam | None:
+    """Generate relation parameter class from relation data.
+
+    Args:
+        relation_data: Relation data.
+        parameter_type: Parameter type to use.
+        support_empty: Support empty relation data.
+
+    Return:
+        Parameter instance created.
+
+    Raises:
+        CharmConfigInvalidError: If some parameter in invalid.
     """
+    if not support_empty and not relation_data:
+        return None
+    if relation_data is None:
+        return None
 
-    endpoint: str | None = None
-    service_name: str | None = None
+    try:
+        return parameter_type.parse_obj(relation_data)
+    except ValidationError as exc:
+        error_message = build_validation_error_message(exc)
+        raise CharmConfigInvalidError(
+            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+        ) from exc
 
 
 class S3Parameters(BaseModel):

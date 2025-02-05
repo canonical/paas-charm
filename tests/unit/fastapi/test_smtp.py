@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Flask charm tracing relation unit tests."""
+"""Flask charm smtp relation unit tests."""
 
 import unittest.mock
 
