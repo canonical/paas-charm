@@ -7,7 +7,7 @@ import os
 import re
 import typing
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
@@ -18,20 +18,6 @@ from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
-
-
-class ProxyConfig(BaseModel):
-    """Configuration for network access through proxy.
-
-    Attributes:
-        http_proxy: The http proxy URL.
-        https_proxy: The https proxy URL.
-        no_proxy: Comma separated list of hostnames to bypass proxy.
-    """
-
-    http_proxy: str | None = Field(default=None, pattern="https?://.+")
-    https_proxy: str | None = Field(default=None, pattern="https?://.+")
-    no_proxy: typing.Optional[str] = None
 
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
@@ -230,8 +216,6 @@ class IntegrationsState:
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
-        This functions will raise in the configuration is invalid.
-
         Args:
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
@@ -241,35 +225,9 @@ class IntegrationsState:
 
         Return:
             The IntegrationsState instance created.
-
-        Raises:
-            CharmConfigInvalidError: If some parameter in invalid.
         """
-        if s3_connection_info:
-            try:
-                # s3_connection_info is not really a Dict[str, str] as stated in
-                # charms.data_platform_libs.v0.s3. It is really a
-                # Dict[str, str | list[str]].
-                # Ignoring as mypy does not work correctly with that information.
-                s3_parameters = S3Parameters(**s3_connection_info)  # type: ignore[arg-type]
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(
-                    f"Invalid S3 configuration: {error_message}"
-                ) from exc
-        else:
-            s3_parameters = None
-
-        if saml_relation_data is not None:
-            try:
-                saml_parameters = SamlParameters(**saml_relation_data)
-            except ValidationError as exc:
-                error_message = build_validation_error_message(exc)
-                raise CharmConfigInvalidError(
-                    f"Invalid Saml configuration: {error_message}"
-                ) from exc
-        else:
-            saml_parameters = None
+        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
+        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -287,6 +245,55 @@ class IntegrationsState:
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
         )
+
+
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters")
+
+
+def generate_relation_parameters(
+    relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
+    parameter_type: Type[RelationParam],
+    support_empty: bool = False,
+) -> RelationParam | None:
+    """Generate relation parameter class from relation data.
+
+    Args:
+        relation_data: Relation data.
+        parameter_type: Parameter type to use.
+        support_empty: Support empty relation data.
+
+    Return:
+        Parameter instance created.
+
+    Raises:
+        CharmConfigInvalidError: If some parameter in invalid.
+    """
+    if not support_empty and not relation_data:
+        return None
+    if relation_data is None:
+        return None
+
+    try:
+        return parameter_type.parse_obj(relation_data)
+    except ValidationError as exc:
+        error_message = build_validation_error_message(exc)
+        raise CharmConfigInvalidError(
+            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+        ) from exc
+
+
+class ProxyConfig(BaseModel):
+    """Configuration for network access through proxy.
+
+    Attributes:
+        http_proxy: The http proxy URL.
+        https_proxy: The https proxy URL.
+        no_proxy: Comma separated list of hostnames to bypass proxy.
+    """
+
+    http_proxy: str | None = Field(default=None, pattern="https?://.+")
+    https_proxy: str | None = Field(default=None, pattern="https?://.+")
+    no_proxy: typing.Optional[str] = None
 
 
 class S3Parameters(BaseModel):
