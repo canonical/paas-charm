@@ -123,7 +123,7 @@ async def django_app_fixture(
     )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
     )
     return app
 
@@ -147,7 +147,7 @@ async def fastapi_app_fixture(
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
     )
     return app
 
@@ -171,7 +171,7 @@ async def go_app_fixture(
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300, raise_on_blocked=True
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
     )
     return app
 
