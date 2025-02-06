@@ -286,7 +286,9 @@ class IntegrationsState:
         )
 
 
-RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters", "SmtpParameters")
+RelationParam = TypeVar(
+    "RelationParam", "SamlParameters", "S3Parameters", "TempoParameters", "SmtpParameters"
+)
 
 
 def generate_relation_parameters(

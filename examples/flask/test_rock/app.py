@@ -20,9 +20,9 @@ import pymysql.cursors
 import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
+from flask_mail import Mail, Message
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from flask_mail import Mail, Message
 
 
 def hostname():
