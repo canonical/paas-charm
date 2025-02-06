@@ -19,6 +19,15 @@ from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
 class CharmState:  # pylint: disable=too-many-instance-attributes
@@ -75,13 +84,15 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
+        tracing_requirer: "TracingEndpointRequirer | None" = None,
+        app_name: str | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
         Args:
             config: The charm configuration.
+            app_name: Name of the application.
             framework: The framework name.
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
@@ -90,7 +101,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_relation_data: The tracing relation data provided by the Tempo charm.
+            tracing_requirer: The tracing relation object provided by the Tempo charm.
             base_url: Base URL for the service.
 
         Return:
@@ -106,12 +117,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         }
 
         integrations = IntegrationsState.build(
+            app_name=app_name,
             redis_uri=redis_uri,
             database_requirers=database_requirers,
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
-            tempo_relation_data=tempo_relation_data,
+            tracing_requirer=tracing_requirer,
         )
         return cls(
             framework=framework,
@@ -218,24 +230,26 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tempo_relation_data: dict[str, str] | None = None,
+        tracing_requirer: "TracingEndpointRequirer | None" = None,
+        app_name: str | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
         Args:
+            app_name: Name of the application.
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tempo_relation_data: The tracing relation data provided by the Tempo charm.
+            tracing_requirer: The tracing relation data provided by the Tempo charm.
 
         Return:
             The IntegrationsState instance created.
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_parameters = generate_relation_parameters(tempo_relation_data, TempoParameters)
+        tempo_parameters = generate_tracing_parameters(tracing_requirer, app_name)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -256,7 +270,27 @@ class IntegrationsState:
         )
 
 
-RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters")
+def generate_tracing_parameters(
+    tracing_requirer: "TracingEndpointRequirer | None" = None,
+    app_name: str | None = None,
+) -> "TempoParameters | None":
+    """Generate TempoParameters class from tracing requirer.
+
+    Args:
+        tracing_requirer: Tempo requirer object.
+        app_name: Name of the application.
+
+    Return:
+        Generated TempoParameters instance.
+    """
+    if not tracing_requirer or not tracing_requirer.is_ready():
+        return None
+    return TempoParameters(
+        service_name=app_name, endpoint=tracing_requirer.get_endpoint(protocol="otlp_http")
+    )
+
+
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters")
 
 
 def generate_relation_parameters(
