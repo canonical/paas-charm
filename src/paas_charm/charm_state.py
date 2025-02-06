@@ -101,7 +101,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing requirer object provided by the Tempo charm.
+            tracing_requirer: The tracing relation object provided by the Tempo charm.
             base_url: Base URL for the service.
 
         Return:
@@ -242,14 +242,20 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing requirer object provided by the Tempo charm.
+            tracing_requirer: The tracing relation data provided by the Tempo charm.
 
         Return:
             The IntegrationsState instance created.
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_parameters = generate_tracing_parameters(tracing_requirer, app_name)
+        tempo_data = {}
+        if tracing_requirer and tracing_requirer.is_ready():
+            tempo_data = {
+                "service_name": app_name,
+                "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
+            }
+        tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -270,27 +276,7 @@ class IntegrationsState:
         )
 
 
-def generate_tracing_parameters(
-    tracing_requirer: "TracingEndpointRequirer | None" = None,
-    app_name: str | None = None,
-) -> "TempoParameters | None":
-    """Generate TempoParameters class from tracing requirer.
-
-    Args:
-        tracing_requirer: Tracing requirer object.
-        app_name: Name of the application.
-
-    Return:
-        Generated TempoParameters instance.
-    """
-    if not tracing_requirer or not tracing_requirer.is_ready():
-        return None
-    return TempoParameters(
-        service_name=app_name, endpoint=tracing_requirer.get_endpoint(protocol="otlp_http")
-    )
-
-
-RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters")
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters")
 
 
 def generate_relation_parameters(
