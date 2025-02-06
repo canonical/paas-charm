@@ -24,7 +24,9 @@ class GunicornBase(PaasCharm):
     def _workload_config(self) -> WorkloadConfig:
         """Return a WorkloadConfig instance."""
         return create_workload_config(
-            framework_name=self._framework_name, unit_name=self.unit.name
+            framework_name=self._framework_name,
+            unit_name=self.unit.name,
+            tracing_enabled=bool(self._tracing and self._tracing.is_ready()),
         )
 
     def create_webserver_config(self) -> WebserverConfig:

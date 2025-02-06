@@ -93,6 +93,10 @@ requires:
     interface: postgresql_client
     optional: False
     limit: 1
+  tracing:
+    interface: tracing
+    optional: True
+    limit: 1
 resources:
   django-app-image:
     description: django application image.

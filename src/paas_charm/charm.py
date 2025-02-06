@@ -45,6 +45,15 @@ except ImportError:
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
     )
 
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    logger.exception(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+    )
+
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -83,12 +92,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
-
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         self._redis = self._init_redis(requires)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
+        self._tracing = self._init_tracing(requires)
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -227,6 +236,34 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _rabbitmq
 
+    def _init_tracing(self, requires: dict[str, RelationMeta]) -> "TracingEndpointRequirer | None":
+        """Initialize the Tracing relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the Tracing relation or None
+        """
+        _tracing = None
+        if "tracing" in requires and requires["tracing"].interface_name == "tracing":
+            try:
+                _tracing = TracingEndpointRequirer(
+                    self, relation_name="tracing", protocols=["otlp_http"]
+                )
+                self.framework.observe(
+                    _tracing.on.endpoint_changed, self._on_tracing_relation_changed
+                )
+                self.framework.observe(
+                    _tracing.on.endpoint_removed, self._on_tracing_relation_broken
+                )
+            except NameError:
+                logger.exception(
+                    "Missing charm library, please run "
+                    "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
+                )
+        return _tracing
+
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
 
@@ -362,6 +399,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._redis and not charm_state.integrations.redis_uri:
             if not requires["redis"].optional:
                 yield "redis"
+
         if self._s3 and not charm_state.integrations.s3_parameters:
             if not requires["s3"].optional:
                 yield "s3"
@@ -378,6 +416,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._saml and not charm_state.integrations.saml_parameters:
             if not requires["saml"].optional:
                 yield "saml"
+
+        if self._tracing and not charm_state.integrations.tempo_parameters:
+            if not requires["tracing"].optional:
+                yield "tracing"
 
     def _missing_required_integrations(
         self, charm_state: CharmState
@@ -434,6 +476,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         saml_relation_data = None
         if self._saml and (saml_data := self._saml.get_relation_data()):
             saml_relation_data = saml_data.to_relation_data()
+
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
             dict,
@@ -452,6 +495,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             s3_connection_info=self._s3.get_s3_connection_info() if self._s3 else None,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=self._rabbitmq.rabbitmq_uri() if self._rabbitmq else None,
+            tracing_requirer=self._tracing if self._tracing is not None else None,
+            app_name=self.app.name,
             base_url=self._base_url,
         )
 
@@ -565,4 +610,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
+        """Handle tracing relation changed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
+        """Handle tracing relation broken event."""
         self.restart()

@@ -2,12 +2,15 @@
 # See LICENSE file for licensing details.
 
 import io
+import json
 import os
 import pathlib
 import uuid
 import zipfile
 
+import requests
 import yaml
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
@@ -44,3 +47,27 @@ def inject_charm_config(charm: pathlib.Path | str, config: dict, tmp_dir: pathli
     with open(charm, "wb") as new_charm_file:
         new_charm_file.write(new_charm.getvalue())
     return str(charm)
+
+
+def get_traces(tempo_host: str, service_name: str):
+    """Get traces directly from Tempo REST API."""
+    url = f"http://{tempo_host}:3200/api/search?tags=service.name={service_name}"
+    req = requests.get(
+        url,
+        verify=False,
+    )
+    assert req.status_code == 200
+    traces = json.loads(req.text)["traces"]
+    return traces
+
+
+@retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
+async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
+    """Get traces directly from Tempo REST API, but also try multiple times.
+
+    Useful for cases when Tempo might not return the traces immediately (its API is known for returning data in
+    random order).
+    """
+    traces = get_traces(tempo_host, service_name=service_name)
+    assert len(traces) > 0
+    return traces

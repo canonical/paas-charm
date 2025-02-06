@@ -20,6 +20,8 @@ import pymysql.cursors
 import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
+from opentelemetry import trace
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 
 def hostname():
@@ -59,6 +61,39 @@ broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
 # Configure Celery only if Redis is configured
 celery_app = celery_init_app(app, broker_url)
 redis_client = redis.Redis.from_url(broker_url) if broker_url else None
+
+FlaskInstrumentor().instrument_app(app)
+tracer = trace.get_tracer(__name__)
+
+
+def fib_slow(n):
+    if n <= 1:
+        return n
+    return fib_slow(n - 1) + fib_fast(n - 2)
+
+
+def fib_fast(n):
+    nth_fib = [0] * (n + 2)
+    nth_fib[1] = 1
+    for i in range(2, n + 1):
+        nth_fib[i] = nth_fib[i - 1] + nth_fib[i - 2]
+    return nth_fib[n]
+
+
+@app.route("/fibonacci")
+def fibonacci():
+    n = int(request.args.get("n", 1))
+    with tracer.start_as_current_span("root"):
+        with tracer.start_as_current_span("fib_slow") as slow_span:
+            answer = fib_slow(n)
+            slow_span.set_attribute("n", n)
+            slow_span.set_attribute("nth_fibonacci", answer)
+        with tracer.start_as_current_span("fib_fast") as fast_span:
+            answer = fib_fast(n)
+            fast_span.set_attribute("n", n)
+            fast_span.set_attribute("nth_fibonacci", answer)
+
+    return f"F({n}) is: ({answer})"
 
 
 @celery_app.on_after_configure.connect
