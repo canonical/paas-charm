@@ -101,7 +101,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing relation object provided by the Tempo charm.
+            tracing_requirer: The tracing requirer object provided by the Tempo charm.
             base_url: Base URL for the service.
 
         Return:
@@ -242,7 +242,7 @@ class IntegrationsState:
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing relation data provided by the Tempo charm.
+            tracing_requirer: The tracing requirer object provided by the Tempo charm.
 
         Return:
             The IntegrationsState instance created.
@@ -277,7 +277,7 @@ def generate_tracing_parameters(
     """Generate TempoParameters class from tracing requirer.
 
     Args:
-        tracing_requirer: Tempo requirer object.
+        tracing_requirer: Tracing requirer object.
         app_name: Name of the application.
 
     Return:
