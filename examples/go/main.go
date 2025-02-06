@@ -59,7 +59,7 @@ func (h mainHandler) servePostgresql(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+  metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"
 	}

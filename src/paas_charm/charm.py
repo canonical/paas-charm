@@ -408,6 +408,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._saml and not charm_state.integrations.saml_parameters:
             if not requires["saml"].optional:
                 yield "saml"
+
         if self._smtp and not charm_state.integrations.smtp_parameters:
             if not requires["smtp"].optional:
                 yield "smtp"

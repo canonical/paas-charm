@@ -74,7 +74,6 @@ requires:
     interface: smtp
     optional: True
     limit: 1
-
 resources:
   app-image:
     description: go application image.

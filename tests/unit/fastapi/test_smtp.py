@@ -27,7 +27,6 @@ def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
     act: Run all initial hooks.
     assert: The fastapi service should have the environment variables related to smtp.
     """
-
     harness.add_relation(
         "smtp",
         "smtp-integrator",
@@ -54,7 +53,6 @@ def test_smtp_not_activated(harness: Harness):
     act: Run all initial hooks.
     assert: The fastapi service should not have the environment variables related to smtp.
     """
-
     container = harness.model.unit.get_container(FASTAPI_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
 

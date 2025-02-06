@@ -27,7 +27,6 @@ def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
     act: Run all initial hooks.
     assert: The flask service should have the environment variables related to smtp.
     """
-
     harness.set_model_name("flask-model")
     harness.add_relation(
         "smtp",

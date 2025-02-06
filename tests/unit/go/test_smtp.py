@@ -25,7 +25,6 @@ def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
     act: Run all initial hooks.
     assert: The go service should have the environment variables related to smtp.
     """
-
     harness.add_relation(
         "smtp",
         "smtp-integrator",

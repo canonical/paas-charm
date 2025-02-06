@@ -292,6 +292,20 @@ def generate_relation_parameters(
         ) from exc
 
 
+class ProxyConfig(BaseModel):
+    """Configuration for network access through proxy.
+
+    Attributes:
+        http_proxy: The http proxy URL.
+        https_proxy: The https proxy URL.
+        no_proxy: Comma separated list of hostnames to bypass proxy.
+    """
+
+    http_proxy: str | None = Field(default=None, pattern="https?://.+")
+    https_proxy: str | None = Field(default=None, pattern="https?://.+")
+    no_proxy: typing.Optional[str] = None
+
+
 class S3Parameters(BaseModel):
     """Configuration for accessing S3 bucket.
 
@@ -367,20 +381,6 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         if not certificate:
             raise ValueError("Missing x509certs. There should be at least one certificate.")
         return certificate
-
-
-class ProxyConfig(BaseModel):
-    """Configuration for network access through proxy.
-
-    Attributes:
-        http_proxy: The http proxy URL.
-        https_proxy: The https proxy URL.
-        no_proxy: Comma separated list of hostnames to bypass proxy.
-    """
-
-    http_proxy: str | None = Field(default=None, pattern="https?://.+")
-    https_proxy: str | None = Field(default=None, pattern="https?://.+")
-    no_proxy: typing.Optional[str] = None
 
 
 class TransportSecurity(str, Enum):
