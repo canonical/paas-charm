@@ -6,9 +6,8 @@ from fastapi import FastAPI, HTTPException
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base

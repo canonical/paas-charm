@@ -99,7 +99,7 @@ func main() {
 		panic(err)
 	}
  
-  metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+  	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"
 	}
