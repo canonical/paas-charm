@@ -179,7 +179,7 @@ async def test_smtp_integration(
     mailcatcher,
 ):
     """
-    arrange: build and deploy the flask charm. Integrate the charm with the s3-integrator.
+    arrange: build and deploy the flask charm. Integrate the charm with the smtp-integrator.
     act: send an email from flask charm.
     assert: the mailcatcher should have received the email.
     """

@@ -82,7 +82,7 @@ func initTracer(ctx context.Context) error {
 }
 
 func main() {
-    ctx := context.Background()
+	ctx := context.Background()
 	// initialize trace provider.
 	if err := initTracer(ctx); err != nil {
 		log.Panic(err)
@@ -99,7 +99,7 @@ func main() {
 		panic(err)
 	}
 
-  	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"
 	}

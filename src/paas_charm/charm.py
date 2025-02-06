@@ -59,7 +59,7 @@ try:
     from charms.smtp_integrator.v0.smtp import SmtpRequires
 except ImportError:
     logger.exception(
-        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
+        "Missing charm library, please run ``"
     )
 
 
@@ -275,13 +275,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         return _tracing
 
     def _init_smtp(self, requires: dict[str, RelationMeta]) -> "SmtpRequires | None":
-        """Initialize the SMTP relation if its required.
+        """Initialize the Smtp relation if its required.
 
         Args:
             requires: relation requires dictionary from metadata
 
         Returns:
-            Returns the SMTP relation or None
+            Returns the Smtp relation or None
         """
         _smtp = None
         if "smtp" in requires and requires["smtp"].interface_name == "smtp":
