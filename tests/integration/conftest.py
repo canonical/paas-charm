@@ -122,9 +122,7 @@ async def django_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -146,9 +144,7 @@ async def fastapi_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -170,9 +166,7 @@ async def go_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
