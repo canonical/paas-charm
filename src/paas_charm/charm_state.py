@@ -223,8 +223,6 @@ class IntegrationsState:
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
-        This functions will raise in the configuration is invalid.
-
         Args:
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
