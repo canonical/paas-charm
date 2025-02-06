@@ -7,14 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.2.0 - 2025-02-06
+
+### Added
+
+* Added support for tracing web applications using an integration with
+  [Charmed Tempo HA](https://charmhub.io/topics/charmed-tempo-ha).
+
 ## v1.1.0 - 2024-12-19
 
 ### Changes
 
 Updated the home page for the Read the Docs site to provide relevant information
 about the project.
-
-## v1.1.0 - 2024-12-19
 
 ### Added
 
