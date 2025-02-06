@@ -20,6 +20,15 @@ from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
 class CharmState:  # pylint: disable=too-many-instance-attributes
@@ -76,6 +85,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         s3_connection_info: dict[str, str] | None = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
+        tracing_requirer: "TracingEndpointRequirer | None" = None,
+        app_name: str | None = None,
         smtp_relation_data: dict[str, str] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
@@ -83,6 +94,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config: The charm configuration.
+            app_name: Name of the application.
             framework: The framework name.
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
@@ -91,6 +103,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             s3_connection_info: Connection info from S3 lib.
             saml_relation_data: Relation data from the SAML app.
             rabbitmq_uri: RabbitMQ uri.
+            tracing_requirer: The tracing relation object provided by the Tempo charm.
             smtp_relation_data: Relation data from smtp-integrator app.
             base_url: Base URL for the service.
 
@@ -107,11 +120,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         }
 
         integrations = IntegrationsState.build(
+            app_name=app_name,
             redis_uri=redis_uri,
             database_requirers=database_requirers,
             s3_connection_info=s3_connection_info,
             saml_relation_data=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
+            tracing_requirer=tracing_requirer,
             smtp_relation_data=smtp_relation_data,
         )
         return cls(
@@ -199,6 +214,7 @@ class IntegrationsState:
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
+        tempo_parameters: Tracing parameters.
         smtp_parameters: Smtp parameters.
     """
 
@@ -207,6 +223,7 @@ class IntegrationsState:
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
+    tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
@@ -219,16 +236,20 @@ class IntegrationsState:
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
+        tracing_requirer: "TracingEndpointRequirer | None" = None,
+        app_name: str | None = None,
         smtp_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
         Args:
+            app_name: Name of the application.
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
+            tracing_requirer: The tracing relation data provided by the Tempo charm.
             smtp_relation_data: smtp relation data from smtp lib.
 
         Return:
@@ -236,6 +257,13 @@ class IntegrationsState:
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
+        tempo_data = {}
+        if tracing_requirer and tracing_requirer.is_ready():
+            tempo_data = {
+                "service_name": app_name,
+                "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
+            }
+        tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
         smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
 
         # Workaround as the Redis library temporarily sends the port
@@ -253,11 +281,12 @@ class IntegrationsState:
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
+            tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
         )
 
 
-RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "SmtpParameters")
+RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters", "SmtpParameters")
 
 
 def generate_relation_parameters(
@@ -304,6 +333,18 @@ class ProxyConfig(BaseModel):
     http_proxy: str | None = Field(default=None, pattern="https?://.+")
     https_proxy: str | None = Field(default=None, pattern="https?://.+")
     no_proxy: typing.Optional[str] = None
+
+
+class TempoParameters(BaseModel):
+    """Configuration for accessing Tempo service.
+
+    Attributes:
+        endpoint: Tempo endpoint URL to send the traces.
+        service_name: Tempo service name for the workload.
+    """
+
+    endpoint: str | None = None
+    service_name: str | None = None
 
 
 class S3Parameters(BaseModel):

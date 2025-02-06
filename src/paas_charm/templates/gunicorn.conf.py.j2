@@ -1,3 +1,10 @@
+{%- if enable_tracing -%}
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+{% endif -%}
 bind = ['0.0.0.0:{{ workload_port }}']
 chdir = '{{ workload_app_dir }}'
 accesslog = '{{ access_log }}'
@@ -6,3 +13,11 @@ statsd_host = '{{ statsd_host }}'
 {%- for key, value in config_entries.items() %}
 {{ key }} = {{ value }}
 {%- endfor -%}
+{%- if enable_tracing %}
+
+
+def post_fork(server, worker):
+    trace.set_tracer_provider(TracerProvider())
+    span_processor = BatchSpanProcessor(OTLPSpanExporter())
+    trace.get_tracer_provider().add_span_processor(span_processor)
+{% endif -%}

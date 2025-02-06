@@ -41,6 +41,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         metrics_target: target to scrape for metrics.
         metrics_path: path to scrape for metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
+        tracing_enabled: True if tracing should be enabled.
     """
 
     framework: str
@@ -56,6 +57,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     metrics_target: str | None = None
     metrics_path: str | None = "/metrics"
     unit_name: str
+    tracing_enabled: bool = False
 
     def should_run_scheduler(self) -> bool:
         """Return if the unit should run scheduler processes.
@@ -276,6 +278,11 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
     for interface_name, uri in integrations.databases_uris.items():
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)
+    if integrations.tempo_parameters:
+        if service_name := integrations.tempo_parameters.service_name:
+            env.update({"OTEL_SERVICE_NAME": service_name})
+        if endpoint := integrations.tempo_parameters.endpoint:
+            env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
 
     if integrations.s3_parameters:
         s3 = integrations.s3_parameters

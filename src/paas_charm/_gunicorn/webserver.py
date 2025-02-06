@@ -171,6 +171,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             access_log=access_log,
             error_log=error_log,
             statsd_host=str(STATSD_HOST),
+            enable_tracing=self._workload_config.tracing_enabled,
             config_entries=config_entries,
         )
         return config

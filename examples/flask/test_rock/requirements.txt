@@ -8,4 +8,8 @@ redis[hiredis]
 boto3
 pika
 celery
+opentelemetry-api
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-instrumentation-flask
+opentelemetry-sdk
 Flask-Mail

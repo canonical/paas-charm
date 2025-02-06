@@ -3,16 +3,171 @@
 
 import json
 import logging
+import pathlib
 
 import pytest
 import pytest_asyncio
 from juju.application import Application
-from juju.client.jujudata import FileJujuData
+from juju.errors import JujuError
 from juju.juju import Juju
-from juju.model import Controller, Model
+from juju.model import Model
+from pytest import Config
 from pytest_operator.plugin import OpsTest
 
+from tests.integration.helpers import inject_venv
+
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture(scope="module", name="test_flask_image")
+def fixture_test_flask_image(pytestconfig: Config):
+    """Return the --test-flask-image test parameter."""
+    test_flask_image = pytestconfig.getoption("--test-flask-image")
+    if not test_flask_image:
+        raise ValueError("the following arguments are required: --test-flask-image")
+    return test_flask_image
+
+
+@pytest.fixture(scope="module", name="django_app_image")
+def fixture_django_app_image(pytestconfig: Config):
+    """Return the --django-app-image test parameter."""
+    image = pytestconfig.getoption("--django-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --django-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="fastapi_app_image")
+def fixture_fastapi_app_image(pytestconfig: Config):
+    """Return the --fastapi-app-image test parameter."""
+    image = pytestconfig.getoption("--fastapi-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --fastapi-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="go_app_image")
+def fixture_go_app_image(pytestconfig: Config):
+    """Return the --go-app-image test parameter."""
+    image = pytestconfig.getoption("--go-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --go-app-image")
+    return image
+
+
+async def build_charm_file(
+    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
+) -> str:
+    """Get the existing charm file if exists, build a new one if not."""
+    charm_file = next(
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
+    )
+
+    if not charm_file:
+        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
+        if framework == "flask":
+            charm_location = PROJECT_ROOT / f"examples/{framework}"
+        charm_file = await ops_test.build_charm(charm_location)
+    elif charm_file[0] != "/":
+        charm_file = PROJECT_ROOT / charm_file
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+    return pathlib.Path(charm_file).absolute()
+
+
+@pytest_asyncio.fixture(scope="module", name="flask_app")
+async def flask_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    test_flask_image: str,
+):
+    """Build and deploy the flask charm with test-flask image."""
+    app_name = "flask-k8s"
+
+    resources = {
+        "flask-app-image": test_flask_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
+    app = await model.deploy(
+        charm_file, resources=resources, application_name=app_name, series="jammy"
+    )
+    await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="django_app")
+async def django_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    django_app_image: str,
+    postgresql_k8s: Application,
+):
+    """Build and deploy the Django charm with django-app image."""
+    app_name = "django-k8s"
+
+    resources = {
+        "django-app-image": django_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
+
+    app = await model.deploy(
+        charm_file,
+        resources=resources,
+        config={"django-allowed-hosts": "*"},
+        application_name=app_name,
+        series="jammy",
+    )
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="fastapi_app")
+async def fastapi_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    fastapi_app_image: str,
+    postgresql_k8s: Application,
+):
+    """Build and deploy the FastAPI charm with fastapi-app image."""
+    app_name = "fastapi-k8s"
+
+    resources = {
+        "app-image": fastapi_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="go_app")
+async def go_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    go_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "go-k8s"
+
+    resources = {
+        "app-image": go_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")
@@ -147,10 +302,19 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
     """Deploy postgres k8s charm."""
     _, status, _ = await ops_test.juju("status", "--format", "json")
     version = json.loads(status)["model"]["version"]
-    if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
-        return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
-    else:
-        return await model.deploy("postgresql-k8s", channel="14/stable", revision=300, trust=True)
+    try:
+        if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
+            return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
+        else:
+            return await model.deploy(
+                "postgresql-k8s", channel="14/stable", revision=300, trust=True
+            )
+    except JujuError as e:
+        if 'cannot add application "postgresql-k8s": application already exists' in e.message:
+            logger.info("Application 'postgresql-k8s' already exists")
+            return model.applications["postgresql-k8s"]
+        else:
+            raise e
 
 
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
