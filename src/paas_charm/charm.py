@@ -59,7 +59,8 @@ try:
     from charms.smtp_integrator.v0.smtp import SmtpRequires
 except ImportError:
     logger.exception(
-        "Missing charm library, please run ``"
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
     )
 
 
