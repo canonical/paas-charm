@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.2.2 - 2025-02-07
+
+### Fixed
+
+* Removed `__init__.py` file for templates and included the Jinja templates in the
+  `package-data` in `pyproject.toml`.
+
 ## v1.2.1 - 2025-02-07
 
 ### Fixed
