@@ -145,6 +145,7 @@ html_context = {
     #
     # TODO: To customise the directory, uncomment and update as needed.
     "github_folder": "/docs/",
+    "github_issues": "https://github.com/canonical/paas-charm/issues",
 
     # TODO: To enable or disable the Previous / Next buttons at the bottom of pages
     # Valid options: none, prev, next, both
@@ -321,3 +322,11 @@ with open(".sphinx/latex_elements_template.txt", "rt") as file:
     latex_config = file.read()
 
 latex_elements = ast.literal_eval(latex_config.replace("$PROJECT", project))
+
+# By default, the documentation includes a feedback button at the top.
+# You can disable it by setting the following configuration to True.
+disable_feedback_button = False
+
+html_js_files = ['header-nav.js']
+if 'github_issues' in html_context and html_context['github_issues'] and not disable_feedback_button:
+    html_js_files.append('github_issue_links.js')
