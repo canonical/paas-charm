@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.2.3 - 2025-02-07
+
+### Changed
+
+* Missing charm libraries at import time are now logged as a warning rather than
+  an exception.
+
 ## v1.2.2 - 2025-02-07
 
 ### Fixed

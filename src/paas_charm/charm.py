@@ -33,7 +33,7 @@ try:
     # pylint: disable=ungrouped-imports
     from charms.data_platform_libs.v0.s3 import S3Requirer
 except ImportError:
-    logger.exception(
+    logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
     )
 
@@ -41,7 +41,7 @@ try:
     # pylint: disable=ungrouped-imports
     from charms.saml_integrator.v0.saml import SamlRequires
 except ImportError:
-    logger.exception(
+    logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
     )
 
@@ -49,7 +49,7 @@ try:
     # pylint: disable=ungrouped-imports
     from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 except ImportError:
-    logger.exception(
+    logger.warning(
         "Missing charm library, please run "
         "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
     )
