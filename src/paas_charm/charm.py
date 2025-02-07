@@ -516,9 +516,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         smtp_relation_data = None
         if self._smtp and (smtp_data := self._smtp.get_relation_data()):
             smtp_relation_data = smtp_data.to_relation_data()
-            if password_id := smtp_relation_data.get("password_id"):
-                secret = self.model.get_secret(id=password_id)
-                smtp_relation_data["password"] = secret.get_content()
 
         charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
         config = typing.cast(
