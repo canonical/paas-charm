@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.2.1 - 2025-02-07
+
+### Fixed
+
+* Added an init file to fix `missing templates folder` issue in the pypi package.
+
 ## v1.2.0 - 2025-02-06
 
 ### Added

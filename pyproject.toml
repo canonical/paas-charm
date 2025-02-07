@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.2.0"
+version = "1.2.1"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
