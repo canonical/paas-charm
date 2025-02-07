@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.1.0"
+version = "1.2.2"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
@@ -26,7 +26,7 @@ Repository = "https://github.com/canonical/paas-charm"
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.package-data]
-paas_charm = ["**/cos/**", "**/cos/**/.**"]
+paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2"]
 
 # Testing tools configuration
 [tool.coverage.run]
