@@ -230,15 +230,15 @@ class IntegrationRequirers:
     Attrs:
         databases: DatabaseRequires collection.
         redis: Redis requirer object.
+        rabbitmq: RabbitMQ requirer object.
         s3: S3 requirer object.
         saml: Saml requirer object.
-        rabbitmq: RabbitMQ requirer object.
         tracing: TracingEndpointRequire object.
     """
 
     databases: dict[str, DatabaseRequires]
-    rabbitmq: RabbitMQRequires | None = None
     redis: RedisRequires | None = None
+    rabbitmq: RabbitMQRequires | None = None
     s3: "S3Requirer | None" = None
     saml: "SamlRequires | None" = None
     tracing: "TracingEndpointRequirer | None" = None

@@ -122,16 +122,14 @@ def test_s3_integration(s3_connection_info, expected_s3_parameters):
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
-    s3 = None
-    if s3_connection_info:
-        s3 = unittest.mock.MagicMock()
-        s3.get_s3_connection_info.return_value = s3_connection_info
     charm_state = CharmState.from_charm(
         config=config,
         framework_config=Charm.get_framework_config(charm),
         framework="flask",
         secret_storage=SECRET_STORAGE_MOCK,
-        integration_requirers=IntegrationRequirers(databases={}, s3=s3),
+        integration_requirers=IntegrationRequirers(
+            databases={}, s3=_s3_requirer_mock(s3_connection_info)
+        ),
     )
     assert charm_state.integrations
     assert charm_state.integrations.s3_parameters == expected_s3_parameters
@@ -146,15 +144,15 @@ def test_s3_integration_raises():
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
-    s3 = unittest.mock.MagicMock()
-    s3.get_s3_connection_info.return_value = {"bucket": "bucket"}
     with pytest.raises(CharmConfigInvalidError) as exc:
         charm_state = CharmState.from_charm(
             config=config,
             framework_config=Charm.get_framework_config(charm),
             framework="flask",
             secret_storage=SECRET_STORAGE_MOCK,
-            integration_requirers=IntegrationRequirers(databases={}, s3=s3),
+            integration_requirers=IntegrationRequirers(
+                databases={}, s3=_s3_requirer_mock({"bucket": "bucket"})
+            ),
         )
     assert "S3" in str(exc)
 
@@ -190,14 +188,14 @@ def test_saml_integration():
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
-    saml = unittest.mock.MagicMock()
-    saml.get_relation_data.return_value.to_relation_data.return_value = saml_app_relation_data
     charm_state = CharmState.from_charm(
         config=config,
         framework_config=Charm.get_framework_config(charm),
         framework="flask",
         secret_storage=SECRET_STORAGE_MOCK,
-        integration_requirers=IntegrationRequirers(databases={}, saml=saml),
+        integration_requirers=IntegrationRequirers(
+            databases={}, saml=_saml_requirer_mock(saml_app_relation_data)
+        ),
     )
     assert charm_state.integrations
     assert charm_state.integrations.saml_parameters
@@ -262,15 +260,15 @@ def test_saml_integration_invalid(saml_app_relation_data, error_messages):
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
-    saml = unittest.mock.MagicMock()
-    saml.get_relation_data.return_value.to_relation_data.return_value = saml_app_relation_data
     with pytest.raises(CharmConfigInvalidError) as exc:
         charm_state = CharmState.from_charm(
             config=config,
             framework_config=Charm.get_framework_config(charm),
             framework="flask",
             secret_storage=SECRET_STORAGE_MOCK,
-            integration_requirers=IntegrationRequirers(databases={}, saml=saml),
+            integration_requirers=IntegrationRequirers(
+                databases={}, saml=_saml_requirer_mock(saml_app_relation_data)
+            ),
         )
     for message in error_messages:
         assert message in str(exc)
@@ -346,3 +344,19 @@ def test_flask_secret_key_id_duplication():
             config=config,
             database_requirers={},
         )
+
+
+def _s3_requirer_mock(relation_data: dict[str:str] | None) -> unittest.mock.MagicMock | None:
+    """S3 requirer mock."""
+    if not relation_data:
+        return None
+    s3 = unittest.mock.MagicMock()
+    s3.get_s3_connection_info.return_value = relation_data
+    return s3
+
+
+def _saml_requirer_mock(relation_data: dict[str:str]) -> unittest.mock.MagicMock:
+    """Saml requirer mock."""
+    saml = unittest.mock.MagicMock()
+    saml.get_relation_data.return_value.to_relation_data.return_value = relation_data
+    return saml
