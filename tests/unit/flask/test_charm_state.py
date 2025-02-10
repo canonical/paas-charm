@@ -8,7 +8,7 @@ from secrets import token_hex
 
 import pytest
 
-from paas_charm.charm_state import CharmState, S3Parameters
+from paas_charm.charm_state import CharmState, IntegrationRequirers, S3Parameters
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm, FlaskConfig
 
@@ -58,7 +58,7 @@ def test_charm_state_flask_config(charm_config: dict, flask_config: dict) -> Non
         framework_config=Charm.get_framework_config(charm),
         secret_storage=SECRET_STORAGE_MOCK,
         config=config,
-        database_requirers={},
+        integration_requirers=IntegrationRequirers(databases={}),
     )
     assert charm_state.framework_config == flask_config
 
@@ -90,7 +90,7 @@ def test_charm_state_invalid_flask_config(charm_config: dict) -> None:
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
-            database_requirers={},
+            integration_requirers=IntegrationRequirers(databases={}),
         )
     for config_key in charm_config:
         assert config_key in exc.value.msg
@@ -122,13 +122,16 @@ def test_s3_integration(s3_connection_info, expected_s3_parameters):
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
+    s3 = None
+    if s3_connection_info:
+        s3 = unittest.mock.MagicMock()
+        s3.get_s3_connection_info.return_value = s3_connection_info
     charm_state = CharmState.from_charm(
         config=config,
         framework_config=Charm.get_framework_config(charm),
         framework="flask",
         secret_storage=SECRET_STORAGE_MOCK,
-        database_requirers={},
-        s3_connection_info=s3_connection_info,
+        integration_requirers=IntegrationRequirers(databases={}, s3=s3),
     )
     assert charm_state.integrations
     assert charm_state.integrations.s3_parameters == expected_s3_parameters
@@ -143,14 +146,15 @@ def test_s3_integration_raises():
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
+    s3 = unittest.mock.MagicMock()
+    s3.get_s3_connection_info.return_value = {"bucket": "bucket"}
     with pytest.raises(CharmConfigInvalidError) as exc:
         charm_state = CharmState.from_charm(
             config=config,
             framework_config=Charm.get_framework_config(charm),
             framework="flask",
             secret_storage=SECRET_STORAGE_MOCK,
-            database_requirers={},
-            s3_connection_info={"bucket": "bucket"},
+            integration_requirers=IntegrationRequirers(databases={}, s3=s3),
         )
     assert "S3" in str(exc)
 
@@ -186,13 +190,14 @@ def test_saml_integration():
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
+    saml = unittest.mock.MagicMock()
+    saml.get_relation_data.return_value.to_relation_data.return_value = saml_app_relation_data
     charm_state = CharmState.from_charm(
         config=config,
         framework_config=Charm.get_framework_config(charm),
         framework="flask",
         secret_storage=SECRET_STORAGE_MOCK,
-        database_requirers={},
-        saml_relation_data=saml_app_relation_data,
+        integration_requirers=IntegrationRequirers(databases={}, saml=saml),
     )
     assert charm_state.integrations
     assert charm_state.integrations.saml_parameters
@@ -257,14 +262,15 @@ def test_saml_integration_invalid(saml_app_relation_data, error_messages):
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config.update(config)
     charm = unittest.mock.MagicMock(config=config)
+    saml = unittest.mock.MagicMock()
+    saml.get_relation_data.return_value.to_relation_data.return_value = saml_app_relation_data
     with pytest.raises(CharmConfigInvalidError) as exc:
         charm_state = CharmState.from_charm(
             config=config,
             framework_config=Charm.get_framework_config(charm),
             framework="flask",
             secret_storage=SECRET_STORAGE_MOCK,
-            database_requirers={},
-            saml_relation_data=saml_app_relation_data,
+            integration_requirers=IntegrationRequirers(databases={}, saml=saml),
         )
     for message in error_messages:
         assert message in str(exc)
@@ -287,7 +293,7 @@ def test_secret_configuration():
         framework_config=Charm.get_framework_config(charm),
         secret_storage=SECRET_STORAGE_MOCK,
         config=config,
-        database_requirers={},
+        integration_requirers=IntegrationRequirers(databases={}),
     )
     assert "secret_test" in charm_state.app_config
     assert charm_state.app_config["secret_test"] == {

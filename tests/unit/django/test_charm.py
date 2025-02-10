@@ -16,7 +16,7 @@ from examples.django.charm.src.charm import DjangoCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState
+from paas_charm.charm_state import CharmState, IntegrationRequirers
 
 from .constants import DEFAULT_LAYER
 
@@ -71,7 +71,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         framework="django",
         framework_config=harness.charm.get_framework_config(),
         secret_storage=secret_storage,
-        database_requirers={},
+        integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
     workload_config = create_workload_config(framework_name="django", unit_name="django/0")
@@ -176,7 +176,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         framework="django",
         framework_config=harness.charm.get_framework_config(),
         secret_storage=secret_storage,
-        database_requirers={},
+        integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
     workload_config = create_workload_config(framework_name="django", unit_name="django/0")

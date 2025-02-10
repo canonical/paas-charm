@@ -17,7 +17,7 @@ from ops.testing import Harness
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState
+from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.database_migration import DatabaseMigrationStatus
 from paas_charm.flask import Charm
 
@@ -48,7 +48,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
         config=harness.charm.config,
         framework="flask",
         secret_storage=secret_storage,
-        database_requirers={},
+        integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")

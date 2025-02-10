@@ -10,14 +10,34 @@ from dataclasses import dataclass, field
 from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
+from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
 
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
+
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.data_platform_libs.v0.s3 import S3Requirer
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.saml_integrator.v0.saml import SamlRequires
+except ImportError:
+    # we already logged it in charm.py
+    pass
 
 try:
     # the import is used for type hinting
@@ -79,12 +99,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework: str,
         framework_config: BaseModel,
         secret_storage: KeySecretStorage,
-        database_requirers: dict[str, DatabaseRequires],
-        redis_uri: str | None = None,
-        s3_connection_info: dict[str, str] | None = None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        rabbitmq_uri: str | None = None,
-        tracing_requirer: "TracingEndpointRequirer | None" = None,
+        integration_requirers: "IntegrationRequirers",
         app_name: str | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
@@ -92,16 +107,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Args:
             config: The charm configuration.
-            app_name: Name of the application.
             framework: The framework name.
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
-            database_requirers: All database requirers object declared by the charm.
-            redis_uri: The redis uri provided by the redis charm.
-            s3_connection_info: Connection info from S3 lib.
-            saml_relation_data: Relation data from the SAML app.
-            rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing relation object provided by the Tempo charm.
+            integration_requirers: The collection of integration requirers.
+            app_name: Name of the application.
             base_url: Base URL for the service.
 
         Return:
@@ -116,15 +126,30 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             k: v for k, v in app_config.items() if k not in framework_config.dict().keys()
         }
 
+        saml_relation_data = None
+        if integration_requirers.saml and (
+            saml_data := integration_requirers.saml.get_relation_data()
+        ):
+            saml_relation_data = saml_data.to_relation_data()
+
         integrations = IntegrationsState.build(
             app_name=app_name,
-            redis_uri=redis_uri,
-            database_requirers=database_requirers,
-            s3_connection_info=s3_connection_info,
+            redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
+            database_requirers=integration_requirers.databases,
+            s3_connection_info=(
+                integration_requirers.s3.get_s3_connection_info()
+                if integration_requirers.s3
+                else None
+            ),
             saml_relation_data=saml_relation_data,
-            rabbitmq_uri=rabbitmq_uri,
-            tracing_requirer=tracing_requirer,
+            rabbitmq_uri=(
+                integration_requirers.rabbitmq.rabbitmq_uri()
+                if integration_requirers.rabbitmq
+                else None
+            ),
+            tracing_requirer=integration_requirers.tracing,
         )
+
         return cls(
             framework=framework,
             framework_config=framework_config.dict(exclude_none=True),
@@ -196,6 +221,27 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             Whether the secret storage system is ready.
         """
         return self._is_secret_storage_ready
+
+
+@dataclass
+class IntegrationRequirers:
+    """Collection of integration requirers.
+
+    Attrs:
+        databases: DatabaseRequires collection.
+        redis: Redis requirer object.
+        s3: S3 requirer object.
+        saml: Saml requirer object.
+        rabbitmq: RabbitMQ requirer object.
+        tracing: TracingEndpointRequire object.
+    """
+
+    databases: dict[str, DatabaseRequires]
+    rabbitmq: RabbitMQRequires | None = None
+    redis: RedisRequires | None = None
+    s3: "S3Requirer | None" = None
+    saml: "SamlRequires | None" = None
+    tracing: "TracingEndpointRequirer | None" = None
 
 
 @dataclass
