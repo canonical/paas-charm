@@ -6,11 +6,15 @@
 # this is a unit test file
 # pylint: disable=protected-access
 
+import copy
+import os
+import pathlib
 import unittest.mock
 from secrets import token_hex
 
 import ops
 import pytest
+import yaml
 from ops.pebble import ServiceStatus
 from ops.testing import Harness
 
@@ -20,6 +24,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.database_migration import DatabaseMigrationStatus
 from paas_charm.flask import Charm
+from paas_charm.utils import _config_metadata
 
 from .constants import (
     DEFAULT_LAYER,
@@ -346,6 +351,107 @@ def test_invalid_config(harness: Harness):
     harness.begin()
     harness.update_config({"flask-env": ""})
     assert harness.model.unit.status == ops.BlockedStatus("invalid configuration: flask-env")
+
+
+@pytest.mark.parametrize(
+    "required_configs,given_configs",
+    [
+        pytest.param(
+            [
+                {
+                    "optional-test-1": {
+                        "description": "A non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+                {
+                    "optional-test-2": {
+                        "description": "A second non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+            ],
+            [""],
+            id="blocked for multiple configs",
+        ),
+        pytest.param(
+            [
+                {
+                    "optional-test-1": {
+                        "description": "A non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+                {
+                    "optional-test-2": {
+                        "description": "A second non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+            ],
+            ["optional-test-1"],
+            id="blocked for 1 config",
+        ),
+        pytest.param(
+            [
+                {
+                    "optional-test-1": {
+                        "description": "A non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+                {
+                    "optional-test-2": {
+                        "description": "A second non-optional config option for testing.",
+                        "type": "string",
+                        "optional": False,
+                    }
+                },
+            ],
+            ["optional-test-1", "optional-test-2"],
+            id="no block",
+        ),
+    ],
+)
+def test_missing_configs(harness: Harness, required_configs, given_configs):
+    """
+    arrange: Prepare the harness. Instantiate the charm with some required integrations.
+    act: Integrate with some integrations (but not all the required ones).
+    assert: The charm should be blocked. The message should list only the required integrations
+         that are missing.
+    """
+    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container.add_layer("a_layer", DEFAULT_LAYER)
+    charm_dir = pathlib.Path(os.getcwd())
+
+    config_file = charm_dir / "charmcraft.yaml"
+    if config_file.exists():
+        yaml_dict = yaml.safe_load(config_file.read_text())
+    new_yaml = copy.deepcopy(yaml_dict)
+
+    original_file = ""
+
+    with open(charm_dir / "charmcraft.yaml", "r") as file:
+        original_file = file.read()
+
+    for config in required_configs:
+        new_yaml["config"]["options"].update(config)
+    with open(charm_dir / "charmcraft.yaml", "w") as file:
+        yaml.dump(new_yaml, file)
+    harness.begin_with_initial_hooks()
+    harness.charm.get_framework_config()
+    is_blocked = isinstance(harness.model.unit.status, ops.model.BlockedStatus)
+
+    print(yaml_dict["config"]["options"])
+    with open(charm_dir / "charmcraft.yaml", "w") as file:
+        file.write(original_file)
+
+    assert is_blocked
 
 
 def test_invalid_integration(harness: Harness):

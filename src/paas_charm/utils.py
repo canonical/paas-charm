@@ -105,8 +105,6 @@ def config_get_with_secret(
     return charm.model.get_secret(id=typing.cast(str, secret_id))
 
 
-# ignored because interface PR, I will remove ignore when implementing.
-# pylint: disable=unused-argument
 def get_missing_non_optional_configs(charm: ops.CharmBase) -> list[str] | None:
     """Get a list of missing non-optional config options.
 
@@ -117,4 +115,12 @@ def get_missing_non_optional_configs(charm: ops.CharmBase) -> list[str] | None:
         Returns the list of missing non-optional config options,
         if none exists returns None.
     """
+    metadata = _config_metadata(pathlib.Path(os.getcwd()))
+    missing_options = []
+    for option in metadata["options"]:
+        if metadata["options"][option].get("optional") is False:
+            if not charm.config.get(option):
+                missing_options.append(option)
+    if missing_options:
+        return missing_options
     return None

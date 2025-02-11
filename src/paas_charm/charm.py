@@ -288,10 +288,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             },
         )
 
-        if get_missing_non_optional_configs(self):
-            # log the missing options
-            # block the charm with missing options message
-            pass
+        if missing_options := get_missing_non_optional_configs(self):
+            message = f"Waiting for the {', '.join(missing_options)} configuration(s)."
+            logger.info(message)
+            self.update_app_and_unit_status(ops.BlockedStatus(message))
 
         try:
             return framework_config_class.model_validate(config)
