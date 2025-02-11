@@ -23,7 +23,11 @@ from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
-from paas_charm.utils import build_validation_error_message, config_get_with_secret
+from paas_charm.utils import (
+    build_validation_error_message,
+    config_get_with_secret,
+    get_missing_non_optional_configs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +287,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+
+        if get_missing_non_optional_configs(self):
+            # log the missing options
+            # block the charm with missing options message
+            pass
+
         try:
             return framework_config_class.model_validate(config)
         except ValidationError as exc:
