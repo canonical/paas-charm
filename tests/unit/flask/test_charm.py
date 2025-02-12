@@ -18,6 +18,7 @@ import yaml
 from ops.pebble import ServiceStatus
 from ops.testing import Harness
 
+import paas_charm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
@@ -354,7 +355,7 @@ def test_invalid_config(harness: Harness):
 
 
 @pytest.mark.parametrize(
-    "required_configs,given_configs",
+    "required_configs,missing_configs",
     [
         pytest.param(
             [
@@ -373,7 +374,7 @@ def test_invalid_config(harness: Harness):
                     }
                 },
             ],
-            [""],
+            ["optional-test-1", "optional-test-2"],
             id="blocked for multiple configs",
         ),
         pytest.param(
@@ -385,73 +386,45 @@ def test_invalid_config(harness: Harness):
                         "optional": False,
                     }
                 },
-                {
-                    "optional-test-2": {
-                        "description": "A second non-optional config option for testing.",
-                        "type": "string",
-                        "optional": False,
-                    }
-                },
             ],
             ["optional-test-1"],
             id="blocked for 1 config",
         ),
         pytest.param(
-            [
-                {
-                    "optional-test-1": {
-                        "description": "A non-optional config option for testing.",
-                        "type": "string",
-                        "optional": False,
-                    }
-                },
-                {
-                    "optional-test-2": {
-                        "description": "A second non-optional config option for testing.",
-                        "type": "string",
-                        "optional": False,
-                    }
-                },
-            ],
-            ["optional-test-1", "optional-test-2"],
+            [],
+            [],
             id="no block",
         ),
     ],
 )
-def test_missing_configs(harness: Harness, required_configs, given_configs):
+def test_missing_configs(harness: Harness, required_configs, missing_configs):
     """
-    arrange: Prepare the harness. Instantiate the charm with some required integrations.
-    act: Integrate with some integrations (but not all the required ones).
-    assert: The charm should be blocked. The message should list only the required integrations
-         that are missing.
+    arrange: Prepare the harness.
+    act: Instantiate the charm with some missing configs.
+    assert: The charm should be blocked. The message should list only the non-optional
+         configs that are missing.
     """
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     charm_dir = pathlib.Path(os.getcwd())
-
     config_file = charm_dir / "charmcraft.yaml"
     if config_file.exists():
         yaml_dict = yaml.safe_load(config_file.read_text())
-    new_yaml = copy.deepcopy(yaml_dict)
-
-    original_file = ""
-
-    with open(charm_dir / "charmcraft.yaml", "r") as file:
-        original_file = file.read()
-
     for config in required_configs:
-        new_yaml["config"]["options"].update(config)
-    with open(charm_dir / "charmcraft.yaml", "w") as file:
-        yaml.dump(new_yaml, file)
+        yaml_dict["config"]["options"].update(config)
+    paas_charm.utils._config_metadata = unittest.mock.MagicMock(return_value= yaml_dict["config"])
+
     harness.begin_with_initial_hooks()
     harness.charm.get_framework_config()
-    is_blocked = isinstance(harness.model.unit.status, ops.model.BlockedStatus)
 
-    print(yaml_dict["config"]["options"])
-    with open(charm_dir / "charmcraft.yaml", "w") as file:
-        file.write(original_file)
+    if missing_configs:
+        assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
+        for config in missing_configs:
+            assert config in str(harness.model.unit.status.message)
+    else:
+        assert isinstance(harness.model.unit.status, ops.model.ActiveStatus)
 
-    assert is_blocked
+    paas_charm.utils._config_metadata = _config_metadata
 
 
 def test_invalid_integration(harness: Harness):
