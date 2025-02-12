@@ -412,7 +412,7 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs):
         yaml_dict = yaml.safe_load(config_file.read_text())
     for config in required_configs:
         yaml_dict["config"]["options"].update(config)
-    paas_charm.utils._config_metadata = unittest.mock.MagicMock(return_value= yaml_dict["config"])
+    paas_charm.utils._config_metadata = unittest.mock.MagicMock(return_value=yaml_dict["config"])
 
     harness.begin_with_initial_hooks()
     harness.charm.get_framework_config()
