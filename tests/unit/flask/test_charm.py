@@ -397,7 +397,7 @@ def test_invalid_config(harness: Harness):
         ),
     ],
 )
-def test_missing_configs(harness: Harness, required_configs, missing_configs):
+def test_missing_configs(harness: Harness, required_configs, missing_configs, monkeypatch):
     """
     arrange: Prepare the harness.
     act: Instantiate the charm with some missing configs.
@@ -412,7 +412,11 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs):
         yaml_dict = yaml.safe_load(config_file.read_text())
     for config in required_configs:
         yaml_dict["config"]["options"].update(config)
-    paas_charm.utils._config_metadata = unittest.mock.MagicMock(return_value=yaml_dict["config"])
+    monkeypatch.setattr(
+        paas_charm.utils,
+        "_config_metadata",
+        unittest.mock.MagicMock(return_value=yaml_dict["config"]),
+    )
 
     harness.begin_with_initial_hooks()
     harness.charm.get_framework_config()
@@ -423,8 +427,6 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs):
             assert config in str(harness.model.unit.status.message)
     else:
         assert isinstance(harness.model.unit.status, ops.model.ActiveStatus)
-
-    paas_charm.utils._config_metadata = _config_metadata
 
 
 def test_invalid_integration(harness: Harness):
