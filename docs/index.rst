@@ -77,7 +77,7 @@ or "Give Feedback" links on each documentation page to either directly change so
 you see that's wrong, ask a question, or make a suggestion about a potential change.
 
 If there's a particular area of documentation that you'd like to see that's missing,
-please [file a bug](https://github.com/canonical/paas-charm/issues).
+please `file a bug <https://github.com/canonical/paas-charm/issues>`_.
 
 Project and community
 ---------------------
