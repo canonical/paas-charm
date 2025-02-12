@@ -311,7 +311,7 @@ class IntegrationsState:
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
             tracing_requirer: The tracing relation data provided by the Tempo charm.
-            smtp_relation_data: smtp relation data from smtp lib.
+            smtp_relation_data: Smtp relation data from smtp lib.
 
         Return:
             The IntegrationsState instance created.

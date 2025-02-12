@@ -179,9 +179,9 @@ async def test_smtp_integration(
     mailcatcher,
 ):
     """
-    arrange: build and deploy the flask charm. Integrate the charm with the smtp-integrator.
-    act: send an email from flask charm.
-    assert: the mailcatcher should have received the email.
+    arrange: Build and deploy the flask charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from flask charm.
+    assert: The mailcatcher should have received the email.
     """
     smtp_config = {
         "auth_type": "none",
