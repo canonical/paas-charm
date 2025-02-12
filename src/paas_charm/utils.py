@@ -105,22 +105,19 @@ def config_get_with_secret(
     return charm.model.get_secret(id=typing.cast(str, secret_id))
 
 
-def get_missing_non_optional_configs(charm: ops.CharmBase) -> list[str] | None:
+def get_missing_non_optional_configs(charm: ops.CharmBase) -> list[str]:
     """Get a list of missing non-optional config options.
 
     Args:
         charm: The charm instance.
 
     Returns:
-        Returns the list of missing non-optional config options,
-        if none exists returns None.
+        Returns the list of missing non-optional config options.
     """
     metadata = _config_metadata(pathlib.Path(os.getcwd()))
-    missing_options = []
-    for option in metadata["options"]:
-        if metadata["options"][option].get("optional") is False:
-            if not charm.config.get(option):
-                missing_options.append(option)
-    if missing_options:
-        return missing_options
-    return None
+    return [
+        option
+        for option in metadata["options"]
+        if metadata["options"][option].get("optional") is False
+        and charm.config.get(option) is None
+    ]
