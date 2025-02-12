@@ -529,10 +529,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 s3=self._s3,
                 saml=self._saml,
                 tracing=self._tracing,
+                smtp=self._smtp,
             ),
             app_name=self.app.name,
             base_url=self._base_url,
-            smtp_relation_data=smtp_relation_data,
         )
 
     @property

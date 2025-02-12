@@ -49,6 +49,15 @@ except ImportError:
     # we already logged it in charm.py
     pass
 
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.smtp_integrator.v0.smtp import SmtpRequires
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
 class CharmState:  # pylint: disable=too-many-instance-attributes
@@ -102,7 +111,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_storage: KeySecretStorage,
         integration_requirers: "IntegrationRequirers",
         app_name: str | None = None,
-        smtp_relation_data: dict[str, str] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -112,7 +120,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             framework: The framework name.
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
-
             integration_requirers: The collection of integration requirers.
             app_name: Name of the application.
             base_url: Base URL for the service.
@@ -244,6 +251,7 @@ class IntegrationRequirers:
         s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
+        smtp: Smtp requirer object.
     """
 
     databases: dict[str, DatabaseRequires]
@@ -252,6 +260,7 @@ class IntegrationRequirers:
     s3: "S3Requirer | None" = None
     saml: "SamlRequires | None" = None
     tracing: "TracingEndpointRequirer | None" = None
+    smtp: "SmtpRequires | None" = None
 
 
 @dataclass
