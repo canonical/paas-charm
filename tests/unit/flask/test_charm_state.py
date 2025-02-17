@@ -401,7 +401,7 @@ def _test_app_config_parameters():
     ]
     explicit_optional_options = [
         {
-            "name": (config_name := f"explicit{option["name"][3:]}"),
+            "name": (config_name := f"explicit{option['name'][3:]}"),
             "type_dict": {"type": option["type_dict"]["type"], "optional": True},
             "type_result": (config_name, (option["type_result"][1][0] | None, None)),
         }
@@ -409,7 +409,7 @@ def _test_app_config_parameters():
     ]
     implicit_optional_options = [
         {
-            "name": (config_name := f"implicit{option["name"][3:]}"),
+            "name": (config_name := f"implicit{option['name'][3:]}"),
             "type_dict": {"type": option["type_dict"]["type"]},
             "type_result": (config_name, (option["type_result"][1][0] | None, None)),
         }

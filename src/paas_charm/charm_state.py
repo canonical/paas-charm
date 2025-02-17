@@ -142,7 +142,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         try:
             app_config_class(**app_config)
         except ValidationError as exc:
-            print(exc.errors())
             error_message = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_message[1])
             raise CharmConfigInvalidError(error_message[0]) from exc
@@ -540,4 +539,4 @@ def app_config_factory(framework: str) -> type[BaseModel]:
         )
     )
     # mypy doesn't like the model_attributes dict
-    return create_model(model_name="AppConfig", **model_attributes)  # type: ignore[call-overload]
+    return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
