@@ -428,7 +428,7 @@ def _test_app_config_parameters():
 )
 def test_app_config(option_name, option_dict, expected_output):
     """
-    arrange: Provide dictionaries fot optional and non optional config options.
+    arrange: Provide dictionaries for optional and non optional config options.
     act: Create an attribute.
     assert: The resultant attribute should have the correct type.
     """

@@ -31,7 +31,7 @@ def build_validation_error_message(
         The tuple of 2 strings first for charm status, second for logging.
     """
     error_fields_unique = set(
-        {(error["loc"][0] if error["loc"] else "", error["msg"]) for error in exc.errors()}
+        {(str(error["loc"][0]) if error["loc"] else "", error["msg"]) for error in exc.errors()}
     )
     error_fields = {str(error_field[0]) for error_field in error_fields_unique}
 

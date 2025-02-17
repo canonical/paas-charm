@@ -143,9 +143,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             app_config_class(**app_config)
         except ValidationError as exc:
             print(exc.errors())
-            error_message, error_log = build_validation_error_message(exc, underscore_to_dash=True)
-            logger.error(error_log)
-            raise CharmConfigInvalidError(error_message) from exc
+            error_message = build_validation_error_message(exc, underscore_to_dash=True)
+            logger.error(error_message[1])
+            raise CharmConfigInvalidError(error_message[0]) from exc
 
         saml_relation_data = None
         if integration_requirers.saml and (
@@ -482,9 +482,7 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         return certificate
 
 
-def _create_configuration_attribute(
-    option_name: str, option: dict
-) -> tuple[str, tuple]:  # fill it
+def _create_configuration_attribute(option_name: str, option: dict) -> tuple[str, tuple]:
     """Create the configuration attribute.
 
     Args:
@@ -501,23 +499,25 @@ def _create_configuration_attribute(
     optional = option.get("optional") is not False
     config_type_str = option.get("type")
 
+    # We have a bunch of ignore assignment's because we are assigning types
+    # based on config option type string
     match config_type_str:
         case "boolean":
-            config_type = bool
+            config_type = bool  # type: ignore[assignment]
         case "int":
-            config_type = int
+            config_type = int  # type: ignore[assignment]
         case "float":
-            config_type = float
+            config_type = float  # type: ignore[assignment]
         case "string":
-            config_type = str
+            config_type = str  # type: ignore[assignment]
         case "secret":
-            config_type = dict
+            config_type = dict  # type: ignore[assignment]
         case _:
             raise ValueError(f"Invalid option type: {config_type_str}.")
 
     type_tuple = (config_type, ...)
     if optional:
-        type_tuple = (config_type | None, None)
+        type_tuple = (config_type | None, None)  # type: ignore[assignment]
 
     return (option_name, type_tuple)
 
@@ -539,4 +539,5 @@ def app_config_factory(framework: str) -> type[BaseModel]:
             option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
         )
     )
-    return create_model("AppConfig", **model_attributes)
+    # mypy doesn't like the model_attributes dict
+    return create_model(model_name="AppConfig", **model_attributes)  # type: ignore[call-overload]
