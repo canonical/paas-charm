@@ -4,6 +4,7 @@
 """This module defines the CharmState class which represents the state of the charm."""
 import logging
 import os
+import pathlib
 import re
 import typing
 from dataclasses import dataclass, field
@@ -11,13 +12,21 @@ from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from charms.redis_k8s.v0.redis import RedisRequires
-from pydantic import BaseModel, Extra, Field, ValidationError, ValidationInfo, field_validator
+from pydantic import (
+    BaseModel,
+    Extra,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    create_model,
+    field_validator,
+)
 
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
-from paas_charm.utils import build_validation_error_message
+from paas_charm.utils import _config_metadata, build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +125,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Return:
             The CharmState instance created by the provided charm.
+
+        Raises:
+            CharmConfigInvalidError: If some parameter in invalid.
         """
         app_config = {
             k.replace("-", "_"): v
@@ -125,6 +137,15 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         app_config = {
             k: v for k, v in app_config.items() if k not in framework_config.dict().keys()
         }
+
+        app_config_class = app_config_factory(framework)
+        try:
+            app_config_class(**app_config)
+        except ValidationError as exc:
+            print(exc.errors())
+            error_message, error_log = build_validation_error_message(exc, underscore_to_dash=True)
+            logger.error(error_log)
+            raise CharmConfigInvalidError(error_message) from exc
 
         saml_relation_data = None
         if integration_requirers.saml and (
@@ -351,9 +372,10 @@ def generate_relation_parameters(
     try:
         return parameter_type.parse_obj(relation_data)
     except ValidationError as exc:
-        error_message = build_validation_error_message(exc)
+        error_message, error_log = build_validation_error_message(exc)
+        logger.error(error_log)
         raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__} configuration: {error_message}"
+            f"Invalid {parameter_type.__name__}: {error_message}"
         ) from exc
 
 
@@ -458,3 +480,63 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         if not certificate:
             raise ValueError("Missing x509certs. There should be at least one certificate.")
         return certificate
+
+
+def _create_configuration_attribute(
+    option_name: str, option: dict
+) -> tuple[str, tuple]:  # fill it
+    """Create the configuration attribute.
+
+    Args:
+        option_name: Name of the configuration option.
+        option: The configuration option data.
+
+    Raises:
+        ValueError: raised when the option type is not valid.
+
+    Returns:
+        A tuple constructed from attribute name and type.
+    """
+    option_name = option_name.replace("-", "_")
+    optional = option.get("optional") is not False
+    config_type_str = option.get("type")
+
+    match config_type_str:
+        case "boolean":
+            config_type = bool
+        case "int":
+            config_type = int
+        case "float":
+            config_type = float
+        case "string":
+            config_type = str
+        case "secret":
+            config_type = dict
+        case _:
+            raise ValueError(f"Invalid option type: {config_type_str}.")
+
+    type_tuple = (config_type, ...)
+    if optional:
+        type_tuple = (config_type | None, None)
+
+    return (option_name, type_tuple)
+
+
+def app_config_factory(framework: str) -> type[BaseModel]:
+    """App config class factory.
+
+    Args:
+        framework: The framework name.
+
+    Returns:
+        Constructed app config class.
+    """
+    config_options = _config_metadata(pathlib.Path(os.getcwd()))["options"]
+    model_attributes = dict(
+        _create_configuration_attribute(option_name, config_options[option_name])
+        for option_name in config_options
+        if not any(
+            option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
+        )
+    )
+    return create_model("AppConfig", **model_attributes)

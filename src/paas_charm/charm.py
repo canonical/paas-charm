@@ -26,7 +26,6 @@ from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
-    get_missing_non_optional_configs,
 )
 
 logger = logging.getLogger(__name__)
@@ -288,16 +287,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             },
         )
 
-        if missing_options := get_missing_non_optional_configs(self):
-            message = f"Waiting for the {', '.join(missing_options)} configuration(s)."
-            logger.info(message)
-            self.update_app_and_unit_status(ops.BlockedStatus(message))
-
         try:
             return framework_config_class.model_validate(config)
         except ValidationError as exc:
-            error_message = build_validation_error_message(exc, underscore_to_dash=False)
-            raise CharmConfigInvalidError(f"invalid configuration: {error_message}") from exc
+            error_message, error_log = build_validation_error_message(
+                exc, underscore_to_dash=False
+            )
+            logger.error(error_log)
+            raise CharmConfigInvalidError(error_message) from exc
 
     @property
     def _container(self) -> Container:

@@ -6,7 +6,6 @@
 # this is a unit test file
 # pylint: disable=protected-access
 
-import copy
 import os
 import pathlib
 import unittest.mock
@@ -24,6 +23,7 @@ from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.database_migration import DatabaseMigrationStatus
+from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask import Charm
 from paas_charm.utils import _config_metadata
 
@@ -351,7 +351,8 @@ def test_invalid_config(harness: Harness):
     """
     harness.begin()
     harness.update_config({"flask-env": ""})
-    assert harness.model.unit.status == ops.BlockedStatus("invalid configuration: flask-env")
+    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
+    assert "flask-env" in harness.model.unit.status.message
 
 
 @pytest.mark.parametrize(
@@ -401,7 +402,7 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs, mo
     """
     arrange: Prepare the harness.
     act: Instantiate the charm with some missing configs.
-    assert: The charm should be blocked. The message should list only the non-optional
+    assert: The charm should be blocked. The message should list the non-optional
          configs that are missing.
     """
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
@@ -413,13 +414,18 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs, mo
     for config in required_configs:
         yaml_dict["config"]["options"].update(config)
     monkeypatch.setattr(
-        paas_charm.utils,
+        paas_charm.charm_state,
         "_config_metadata",
         unittest.mock.MagicMock(return_value=yaml_dict["config"]),
     )
 
     harness.begin_with_initial_hooks()
-    harness.charm.get_framework_config()
+
+    try:
+        harness.charm._create_charm_state()
+    except CharmConfigInvalidError as exc:
+        for config in missing_configs:
+            assert config in str(exc)
 
     if missing_configs:
         assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
@@ -443,3 +449,35 @@ def test_invalid_integration(harness: Harness):
     harness.begin_with_initial_hooks()
     assert isinstance(harness.model.unit.status, ops.BlockedStatus)
     assert "S3" in str(harness.model.unit.status.message)
+
+
+def test_get_framework_config(harness: Harness) -> None:
+    """
+    arrange: Get the config options with `flask-` prefix.
+    act: Start the flask charm and get the framework config object
+    assert: Framework config object should have the `flask-` prefixed config options as attributes.
+    """
+    harness.begin()
+    metadata = _config_metadata(pathlib.Path(os.getcwd()))
+    framework_keys = [
+        option[6:].replace("-", "_")
+        for option in metadata["options"]
+        if option.startswith("flask")
+    ]
+
+    framework_config = Charm.get_framework_config(harness.charm)
+
+    assert list(framework_config.__annotations__.keys()).sort() == framework_keys.sort()
+
+
+def test_get_framework_config_fail(harness: Harness) -> None:
+    """
+    arrange: Get the config options with `flask-` prefix.
+    act: Start the flask charm and get the framework config object
+    assert: Framework config object should have the `flask-` prefixed config options as attributes.
+    """
+    harness.begin()
+    harness.update_config({"flask-env": ""})
+
+    with pytest.raises(CharmConfigInvalidError) as exc:
+        framework_config = Charm.get_framework_config(harness.charm)

@@ -3,7 +3,6 @@
 
 """Generic utility functions."""
 import functools
-import itertools
 import os
 import pathlib
 import typing
@@ -15,8 +14,13 @@ from pydantic import ValidationError
 
 def build_validation_error_message(
     exc: ValidationError, prefix: str | None = None, underscore_to_dash: bool = False
-) -> str:
-    """Build a str with a list of error fields from a pydantic exception.
+) -> tuple[str, str]:
+    """Build a tuple of strings for error logging.
+
+    The tuple consists of:
+        0-  A list of error fields from a pydantic exception to print at charm status.
+        1-  A detailed list of error fields from a pydantic exception with their error
+             messages. Best fit for printing error logs.
 
     Args:
         exc: ValidationError exception instance.
@@ -24,18 +28,42 @@ def build_validation_error_message(
         underscore_to_dash: Replace underscores to dashes in the error field names.
 
     Returns:
-        The curated list of error fields ready to be used in an error message.
+        The tuple of 2 strings first for charm status, second for logging.
     """
     error_fields_unique = set(
-        itertools.chain.from_iterable(error["loc"] for error in exc.errors())
+        {(error["loc"][0] if error["loc"] else "", error["msg"]) for error in exc.errors()}
     )
-    error_fields = (str(error_field) for error_field in error_fields_unique)
+    error_fields = {str(error_field[0]) for error_field in error_fields_unique}
+
     if prefix:
-        error_fields = (f"{prefix}{error_field}" for error_field in error_fields)
+        error_fields = {f"{prefix}{error_field}" for error_field in error_fields}
+        error_fields_unique = {
+            (f"{prefix}{error_field[0]}", error_field[1]) for error_field in error_fields_unique
+        }
     if underscore_to_dash:
-        error_fields = (error_field.replace("_", "-") for error_field in error_fields)
-    error_field_str = " ".join(error_fields)
-    return error_field_str
+        error_fields = {error_field.replace("_", "-") for error_field in error_fields}
+        error_fields_unique = {
+            (error_field[0].replace("_", "-"), error_field[1])
+            for error_field in error_fields_unique
+        }
+
+    error_field_str = ""
+    missing_options_str = ""
+    error_field_log_str = "Configuration invalid:"
+    for err in error_fields_unique:
+        if "Field required" in err[1]:
+            missing_options_str += f"{err[0]}, "
+        else:
+            error_field_str += f"{err[0]}, "
+        error_field_log_str += f"\n\t- {err[0]}: {err[1]}"
+
+    message_str = ""
+    if missing_options_str:
+        message_str += f"missing options: {missing_options_str[:-2]} "
+    if error_field_str:
+        message_str += f"invalid options: {error_field_str[:-2]}"
+
+    return (message_str, error_field_log_str)
 
 
 def enable_pebble_log_forwarding() -> bool:
@@ -103,21 +131,3 @@ def config_get_with_secret(
     if secret_id is None:
         return None
     return charm.model.get_secret(id=typing.cast(str, secret_id))
-
-
-def get_missing_non_optional_configs(charm: ops.CharmBase) -> list[str]:
-    """Get a list of missing non-optional config options.
-
-    Args:
-        charm: The charm instance.
-
-    Returns:
-        Returns the list of missing non-optional config options.
-    """
-    metadata = _config_metadata(pathlib.Path(os.getcwd()))
-    return [
-        option
-        for option in metadata["options"]
-        if metadata["options"][option].get("optional") is False
-        and charm.config.get(option) is None
-    ]
