@@ -25,7 +25,15 @@ async def test_proxy(build_charm: str, model: Model, test_flask_image: str, get_
     resources = {
         "flask-app-image": test_flask_image,
     }
-    await model.deploy(build_charm, resources=resources, application_name=app_name, series="jammy")
+    await model.deploy(
+        build_charm,
+        resources=resources,
+        application_name=app_name,
+        series="jammy",
+        config={
+            "non-optional-test": "something",
+        },
+    )
     await model.wait_for_idle(raise_on_blocked=True)
     unit_ips = await get_unit_ips(app_name)
     for unit_ip in unit_ips:
