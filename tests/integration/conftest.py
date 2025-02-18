@@ -91,7 +91,13 @@ async def flask_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
     app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
+        charm_file,
+        resources=resources,
+        application_name=app_name,
+        series="jammy",
+        config={
+            "non-optional-test": "something",
+        },
     )
     await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
     return app
@@ -117,7 +123,10 @@ async def django_app_fixture(
     app = await model.deploy(
         charm_file,
         resources=resources,
-        config={"django-allowed-hosts": "*"},
+        config={
+            "django-allowed-hosts": "*",
+            "non-optional-test": "something",
+        },
         application_name=app_name,
         series="jammy",
     )
@@ -142,7 +151,14 @@ async def fastapi_app_fixture(
         "app-image": fastapi_app_image,
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    app = await model.deploy(
+        charm_file,
+        resources=resources,
+        application_name=app_name,
+        config={
+            "non-optional-test": "something",
+        },
+    )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
@@ -164,7 +180,14 @@ async def go_app_fixture(
         "app-image": go_app_image,
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    app = await model.deploy(
+        charm_file,
+        resources=resources,
+        application_name=app_name,
+        config={
+            "non-optional-test": "something",
+        },
+    )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app

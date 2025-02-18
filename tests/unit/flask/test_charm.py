@@ -75,6 +75,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     flask_layer = plan.to_dict()["services"]["flask"]
     assert flask_layer == {
         "environment": {
+            "FLASK_NON_OPTIONAL_TEST": "something",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
             "FLASK_SECRET_KEY": "0000000000000000",
         },

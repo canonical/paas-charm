@@ -25,7 +25,7 @@ from .constants import INTEGRATIONS_RELATION_DATA, SAML_APP_RELATION_DATA_EXAMPL
 # this is a unit test file
 # pylint: disable=protected-access
 
-DEFAULT_CHARM_CONFIG = {"flask-preferred-url-scheme": "HTTPS"}
+DEFAULT_CHARM_CONFIG = {"flask-preferred-url-scheme": "HTTPS", "non-optional-test": "something"}
 SECRET_STORAGE_MOCK = unittest.mock.MagicMock(is_initialized=True)
 SECRET_STORAGE_MOCK.get_secret_key.return_value = ""
 

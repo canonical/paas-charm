@@ -89,7 +89,13 @@ async def flask_app_fixture(build_charm: str, model: Model, test_flask_image: st
         "flask-app-image": test_flask_image,
     }
     app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
+        build_charm,
+        resources=resources,
+        application_name=app_name,
+        series="jammy",
+        config={
+            "non-optional-test": "something",
+        },
     )
     await model.wait_for_idle(raise_on_blocked=True)
     return app
@@ -104,7 +110,13 @@ async def flask_db_app_fixture(build_charm: str, model: Model, test_db_flask_ima
         "flask-app-image": test_db_flask_image,
     }
     app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
+        build_charm,
+        resources=resources,
+        application_name=app_name,
+        series="jammy",
+        config={
+            "non-optional-test": "something",
+        },
     )
     await model.wait_for_idle()
     return app
@@ -119,7 +131,13 @@ async def flask_async_app_fixture(build_charm: str, model: Model, test_async_fla
         "flask-app-image": test_async_flask_image,
     }
     app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
+        build_charm,
+        resources=resources,
+        application_name=app_name,
+        series="jammy",
+        config={
+            "non-optional-test": "something",
+        },
     )
     await model.wait_for_idle(raise_on_blocked=True)
     return app

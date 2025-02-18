@@ -50,6 +50,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         check_config_command,
         handler=check_config_handler,
     )
+    harness.update_config({"non-optional-test": "something"})
 
     yield harness
     harness.cleanup()

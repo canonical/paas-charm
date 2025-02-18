@@ -88,6 +88,10 @@ config:
     secret-test:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
+    non-optional-test:
+      description: A test configuration option for testing non-optional configuration options.
+      type: string
+      optional: False
 containers:
   flask-app:
     resource: flask-app-image

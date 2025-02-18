@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for flask charm integration tests."""
-import asyncio
 import os
 import pathlib
 
@@ -75,7 +74,10 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
     app = await model.deploy(
         charm_file,
         application_name=app_name,
-        config={"django-allowed-hosts": "*"},
+        config={
+            "django-allowed-hosts": "*",
+            "non-optional-test": "something",
+        },
         resources=resources,
         series="jammy",
     )
@@ -97,7 +99,10 @@ async def django_async_app_fixture(
     app = await model.deploy(
         charm_file,
         application_name=app_name,
-        config={"django-allowed-hosts": "*"},
+        config={
+            "django-allowed-hosts": "*",
+            "non-optional-test": "something",
+        },
         resources=resources,
         series="jammy",
     )

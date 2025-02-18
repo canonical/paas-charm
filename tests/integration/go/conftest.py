@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for go charm integration tests."""
-import asyncio
 import os
 import pathlib
 
@@ -57,6 +56,9 @@ async def go_app_fixture(charm_file: str, model: Model, go_app_image: str, postg
         charm_file,
         application_name=app_name,
         resources=resources,
+        config={
+            "non-optional-test": "something",
+        },
     )
     await model.integrate(app_name, "postgresql-k8s")
     await model.wait_for_idle(status="active")

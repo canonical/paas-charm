@@ -18,6 +18,7 @@ from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
         pytest.param(
             {},
             {
+                "APP_NON_OPTIONAL_TEST": "something",
                 "APP_PORT": "8080",
                 "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_METRICS_PORT": "8080",
@@ -34,6 +35,7 @@ from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
                 "metrics-path": "/othermetrics",
             },
             {
+                "APP_NON_OPTIONAL_TEST": "something",
                 "APP_PORT": "9000",
                 "APP_BASE_URL": "http://go-k8s.None:9000",
                 "APP_METRICS_PORT": "9001",
