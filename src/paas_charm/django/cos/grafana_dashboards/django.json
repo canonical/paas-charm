@@ -814,6 +814,7 @@
         "type": "loki",
         "uid": "${lokids}"
       },
+      "description": "Pick a unit to display logs.",
       "gridPos": {
         "h": 8,
         "w": 24,
