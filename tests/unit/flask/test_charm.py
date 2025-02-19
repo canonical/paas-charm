@@ -422,17 +422,16 @@ def test_missing_configs(harness: Harness, required_configs, missing_configs, mo
 
     harness.begin_with_initial_hooks()
 
-    try:
-        harness.charm._create_charm_state()
-    except CharmConfigInvalidError as exc:
-        for config in missing_configs:
-            assert config in str(exc)
-
     if missing_configs:
-        assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-        for config in missing_configs:
-            assert config in str(harness.model.unit.status.message)
+        with pytest.raises(CharmConfigInvalidError) as exc:
+            harness.charm._create_charm_state()
+            for config in missing_configs:
+                assert config in str(exc)
+            assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
+            for config in missing_configs:
+                assert config in str(harness.model.unit.status.message)
     else:
+        harness.charm._create_charm_state()
         assert isinstance(harness.model.unit.status, ops.model.ActiveStatus)
 
 

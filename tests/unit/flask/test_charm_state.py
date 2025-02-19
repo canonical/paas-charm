@@ -371,7 +371,6 @@ def _saml_requirer_mock(relation_data: dict[str:str]) -> unittest.mock.MagicMock
 
 
 def _test_app_config_parameters():
-
     non_optional_options = [
         {
             "name": (config_name_1 := "non_optional_bool"),
@@ -476,7 +475,7 @@ def test_app_config_factory(mock_yaml: dict, expected_output: dict, monkeypatch)
     arrange: Provide mock config yaml with optional and non optional config options.
     act: Create an AppConfig object.
     assert: The resultant AppConfig object should have the required parameters set correctly.
-      The AppConfig object should not have attributes for framework settings.
+        The AppConfig object should not have attributes for framework settings.
     """
     monkeypatch.setattr(
         "paas_charm.charm_state._config_metadata",

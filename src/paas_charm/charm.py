@@ -23,10 +23,7 @@ from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
-from paas_charm.utils import (
-    build_validation_error_message,
-    config_get_with_secret,
-)
+from paas_charm.utils import build_validation_error_message, config_get_with_secret
 
 logger = logging.getLogger(__name__)
 
@@ -290,9 +287,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         try:
             return framework_config_class.model_validate(config)
         except ValidationError as exc:
-            error_message, error_log = build_validation_error_message(
-                exc, underscore_to_dash=False
-            )
+            error_message, error_log = build_validation_error_message(exc)
             logger.error(error_log)
             raise CharmConfigInvalidError(error_message) from exc
 

@@ -48,7 +48,6 @@ def test_build_validation_error_message(validation_error: list[dict]) -> None:
     act: Build the validation error message.
     assert: It should return the formatted error message with the expected strings.
     """
-
     mock_validation_error = MagicMock()
     mock_validation_error.errors.return_value = validation_error
 

@@ -14,6 +14,11 @@ from ops.testing import Harness
     ["flask_harness", "go_harness", "fastapi_harness", "django_harness"],
 )
 def test_non_optional_config(request, blocked_harness_fixture: Harness) -> None:
+    """
+    arrange: Deploy charm.
+    act: Check if its blocked with correct message then update the config.
+    assert: The charm should be in active state.
+    """
     blocked_harness = request.getfixturevalue(blocked_harness_fixture)
 
     assert isinstance(blocked_harness.model.unit.status, ops.model.BlockedStatus)

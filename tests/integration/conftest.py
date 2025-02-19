@@ -144,9 +144,7 @@ async def flask_blocked_app_fixture(
     }
     charm_file = await build_blocked_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
     app = await model.deploy(
-        charm_file,
-        resources=resources,
-        application_name=app_name,
+        charm_file, resources=resources, application_name=app_name, series="jammy"
     )
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
@@ -263,11 +261,7 @@ async def fastapi_blocked_app_fixture(
     charm_file = await build_blocked_charm_file(
         pytestconfig, ops_test, tmp_path_factory, "fastapi"
     )
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        application_name=app_name,
-    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
@@ -319,11 +313,7 @@ async def go_blocked_app_fixture(
         "app-image": go_app_image,
     }
     charm_file = await build_blocked_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        application_name=app_name,
-    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
