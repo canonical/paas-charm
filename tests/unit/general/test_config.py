@@ -11,7 +11,7 @@ from ops.testing import Harness
 
 @pytest.mark.parametrize(
     "blocked_harness_fixture",
-    ["flask_harness"],  # , "go_harness", "fastapi_harness", "django_harness"],
+    ["flask_harness", "go_harness", "fastapi_harness", "django_harness"],
 )
 def test_non_optional_config(request, blocked_harness_fixture: Harness) -> None:
     blocked_harness = request.getfixturevalue(blocked_harness_fixture)
