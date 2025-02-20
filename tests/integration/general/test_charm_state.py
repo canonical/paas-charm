@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask workers and schedulers."""
+"""Integration tests for CharmState in all supported frameworks."""
 
 
 import nest_asyncio

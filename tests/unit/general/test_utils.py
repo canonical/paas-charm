@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.utils import build_validation_error_message
+from paas_charm.utils import build_validation_error_message, is_user_defined_config
 
 
 def _test_build_validation_error_message_parameters():
@@ -141,3 +141,27 @@ def test_build_validation_error_message(
 
     for substr in expected_error_log_substrs:
         assert substr in output.error_log.lower()
+
+
+@pytest.mark.parametrize(
+    "framework, option_name, expected_result",
+    [
+        pytest.param("flask", "flask-config", False),
+        pytest.param("flask", "user-defined-config", True),
+        pytest.param("flask", "webserver-config", False),
+        pytest.param("flask", "app-config", False),
+        pytest.param("go", "user-defined-config", True),
+        pytest.param("go", "webserver-config", False),
+        pytest.param("go", "app-config", False),
+        pytest.param("django", "django-config", False),
+        pytest.param("django", "user-defined-config", True),
+        pytest.param("django", "webserver-config", False),
+        pytest.param("django", "app-config", False),
+        pytest.param("fastapi", "user-defined-config", True),
+        pytest.param("fastapi", "webserver-config", False),
+        pytest.param("fastapi", "app-config", False),
+    ],
+)
+def test_is_user_defined_config(framework, option_name, expected_result) -> None:
+
+    assert is_user_defined_config(option_name, framework) == expected_result

@@ -26,7 +26,11 @@ from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
-from paas_charm.utils import _config_metadata, build_validation_error_message
+from paas_charm.utils import (
+    _config_metadata,
+    build_validation_error_message,
+    is_user_defined_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +136,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         app_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
-            if _is_user_defined_config(k, framework)
+            if is_user_defined_config(k, framework)
         }
         app_config = {
             k: v for k, v in app_config.items() if k not in framework_config.dict().keys()
@@ -520,21 +524,6 @@ def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple
     return (option_name, type_tuple)
 
 
-def _is_user_defined_config(option_name: str, framework: str) -> bool:
-    """Check if a config option is user defined.
-
-    Args:
-        option_name: Name of the config option.
-        framework: The framework name.
-
-    Returns:
-        True if user defined config options, false otherwise.
-    """
-    return not any(
-        option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
-    )
-
-
 def app_config_class_factory(framework: str) -> type[BaseModel]:
     """App config class factory.
 
@@ -548,7 +537,7 @@ def app_config_class_factory(framework: str) -> type[BaseModel]:
     model_attributes = dict(
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
-        if _is_user_defined_config(option_name, framework)
+        if is_user_defined_config(option_name, framework)
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]

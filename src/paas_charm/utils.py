@@ -148,3 +148,18 @@ def config_get_with_secret(
     if secret_id is None:
         return None
     return charm.model.get_secret(id=typing.cast(str, secret_id))
+
+
+def is_user_defined_config(option_name: str, framework: str) -> bool:
+    """Check if a config option is user defined.
+
+    Args:
+        option_name: Name of the config option.
+        framework: The framework name.
+
+    Returns:
+        True if user defined config options, false otherwise.
+    """
+    return not any(
+        option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
+    )
