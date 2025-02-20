@@ -74,10 +74,7 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
     app = await model.deploy(
         charm_file,
         application_name=app_name,
-        config={
-            "django-allowed-hosts": "*",
-            "non-optional-string": "something",
-        },
+        config={"django-allowed-hosts": "*"},
         resources=resources,
         series="jammy",
     )
@@ -99,10 +96,7 @@ async def django_async_app_fixture(
     app = await model.deploy(
         charm_file,
         application_name=app_name,
-        config={
-            "django-allowed-hosts": "*",
-            "non-optional-string": "something",
-        },
+        config={"django-allowed-hosts": "*"},
         resources=resources,
         series="jammy",
     )

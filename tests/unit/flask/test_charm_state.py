@@ -8,11 +8,7 @@ from secrets import token_hex
 
 import pytest
 
-from paas_charm.charm_state import (
-    CharmState,
-    IntegrationRequirers,
-    S3Parameters,
-)
+from paas_charm.charm_state import CharmState, IntegrationRequirers, S3Parameters
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm
 

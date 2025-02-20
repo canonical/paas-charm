@@ -430,10 +430,7 @@ def test_app_config_class_factory(
         ),
         pytest.param({}, S3Parameters, True, NoneType, True),
         pytest.param(
-            {
-                "service_name": "app_name",
-                "endpoint": "localhost:1234",
-            },
+            {"service_name": "app_name", "endpoint": "localhost:1234"},
             TempoParameters,
             False,
             TempoParameters,

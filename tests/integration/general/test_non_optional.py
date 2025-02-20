@@ -20,9 +20,7 @@ nest_asyncio.apply()
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
-            {
-                "non-optional-int": "1",
-            },
+            {"non-optional-int": "1"},
             id="flask",
         ),
         pytest.param(
@@ -30,9 +28,7 @@ nest_asyncio.apply()
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
-            {
-                "non-optional-int": "1",
-            },
+            {"non-optional-int": "1"},
             id="django",
         ),
         pytest.param(
@@ -48,9 +44,7 @@ nest_asyncio.apply()
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
-            {
-                "non-optional-int": "1",
-            },
+            {"non-optional-int": "1"},
             id="go",
         ),
     ],

@@ -30,7 +30,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 @pytest.fixture(name="go_harness")
 def go_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
+    """Go harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/go/charm")
     harness = _build_harness(GoCharm, GO_CONTAINER_NAME, GO_DEFAULT_LAYER, "app")
 
@@ -41,7 +41,7 @@ def go_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 @pytest.fixture(name="flask_harness")
 def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
+    """Flask harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/flask")
     harness = _build_harness(FlaskCharm, FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER, "flask/app")
     _set_check_config_handler(harness, "flask", FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER)
@@ -53,7 +53,7 @@ def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 @pytest.fixture(name="fastapi_harness")
 def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
+    """FastAPI harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
 
@@ -64,7 +64,7 @@ def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 @pytest.fixture(name="django_harness")
 def django_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
+    """Django harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/django/charm")
     harness = _build_harness(
         DjangoCharm, DJANGO_CONTAINER_NAME, DJANGO_DEFAULT_LAYER, "django/app"
@@ -104,15 +104,13 @@ def _build_harness(charm: PaasCharm, container_name: str, layer: dict, folder: s
     harness.set_can_connect(container_name, True)
     container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", layer)
-
-    # harness.begin_with_initial_hooks()
     return harness
 
 
 def _set_check_config_handler(
     harness: Harness, framework: str, container_name: str, layer: dict
 ) -> None:
-    """Set the check_config handler for flask and django workloads.
+    """Set the check_config handler for Flask and Django workloads.
 
     Args:
         harness: Charms harness.

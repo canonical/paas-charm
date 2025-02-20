@@ -22,18 +22,12 @@ from .constants import DEFAULT_LAYER
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {},
-        {
-            "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
-        },
+        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]'},
         id="default",
     ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
-        {
-            "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
-        },
+        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]'},
         id="allowed-hosts",
     ),
     pytest.param(
