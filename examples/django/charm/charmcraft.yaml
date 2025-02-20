@@ -72,10 +72,6 @@ config:
     webserver-worker-class:
       description: The method of webserver worker processes for handling requests. Can be either 'gevent' or 'sync'.
       type: string
-    non-optional-test:
-      description: A test configuration option for testing non-optional configuration options.
-      type: string
-      optional: False
 containers:
   django-app:
     resource: django-app-image

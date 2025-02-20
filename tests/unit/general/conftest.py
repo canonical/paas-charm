@@ -104,7 +104,8 @@ def _build_harness(charm: PaasCharm, container_name: str, layer: dict, folder: s
     harness.set_can_connect(container_name, True)
     container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", layer)
-    harness.begin_with_initial_hooks()
+
+    # harness.begin_with_initial_hooks()
     return harness
 
 

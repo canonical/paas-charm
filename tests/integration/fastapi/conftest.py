@@ -61,7 +61,7 @@ async def fastapi_app_fixture(
         application_name=app_name,
         resources=resources,
         config={
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
     )
     await model.integrate(app_name, "postgresql-k8s")

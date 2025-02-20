@@ -94,7 +94,7 @@ async def flask_app_fixture(build_charm: str, model: Model, test_flask_image: st
         application_name=app_name,
         series="jammy",
         config={
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
     )
     await model.wait_for_idle(raise_on_blocked=True)
@@ -115,7 +115,7 @@ async def flask_db_app_fixture(build_charm: str, model: Model, test_db_flask_ima
         application_name=app_name,
         series="jammy",
         config={
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
     )
     await model.wait_for_idle()
@@ -136,7 +136,7 @@ async def flask_async_app_fixture(build_charm: str, model: Model, test_async_fla
         application_name=app_name,
         series="jammy",
         config={
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
     )
     await model.wait_for_idle(raise_on_blocked=True)

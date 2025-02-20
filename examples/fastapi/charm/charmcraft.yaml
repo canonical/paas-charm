@@ -58,8 +58,8 @@ config:
     user-defined-config:
       type: string
       description: Example of a user defined configuration.
-    non-optional-test:
-      description: A test configuration option for testing non-optional configuration options.
+    non-optional-string:
+      description: A test string configuration option for testing non-optional configuration options.
       type: string
       optional: False
 containers:

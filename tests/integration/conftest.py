@@ -94,7 +94,10 @@ async def build_blocked_charm_file(
 
     charm_file = inject_charm_config(
         charm_file,
-        {"non-optional-test-1": {"type": "string", "optional": False}},
+        {
+            "non-optional-bool": {"type": "boolean", "optional": False},
+            "non-optional-int": {"type": "int", "optional": False},
+        },
         tmp_path_factory.mktemp(framework),
     )
     return pathlib.Path(charm_file).absolute()
@@ -120,9 +123,6 @@ async def flask_app_fixture(
         resources=resources,
         application_name=app_name,
         series="jammy",
-        config={
-            "non-optional-test": "something",
-        },
     )
     await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
     return app
@@ -172,7 +172,6 @@ async def django_app_fixture(
         resources=resources,
         config={
             "django-allowed-hosts": "*",
-            "non-optional-test": "something",
         },
         application_name=app_name,
         series="jammy",
@@ -235,7 +234,7 @@ async def fastapi_app_fixture(
         resources=resources,
         application_name=app_name,
         config={
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
     )
     await model.integrate(app_name, postgresql_k8s.name)
@@ -288,9 +287,6 @@ async def go_app_fixture(
         charm_file,
         resources=resources,
         application_name=app_name,
-        config={
-            "non-optional-test": "something",
-        },
     )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)

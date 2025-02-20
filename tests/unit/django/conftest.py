@@ -121,5 +121,4 @@ def _build_harness(meta=None):
         check_config_command,
         handler=check_config_handler,
     )
-    harness.update_config({"non-optional-test": "something"})
     return harness

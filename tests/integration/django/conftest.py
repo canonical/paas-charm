@@ -76,7 +76,7 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
         application_name=app_name,
         config={
             "django-allowed-hosts": "*",
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
         resources=resources,
         series="jammy",
@@ -101,7 +101,7 @@ async def django_async_app_fixture(
         application_name=app_name,
         config={
             "django-allowed-hosts": "*",
-            "non-optional-test": "something",
+            "non-optional-string": "something",
         },
         resources=resources,
         series="jammy",

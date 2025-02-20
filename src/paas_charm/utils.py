@@ -3,6 +3,7 @@
 
 """Generic utility functions."""
 import functools
+import itertools
 import os
 import pathlib
 import typing
@@ -12,9 +13,21 @@ import yaml
 from pydantic import ValidationError
 
 
+class ValidationErrorMessage(typing.NamedTuple):
+    """Class carrying status message and error log for pydantic validation errors.
+
+    Attrs:
+        error_log: Detailed error log for invalid config options.
+        status_msg: Short status message for invalid config options.
+    """
+
+    error_log: str
+    status_msg: str
+
+
 def build_validation_error_message(
     exc: ValidationError, prefix: str | None = None, underscore_to_dash: bool = False
-) -> tuple[str, str]:
+) -> ValidationErrorMessage:
     """Build a tuple of strings for error logging.
 
     The tuple consists of:
@@ -47,23 +60,27 @@ def build_validation_error_message(
             for error_field in error_fields_unique
         }
 
-    error_field_str = ""
-    missing_options_str = ""
-    error_field_log_str = "Configuration invalid:"
-    for err in error_fields_unique:
-        if "Field required" in err[1]:
-            missing_options_str += f"{err[0]}, "
+    missing_fields = {}
+    invalid_fields = {}
+
+    for loc, msg in error_fields_unique:
+        if "required" in msg.lower():
+            missing_fields[loc] = msg
         else:
-            error_field_str += f"{err[0]}, "
-        error_field_log_str += f"\n\t- {err[0]}: {err[1]}"
+            invalid_fields[loc] = msg
 
-    message_str = ""
-    if missing_options_str:
-        message_str += f"missing options: {missing_options_str[:-2]} "
-    if error_field_str:
-        message_str += f"invalid options: {error_field_str[:-2]}"
+    message_str_missing = f"missing options: {', '.join(missing_fields)}" if missing_fields else ""
+    message_str_invalid = f"invalid options: {', '.join(invalid_fields)}" if invalid_fields else ""
+    message_str = f"{message_str_missing}\
+        {', ' if message_str_missing and message_str_invalid else ''}{message_str_invalid}"
 
-    return (message_str, error_field_log_str)
+    log_message_lines = (
+        f"- {key}: {value}"
+        for key, value in itertools.chain(missing_fields.items(), invalid_fields.items())
+    )
+    log_message = "invalid configuration:\n" + "\n".join(log_message_lines)
+
+    return ValidationErrorMessage(status_msg=message_str, error_log=log_message)
 
 
 def enable_pebble_log_forwarding() -> bool:

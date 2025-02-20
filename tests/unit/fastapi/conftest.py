@@ -29,7 +29,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
     root = harness.get_filesystem_root(FASTAPI_CONTAINER_NAME)
     (root / "app").mkdir(parents=True)
     harness.set_can_connect(FASTAPI_CONTAINER_NAME, True)
-    harness.update_config({"non-optional-test": "something"})
+    harness.update_config({"non-optional-string": "something"})
 
     yield harness
     harness.cleanup()

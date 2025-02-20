@@ -23,7 +23,6 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {},
         {
-            "DJANGO_NON_OPTIONAL_TEST": "something",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
         },
@@ -32,7 +31,6 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {"django-allowed-hosts": "test.local"},
         {
-            "DJANGO_NON_OPTIONAL_TEST": "something",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
         },
@@ -41,7 +39,6 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {"django-debug": True},
         {
-            "DJANGO_NON_OPTIONAL_TEST": "something",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
             "DJANGO_DEBUG": "true",
@@ -51,7 +48,6 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {"django-secret-key": "foobar"},
         {
-            "DJANGO_NON_OPTIONAL_TEST": "something",
             "DJANGO_SECRET_KEY": "foobar",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
         },

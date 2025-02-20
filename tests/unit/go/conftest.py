@@ -29,7 +29,6 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
     root = harness.get_filesystem_root(GO_CONTAINER_NAME)
     (root / "app").mkdir(parents=True)
     harness.set_can_connect(GO_CONTAINER_NAME, True)
-    harness.update_config({"non-optional-test": "something"})
 
     yield harness
     harness.cleanup()
