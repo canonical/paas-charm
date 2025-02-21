@@ -19,6 +19,11 @@ from tests.integration.helpers import inject_charm_config, inject_venv
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
 
+NON_OPTIONAL_CONFIGS = {
+    "non-optional-bool": {"type": "boolean", "optional": False},
+    "non-optional-int": {"type": "int", "optional": False},
+}
+
 
 @pytest.fixture(scope="module", name="test_flask_image")
 def fixture_test_flask_image(pytestconfig: Config):
@@ -75,8 +80,12 @@ async def build_charm_file(
     return pathlib.Path(charm_file).absolute()
 
 
-async def build_blocked_charm_file(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
+async def build_charm_file_with_config_options(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    framework: str,
+    config_options: dict,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -94,10 +103,7 @@ async def build_blocked_charm_file(
 
     charm_file = inject_charm_config(
         charm_file,
-        {
-            "non-optional-bool": {"type": "boolean", "optional": False},
-            "non-optional-int": {"type": "int", "optional": False},
-        },
+        config_options,
         tmp_path_factory.mktemp(framework),
     )
     return pathlib.Path(charm_file).absolute()
@@ -139,7 +145,9 @@ async def flask_blocked_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_blocked_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "flask", NON_OPTIONAL_CONFIGS
+    )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -191,7 +199,9 @@ async def django_blocked_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_blocked_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "django", NON_OPTIONAL_CONFIGS
+    )
 
     app = await model.deploy(
         charm_file,
@@ -246,8 +256,8 @@ async def fastapi_blocked_app_fixture(
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = await build_blocked_charm_file(
-        pytestconfig, ops_test, tmp_path_factory, "fastapi"
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "fastapi", NON_OPTIONAL_CONFIGS
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
@@ -293,7 +303,9 @@ async def go_blocked_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_blocked_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "go", NON_OPTIONAL_CONFIGS
+    )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)

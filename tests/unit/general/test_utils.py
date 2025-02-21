@@ -163,5 +163,10 @@ def test_build_validation_error_message(
     ],
 )
 def test_is_user_defined_config(framework, option_name, expected_result) -> None:
+    """
+    arrange: Provide a config option name.
+    act: Call the is_user_defined_config function with the config option.
+    assert: The result should be equal to the expected result.
+    """
 
     assert is_user_defined_config(option_name, framework) == expected_result

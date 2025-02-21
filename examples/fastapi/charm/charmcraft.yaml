@@ -59,7 +59,7 @@ config:
       type: string
       description: Example of a user defined configuration.
     non-optional-string:
-      description: A test string configuration option for testing non-optional configuration options.
+      description: Example of a non-optional string configuration option.
       type: string
       optional: False
 containers:
