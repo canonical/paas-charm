@@ -78,7 +78,7 @@ def build_validation_error_message(
         f"- {key}: {value}"
         for key, value in itertools.chain(missing_fields.items(), invalid_fields.items())
     )
-    log_message = f'invalid configuration:\n{"\n".join(log_message_lines)}'
+    log_message = f'invalid configuration:{"\n"}{"\n".join(log_message_lines)}'
 
     return ValidationErrorMessage(status_msg=message_str, error_log=log_message)
 
