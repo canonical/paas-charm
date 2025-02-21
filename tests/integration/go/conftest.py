@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for go charm integration tests."""
-import asyncio
 import os
 import pathlib
 

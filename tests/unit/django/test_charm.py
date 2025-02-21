@@ -12,7 +12,6 @@ import ops
 import pytest
 from ops.testing import ExecArgs, ExecResult, Harness
 
-from examples.django.charm.src.charm import DjangoCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
@@ -28,10 +27,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
     ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
-        {
-            "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
-        },
+        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]'},
         id="allowed-hosts",
     ),
     pytest.param(
@@ -45,7 +41,10 @@ TEST_DJANGO_CONFIG_PARAMS = [
     ),
     pytest.param(
         {"django-secret-key": "foobar"},
-        {"DJANGO_SECRET_KEY": "foobar", "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]'},
+        {
+            "DJANGO_SECRET_KEY": "foobar",
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+        },
         id="secret-key",
     ),
 ]

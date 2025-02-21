@@ -283,11 +283,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+
         try:
             return framework_config_class.model_validate(config)
         except ValidationError as exc:
-            error_message = build_validation_error_message(exc, underscore_to_dash=False)
-            raise CharmConfigInvalidError(f"invalid configuration: {error_message}") from exc
+            error_messages = build_validation_error_message(exc)
+            logger.error(error_messages.error_log)
+            raise CharmConfigInvalidError(error_messages.status_msg) from exc
 
     @property
     def _container(self) -> Container:

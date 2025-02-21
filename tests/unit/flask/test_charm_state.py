@@ -10,7 +10,7 @@ import pytest
 
 from paas_charm.charm_state import CharmState, IntegrationRequirers, S3Parameters
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.flask.charm import Charm, FlaskConfig
+from paas_charm.flask.charm import Charm
 
 from .constants import SAML_APP_RELATION_DATA_EXAMPLE
 

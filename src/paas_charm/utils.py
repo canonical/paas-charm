@@ -13,10 +13,27 @@ import yaml
 from pydantic import ValidationError
 
 
+class ValidationErrorMessage(typing.NamedTuple):
+    """Class carrying status message and error log for pydantic validation errors.
+
+    Attrs:
+        error_log: Detailed error log for invalid config options.
+        status_msg: Short status message for invalid config options.
+    """
+
+    error_log: str
+    status_msg: str
+
+
 def build_validation_error_message(
     exc: ValidationError, prefix: str | None = None, underscore_to_dash: bool = False
-) -> str:
-    """Build a str with a list of error fields from a pydantic exception.
+) -> ValidationErrorMessage:
+    """Build a tuple of strings for error logging.
+
+    The tuple consists of:
+        0-  A list of error fields from a pydantic exception to print at charm status.
+        1-  A detailed list of error fields from a pydantic exception with their error
+             messages. Best fit for printing error logs.
 
     Args:
         exc: ValidationError exception instance.
@@ -24,18 +41,46 @@ def build_validation_error_message(
         underscore_to_dash: Replace underscores to dashes in the error field names.
 
     Returns:
-        The curated list of error fields ready to be used in an error message.
+        The tuple of 2 strings first for charm status, second for logging.
     """
     error_fields_unique = set(
-        itertools.chain.from_iterable(error["loc"] for error in exc.errors())
+        {(str(error["loc"][0]) if error["loc"] else "", error["msg"]) for error in exc.errors()}
     )
-    error_fields = (str(error_field) for error_field in error_fields_unique)
+    error_fields = {str(error_field[0]) for error_field in error_fields_unique}
+
     if prefix:
-        error_fields = (f"{prefix}{error_field}" for error_field in error_fields)
+        error_fields = {f"{prefix}{error_field}" for error_field in error_fields}
+        error_fields_unique = {
+            (f"{prefix}{error_field[0]}", error_field[1]) for error_field in error_fields_unique
+        }
     if underscore_to_dash:
-        error_fields = (error_field.replace("_", "-") for error_field in error_fields)
-    error_field_str = " ".join(error_fields)
-    return error_field_str
+        error_fields = {error_field.replace("_", "-") for error_field in error_fields}
+        error_fields_unique = {
+            (error_field[0].replace("_", "-"), error_field[1])
+            for error_field in error_fields_unique
+        }
+
+    missing_fields = {}
+    invalid_fields = {}
+
+    for loc, msg in error_fields_unique:
+        if "required" in msg.lower():
+            missing_fields[loc] = msg
+        else:
+            invalid_fields[loc] = msg
+
+    message_str_missing = f"missing options: {', '.join(missing_fields)}" if missing_fields else ""
+    message_str_invalid = f"invalid options: {', '.join(invalid_fields)}" if invalid_fields else ""
+    message_str = f"{message_str_missing}\
+        {', ' if message_str_missing and message_str_invalid else ''}{message_str_invalid}"
+
+    log_message_lines = "\n".join(
+        f"- {key}: {value}"
+        for key, value in itertools.chain(missing_fields.items(), invalid_fields.items())
+    )
+    log_message = f"invalid configuration:\n{log_message_lines}"
+
+    return ValidationErrorMessage(status_msg=message_str, error_log=log_message)
 
 
 def enable_pebble_log_forwarding() -> bool:
@@ -103,3 +148,18 @@ def config_get_with_secret(
     if secret_id is None:
         return None
     return charm.model.get_secret(id=typing.cast(str, secret_id))
+
+
+def is_user_defined_config(option_name: str, framework: str) -> bool:
+    """Check if a config option is user defined.
+
+    Args:
+        option_name: Name of the config option.
+        framework: The framework name.
+
+    Returns:
+        True if user defined config options, false otherwise.
+    """
+    return not any(
+        option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
+    )

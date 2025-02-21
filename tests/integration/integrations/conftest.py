@@ -10,10 +10,8 @@ import nest_asyncio
 import pytest
 import pytest_asyncio
 from juju.application import Application
-from juju.model import Model
 from minio import Minio
 from ops import JujuVersion
-from pytest import Config
 from pytest_operator.plugin import OpsTest
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
