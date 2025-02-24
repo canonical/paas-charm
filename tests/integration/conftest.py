@@ -236,7 +236,7 @@ async def fastapi_app_fixture(
         charm_file,
         resources=resources,
         application_name=app_name,
-        config={"non-optional-string": "something"},
+        config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
