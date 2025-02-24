@@ -25,7 +25,7 @@ from paas_charm.charm_state import (
     generate_relation_parameters,
 )
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.utils import _config_metadata
+from paas_charm.utils import config_metadata
 from tests.unit.flask.constants import INTEGRATIONS_RELATION_DATA, SAML_APP_RELATION_DATA_EXAMPLE
 
 
@@ -195,7 +195,7 @@ def test_non_optional_config(
         yaml_dict["config"]["options"].update(config)
     monkeypatch.setattr(
         paas_charm.charm_state,
-        "_config_metadata",
+        "config_metadata",
         unittest.mock.MagicMock(return_value=yaml_dict["config"]),
     )
     blocked_harness.begin_with_initial_hooks()
@@ -229,7 +229,7 @@ def test_get_framework_config_with_prefix(
     """
     harness = request.getfixturevalue(parametrized_harness_fixture)
     harness.begin()
-    metadata = _config_metadata(pathlib.Path(os.getcwd()))
+    metadata = config_metadata(pathlib.Path(os.getcwd()))
     framework_keys = [
         option[6:].replace("-", "_") for option in metadata["options"] if option.startswith(prefix)
     ]
@@ -409,7 +409,7 @@ def test_app_config_class_factory(
         The AppConfig object should not have attributes for framework settings.
     """
     monkeypatch.setattr(
-        "paas_charm.charm_state._config_metadata",
+        "paas_charm.charm_state.config_metadata",
         unittest.mock.MagicMock(return_value=mock_yaml),
     )
 

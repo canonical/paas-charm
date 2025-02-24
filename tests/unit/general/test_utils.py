@@ -6,44 +6,50 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.utils import build_validation_error_message, is_user_defined_config
+from paas_charm.charm_state import is_user_defined_config
+from paas_charm.utils import build_validation_error_message
 
 
 def _test_build_validation_error_message_parameters():
     return [
         pytest.param(
             [{"loc": ("non-optional",), "msg": "Field required"}],
-            ["non-optional", "missing"],
+            ["non-optional"],
+            ["missing"],
             ["invalid", "required"],
-            ["non-optional", "field", "required"],
+            ["field", "required"],
             id="only missing",
         ),
         pytest.param(
             [{"loc": ("invalid-string",), "msg": "Input should be a valid string"}],
-            ["invalid", "invalid-string", "option"],
+            ["invalid-string"],
+            ["invalid", "option"],
             ["missing", "valid string"],
-            ["invalid-string", "valid string", "invalid"],
+            ["valid string", "invalid"],
             id="invalid string",
         ),
         pytest.param(
             [{"loc": ("invalid-int",), "msg": "Input should be a valid int"}],
-            ["invalid", "invalid-int", "option"],
+            ["invalid-int"],
+            ["invalid", "option"],
             ["missing", "valid int"],
-            ["invalid-int", "valid int", "invalid"],
+            ["valid int", "invalid"],
             id="invalid int",
         ),
         pytest.param(
             [{"loc": ("invalid-bool",), "msg": "Input should be a valid bool"}],
-            ["invalid", "invalid-bool", "option"],
+            ["invalid-bool"],
+            ["invalid", "option"],
             ["missing", "valid bool"],
-            ["invalid-bool", "valid bool", "invalid"],
+            ["valid bool", "invalid"],
             id="invalid bool",
         ),
         pytest.param(
             [{"loc": ("invalid-float",), "msg": "Input should be a valid float"}],
-            ["invalid", "invalid-float", "option"],
+            ["invalid-float"],
+            ["invalid", "option"],
             ["missing", "valid float"],
-            ["invalid-float", "valid float", "invalid"],
+            ["valid float", "invalid"],
             id="invalid float",
         ),
         pytest.param(
@@ -51,9 +57,10 @@ def _test_build_validation_error_message_parameters():
                 {"loc": ("invalid-string",), "msg": "Input should be a valid string"},
                 {"loc": ("invalid-int",), "msg": "Input should be a valid int"},
             ],
-            ["invalid", "invalid-string", "invalid-int", "option"],
+            ["invalid-string", "invalid-int"],
+            ["invalid", "option"],
             ["missing", "valid string", "valid int"],
-            ["invalid-string", "invalid-int", "valid string", "valid int", "invalid"],
+            ["valid string", "valid int", "invalid"],
             id="invalid string and int",
         ),
         pytest.param(
@@ -63,6 +70,7 @@ def _test_build_validation_error_message_parameters():
                     "msg": "Value error, invalid-dict missing 'value' key in the secret content",
                 }
             ],
+            [],
             ["invalid", "option"],
             ["missing", "invalid-dict"],
             ["invalid-dict", "invalid", "value error"],
@@ -73,9 +81,10 @@ def _test_build_validation_error_message_parameters():
                 {"loc": ("non-optional-1",), "msg": "Field required"},
                 {"loc": ("non-optional-2",), "msg": "Field required"},
             ],
-            ["non-optional-1", "non-optional-1", "missing"],
+            ["non-optional-1", "non-optional-2"],
+            ["missing"],
             ["invalid", "required"],
-            ["non-optional-1", "non-optional-2", "field", "required"],
+            ["field", "required"],
             id="2 missing",
         ),
         pytest.param(
@@ -83,7 +92,8 @@ def _test_build_validation_error_message_parameters():
                 {"loc": ("invalid-bool",), "msg": "Input should be a valid bool"},
                 {"loc": ("non-optional",), "msg": "Field required"},
             ],
-            ["invalid-bool", "non-optional", "missing", "invalid", "option"],
+            ["invalid-bool", "non-optional"],
+            ["missing", "invalid", "option"],
             ["valid bool", "required"],
             ["valid bool", "invalid", "required"],
             id="invalid bool, missing option",
@@ -97,7 +107,8 @@ def _test_build_validation_error_message_parameters():
                     "msg": "Value error, invalid-dict missing 'value' key in the secret content",
                 },
             ],
-            ["invalid-bool", "non-optional", "missing", "invalid", "option"],
+            ["invalid-bool", "non-optional"],
+            ["missing", "invalid", "option"],
             ["invalid-dict", "value error", "valid bool", "required"],
             [
                 "valid bool",
@@ -105,23 +116,47 @@ def _test_build_validation_error_message_parameters():
                 "required",
                 "value error",
                 "invalid-dict",
-                "non-optional",
-                "invalid-bool",
             ],
             id="invalid bool, value error, missing option",
+        ),
+        pytest.param(
+            [
+                {
+                    "loc": (
+                        "invalid-dict",
+                        "invalid-bool",
+                    ),
+                    "msg": "Some error",
+                },
+            ],
+            ["invalid-dict.invalid-bool"],
+            ["invalid", "option"],
+            ["some error"],
+            [
+                "invalid",
+                "some error",
+            ],
+            id="multiple loc",
         ),
     ]
 
 
 @pytest.mark.parametrize(
-    "validation_error, expected_error_message_substrs, unexpected_error_message_substr, expected_error_log_substrs",
+    "validation_error, expected_loc_strs, expected_error_message_substrs, unexpected_error_message_substr, expected_error_log_substrs",
     _test_build_validation_error_message_parameters(),
 )
+@pytest.mark.parametrize(
+    "underscore", [pytest.param(True, id="underscore"), pytest.param(False, id="no underscore")]
+)
+@pytest.mark.parametrize("prefix", ["", "abc-"])
 def test_build_validation_error_message(
     validation_error: list[dict],
+    expected_loc_strs: list[str],
     expected_error_message_substrs: list[str],
     unexpected_error_message_substr: list[str],
     expected_error_log_substrs: list[str],
+    underscore: bool,
+    prefix: str,
 ) -> None:
     """
     arrange: Provide a mock validation error.
@@ -131,16 +166,26 @@ def test_build_validation_error_message(
     mock_validation_error = MagicMock()
     mock_validation_error.errors.return_value = validation_error
 
-    output = build_validation_error_message(mock_validation_error)
+    output = build_validation_error_message(
+        mock_validation_error, prefix=prefix, underscore_to_dash=underscore
+    )
 
     for substr in expected_error_message_substrs:
-        assert substr in output.status_msg.lower()
+        assert substr in output.short.lower()
+
+    for substr in expected_loc_strs:
+        if underscore:
+            assert f"{prefix}{substr}".replace("_", "-") in output.short.lower()
+            assert f"{prefix}{substr}".replace("_", "-") in output.long.lower()
+        else:
+            assert f"{prefix}{substr}" in output.short.lower()
+            assert f"{prefix}{substr}" in output.long.lower()
 
     for substr in unexpected_error_message_substr:
-        assert substr not in output.status_msg.lower()
+        assert substr not in output.short.lower()
 
     for substr in expected_error_log_substrs:
-        assert substr in output.error_log.lower()
+        assert substr in output.long.lower()
 
 
 @pytest.mark.parametrize(

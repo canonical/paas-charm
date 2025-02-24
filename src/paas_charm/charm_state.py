@@ -26,11 +26,7 @@ from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
-from paas_charm.utils import (
-    _config_metadata,
-    build_validation_error_message,
-    is_user_defined_config,
-)
+from paas_charm.utils import build_validation_error_message, config_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +64,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
     Attrs:
         framework_config: the value of the framework specific charm configuration.
-        app_config: user-defined configurations for the application.
+        user_defined_config: user-defined configurations for the application.
         secret_key: the charm managed application secret key.
         is_secret_storage_ready: whether the secret storage system is ready.
         proxy: proxy information.
@@ -79,7 +75,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         *,
         framework: str,
         is_secret_storage_ready: bool,
-        app_config: dict[str, int | str | bool | dict[str, str]] | None = None,
+        user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
         integrations: "IntegrationsState | None" = None,
@@ -90,7 +86,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         Args:
             framework: the framework name.
             is_secret_storage_ready: whether the secret storage system is ready.
-            app_config: User-defined configuration values for the application configuration.
+            user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
             secret_key: The secret storage manager associated with the charm.
             integrations: Information about the integrations.
@@ -98,7 +94,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
-        self._app_config = app_config if app_config is not None else {}
+        self._user_defined_config = user_defined_config if user_defined_config is not None else {}
         self._is_secret_storage_ready = is_secret_storage_ready
         self._secret_key = secret_key
         self.integrations = integrations or IntegrationsState()
@@ -133,22 +129,22 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         Raises:
             CharmConfigInvalidError: If some parameter in invalid.
         """
-        app_config = {
+        user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
             if is_user_defined_config(k, framework)
         }
-        app_config = {
-            k: v for k, v in app_config.items() if k not in framework_config.dict().keys()
+        user_defined_config = {
+            k: v for k, v in user_defined_config.items() if k not in framework_config.dict().keys()
         }
 
         app_config_class = app_config_class_factory(framework)
         try:
-            app_config_class(**app_config)
+            app_config_class(**user_defined_config)
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
-            logger.error(error_messages.error_log)
-            raise CharmConfigInvalidError(error_messages.status_msg) from exc
+            logger.error(error_messages.long)
+            raise CharmConfigInvalidError(error_messages.short) from exc
 
         saml_relation_data = None
         if integration_requirers.saml and (
@@ -177,7 +173,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         return cls(
             framework=framework,
             framework_config=framework_config.dict(exclude_none=True),
-            app_config=typing.cast(dict[str, str | int | bool | dict[str, str]], app_config),
+            user_defined_config=typing.cast(
+                dict[str, str | int | bool | dict[str, str]], user_defined_config
+            ),
             secret_key=(
                 secret_storage.get_secret_key() if secret_storage.is_initialized else None
             ),
@@ -212,13 +210,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         return self._framework_config
 
     @property
-    def app_config(self) -> dict[str, str | int | bool | dict[str, str]]:
+    def user_defined_config(self) -> dict[str, str | int | bool | dict[str, str]]:
         """Get the value of user-defined application configurations.
 
         Returns:
             The value of user-defined application configurations.
         """
-        return self._app_config
+        return self._user_defined_config
 
     @property
     def secret_key(self) -> str:
@@ -376,9 +374,9 @@ def generate_relation_parameters(
         return parameter_type.parse_obj(relation_data)
     except ValidationError as exc:
         error_messages = build_validation_error_message(exc)
-        logger.error(error_messages.error_log)
+        logger.error(error_messages.long)
         raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__}: {error_messages.status_msg}"
+            f"Invalid {parameter_type.__name__}: {error_messages.short}"
         ) from exc
 
 
@@ -533,7 +531,7 @@ def app_config_class_factory(framework: str) -> type[BaseModel]:
     Returns:
         Constructed app config class.
     """
-    config_options = _config_metadata(pathlib.Path(os.getcwd()))["options"]
+    config_options = config_metadata(pathlib.Path(os.getcwd()))["options"]
     model_attributes = dict(
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
@@ -541,3 +539,18 @@ def app_config_class_factory(framework: str) -> type[BaseModel]:
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
+
+
+def is_user_defined_config(option_name: str, framework: str) -> bool:
+    """Check if a config option is user defined.
+
+    Args:
+        option_name: Name of the config option.
+        framework: The framework name.
+
+    Returns:
+        True if user defined config options, false otherwise.
+    """
+    return not any(
+        option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
+    )

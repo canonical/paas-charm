@@ -14,7 +14,7 @@ from paas_charm.go.charm import GoConfig
 
 
 @pytest.mark.parametrize(
-    "set_env, app_config, framework_config, integrations, expected",
+    "set_env, user_defined_config, framework_config, integrations, expected",
     [
         pytest.param(
             {},
@@ -70,7 +70,7 @@ from paas_charm.go.charm import GoConfig
     ],
 )
 def test_go_environment_vars(
-    monkeypatch, set_env, app_config, framework_config, integrations, expected
+    monkeypatch, set_env, user_defined_config, framework_config, integrations, expected
 ):
     """
     arrange: set juju charm generic app with distinct combinations of configuration.
@@ -103,7 +103,7 @@ def test_go_environment_vars(
         is_secret_storage_ready=True,
         framework_config=framework_config.dict(exclude_none=True),
         base_url="https://paas.example.com",
-        app_config={"otherconfig": "othervalue"},
+        user_defined_config={"otherconfig": "othervalue"},
         integrations=integrations,
     )
 
