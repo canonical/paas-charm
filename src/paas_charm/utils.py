@@ -40,7 +40,11 @@ def build_validation_error_message(
     """
     fields = set(
         (
-            f'{prefix}{".".join(str(loc) for loc in error["loc"])}' if error["loc"] else "",
+            (
+                f'{prefix if prefix else ""}{".".join(str(loc) for loc in error["loc"])}'
+                if error["loc"]
+                else ""
+            ),
             error["msg"],
         )
         for error in exc.errors()
