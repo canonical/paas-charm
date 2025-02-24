@@ -39,7 +39,10 @@ def build_validation_error_message(
         The ValidationErrorMessage for error logging..
     """
     fields = set(
-        (f"{prefix}{'.'.join(error["loc"])}" if error["loc"] else "", error["msg"])
+        (
+            f'{prefix}{".".join(str(loc) for loc in error["loc"])}' if error["loc"] else "",
+            error["msg"],
+        )
         for error in exc.errors()
     )
 
