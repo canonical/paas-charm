@@ -10,7 +10,7 @@ import zipfile
 
 import requests
 import yaml
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 
 def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
@@ -71,3 +71,18 @@ async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
     traces = get_traces(tempo_host, service_name=service_name)
     assert len(traces) > 0
     return traces
+
+
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
+async def get_mails_patiently(mailcatcher_pod_ip):
+    """Get mails directly from Mailcatcher REST API, but also try multiple times."""
+    url = f"http://{mailcatcher_pod_ip}:1080/messages"
+    req = requests.get(
+        url,
+        timeout=5,
+        verify=False,
+    )
+    assert req.status_code == 200
+    mails = req.json()
+    assert len(mails) > 0
+    return mails

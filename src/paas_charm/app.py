@@ -322,6 +322,23 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
         rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
         env.update(rabbitmq_envvars)
 
+    if integrations.smtp_parameters:
+        smtp = integrations.smtp_parameters
+        env.update(
+            (k, v)
+            for k, v in (
+                ("SMTP_HOST", smtp.host),
+                ("SMTP_PORT", str(smtp.port)),
+                ("SMTP_USER", smtp.user),
+                ("SMTP_PASSWORD", smtp.password),
+                ("SMTP_AUTH_TYPE", smtp.auth_type),
+                ("SMTP_TRANSPORT_SECURITY", smtp.transport_security),
+                ("SMTP_DOMAIN", smtp.domain),
+                ("SMTP_SKIP_SSL_VERIFY", smtp.skip_ssl_verify),
+            )
+            if v is not None
+        )
+
     return {prefix + k: v for k, v in env.items()}
 
 
