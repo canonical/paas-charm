@@ -124,22 +124,6 @@ your pull request must provide the following details:
 - **Reversibility**: If you propose decisions that may be costly to reverse,
   list the reasons and suggest steps to reverse the changes if necessary.
 
-
-Commit structure and messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. TODO: Update with your own guidelines or drop if excessive
-
-Use separate commits for each logical change,
-and for changes to different components.
-
-Use `conventional commits <https://www.conventionalcommits.org/>`_
-to ensure consistency across the project:
-
-Such structure makes it easier to review contributions
-and simplifies porting fixes to other branches.
-
-
 Signing commits
 ~~~~~~~~~~~~~~~
 
