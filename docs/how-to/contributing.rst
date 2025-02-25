@@ -56,7 +56,7 @@ Environment setup
 -----------------
 
 To make contributions to this charm, you'll need a working
-`development setup <https://juju.is/docs/sdk/dev-setup>`_.
+`development setup <https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-your-deployment/manage-your-deployment-environment/>`_.
 
 The code for this charm can be downloaded as follows:
 
@@ -136,7 +136,7 @@ your pull request must provide the following details:
   - The documentation is generated using src-docs
   - The documentation for RTD is updated
   - The PR is tagged with appropriate label (urgent, trivial, complex)
-  - The `changelog <https://github.com/canonical/paas-charm/CHANGELOG.md>`_ has been updated
+  - The changelog has been updated
 
 Signing commits
 ~~~~~~~~~~~~~~~

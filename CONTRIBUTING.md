@@ -26,7 +26,8 @@ Canonical welcomes contributions to the 12-Factor app support project. Please ch
 
 ## Developing
 
-To make contributions to this charm, you'll need a working [development setup](https://juju.is/docs/sdk/dev-setup).
+To make contributions to this charm, you'll need a working
+[development setup](https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-your-deployment/manage-your-deployment-environment/).
 
 The code for this charm can be downloaded as follows:
 
