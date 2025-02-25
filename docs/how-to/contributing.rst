@@ -36,11 +36,6 @@ When contributing, you must abide by the
 
 .. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
-License and copyright
----------------------
-
-.. TODO: Update with your license details or drop if excessive
-
 
 Releases and versions
 ---------------------
