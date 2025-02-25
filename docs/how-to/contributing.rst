@@ -2,9 +2,7 @@
 .. See LICENSE file for licensing details.
 .. _how-to-contribute:
 
-.. TODO: Replace all mentions of ACME with your project name
 .. TODO: Update all sections containing TODOs; make sure no TODOs are left
-
 
 How to contribute
 =================
@@ -36,28 +34,49 @@ When contributing, you must abide by the
 
 .. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
-License and copyright
----------------------
+Canonical Contributor Agreement
+-------------------------------
 
-.. TODO: Update with your license details or drop if excessive
-
+Canonical welcomes contributions to the 12-Factor app support project. Please check out our
+`contributor agreement <https://ubuntu.com/legal/contributors>`_ if you're interested in contributing to the solution.
 
 Releases and versions
 ---------------------
 
-.. TODO: Add your release and versioning details or drop if excessive
-
-The 12-factor project uses `semantic versioning <https://semver.org/>`_;
+The 12-factor app support project uses `semantic versioning <https://semver.org/>`_;
 major releases occur once or twice a year.
 
-The release notes can be found `here <https://github.com/canonical/paas-charm/blob/main/CHANGELOG.md>`_.
+Please ensure that any new feature, fix, or significant change is documented by
+adding an entry to the `CHANGELOG.md <https://github.com/canonical/paas-charm/blob/main/CHANGELOG.md>`_ file.
+
+To learn more about changelog best practices, visit `Keep a Changelog <https://keepachangelog.com/>`_.
 
 
 Environment setup
 -----------------
 
-.. TODO: Update with your prerequisites or drop if excessive
+To make contributions to this charm, you'll need a working
+`development setup <https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-your-deployment/manage-your-deployment-environment/>`_.
 
+The code for this charm can be downloaded as follows:
+
+.. code::
+
+    git clone https://github.com/canonical/paas-charm
+
+You can use the environments created by `tox` for development:
+
+.. code-block::
+
+    tox --notest -e unit
+    source .tox/unit/bin/activate
+
+You can create an environment for development with `tox`:
+
+.. code-block::
+  
+    tox devenv -e integration
+    source venv/bin/activate
 
 Submissions
 -----------
@@ -90,39 +109,34 @@ if approved, they will be eventually merged.
 Describing pull requests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO: Update with your own checklist or drop if excessive
-
 To be properly considered, reviewed and merged,
 your pull request must provide the following details:
 
 - **Title**: Summarize the change in a short, descriptive title.
 
-- **Description**: Explain the problem that your pull request solves.
+- **Applicable spec**: A link to a specification related to the change.
+
+- **Overview**: Explain the problem that your pull request solves.
   Mention any new features, bug fixes or refactoring.
 
-- **Relevant issues**: Reference any
-  `related issues, pull requests and repositories <https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls>`_.
+- **Juju Events Changes**: Describe any changes made to Juju events, or
+  "None" if the pull request does not change any Juju events.
 
-- **Testing**: Explain whether new or updated tests are included.
+- **Module Changes**: Describe any changes made to the module, or "None"
+  if your pull request does not change the module.
 
-- **Reversibility**: If you propose decisions that may be costly to reverse,
-  list the reasons and suggest steps to reverse the changes if necessary.
+- **Library Changes**: Describe any changes made to the ``paas-charm`` library,
+  or "None" is the library is not affected.
 
+- **Checklist**: Complete the following items:
 
-Commit structure and messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. TODO: Update with your own guidelines or drop if excessive
-
-Use separate commits for each logical change,
-and for changes to different components.
-
-Use `conventional commits <https://www.conventionalcommits.org/>`_
-to ensure consistency across the project:
-
-Such structure makes it easier to review contributions
-and simplifies porting fixes to other branches.
-
+  - The `charm style guide <https://juju.is/docs/sdk/styleguide>`_ was applied
+  - The `contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_ was applied
+  - The changes are compliant with `ISD054 - Managing Charm Complexity <https://discourse.charmhub.io/t/specification-isd014-managing-charm-complexity/11619>`_
+  - The documentation is generated using src-docs
+  - The documentation for RTD is updated
+  - The PR is tagged with appropriate label (urgent, trivial, complex)
+  - The changelog has been updated
 
 Signing commits
 ~~~~~~~~~~~~~~~
@@ -147,7 +161,7 @@ Code
 Formatting and linting
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO: Update with your linting configuration setup or drop if excessive
+.. TODO: Update with your linting configuration setup or drop if excessive 
 
 Structure
 ~~~~~~~~~
@@ -186,22 +200,21 @@ Structure
 Best practices
 ~~~~~~~~~~~~~~
 
-.. TODO: Update with your best practices or drop if excessive
+.. TODO: Update with your best practices or drop if excessive 
 
 
 Tests
 -----
 
-.. TODO: Update with your testing framework details or drop if excessive
+This project uses ``tox`` for managing test environments. There are some pre-configured environments
+that can be used for linting and formatting code when you're preparing contributions to the charm:
 
-All code contributions must include tests.
-
-To run the tests locally before submitting your changes:
-
-.. code-block:: console
-
-   TODO: test command 1
-   TODO: test command 2
+* ``tox``: Runs all of the basic checks (``lint``, ``unit``, ``static``, and ``coverage-report``).
+* ``tox -e fmt``: Runs formatting using ``black`` and ``isort``.
+* ``tox -e lint``: Runs a range of static code analysis to check the code.
+* ``tox -e static``: Runs other checks such as ``bandit`` for security issues.
+* ``tox -e unit``: Runs the unit tests.
+* ``tox -e integration``: Runs the integration tests.
 
 
 Documentation
