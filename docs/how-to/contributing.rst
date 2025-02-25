@@ -161,7 +161,7 @@ Code
 Formatting and linting
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO: Update with your linting configuration setup or drop if excessive
+.. TODO: Update with your linting configuration setup or drop if excessive 
 
 Structure
 ~~~~~~~~~
@@ -200,7 +200,7 @@ Structure
 Best practices
 ~~~~~~~~~~~~~~
 
-.. TODO: Update with your best practices or drop if excessive
+.. TODO: Update with your best practices or drop if excessive 
 
 
 Tests
