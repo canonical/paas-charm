@@ -36,6 +36,11 @@ When contributing, you must abide by the
 
 .. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
+Canonical Contributor Agreement
+-------------------------------
+
+Canonical welcomes contributions to the 12-Factor app support project. Please check out our
+`contributor agreement <https://ubuntu.com/legal/contributors>`_ if you're interested in contributing to the solution.
 
 Releases and versions
 ---------------------
