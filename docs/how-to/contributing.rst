@@ -52,8 +52,28 @@ To learn more about changelog best practices, visit `Keep a Changelog <https://k
 Environment setup
 -----------------
 
-.. TODO: Update with your prerequisites or drop if excessive
+To make contributions to this charm, you'll need a working
+`development setup <https://juju.is/docs/sdk/dev-setup>`_.
 
+The code for this charm can be downloaded as follows:
+
+.. code::
+
+    git clone https://github.com/canonical/paas-charm
+
+You can use the environments created by `tox` for development:
+
+.. code-block::
+
+    tox --notest -e unit
+    source .tox/unit/bin/activate
+
+You can create an environment for development with `tox`:
+
+.. code-block::
+  
+    tox devenv -e integration
+    source venv/bin/activate
 
 Submissions
 -----------
