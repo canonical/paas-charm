@@ -106,23 +106,34 @@ if approved, they will be eventually merged.
 Describing pull requests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO: Update with your own checklist or drop if excessive
-
 To be properly considered, reviewed and merged,
 your pull request must provide the following details:
 
 - **Title**: Summarize the change in a short, descriptive title.
 
-- **Description**: Explain the problem that your pull request solves.
+- **Applicable spec**: A link to a specification related to the change.
+
+- **Overview**: Explain the problem that your pull request solves.
   Mention any new features, bug fixes or refactoring.
 
-- **Relevant issues**: Reference any
-  `related issues, pull requests and repositories <https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls>`_.
+- **Juju Events Changes**: Describe any changes made to Juju events, or
+  "None" if the pull request does not change any Juju events.
 
-- **Testing**: Explain whether new or updated tests are included.
+- **Module Changes**: Describe any changes made to the module, or "None"
+  if your pull request does not change the module.
 
-- **Reversibility**: If you propose decisions that may be costly to reverse,
-  list the reasons and suggest steps to reverse the changes if necessary.
+- **Library Changes**: Describe any changes made to the ``paas-charm`` library,
+  or "None" is the library is not affected.
+
+- **Checklist**: Complete the following items:
+
+  - The `charm style guide <https://juju.is/docs/sdk/styleguide>`_ was applied
+  - The `contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_ was applied
+  - The changes are compliant with `ISD054 - Managing Charm Complexity <https://discourse.charmhub.io/t/specification-isd014-managing-charm-complexity/11619>`_
+  - The documentation is generated using src-docs
+  - The documentation for RTD is updated
+  - The PR is tagged with appropriate label (urgent, trivial, complex)
+  - The `changelog <https://github.com/canonical/paas-charm/CHANGELOG.md>`_ has been updated
 
 Signing commits
 ~~~~~~~~~~~~~~~
