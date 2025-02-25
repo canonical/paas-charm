@@ -15,8 +15,8 @@ enhancements to the 12-Factor app support project.
   - code quality
   - test coverage
   - user experience for Juju operators of this charm.
-- Please help us out in ensuring easy to review branches by rebasing your pull request branch onto the `main` branch. This 
-  also avoids merge commits and creates a linear Git commit history.
+- Please help us out in ensuring easy to review branches by rebasing your pull request branch onto the `main` branch.
+  This also avoids merge commits and creates a linear Git commit history.
 - Please generate src documentation for every commit. See the section below for more details.
 
 ## Canonical Contributor Agreement
@@ -68,6 +68,7 @@ Run the following command:
 echo -e "tox -e src-docs\ngit add src-docs\n" >> .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
+
 ## Add an integration
 
 There are a few recommended steps to add a new integration which we'll go
