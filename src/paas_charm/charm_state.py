@@ -156,17 +156,17 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-        saml_relation_data = None
-        if integration_requirers.saml and (
-            saml_data := integration_requirers.saml.get_relation_data()
-        ):
-            saml_relation_data = saml_data.to_relation_data()
+        # saml_relation_data = None
+        # if integration_requirers.saml and (
+        #     saml_data := integration_requirers.saml.get_relation_data()
+        # ):
+        #     saml_relation_data = saml_data.to_relation_data()
 
-        smtp_relation_data = None
-        if integration_requirers.smtp and (
-            smtp_data := integration_requirers.smtp.get_relation_data()
-        ):
-            smtp_relation_data = smtp_data.to_relation_data()
+        # smtp_relation_data = None
+        # if integration_requirers.smtp and (
+        #     smtp_data := integration_requirers.smtp.get_relation_data()
+        # ):
+        #     smtp_relation_data = smtp_data.to_relation_data()
 
         integrations = IntegrationsState.build(
             app_name=app_name,
@@ -177,14 +177,28 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 if integration_requirers.s3
                 else None
             ),
-            saml_relation_data=saml_relation_data,
+            saml_relation_data=(
+                saml_data.to_relation_data()
+                if (
+                    integration_requirers.saml
+                    and (saml_data := integration_requirers.saml.get_relation_data())
+                )
+                else None
+            ),
             rabbitmq_uri=(
                 integration_requirers.rabbitmq.rabbitmq_uri()
                 if integration_requirers.rabbitmq
                 else None
             ),
             tracing_requirer=integration_requirers.tracing,
-            smtp_relation_data=smtp_relation_data,
+            smtp_relation_data=(
+                smtp_data.to_relation_data()
+                if (
+                    integration_requirers.smtp
+                    and (smtp_data := integration_requirers.smtp.get_relation_data())
+                )
+                else None
+            ),
         )
 
         return cls(
@@ -667,4 +681,3 @@ def is_user_defined_config(option_name: str, framework: str) -> bool:
     return not any(
         option_name.startswith(prefix) for prefix in (f"{framework}-", "webserver-", "app-")
     )
-
