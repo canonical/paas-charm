@@ -40,12 +40,13 @@ When contributing, you must abide by the
 Releases and versions
 ---------------------
 
-.. TODO: Add your release and versioning details or drop if excessive
-
-The 12-factor project uses `semantic versioning <https://semver.org/>`_;
+The 12-factor app support project uses `semantic versioning <https://semver.org/>`_;
 major releases occur once or twice a year.
 
-The release notes can be found `here <https://github.com/canonical/paas-charm/blob/main/CHANGELOG.md>`_.
+Please ensure that any new feature, fix, or significant change is documented by
+adding an entry to the `CHANGELOG.md <https://github.com/canonical/paas-charm/blob/main/CHANGELOG.md>`_ file.
+
+To learn more about changelog best practices, visit `Keep a Changelog <https://keepachangelog.com/>`_.
 
 
 Environment setup
