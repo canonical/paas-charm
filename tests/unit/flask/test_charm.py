@@ -345,7 +345,8 @@ def test_invalid_config(harness: Harness):
     """
     harness.begin()
     harness.update_config({"flask-env": ""})
-    assert harness.model.unit.status == ops.BlockedStatus("invalid configuration: flask-env")
+    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
+    assert "flask-env" in harness.model.unit.status.message
 
 
 def test_invalid_integration(harness: Harness):

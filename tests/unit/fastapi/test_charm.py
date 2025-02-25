@@ -19,6 +19,7 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
             {},
             {},
             {
+                "APP_NON_OPTIONAL_STRING": "non-optional-value",
                 "UVICORN_PORT": "8080",
                 "WEB_CONCURRENCY": "1",
                 "UVICORN_LOG_LEVEL": "info",
@@ -45,6 +46,7 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
                 "username": "test-username",
             },
             {
+                "APP_NON_OPTIONAL_STRING": "non-optional-value",
                 "UVICORN_PORT": "9000",
                 "WEB_CONCURRENCY": "1",
                 "UVICORN_LOG_LEVEL": "info",

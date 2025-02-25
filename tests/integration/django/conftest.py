@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for flask charm integration tests."""
-import asyncio
 import os
 import pathlib
 

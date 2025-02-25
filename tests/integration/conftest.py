@@ -14,10 +14,15 @@ from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_venv
+from tests.integration.helpers import inject_charm_config, inject_venv
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
+
+NON_OPTIONAL_CONFIGS = {
+    "non-optional-bool": {"type": "boolean", "optional": False},
+    "non-optional-int": {"type": "int", "optional": False},
+}
 
 
 @pytest.fixture(scope="module", name="test_flask_image")
@@ -75,6 +80,35 @@ async def build_charm_file(
     return pathlib.Path(charm_file).absolute()
 
 
+async def build_charm_file_with_config_options(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    framework: str,
+    config_options: dict,
+) -> str:
+    """Get the existing charm file if exists, build a new one if not."""
+    charm_file = next(
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
+    )
+
+    if not charm_file:
+        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
+        if framework == "flask":
+            charm_location = PROJECT_ROOT / f"examples/{framework}"
+        charm_file = await ops_test.build_charm(charm_location)
+    elif charm_file[0] != "/":
+        charm_file = PROJECT_ROOT / charm_file
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+
+    charm_file = inject_charm_config(
+        charm_file,
+        config_options,
+        tmp_path_factory.mktemp(framework),
+    )
+    return pathlib.Path(charm_file).absolute()
+
+
 @pytest_asyncio.fixture(scope="module", name="flask_app")
 async def flask_app_fixture(
     pytestconfig: pytest.Config,
@@ -94,6 +128,30 @@ async def flask_app_fixture(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
     await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="flask_blocked_app")
+async def flask_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    test_flask_image: str,
+):
+    """Build and deploy the flask charm with test-flask image."""
+    app_name = "flask-k8s"
+
+    resources = {
+        "flask-app-image": test_flask_image,
+    }
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "flask", NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(
+        charm_file, resources=resources, application_name=app_name, series="jammy"
+    )
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
 
 
@@ -126,6 +184,38 @@ async def django_app_fixture(
     return app
 
 
+@pytest_asyncio.fixture(scope="module", name="django_blocked_app")
+async def django_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    django_app_image: str,
+    postgresql_k8s: Application,
+):
+    """Build and deploy the Django charm with django-app image."""
+    app_name = "django-k8s"
+
+    resources = {
+        "django-app-image": django_app_image,
+    }
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "django", NON_OPTIONAL_CONFIGS
+    )
+
+    app = await model.deploy(
+        charm_file,
+        resources=resources,
+        config={"django-allowed-hosts": "*"},
+        application_name=app_name,
+        series="jammy",
+    )
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
+    return app
+
+
 @pytest_asyncio.fixture(scope="module", name="fastapi_app")
 async def fastapi_app_fixture(
     pytestconfig: pytest.Config,
@@ -142,9 +232,37 @@ async def fastapi_app_fixture(
         "app-image": fastapi_app_image,
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    app = await model.deploy(
+        charm_file,
+        resources=resources,
+        application_name=app_name,
+        config={"non-optional-string": "non-optional-value"},
+    )
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="fastapi_blocked_app")
+async def fastapi_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    fastapi_app_image: str,
+    postgresql_k8s: Application,
+):
+    """Build and deploy the FastAPI charm with fastapi-app image."""
+    app_name = "fastapi-k8s"
+
+    resources = {"app-image": fastapi_app_image}
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "fastapi", NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
 
 
@@ -167,6 +285,31 @@ async def go_app_fixture(
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="go_blocked_app")
+async def go_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    go_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "go-k8s"
+
+    resources = {
+        "app-image": go_app_image,
+    }
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "go", NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
 
 

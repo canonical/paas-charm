@@ -4,17 +4,14 @@
 """pytest fixtures for the go unit test."""
 import os
 import pathlib
-import shlex
 import typing
-import unittest.mock
 
-import ops
 import pytest
 from ops.testing import Harness
 
 from examples.go.charm.src.charm import GoCharm
 
-from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
+from .constants import GO_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 

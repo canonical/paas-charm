@@ -13,10 +13,22 @@ import yaml
 from pydantic import ValidationError
 
 
+class ValidationErrorMessage(typing.NamedTuple):
+    """Class carrying status message and error log for pydantic validation errors.
+
+    Attrs:
+        short: Short error message to show in status message.
+        long: Detailed error message for logging.
+    """
+
+    short: str
+    long: str
+
+
 def build_validation_error_message(
     exc: ValidationError, prefix: str | None = None, underscore_to_dash: bool = False
-) -> str:
-    """Build a str with a list of error fields from a pydantic exception.
+) -> ValidationErrorMessage:
+    """Build a ValidationErrorMessage for error logging.
 
     Args:
         exc: ValidationError exception instance.
@@ -24,18 +36,44 @@ def build_validation_error_message(
         underscore_to_dash: Replace underscores to dashes in the error field names.
 
     Returns:
-        The curated list of error fields ready to be used in an error message.
+        The ValidationErrorMessage for error logging..
     """
-    error_fields_unique = set(
-        itertools.chain.from_iterable(error["loc"] for error in exc.errors())
+    fields = set(
+        (
+            (
+                f'{prefix if prefix else ""}{".".join(str(loc) for loc in error["loc"])}'
+                if error["loc"]
+                else ""
+            ),
+            error["msg"],
+        )
+        for error in exc.errors()
     )
-    error_fields = (str(error_field) for error_field in error_fields_unique)
-    if prefix:
-        error_fields = (f"{prefix}{error_field}" for error_field in error_fields)
+
     if underscore_to_dash:
-        error_fields = (error_field.replace("_", "-") for error_field in error_fields)
-    error_field_str = " ".join(error_fields)
-    return error_field_str
+        fields = {(key.replace("_", "-"), value) for key, value in fields}
+
+    missing_fields = {}
+    invalid_fields = {}
+
+    for loc, msg in fields:
+        if "required" in msg.lower():
+            missing_fields[loc] = msg
+        else:
+            invalid_fields[loc] = msg
+
+    short_str_missing = f"missing options: {', '.join(missing_fields)}" if missing_fields else ""
+    short_str_invalid = f"invalid options: {', '.join(invalid_fields)}" if invalid_fields else ""
+    short_str = f"{short_str_missing}\
+        {', ' if missing_fields and invalid_fields else ''}{short_str_invalid}"
+
+    long_str_lines = "\n".join(
+        f"- {key}: {value}"
+        for key, value in itertools.chain(missing_fields.items(), invalid_fields.items())
+    )
+    long_str = f"invalid configuration:\n{long_str_lines}"
+
+    return ValidationErrorMessage(short=short_str, long=long_str)
 
 
 def enable_pebble_log_forwarding() -> bool:
@@ -58,7 +96,7 @@ def enable_pebble_log_forwarding() -> bool:
 
 
 @functools.lru_cache
-def _config_metadata(charm_dir: pathlib.Path) -> dict:
+def config_metadata(charm_dir: pathlib.Path) -> dict:
     """Get charm configuration metadata for the given charm directory.
 
     Args:
@@ -95,7 +133,7 @@ def config_get_with_secret(
     Returns:
         The configuration value.
     """
-    metadata = _config_metadata(pathlib.Path(os.getcwd()))
+    metadata = config_metadata(pathlib.Path(os.getcwd()))
     config_type = metadata["options"][key]["type"]
     if config_type != "secret":
         return charm.config.get(key)

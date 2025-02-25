@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for FastAPI charm integration tests."""
-import asyncio
 import os
 import pathlib
 
@@ -61,6 +60,7 @@ async def fastapi_app_fixture(
         charm_file,
         application_name=app_name,
         resources=resources,
+        config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, "postgresql-k8s")
     await model.wait_for_idle(status="active")

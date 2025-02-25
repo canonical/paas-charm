@@ -4,17 +4,14 @@
 """pytest fixtures for the fastapi unit test."""
 import os
 import pathlib
-import shlex
 import typing
-import unittest.mock
 
-import ops
 import pytest
 from ops.testing import Harness
 
 from examples.fastapi.charm.src.charm import FastAPICharm
 
-from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
+from .constants import FASTAPI_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -32,6 +29,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
     root = harness.get_filesystem_root(FASTAPI_CONTAINER_NAME)
     (root / "app").mkdir(parents=True)
     harness.set_can_connect(FASTAPI_CONTAINER_NAME, True)
+    harness.update_config({"non-optional-string": "non-optional-value"})
 
     yield harness
     harness.cleanup()

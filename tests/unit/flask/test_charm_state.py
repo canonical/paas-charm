@@ -10,7 +10,7 @@ import pytest
 
 from paas_charm.charm_state import CharmState, IntegrationRequirers, S3Parameters
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.flask.charm import Charm, FlaskConfig
+from paas_charm.flask.charm import Charm
 
 from .constants import SAML_APP_RELATION_DATA_EXAMPLE
 
@@ -278,7 +278,7 @@ def test_secret_configuration():
     """
     arrange: prepare a juju secret configuration.
     act: set secret-test charm configurations.
-    assert: app_config in the charm state should contain the value of the secret configuration.
+    assert: user_defined_config in the charm state should contain the value of the secret configuration.
     """
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config["secret-test"] = {"foo": "foo", "bar": "bar", "foo-bar": "foobar"}
@@ -293,8 +293,8 @@ def test_secret_configuration():
         config=config,
         integration_requirers=IntegrationRequirers(databases={}),
     )
-    assert "secret_test" in charm_state.app_config
-    assert charm_state.app_config["secret_test"] == {
+    assert "secret_test" in charm_state.user_defined_config
+    assert charm_state.user_defined_config["secret_test"] == {
         "bar": "bar",
         "foo": "foo",
         "foo-bar": "foobar",

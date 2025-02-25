@@ -4,13 +4,10 @@
 """Integration tests for Flask workers and schedulers."""
 
 import asyncio
-import json
 import logging
-import time
 
 import aiohttp
 import pytest
-from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 

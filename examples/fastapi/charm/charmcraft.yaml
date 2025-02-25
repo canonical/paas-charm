@@ -58,6 +58,10 @@ config:
     user-defined-config:
       type: string
       description: Example of a user defined configuration.
+    non-optional-string:
+      description: Example of a non-optional string configuration option.
+      type: string
+      optional: False
 containers:
   app:
     resource: app-image

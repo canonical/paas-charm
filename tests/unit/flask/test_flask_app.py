@@ -12,7 +12,6 @@ import unittest.mock
 
 import pytest
 
-from paas_charm._gunicorn.webserver import WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import map_integrations_to_env
@@ -20,7 +19,7 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
 
 
 @pytest.mark.parametrize(
-    "flask_config,app_config",
+    "flask_config,user_defined_config",
     [
         pytest.param({"env": "test"}, {}, id="env"),
         pytest.param({"permanent_session_lifetime": 1}, {}, id="permanent_session_lifetime"),
@@ -33,7 +32,9 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
         ),
     ],
 )
-def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock, container_mock):
+def test_flask_env(
+    flask_config: dict, user_defined_config: dict, database_migration_mock, container_mock
+):
     """
     arrange: create the Flask app object with a controlled charm state.
     act: none.
@@ -44,7 +45,7 @@ def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock
         secret_key="foobar",
         is_secret_storage_ready=True,
         framework_config=flask_config,
-        app_config=app_config,
+        user_defined_config=user_defined_config,
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
@@ -58,7 +59,7 @@ def test_flask_env(flask_config: dict, app_config: dict, database_migration_mock
     assert env["FLASK_SECRET_KEY"] == "foobar"
     del env["FLASK_SECRET_KEY"]
     expected_env = {}
-    for config_key, config_value in app_config.items():
+    for config_key, config_value in user_defined_config.items():
         if isinstance(config_value, dict):
             for secret_key, secret_value in config_value.items():
                 expected_env[

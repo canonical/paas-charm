@@ -140,7 +140,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """
         prefix = self.configuration_prefix
         env = {}
-        for app_config_key, app_config_value in self._charm_state.app_config.items():
+        for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
                     env[f"{prefix}{app_config_key.upper()}_{k.replace('-', '_').upper()}"] = (

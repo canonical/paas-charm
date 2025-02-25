@@ -66,6 +66,19 @@ Documentation for this project is located in a few places:
 3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
    Documentation related to the software operators (charms)
 
+Contributing to this documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Documentation is an important part of this project, and we take the same open-source
+approach to the documentation as the code. As such, we welcome community contributions,
+suggestions and constructive feedback on our documentation. Our documentation is hosted
+on Read The Docs to enable easy collaboration. Please use the "Edit this page on GitHub"
+or "Give Feedback" links on each documentation page to either directly change something
+you see that's wrong, ask a question, or make a suggestion about a potential change.
+
+If there's a particular area of documentation that you'd like to see that's missing,
+please `file a bug <https://github.com/canonical/paas-charm/issues>`_.
+
 Project and community
 ---------------------
 

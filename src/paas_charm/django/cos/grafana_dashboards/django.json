@@ -33,6 +33,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -93,6 +94,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -812,6 +814,7 @@
         "type": "loki",
         "uid": "${lokids}"
       },
+      "description": "Pick a unit to display logs.",
       "gridPos": {
         "h": 8,
         "w": 24,
@@ -980,6 +983,6 @@
   "timezone": "",
   "title": "Django Operator",
   "uid": null,
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
