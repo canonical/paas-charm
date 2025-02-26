@@ -34,7 +34,7 @@ When contributing, you must abide by the
 
 .. TODO: Do we link the `IS Charms contributing guide <https://github.com/canonical/is-charms-contributing-guide>`_?
 
-Canonical Contributor Agreement
+Canonical contributor agreement
 -------------------------------
 
 Canonical welcomes contributions to the 12-Factor app support project. Please check out our
@@ -118,6 +118,8 @@ your pull request must provide the following details:
 
 - **Overview**: Explain the problem that your pull request solves.
   Mention any new features, bug fixes or refactoring.
+
+- **Rationale**: 
 
 - **Juju Events Changes**: Describe any changes made to Juju events, or
   "None" if the pull request does not change any Juju events.
