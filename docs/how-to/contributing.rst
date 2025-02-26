@@ -114,12 +114,10 @@ your pull request must provide the following details:
 
 - **Title**: Summarize the change in a short, descriptive title.
 
-- **Applicable spec**: A link to a specification related to the change.
-
-- **Overview**: Explain the problem that your pull request solves.
+- **Overview**: Describe the problem that your pull request solves.
   Mention any new features, bug fixes or refactoring.
 
-- **Rationale**: 
+- **Rationale**: Explain why the change is needed.
 
 - **Juju Events Changes**: Describe any changes made to Juju events, or
   "None" if the pull request does not change any Juju events.
