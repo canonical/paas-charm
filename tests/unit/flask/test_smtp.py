@@ -9,16 +9,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
-
-SMTP_DATA = {
-    "auth_type": "none",
-    "domain": "example.com",
-    "host": "test-ip",
-    "port": "1025",
-    "skip_ssl_verify": "False",
-    "transport_security": "none",
-}
+from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, SMTP_RELATION_DATA_EXAMPLE
 
 
 def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
@@ -30,7 +21,7 @@ def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
     harness.add_relation(
         "smtp",
         "smtp-integrator",
-        app_data=SMTP_DATA,
+        app_data=SMTP_RELATION_DATA_EXAMPLE,
     )
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
@@ -40,10 +31,10 @@ def test_smtp_relation(harness: Harness, request: pytest.FixtureRequest):
     assert harness.model.unit.status == ops.ActiveStatus()
     service_env = container.get_plan().services["flask"].environment
     assert service_env.get("SMTP_AUTH_TYPE") is None
-    assert service_env["SMTP_DOMAIN"] == SMTP_DATA["domain"]
-    assert service_env["SMTP_HOST"] == SMTP_DATA["host"]
-    assert service_env["SMTP_PORT"] == SMTP_DATA["port"]
-    assert service_env["SMTP_SKIP_SSL_VERIFY"] == SMTP_DATA["skip_ssl_verify"]
+    assert service_env["SMTP_DOMAIN"] == SMTP_RELATION_DATA_EXAMPLE["domain"]
+    assert service_env["SMTP_HOST"] == SMTP_RELATION_DATA_EXAMPLE["host"]
+    assert service_env["SMTP_PORT"] == SMTP_RELATION_DATA_EXAMPLE["port"]
+    assert service_env["SMTP_SKIP_SSL_VERIFY"] == SMTP_RELATION_DATA_EXAMPLE["skip_ssl_verify"]
     assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
 
 
