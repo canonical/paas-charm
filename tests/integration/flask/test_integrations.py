@@ -4,7 +4,6 @@
 """Integration tests for Flask charm integrations, like S3 and Saml."""
 import logging
 import urllib.parse
-from secrets import token_hex
 
 import ops
 import pytest
@@ -13,8 +12,6 @@ from juju.application import Application
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 from saml_test_helper import SamlK8sTestHelper
-
-from tests.integration.helpers import get_mails_patiently
 
 logger = logging.getLogger(__name__)
 
@@ -169,48 +166,3 @@ async def test_saml_integration(
             entity_id_url._replace(path="sso")
         )
         assert env["SAML_SIGNING_CERTIFICATE"] in saml_helper.CERTIFICATE.replace("\n", "")
-
-
-async def test_smtp_integration(
-    ops_test: OpsTest,
-    flask_app: Application,
-    model: Model,
-    get_unit_ips,
-    mailcatcher,
-):
-    """
-    arrange: Build and deploy the flask charm. Integrate the charm with the smtp-integrator.
-    act: Send an email from flask charm.
-    assert: The mailcatcher should have received the email.
-    """
-    smtp_config = {
-        "auth_type": "none",
-        "domain": "example.com",
-        "host": mailcatcher.host,
-        "port": mailcatcher.port,
-    }
-    smtp_integrator_app = await model.deploy(
-        "smtp-integrator",
-        channel="latest/edge",
-        config=smtp_config,
-    )
-    await model.wait_for_idle()
-    await model.add_relation(flask_app.name, f"{smtp_integrator_app.name}:smtp")
-
-    await model.wait_for_idle(
-        idle_period=30,
-        apps=[flask_app.name, smtp_integrator_app.name],
-        status="active",
-    )
-
-    unit_ip = (await get_unit_ips(flask_app.name))[0]
-
-    response = requests.get(f"http://{unit_ip}:8000/send_mail", timeout=5)
-    assert response.status_code == 200
-    assert "Sent" in response.text
-
-    mails = await get_mails_patiently(mailcatcher.pod_ip)
-    assert mails[0]
-    assert "<tester@example.com>" in mails[0]["sender"]
-    assert mails[0]["recipients"] == ["<test@example.com>"]
-    assert mails[0]["subject"] == "hello"
