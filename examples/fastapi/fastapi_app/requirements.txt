@@ -7,3 +7,4 @@ opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 opentelemetry-exporter-otlp
 opentelemetry-exporter-otlp-proto-http
+fastapi-mail
