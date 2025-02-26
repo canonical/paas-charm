@@ -204,11 +204,6 @@ Structure
   This also improves consistency and readability.
 
 
-Best practices
-~~~~~~~~~~~~~~
-
-.. TODO: Update with your best practices or drop if excessive 
-
 Documentation
 -------------
 
