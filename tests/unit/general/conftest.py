@@ -6,6 +6,7 @@ import os
 import pathlib
 import shlex
 import typing
+import unittest
 
 import ops
 import pytest
@@ -135,3 +136,11 @@ def _set_check_config_handler(
         check_config_command,
         handler=check_config_handler,
     )
+
+
+def MockTracingEndpointRequirer(is_ready: bool, endpoint: str):
+    mock = unittest.mock.MagicMock()
+    mock.is_ready.return_value = is_ready
+    mock.get_endpoint.return_value = endpoint
+
+    return mock

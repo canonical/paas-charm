@@ -53,22 +53,3 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
 
     yield harness
     harness.cleanup()
-
-
-@pytest.fixture
-def database_migration_mock():
-    """Create a mock instance for the DatabaseMigration class."""
-    mock = unittest.mock.MagicMock()
-    mock.status = DatabaseMigrationStatus.PENDING
-    mock.script = None
-    return mock
-
-
-@pytest.fixture
-def container_mock():
-    """Create a mock instance for the Container."""
-    mock = unittest.mock.MagicMock()
-    pull_result = unittest.mock.MagicMock()
-    pull_result.read.return_value = str(DEFAULT_LAYER["services"]).replace("'", '"')
-    mock.pull.return_value = pull_result
-    return mock

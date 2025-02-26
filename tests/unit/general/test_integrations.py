@@ -4,24 +4,33 @@
 """Integrations unit tests."""
 import itertools
 import json
+import unittest
+from types import NoneType
 
 import pytest
 from ops.testing import Harness
 
-from paas_charm.app import map_integrations_to_env
+from paas_charm._gunicorn.workload_config import create_workload_config
+from paas_charm._gunicorn.wsgi_app import WsgiApp
+from paas_charm.app import App, WorkloadConfig, map_integrations_to_env
 from paas_charm.charm_state import (
+    CharmState,
     IntegrationsState,
+    RelationParam,
     S3Parameters,
     SamlParameters,
     SmtpParameters,
     TempoParameters,
+    _create_config_attribute,
     generate_relation_parameters,
 )
+from paas_charm.exceptions import CharmConfigInvalidError
 from tests.unit.flask.constants import (
     INTEGRATIONS_RELATION_DATA,
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
+from tests.unit.general.conftest import MockTracingEndpointRequirer
 
 
 def _generate_map_integrations_to_env_parameters(prefix: str = ""):
@@ -253,3 +262,306 @@ def test_map_integrations_to_env(
     """
     env = map_integrations_to_env(integrations, prefix)
     assert env == expected_env
+
+
+@pytest.mark.parametrize(
+    "relation_data, relation_parameter_type, accept_empty, expected_type, should_fail",
+    [
+        pytest.param(
+            SAML_APP_RELATION_DATA_EXAMPLE,
+            SamlParameters,
+            True,
+            SamlParameters,
+            False,
+            id="Saml correct parameters",
+        ),
+        pytest.param({}, SamlParameters, False, NoneType, False, id="Saml empty parameters"),
+        pytest.param(
+            {"wrong_key": "wrong_value"},
+            SamlParameters,
+            False,
+            NoneType,
+            True,
+            id="Saml wrong parameters",
+        ),
+        pytest.param(
+            INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
+            S3Parameters,
+            False,
+            S3Parameters,
+            False,
+            id="S3 correct parameters",
+        ),
+        pytest.param(
+            {"wrong_key": "wrong_value"},
+            S3Parameters,
+            False,
+            NoneType,
+            True,
+            id="S3 wrong parameters",
+        ),
+        pytest.param({}, S3Parameters, True, NoneType, True, id="S3 empty parameters"),
+        pytest.param(
+            {"service_name": "app_name", "endpoint": "localhost:1234"},
+            TempoParameters,
+            False,
+            TempoParameters,
+            False,
+            id="Tempo correct parameters",
+        ),
+        pytest.param(
+            {"wrong_key": "wrong_value"},
+            TempoParameters,
+            False,
+            NoneType,
+            True,
+            id="Tempo wrong parameters",
+        ),
+        pytest.param({}, TempoParameters, False, NoneType, False, id="Tempo empty parameters"),
+        pytest.param(
+            SMTP_RELATION_DATA_EXAMPLE,
+            SmtpParameters,
+            False,
+            SmtpParameters,
+            False,
+            id="Smtp correct parameters",
+        ),
+        pytest.param(
+            {"wrong_key": "wrong_value"},
+            SmtpParameters,
+            False,
+            NoneType,
+            True,
+            id="Smtp wrong parameters",
+        ),
+        pytest.param({}, SmtpParameters, True, NoneType, True, id="Smtp empty parameters"),
+    ],
+)
+def test_generate_relation_parameters(
+    relation_data: dict,
+    relation_parameter_type: RelationParam,
+    accept_empty: bool,
+    expected_type: type,
+    should_fail: bool,
+):
+    """
+    arrange: None
+    act: Generate a relation parameter object.
+    assert: The function should error out or the resultant object should be the correct type.
+    """
+    if should_fail:
+        with pytest.raises(CharmConfigInvalidError):
+            relation_parameters = generate_relation_parameters(
+                relation_data, relation_parameter_type, accept_empty
+            )
+    else:
+        relation_parameters = generate_relation_parameters(
+            relation_data, relation_parameter_type, accept_empty
+        )
+        assert isinstance(relation_parameters, expected_type)
+
+
+def _test_integrations_state_build_parameters():
+    mock_relations: dict[str, str] = {
+        "redis_uri": None,
+        "database_requirers": {},
+        "s3_connection_info": None,
+        "saml_relation_data": None,
+        "rabbitmq_uri": None,
+        "tracing_requirer": None,
+        "app_name": None,
+        "smtp_relation_data": None,
+    }
+
+    return [
+        pytest.param(
+            {**mock_relations, "saml_relation_data": SAML_APP_RELATION_DATA_EXAMPLE},
+            False,
+            id="Saml correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "saml_relation_data": {}},
+            True,
+            id="Saml empty parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "saml_relation_data": {"wrong_key": "wrong_value"}},
+            True,
+            id="Saml wrong parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
+            False,
+            id="S3 correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "s3_connection_info": {}},
+            False,
+            id="S3 empty parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "s3_connection_info": {"wrong_key": "wrong_value"}},
+            True,
+            id="S3 wrong parameters",
+        ),
+        pytest.param(
+            {
+                **mock_relations,
+                "tracing_requirer": MockTracingEndpointRequirer(True, "localhost:1234"),
+                "app_name": "app_name",
+            },
+            False,
+            id="Tempo correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "tracing_requirer": None},
+            False,
+            id="Tempo empty parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
+            False,
+            id="Tempo not ready",
+        ),
+        pytest.param(
+            {**mock_relations, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
+            False,
+            id="Smtp correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "smtp_relation_data": {}},
+            False,
+            id="Smtp empty parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "smtp_relation_data": {"wrong_key": "wrong_value"}},
+            True,
+            id="Smtp wrong parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "redis_uri": "http://redisuri"},
+            False,
+            id="Redis correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "redis_uri": ""},
+            False,
+            id="Redis empty parameters",
+        ),
+        pytest.param(
+            {
+                **mock_relations,
+                "rabbitmq_uri": "amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/",
+            },
+            False,
+            id="RabbitMQ correct parameters",
+        ),
+        pytest.param(
+            {**mock_relations, "rabbitmq_uri": "http://redisuri"},
+            False,
+            id="RabbitMQ empty parameters",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "mock_relations, should_fail",
+    _test_integrations_state_build_parameters(),
+)
+def test_integrations_state_build(
+    mock_relations: dict,
+    should_fail: bool,
+):
+    """
+    arrange: None
+    act: Generate a relation parameter object.
+    assert: The function should error out or the resultant object should be the correct type.
+    """
+    if should_fail:
+        with pytest.raises(CharmConfigInvalidError):
+            IntegrationsState.build(
+                redis_uri=mock_relations["redis_uri"],
+                database_requirers=mock_relations["database_requirers"],
+                s3_connection_info=mock_relations["s3_connection_info"],
+                saml_relation_data=mock_relations["saml_relation_data"],
+                rabbitmq_uri=mock_relations["rabbitmq_uri"],
+                tracing_requirer=mock_relations["tracing_requirer"],
+                app_name=mock_relations["app_name"],
+                smtp_relation_data=mock_relations["smtp_relation_data"],
+            )
+    else:
+        assert isinstance(
+            IntegrationsState.build(
+                redis_uri=mock_relations["redis_uri"],
+                database_requirers=mock_relations["database_requirers"],
+                s3_connection_info=mock_relations["s3_connection_info"],
+                saml_relation_data=mock_relations["saml_relation_data"],
+                rabbitmq_uri=mock_relations["rabbitmq_uri"],
+                tracing_requirer=mock_relations["tracing_requirer"],
+                app_name=mock_relations["app_name"],
+                smtp_relation_data=mock_relations["smtp_relation_data"],
+            ),
+            IntegrationsState,
+        )
+
+
+def _test_integrations_env_parameters():
+
+    parameters_with_empty_prefix = _generate_map_integrations_to_env_parameters()
+
+    return [pytest.param(p.values[0], p.values[2], id=p.id) for p in parameters_with_empty_prefix]
+
+
+@pytest.mark.parametrize(
+    "integrations, expected_vars",
+    _test_integrations_env_parameters(),
+)
+@pytest.mark.parametrize(
+    "framework, container_mock",
+    [
+        pytest.param("flask", "flask_container_mock", id="flask"),
+        pytest.param("django", "django_container_mock", id="django"),
+        pytest.param("go", "go_container_mock", id="go"),
+        pytest.param("fastapi", "fastapi_container_mock", id="fastapi"),
+    ],
+)
+def test_integrations_env(
+    monkeypatch,
+    database_migration_mock,
+    container_mock,
+    integrations,
+    framework,
+    expected_vars,
+    request,
+):
+    """
+    arrange: prepare charmstate with integrations state.
+    act: generate a flask environment.
+    assert: flask_environment generated should contain the expected env vars.
+    """
+    charm_state = CharmState(
+        framework=framework,
+        secret_key="foobar",
+        is_secret_storage_ready=True,
+        integrations=integrations,
+    )
+    workload_config = create_workload_config(framework_name=framework, unit_name=f"{framework}/0")
+    if framework == ("flask" or "django"):
+        app = WsgiApp(
+            container=request.getfixturevalue(container_mock),
+            charm_state=charm_state,
+            workload_config=workload_config,
+            webserver=unittest.mock.MagicMock(),
+            database_migration=database_migration_mock,
+        )
+    else:
+        app = App(
+            container=unittest.mock.MagicMock(),
+            charm_state=charm_state,
+            workload_config=workload_config,
+            database_migration=unittest.mock.MagicMock(),
+        )
+    env = app.gen_environment()
+    for expected_var_name, expected_env_value in expected_vars.items():
+        assert expected_var_name in env
+        assert env[expected_var_name] == expected_env_value

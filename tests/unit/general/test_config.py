@@ -7,7 +7,6 @@
 import os
 import pathlib
 import unittest
-from types import NoneType
 
 import ops
 import pytest
@@ -16,17 +15,9 @@ from ops.testing import Harness
 from pydantic import Field
 
 import paas_charm
-from paas_charm.charm_state import (
-    RelationParam,
-    S3Parameters,
-    SamlParameters,
-    TempoParameters,
-    _create_config_attribute,
-    generate_relation_parameters,
-)
+from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
-from tests.unit.flask.constants import INTEGRATIONS_RELATION_DATA, SAML_APP_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
@@ -417,47 +408,3 @@ def test_app_config_class_factory(
         paas_charm.charm_state.app_config_class_factory(framework).__annotations__
         == expected_output
     )
-
-
-@pytest.mark.parametrize(
-    "relation_data, relation_parameter_type, accept_empty, expected_type, should_fail",
-    [
-        pytest.param(SAML_APP_RELATION_DATA_EXAMPLE, SamlParameters, True, SamlParameters, False),
-        pytest.param({}, SamlParameters, False, NoneType, False),
-        pytest.param({"wrong_key": "wrong_value"}, SamlParameters, False, NoneType, True),
-        pytest.param(
-            INTEGRATIONS_RELATION_DATA["s3"]["app_data"], S3Parameters, False, S3Parameters, False
-        ),
-        pytest.param({}, S3Parameters, True, NoneType, True),
-        pytest.param(
-            {"service_name": "app_name", "endpoint": "localhost:1234"},
-            TempoParameters,
-            False,
-            TempoParameters,
-            False,
-        ),
-        pytest.param({}, TempoParameters, False, NoneType, False),
-    ],
-)
-def test_generate_relation_parameters(
-    relation_data: dict,
-    relation_parameter_type: RelationParam,
-    accept_empty: bool,
-    expected_type: type,
-    should_fail: bool,
-):
-    """
-    arrange: None
-    act: Generate a relation parameter object.
-    assert: The function should error out or the resultant object should be the correct type.
-    """
-    if should_fail:
-        with pytest.raises(paas_charm.exceptions.CharmConfigInvalidError):
-            relation_parameters = generate_relation_parameters(
-                relation_data, relation_parameter_type, accept_empty
-            )
-    else:
-        relation_parameters = generate_relation_parameters(
-            relation_data, relation_parameter_type, accept_empty
-        )
-        assert isinstance(relation_parameters, expected_type)

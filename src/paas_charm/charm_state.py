@@ -354,7 +354,7 @@ class IntegrationsState:
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_data = {}
+        tempo_data = None
         if tracing_requirer and tracing_requirer.is_ready():
             tempo_data = {
                 "service_name": app_name,
@@ -443,8 +443,8 @@ class TempoParameters(BaseModel):
         service_name: Tempo service name for the workload.
     """
 
-    endpoint: str | None = None
-    service_name: str | None = None
+    endpoint: str = Field(alias="endpoint")
+    service_name: str = Field(alias="service_name")
 
 
 class S3Parameters(BaseModel):
