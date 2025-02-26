@@ -17,7 +17,7 @@ from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
 
-from .constants import DEFAULT_LAYER
+from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
@@ -58,7 +58,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     assert: django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()
-    container = harness.charm.unit.get_container("django-app")
+    container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
     secret_storage = unittest.mock.MagicMock()
@@ -80,7 +80,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         container=container,
     )
     django_app = WsgiApp(
-        container=harness.charm.unit.get_container("django-app"),
+        container=harness.charm.unit.get_container(DJANGO_CONTAINER_NAME),
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=webserver,
@@ -112,7 +112,7 @@ def test_django_create_super_user(harness: Harness) -> None:
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container("django-app")
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
 
@@ -145,7 +145,7 @@ def test_required_database_integration(harness_no_integrations: Harness):
     assert: The charm should be blocked, as Django requires a database to work.
     """
     harness = harness_no_integrations
-    container = harness.model.unit.get_container("django-app")
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -162,7 +162,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     assert: Django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()
-    container = harness.charm.unit.get_container("django-app")
+    container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
     secret_storage = unittest.mock.MagicMock()
@@ -185,7 +185,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         container=container,
     )
     django_app = WsgiApp(
-        container=harness.charm.unit.get_container("django-app"),
+        container=harness.charm.unit.get_container(DJANGO_CONTAINER_NAME),
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=webserver,
@@ -219,7 +219,7 @@ def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness):
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container("django-app")
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.set_model_name("flask-model")
     harness.begin_with_initial_hooks()

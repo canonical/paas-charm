@@ -7,7 +7,7 @@ import ops
 import pytest
 from ops.testing import ExecResult, Harness
 
-from .constants import DEFAULT_LAYER
+from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 
 
 @pytest.mark.parametrize(
@@ -39,7 +39,7 @@ def test_async_workers_config(
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container("django-app")
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.handle_exec(
@@ -89,7 +89,7 @@ def test_async_workers_config_fail(
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container("django-app")
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.handle_exec(
         container.name,
