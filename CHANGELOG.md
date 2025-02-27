@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.3.1 - 2025-02-27
+
+### Changed
+
+* Changed workload container name to a constant value for the go-framework
+
 ## v1.3.0 - 2025-02-24
 
 ### Changed
