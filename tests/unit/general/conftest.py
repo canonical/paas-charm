@@ -58,6 +58,7 @@ def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
 
+    harness.update_config({"non-optional-string": ""})
     yield harness
 
     harness.cleanup()

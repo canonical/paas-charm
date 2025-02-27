@@ -8,8 +8,11 @@ import unittest
 from types import NoneType
 
 import pytest
+from charms.smtp_integrator.v0.smtp import SmtpRequires
+from ops import ActiveStatus, RelationMeta, RelationRole
 from ops.testing import Harness
 
+import paas_charm
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App, WorkloadConfig, map_integrations_to_env
@@ -25,12 +28,20 @@ from paas_charm.charm_state import (
     generate_relation_parameters,
 )
 from paas_charm.exceptions import CharmConfigInvalidError
+from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
+from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
+from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
+from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.flask.constants import (
+    FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
 from tests.unit.general.conftest import MockTracingEndpointRequirer
+from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
+from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
 def _generate_map_integrations_to_env_parameters(prefix: str = ""):
@@ -536,8 +547,8 @@ def test_integrations_env(
 ):
     """
     arrange: prepare charmstate with integrations state.
-    act: generate a flask environment.
-    assert: flask_environment generated should contain the expected env vars.
+    act: generate an app environment.
+    assert: app environment generated should contain the expected env vars.
     """
     charm_state = CharmState(
         framework=framework,
@@ -565,3 +576,292 @@ def test_integrations_env(
     for expected_var_name, expected_env_value in expected_vars.items():
         assert expected_var_name in env
         assert env[expected_var_name] == expected_env_value
+
+
+@pytest.mark.parametrize(
+    "requires, expected_type",
+    [
+        pytest.param({}, NoneType, id="empty"),
+        pytest.param(
+            {
+                "smtp": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="smtp",
+                    raw={"interface": "smtp", "limit": 1},
+                )
+            },
+            SmtpRequires,
+            id="smtp",
+        ),
+    ],
+)
+def test_init_smtp(requires, expected_type):
+    """
+    arrange: Get the mock requires.
+    act: Run the _init_smtp function.
+    assert: It should return SmtpRequires when there is smtp integration, none otherwise.
+    """
+    charm = unittest.mock.MagicMock()
+    result = paas_charm.charm.PaasCharm._init_smtp(self=charm, requires=requires)
+    assert isinstance(result, expected_type)
+
+
+def _test_missing_required_other_integrations_parameters():
+    charm_without_relation = unittest.mock.MagicMock()
+    charm_with_saml = unittest.mock.MagicMock()
+    charm_with_tracing = unittest.mock.MagicMock()
+    charm_with_smtp = unittest.mock.MagicMock()
+
+    charm_state_without_relation = unittest.mock.MagicMock()
+    charm_state_with_saml = unittest.mock.MagicMock()
+    charm_state_with_tracing = unittest.mock.MagicMock()
+    charm_state_with_smtp = unittest.mock.MagicMock()
+
+    optional_saml_requires = {
+        "saml": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="saml",
+            raw={"interface": "saml", "optional": True, "limit": 1},
+        )
+    }
+    not_optional_saml_requires = {
+        "saml": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="saml",
+            raw={"interface": "saml", "optional": False, "limit": 1},
+        )
+    }
+
+    optional_tracing_requires = {
+        "tracing": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="tracing",
+            raw={"interface": "tracing", "optional": True, "limit": 1},
+        )
+    }
+    not_optional_tracing_requires = {
+        "tracing": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="tracing",
+            raw={"interface": "tracing", "optional": False, "limit": 1},
+        )
+    }
+
+    optional_smtp_requires = {
+        "smtp": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="smtp",
+            raw={"interface": "smtp", "optional": True, "limit": 1},
+        )
+    }
+    not_optional_smtp_requires = {
+        "smtp": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="smtp",
+            raw={"interface": "smtp", "optional": False, "limit": 1},
+        )
+    }
+    charm_with_saml._saml.return_value = True
+    charm_with_tracing._tracing.return_value = True
+    charm_with_smtp._smtp.return_value = True
+
+    charm_state_with_saml.integrations.return_value.saml_parameters.return_value = True
+    charm_state_with_tracing.integrations.return_value.tempo_parameters.return_value = True
+    charm_state_with_smtp.integrations.return_value.smtp_parameters.return_value = True
+
+    return [
+        pytest.param(
+            charm_with_saml,
+            not_optional_saml_requires,
+            charm_state_without_relation,
+            "saml",
+            id="missing not optional saml",
+        ),
+        pytest.param(
+            charm_with_saml,
+            optional_saml_requires,
+            charm_state_without_relation,
+            "",
+            id="missing optional saml",
+        ),
+        pytest.param(
+            charm_with_saml,
+            not_optional_saml_requires,
+            charm_state_with_saml,
+            "",
+            id="not missing not optional saml",
+        ),
+        pytest.param(
+            charm_with_saml,
+            optional_saml_requires,
+            charm_state_with_saml,
+            "",
+            id="not missing optional saml",
+        ),
+        pytest.param(
+            charm_with_tracing,
+            not_optional_tracing_requires,
+            charm_state_without_relation,
+            "tracing",
+            id="missing not optional tracing",
+        ),
+        pytest.param(
+            charm_with_tracing,
+            optional_tracing_requires,
+            charm_state_without_relation,
+            "",
+            id="missing optional tracing",
+        ),
+        pytest.param(
+            charm_with_tracing,
+            not_optional_tracing_requires,
+            charm_state_with_tracing,
+            "",
+            id="not missing not optional tracing",
+        ),
+        pytest.param(
+            charm_with_tracing,
+            optional_tracing_requires,
+            charm_state_with_tracing,
+            "",
+            id="not missing optional tracing",
+        ),
+        pytest.param(
+            charm_with_smtp,
+            not_optional_smtp_requires,
+            charm_state_without_relation,
+            "smtp",
+            id="missing not optional smtp",
+        ),
+        pytest.param(
+            charm_with_smtp,
+            optional_smtp_requires,
+            charm_state_without_relation,
+            "",
+            id="missing optional smtp",
+        ),
+        pytest.param(
+            charm_with_smtp,
+            not_optional_smtp_requires,
+            charm_state_with_smtp,
+            "",
+            id="not missing not optional smtp",
+        ),
+        pytest.param(
+            charm_with_smtp,
+            optional_smtp_requires,
+            charm_state_with_smtp,
+            "",
+            id="not missing optional smtp",
+        ),
+        pytest.param(
+            charm_without_relation,
+            {},
+            charm_state_without_relation,
+            "",
+            id="no relation",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "mock_charm, mock_requires, mock_charm_state, expected",
+    _test_missing_required_other_integrations_parameters(),
+)
+def test_missing_required_other_integrations(
+    mock_charm, mock_requires, mock_charm_state, expected
+):
+    """
+    arrange: Get the mock charm, requires and charm state.
+    act: Run the _missing_required_other_integrations function.
+    assert: integration name should be in the result only when integration is required
+     and the parameters for that integration not generated.
+    """
+    expected = paas_charm.charm.PaasCharm._missing_required_other_integrations(
+        mock_charm, mock_requires, mock_charm_state
+    )
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+    ],
+)
+def test_smtp_relation(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Integrate the charm with the smtp-integrator charm.
+    act: Run all initial hooks.
+    assert: The app service should have the environment variables related to smtp.
+    """
+    harness = request.getfixturevalue(app_harness)
+    harness.add_relation(
+        "smtp",
+        "smtp-integrator",
+        app_data=SMTP_RELATION_DATA_EXAMPLE,
+    )
+    container = harness.model.unit.get_container(container_name)
+
+    harness.begin_with_initial_hooks()
+
+    assert harness.model.unit.status == ActiveStatus()
+    service_env = container.get_plan().services[framework].environment
+    assert service_env.get("SMTP_AUTH_TYPE") is None
+    assert service_env["SMTP_DOMAIN"] == SMTP_RELATION_DATA_EXAMPLE["domain"]
+    assert service_env["SMTP_HOST"] == SMTP_RELATION_DATA_EXAMPLE["host"]
+    assert service_env["SMTP_PORT"] == SMTP_RELATION_DATA_EXAMPLE["port"]
+    assert service_env["SMTP_SKIP_SSL_VERIFY"] == SMTP_RELATION_DATA_EXAMPLE["skip_ssl_verify"]
+    assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+    ],
+)
+def test_smtp_not_activated(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Deploy the charm without a relation to the smtp-integrator charm.
+    act: Run all initial hooks.
+    assert: The app service should not have the environment variables related to smtp.
+    """
+    harness = request.getfixturevalue(app_harness)
+    container = harness.model.unit.get_container(container_name)
+
+    harness.begin_with_initial_hooks()
+
+    assert harness.model.unit.status == ActiveStatus()
+    service_env = container.get_plan().services[framework].environment
+    assert service_env.get("SMTP_AUTH_TYPE") is None
+    assert service_env.get("SMTP_DOMAIN") is None
+    assert service_env.get("SMTP_HOST") is None
+    assert service_env.get("SMTP_PORT") is None
+    assert service_env.get("SMTP_SKIP_SSL_VERIFY") is None
+    assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
