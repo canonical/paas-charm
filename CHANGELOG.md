@@ -11,12 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* No code changes. [Release workflow from 1.3.1](https://github.com/canonical/paas-charm/actions/runs/13560661165/job/37903076785) seems to have failed due to the error `400 This filename has already been used, use a different version.
-
-## v1.3.1 - 2025-02-27
-
-### Changed
-
 * Changed workload container name to a constant value for the go-framework
 
 ## v1.3.0 - 2025-02-24
