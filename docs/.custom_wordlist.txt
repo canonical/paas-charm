@@ -1,7 +1,14 @@
+CHANGELOG
+Changelog
+changelog
 Charmcraft
 FastAPI
 lifecycle
+ISD
+md
 natively
 OCI
 Postgres
 Rockcraft
+src
+tox
