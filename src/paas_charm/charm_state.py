@@ -156,18 +156,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-        # saml_relation_data = None
-        # if integration_requirers.saml and (
-        #     saml_data := integration_requirers.saml.get_relation_data()
-        # ):
-        #     saml_relation_data = saml_data.to_relation_data()
-
-        # smtp_relation_data = None
-        # if integration_requirers.smtp and (
-        #     smtp_data := integration_requirers.smtp.get_relation_data()
-        # ):
-        #     smtp_relation_data = smtp_data.to_relation_data()
-
         integrations = IntegrationsState.build(
             app_name=app_name,
             redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
@@ -354,7 +342,7 @@ class IntegrationsState:
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_data = None
+        tempo_data = {}
         if tracing_requirer and tracing_requirer.is_ready():
             tempo_data = {
                 "service_name": app_name,

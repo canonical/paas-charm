@@ -13,10 +13,7 @@ from opentelemetry import trace
 tracer = trace.get_tracer(__name__)
 
 from django.conf import settings
-from django.core.mail import (
-    EmailMessage,
-    get_connection,
-)
+from django.core.mail import EmailMessage, get_connection
 
 
 def send_mail(request):

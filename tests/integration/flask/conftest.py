@@ -3,7 +3,6 @@
 
 """Fixtures for flask charm integration tests."""
 
-import logging
 import os
 import pathlib
 from secrets import token_hex
@@ -20,8 +19,6 @@ from pytest_operator.plugin import OpsTest
 from tests.integration.helpers import inject_charm_config, inject_venv
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
-
-logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(autouse=True)

@@ -9,7 +9,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, TRACING_APP_RELATION_DATA_EXAMPLE
+from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 
 
 def test_tracing_relation(harness: Harness):
@@ -23,7 +23,9 @@ def test_tracing_relation(harness: Harness):
     harness.add_relation(
         "tracing",
         "tempo-coordinator",
-        app_data=TRACING_APP_RELATION_DATA_EXAMPLE,
+        app_data={
+            "receivers": '[{"protocol": {"name": "otlp_http", "type": "http"}, "url": "http://test-ip:4318"}]'
+        },
     )
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)

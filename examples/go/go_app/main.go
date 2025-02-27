@@ -231,9 +231,6 @@ func main() {
 	} else {
 		mux.Handle("/metrics", promhttp.Handler())
 	}
-	// mail
-
-	// mail
 
 	server := &http.Server{
 		Addr:    ":" + port,
