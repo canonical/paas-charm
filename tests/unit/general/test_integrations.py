@@ -373,7 +373,7 @@ def test_generate_relation_parameters(
 
 
 def _test_integrations_state_build_parameters():
-    mock_relations: dict[str, str] = {
+    relation_dict: dict[str, str] = {
         "redis_uri": None,
         "database_requirers": {},
         "s3_connection_info": None,
@@ -386,38 +386,38 @@ def _test_integrations_state_build_parameters():
 
     return [
         pytest.param(
-            {**mock_relations, "saml_relation_data": SAML_APP_RELATION_DATA_EXAMPLE},
+            {**relation_dict, "saml_relation_data": SAML_APP_RELATION_DATA_EXAMPLE},
             False,
             id="Saml correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "saml_relation_data": {}},
+            {**relation_dict, "saml_relation_data": {}},
             True,
             id="Saml empty parameters",
         ),
         pytest.param(
-            {**mock_relations, "saml_relation_data": {"wrong_key": "wrong_value"}},
+            {**relation_dict, "saml_relation_data": {"wrong_key": "wrong_value"}},
             True,
             id="Saml wrong parameters",
         ),
         pytest.param(
-            {**mock_relations, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
+            {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "s3_connection_info": {}},
+            {**relation_dict, "s3_connection_info": {}},
             False,
             id="S3 empty parameters",
         ),
         pytest.param(
-            {**mock_relations, "s3_connection_info": {"wrong_key": "wrong_value"}},
+            {**relation_dict, "s3_connection_info": {"wrong_key": "wrong_value"}},
             True,
             id="S3 wrong parameters",
         ),
         pytest.param(
             {
-                **mock_relations,
+                **relation_dict,
                 "tracing_requirer": MockTracingEndpointRequirer(True, "localhost:1234"),
                 "app_name": "app_name",
             },
@@ -425,50 +425,50 @@ def _test_integrations_state_build_parameters():
             id="Tempo correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "tracing_requirer": None},
+            {**relation_dict, "tracing_requirer": None},
             False,
             id="Tempo empty parameters",
         ),
         pytest.param(
-            {**mock_relations, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
+            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
             False,
             id="Tempo not ready",
         ),
         pytest.param(
-            {**mock_relations, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
+            {**relation_dict, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
             False,
             id="Smtp correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "smtp_relation_data": {}},
+            {**relation_dict, "smtp_relation_data": {}},
             False,
             id="Smtp empty parameters",
         ),
         pytest.param(
-            {**mock_relations, "smtp_relation_data": {"wrong_key": "wrong_value"}},
+            {**relation_dict, "smtp_relation_data": {"wrong_key": "wrong_value"}},
             True,
             id="Smtp wrong parameters",
         ),
         pytest.param(
-            {**mock_relations, "redis_uri": "http://redisuri"},
+            {**relation_dict, "redis_uri": "http://redisuri"},
             False,
             id="Redis correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "redis_uri": ""},
+            {**relation_dict, "redis_uri": ""},
             False,
             id="Redis empty parameters",
         ),
         pytest.param(
             {
-                **mock_relations,
+                **relation_dict,
                 "rabbitmq_uri": "amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/",
             },
             False,
             id="RabbitMQ correct parameters",
         ),
         pytest.param(
-            {**mock_relations, "rabbitmq_uri": "http://redisuri"},
+            {**relation_dict, "rabbitmq_uri": "http://redisuri"},
             False,
             id="RabbitMQ empty parameters",
         ),
@@ -476,11 +476,11 @@ def _test_integrations_state_build_parameters():
 
 
 @pytest.mark.parametrize(
-    "mock_relations, should_fail",
+    "relation_dict, should_fail",
     _test_integrations_state_build_parameters(),
 )
 def test_integrations_state_build(
-    mock_relations: dict,
+    relation_dict: dict,
     should_fail: bool,
 ):
     """
@@ -491,26 +491,26 @@ def test_integrations_state_build(
     if should_fail:
         with pytest.raises(CharmConfigInvalidError):
             IntegrationsState.build(
-                redis_uri=mock_relations["redis_uri"],
-                database_requirers=mock_relations["database_requirers"],
-                s3_connection_info=mock_relations["s3_connection_info"],
-                saml_relation_data=mock_relations["saml_relation_data"],
-                rabbitmq_uri=mock_relations["rabbitmq_uri"],
-                tracing_requirer=mock_relations["tracing_requirer"],
-                app_name=mock_relations["app_name"],
-                smtp_relation_data=mock_relations["smtp_relation_data"],
+                redis_uri=relation_dict["redis_uri"],
+                database_requirers=relation_dict["database_requirers"],
+                s3_connection_info=relation_dict["s3_connection_info"],
+                saml_relation_data=relation_dict["saml_relation_data"],
+                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                tracing_requirer=relation_dict["tracing_requirer"],
+                app_name=relation_dict["app_name"],
+                smtp_relation_data=relation_dict["smtp_relation_data"],
             )
     else:
         assert isinstance(
             IntegrationsState.build(
-                redis_uri=mock_relations["redis_uri"],
-                database_requirers=mock_relations["database_requirers"],
-                s3_connection_info=mock_relations["s3_connection_info"],
-                saml_relation_data=mock_relations["saml_relation_data"],
-                rabbitmq_uri=mock_relations["rabbitmq_uri"],
-                tracing_requirer=mock_relations["tracing_requirer"],
-                app_name=mock_relations["app_name"],
-                smtp_relation_data=mock_relations["smtp_relation_data"],
+                redis_uri=relation_dict["redis_uri"],
+                database_requirers=relation_dict["database_requirers"],
+                s3_connection_info=relation_dict["s3_connection_info"],
+                saml_relation_data=relation_dict["saml_relation_data"],
+                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                tracing_requirer=relation_dict["tracing_requirer"],
+                app_name=relation_dict["app_name"],
+                smtp_relation_data=relation_dict["smtp_relation_data"],
             ),
             IntegrationsState,
         )

@@ -43,6 +43,19 @@ func (h mainHandler) serveHelloWorld(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, World!")
 }
 
+func handleError(w http.ResponseWriter, error_message error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "application/json")
+	resp := make(map[string]string)
+	resp["message"] = error_message.Error()
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+	w.Write(jsonResp)
+	return
+}
+
 func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
@@ -75,8 +88,9 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	auth := smtp.PlainAuth("", smtp_user+"@"+smtp_domain, smtp_password, smtp_host)
 	smtp_transport_security, _ := os.LookupEnv("SMTP_TRANSPORT_SECURITY")
 	c, err := smtp.Dial(smtp_servername)
+	defer c.Quit()
 	if err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 	if smtp_transport_security == "starttls" {
 		// TLS config
@@ -90,36 +104,35 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	// Auth
 	if smtp_transport_security == "tls" {
 		if err = c.Auth(auth); err != nil {
-			log.Panic(err)
+			handleError(w, err)
 		}
 	}
 
 	// To && From
 	if err = c.Mail(from.Address); err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 
 	if err = c.Rcpt(to.Address); err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 
 	// Data
 	m, err := c.Data()
 	if err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 
 	_, err = m.Write([]byte(message))
 	if err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 
 	err = m.Close()
 	if err != nil {
-		log.Panic(err)
+		handleError(w, err)
 	}
 
-	c.Quit()
 	fmt.Fprintf(w, "Sent")
 
 }
@@ -169,7 +182,7 @@ func main() {
 	ctx := context.Background()
 	// initialize trace provider.
 	if err := initTracer(ctx); err != nil {
-		log.Panic(err)
+		log.Printf(err.Error())
 	}
 
 	// Create a named tracer with package path as its name.

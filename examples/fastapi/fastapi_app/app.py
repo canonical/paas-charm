@@ -4,6 +4,7 @@ import os
 
 from fastapi import FastAPI, HTTPException
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+from fastapi_mail.errors import ConnectionErrors
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -78,8 +79,8 @@ async def simple_send() -> JSONResponse:
         fm = FastMail(conf)
         await fm.send_message(message)
         return "Sent"
-    except Exception as e:
-        return f"Failed to send information: {e}"
+    except ConnectionErrors as e:
+        return f"Failed to send mail: {e}"
 
 
 @app.get("/table/{table}")
