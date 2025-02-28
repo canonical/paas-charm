@@ -33,7 +33,7 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
     ],
 )
 def test_flask_env(
-    flask_config: dict, user_defined_config: dict, database_migration_mock, container_mock
+    flask_config: dict, user_defined_config: dict, database_migration_mock, flask_container_mock
 ):
     """
     arrange: create the Flask app object with a controlled charm state.
@@ -49,7 +49,7 @@ def test_flask_env(
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
-        container=container_mock,
+        container=flask_container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=unittest.mock.MagicMock(),
@@ -111,7 +111,7 @@ def test_http_proxy(
     expected: typing.Dict[str, str],
     monkeypatch,
     database_migration_mock,
-    container_mock,
+    flask_container_mock,
 ):
     """
     arrange: set juju charm http proxy related environment variables.
@@ -127,7 +127,7 @@ def test_http_proxy(
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
     flask_app = WsgiApp(
-        container=container_mock,
+        container=flask_container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=unittest.mock.MagicMock(),
@@ -142,190 +142,3 @@ def test_http_proxy(
     expected_env.update(expected)
     for env_name, env_value in expected_env.items():
         assert env.get(env_name) == env.get(env_name.upper()) == env_value
-
-
-@pytest.mark.parametrize(
-    "integrations, expected_vars",
-    [
-        pytest.param(
-            None,
-            {},
-            id="integrations is None",
-        ),
-        pytest.param(
-            IntegrationsState(redis_uri="http://redisuri"),
-            {
-                "REDIS_DB_CONNECT_STRING": "http://redisuri",
-            },
-            id="integrations exists",
-        ),
-    ],
-)
-def test_integrations_env(
-    monkeypatch,
-    database_migration_mock,
-    container_mock,
-    integrations,
-    expected_vars,
-):
-    """
-    arrange: prepare charmstate with integrations state.
-    act: generate a flask environment.
-    assert: flask_environment generated should contain the expected env vars.
-    """
-    charm_state = CharmState(
-        framework="flask",
-        secret_key="foobar",
-        is_secret_storage_ready=True,
-        integrations=integrations,
-    )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
-    flask_app = WsgiApp(
-        container=container_mock,
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=unittest.mock.MagicMock(),
-        database_migration=database_migration_mock,
-    )
-    env = flask_app.gen_environment()
-    for expected_var_name, expected_env_value in expected_vars.items():
-        assert expected_var_name in env
-        assert env[expected_var_name] == expected_env_value
-
-
-@pytest.mark.parametrize(
-    "integrations, expected_env",
-    [
-        pytest.param(
-            IntegrationsState(),
-            {},
-            id="no new env vars",
-        ),
-        pytest.param(
-            IntegrationsState(redis_uri="http://redisuri"),
-            {
-                "REDIS_DB_CONNECT_STRING": "http://redisuri",
-                "REDIS_DB_FRAGMENT": "",
-                "REDIS_DB_HOSTNAME": "redisuri",
-                "REDIS_DB_NETLOC": "redisuri",
-                "REDIS_DB_PARAMS": "",
-                "REDIS_DB_PATH": "",
-                "REDIS_DB_QUERY": "",
-                "REDIS_DB_SCHEME": "http",
-            },
-            id="With Redis uri",
-        ),
-        pytest.param(
-            IntegrationsState(
-                databases_uris={
-                    "postgresql": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-                    "mysql": "mysql://test-username:test-password@test-mysql:3306/flask-app",
-                    "mongodb": None,
-                    "futuredb": "futuredb://foobar/",
-                },
-            ),
-            {
-                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-                "POSTGRESQL_DB_FRAGMENT": "",
-                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
-                "POSTGRESQL_DB_NAME": "test-database",
-                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
-                "POSTGRESQL_DB_PARAMS": "",
-                "POSTGRESQL_DB_PASSWORD": "test-password",
-                "POSTGRESQL_DB_PATH": "/test-database",
-                "POSTGRESQL_DB_PORT": "5432",
-                "POSTGRESQL_DB_QUERY": "connect_timeout=10",
-                "POSTGRESQL_DB_SCHEME": "postgresql",
-                "POSTGRESQL_DB_USERNAME": "test-username",
-                "MYSQL_DB_CONNECT_STRING": "mysql://test-username:test-password@test-mysql:3306/flask-app",
-                "MYSQL_DB_FRAGMENT": "",
-                "MYSQL_DB_HOSTNAME": "test-mysql",
-                "MYSQL_DB_NAME": "flask-app",
-                "MYSQL_DB_NETLOC": "test-username:test-password@test-mysql:3306",
-                "MYSQL_DB_PARAMS": "",
-                "MYSQL_DB_PASSWORD": "test-password",
-                "MYSQL_DB_PATH": "/flask-app",
-                "MYSQL_DB_PORT": "3306",
-                "MYSQL_DB_QUERY": "",
-                "MYSQL_DB_SCHEME": "mysql",
-                "MYSQL_DB_USERNAME": "test-username",
-                "FUTUREDB_DB_CONNECT_STRING": "futuredb://foobar/",
-                "FUTUREDB_DB_FRAGMENT": "",
-                "FUTUREDB_DB_HOSTNAME": "foobar",
-                "FUTUREDB_DB_NAME": "",
-                "FUTUREDB_DB_NETLOC": "foobar",
-                "FUTUREDB_DB_PARAMS": "",
-                "FUTUREDB_DB_PATH": "/",
-                "FUTUREDB_DB_QUERY": "",
-                "FUTUREDB_DB_SCHEME": "futuredb",
-            },
-            id="With several databases, one of them None.",
-        ),
-        pytest.param(
-            IntegrationsState(
-                s3_parameters=S3Parameters.model_construct(
-                    access_key="access_key",
-                    secret_key="secret_key",
-                    bucket="bucket",
-                ),
-            ),
-            {
-                "S3_ACCESS_KEY": "access_key",
-                "S3_SECRET_KEY": "secret_key",
-                "S3_BUCKET": "bucket",
-            },
-            id="With minimal variables in S3 Integration.",
-        ),
-        pytest.param(
-            IntegrationsState(
-                s3_parameters=S3Parameters.model_construct(
-                    access_key="access_key",
-                    secret_key="secret_key",
-                    region="region",
-                    storage_class="GLACIER",
-                    bucket="bucket",
-                    endpoint="https://s3.example.com",
-                    path="/path/subpath/",
-                    s3_api_version="s3v4",
-                    uri_style="host",
-                    tls_ca_chain=(
-                        ca_chain := [
-                            "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                            "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                        ]
-                    ),
-                    attributes=(
-                        attributes := [
-                            "header1:value1",
-                            "header2:value2",
-                        ]
-                    ),
-                ),
-            ),
-            {
-                "S3_ACCESS_KEY": "access_key",
-                "S3_SECRET_KEY": "secret_key",
-                "S3_API_VERSION": "s3v4",
-                "S3_BUCKET": "bucket",
-                "S3_ENDPOINT": "https://s3.example.com",
-                "S3_PATH": "/path/subpath/",
-                "S3_REGION": "region",
-                "S3_STORAGE_CLASS": "GLACIER",
-                "S3_ATTRIBUTES": json.dumps(attributes),
-                "S3_TLS_CA_CHAIN": json.dumps(ca_chain),
-            },
-            id="With all variables in S3 Integration.",
-        ),
-    ],
-)
-def test_map_integrations_to_env(
-    integrations,
-    expected_env,
-):
-    """
-    arrange: prepare integrations state.
-    act: call to generate mappings to env variables.
-    assert: the variables generated should be the expected ones.
-    """
-    env = map_integrations_to_env(integrations)
-    assert env == expected_env

@@ -8,6 +8,7 @@ import pathlib
 import re
 import typing
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
@@ -53,6 +54,15 @@ try:
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
     from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.smtp_integrator.v0.smtp import SmtpRequires
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -146,12 +156,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-        saml_relation_data = None
-        if integration_requirers.saml and (
-            saml_data := integration_requirers.saml.get_relation_data()
-        ):
-            saml_relation_data = saml_data.to_relation_data()
-
         integrations = IntegrationsState.build(
             app_name=app_name,
             redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
@@ -161,13 +165,28 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 if integration_requirers.s3
                 else None
             ),
-            saml_relation_data=saml_relation_data,
+            saml_relation_data=(
+                saml_data.to_relation_data()
+                if (
+                    integration_requirers.saml
+                    and (saml_data := integration_requirers.saml.get_relation_data())
+                )
+                else None
+            ),
             rabbitmq_uri=(
                 integration_requirers.rabbitmq.rabbitmq_uri()
                 if integration_requirers.rabbitmq
                 else None
             ),
             tracing_requirer=integration_requirers.tracing,
+            smtp_relation_data=(
+                smtp_data.to_relation_data()
+                if (
+                    integration_requirers.smtp
+                    and (smtp_data := integration_requirers.smtp.get_relation_data())
+                )
+                else None
+            ),
         )
 
         return cls(
@@ -256,6 +275,7 @@ class IntegrationRequirers:
         s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
+        smtp: Smtp requirer object.
     """
 
     databases: dict[str, DatabaseRequires]
@@ -264,6 +284,7 @@ class IntegrationRequirers:
     s3: "S3Requirer | None" = None
     saml: "SamlRequires | None" = None
     tracing: "TracingEndpointRequirer | None" = None
+    smtp: "SmtpRequires | None" = None
 
 
 @dataclass
@@ -279,6 +300,7 @@ class IntegrationsState:
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
         tempo_parameters: Tracing parameters.
+        smtp_parameters: Smtp parameters.
     """
 
     redis_uri: str | None = None
@@ -287,6 +309,7 @@ class IntegrationsState:
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
     tempo_parameters: "TempoParameters | None" = None
+    smtp_parameters: "SmtpParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -300,6 +323,7 @@ class IntegrationsState:
         rabbitmq_uri: str | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
+        smtp_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -311,6 +335,7 @@ class IntegrationsState:
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
             tracing_requirer: The tracing relation data provided by the Tempo charm.
+            smtp_relation_data: Smtp relation data from smtp lib.
 
         Return:
             The IntegrationsState instance created.
@@ -324,6 +349,7 @@ class IntegrationsState:
                 "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
             }
         tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
+        smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -341,10 +367,13 @@ class IntegrationsState:
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
+            smtp_parameters=smtp_parameters,
         )
 
 
-RelationParam = TypeVar("RelationParam", "SamlParameters", "S3Parameters", "TempoParameters")
+RelationParam = TypeVar(
+    "RelationParam", "SamlParameters", "S3Parameters", "TempoParameters", "SmtpParameters"
+)
 
 
 def generate_relation_parameters(
@@ -402,8 +431,8 @@ class TempoParameters(BaseModel):
         service_name: Tempo service name for the workload.
     """
 
-    endpoint: str | None = None
-    service_name: str | None = None
+    endpoint: str = Field(alias="endpoint")
+    service_name: str = Field(alias="service_name")
 
 
 class S3Parameters(BaseModel):
@@ -481,6 +510,92 @@ class SamlParameters(BaseModel, extra=Extra.allow):
         if not certificate:
             raise ValueError("Missing x509certs. There should be at least one certificate.")
         return certificate
+
+
+class TransportSecurity(str, Enum):
+    """Represent the transport security values.
+
+    Attributes:
+        NONE: none
+        STARTTLS: starttls
+        TLS: tls
+    """
+
+    NONE = "none"
+    STARTTLS = "starttls"
+    TLS = "tls"
+
+
+class AuthType(str, Enum):
+    """Represent the auth type values.
+
+    Attributes:
+        NONE: none
+        NOT_PROVIDED: not_provided
+        PLAIN: plain
+    """
+
+    NONE = "none"
+    NOT_PROVIDED = "not_provided"
+    PLAIN = "plain"
+
+
+class SmtpParameters(BaseModel, extra=Extra.allow):
+    """Represent the SMTP relation data.
+
+    Attributes:
+        host: The hostname or IP address of the outgoing SMTP relay.
+        port: The port of the outgoing SMTP relay.
+        user: The SMTP AUTH user to use for the outgoing SMTP relay.
+        password: The SMTP AUTH password to use for the outgoing SMTP relay.
+        password_id: The secret ID where the SMTP AUTH password for the SMTP relay is stored.
+        auth_type: The type used to authenticate with the SMTP relay.
+        transport_security: The security protocol to use for the outgoing SMTP relay.
+        domain: The domain used by the emails sent from SMTP relay.
+        skip_ssl_verify: Specifies if certificate trust verification is skipped in the SMTP relay.
+    """
+
+    host: str = Field(..., min_length=1)
+    port: int = Field(..., ge=1, le=65536)
+    user: str | None = None
+    password: str | None = None
+    password_id: str | None = None
+    auth_type: AuthType | None = None
+    transport_security: TransportSecurity | None = None
+    domain: str | None = None
+    skip_ssl_verify: str | None = None
+
+    @field_validator("auth_type")
+    @classmethod
+    def validate_auth_type(cls, auth_type: AuthType, _: ValidationInfo) -> AuthType | None:
+        """Turn auth_type type into None if its "none".
+
+        Args:
+            auth_type: Authentication type.
+
+        Returns:
+            The validated Authentication type.
+        """
+        if auth_type == AuthType.NONE:
+            return None
+        return auth_type
+
+    @field_validator("transport_security")
+    @classmethod
+    def validate_transport_security(
+        cls, transport_security: TransportSecurity, _: ValidationInfo
+    ) -> TransportSecurity | None:
+        """Turn transport_security into None if its "none".
+
+        Args:
+            transport_security: security protocol.
+
+        Returns:
+            The validated security protocol.
+        """
+        if transport_security == TransportSecurity.NONE:
+            return None
+        return transport_security
 
 
 def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple]:

@@ -91,13 +91,7 @@ from typing import (
 )
 
 import pydantic
-from ops.charm import (
-    CharmBase,
-    CharmEvents,
-    RelationBrokenEvent,
-    RelationEvent,
-    RelationRole,
-)
+from ops.charm import CharmBase, CharmEvents, RelationBrokenEvent, RelationEvent, RelationRole
 from ops.framework import EventSource, Object
 from ops.model import ModelError, Relation
 from pydantic import BaseModel, Field

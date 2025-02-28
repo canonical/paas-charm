@@ -8,6 +8,7 @@ import logging
 
 import aiohttp
 import pytest
+from juju.errors import JujuError
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 
@@ -41,10 +42,12 @@ async def test_workload_tracing(
     """
     try:
         tempo_app = request.getfixturevalue("tempo_app")
-    except Exception as e:
-        logger.info(f"Tempo is already deployed  {e}")
-        tempo_app = model.applications["tempo"]
-
+    except JujuError as e:
+        if "application already exists" in str(e):
+            logger.info(f"Tempo is already deployed  {e}")
+            tempo_app = model.applications["tempo"]
+        else:
+            raise e
     tracing_app = request.getfixturevalue(tracing_app_fixture)
 
     await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app.name}:tracing")

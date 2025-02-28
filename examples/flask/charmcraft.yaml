@@ -137,6 +137,10 @@ requires:
     interface: tracing
     optional: True
     limit: 1
+  smtp:
+    interface: smtp
+    optional: True
+    limit: 1
 resources:
   flask-app-image:
     description: flask application image.

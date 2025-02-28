@@ -6,6 +6,7 @@ import os
 import pathlib
 import shlex
 import typing
+import unittest
 
 import ops
 import pytest
@@ -57,6 +58,7 @@ def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
 
+    harness.update_config({"non-optional-string": ""})
     yield harness
 
     harness.cleanup()
@@ -135,3 +137,11 @@ def _set_check_config_handler(
         check_config_command,
         handler=check_config_handler,
     )
+
+
+def MockTracingEndpointRequirer(is_ready: bool, endpoint: str):
+    mock = unittest.mock.MagicMock()
+    mock.is_ready.return_value = is_ready
+    mock.get_endpoint.return_value = endpoint
+
+    return mock

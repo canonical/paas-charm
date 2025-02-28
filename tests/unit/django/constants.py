@@ -23,4 +23,5 @@ DEFAULT_LAYER = {
         },
     }
 }
+
 DJANGO_CONTAINER_NAME = "django-app"
