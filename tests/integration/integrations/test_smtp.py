@@ -8,6 +8,7 @@ import logging
 import pytest
 import requests
 from juju.application import Application
+from juju.errors import JujuError
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 
@@ -51,9 +52,12 @@ async def test_smtp_integrations(
             channel="latest/edge",
             config=smtp_config,
         )
-    except Exception as e:
-        logger.info(f"smtp-integrator is already deployed {e}")
-        smtp_integrator_app = model.applications["smtp-integrator"]
+    except JujuError as e:
+        if "application already exists" in str(e):
+            logger.info(f"smtp-integrator is already deployed {e}")
+            smtp_integrator_app = model.applications["smtp-integrator"]
+        else:
+            raise e
 
     smtp_app = request.getfixturevalue(smtp_app_fixture)
     await model.wait_for_idle()
