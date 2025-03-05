@@ -236,7 +236,8 @@ linkcheck_anchors_ignore_for_url = [r"https://github\.com/.*"]
 extensions = [
     "canonical_sphinx",
     "sphinxcontrib.cairosvgconverter",
-    "sphinx_last_updated_by_git"
+    "sphinxcontrib.mermaid",
+    "sphinx_last_updated_by_git",
 ]
 
 
