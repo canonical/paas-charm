@@ -58,13 +58,12 @@ We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/
 
 Metrics
 -------
-Depending on the workload framework, PaaS provides support for metrics and tracing.
+Depending on the enabled extension, PaaS provides support for metrics and tracing.
+
+> See more: `extensions charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
 
 Integrations
 ------------
+The list of available integrations and those that are already pre-populated veries from extension to extensions.
 
-Juju events
-------------
-
-Charm code overview
---------------------
+> See more: `extensions charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
