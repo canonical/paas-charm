@@ -5,7 +5,7 @@
 Charm architecture
 ==================
 
-PaaS charm is a framework to easily deploy and operate your Flask or Django workloads and associated infrastructure, such
+PaaS charm is a framework to easily deploy and operate your Flask, Django, FastAPI or Go workloads and associated infrastructure, such
 as databases and ingress, using open source tooling.
 
 The resulting charm design leverages the `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_ pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_ running as the workload container’s entrypoint.
