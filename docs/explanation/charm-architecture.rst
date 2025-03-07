@@ -49,7 +49,11 @@ OCI images
 
 We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/>`_ to build OCI Images for the PaaS charm. 
 
-> See more: `How to publish your charm on Charmhub <https://juju.is/docs/sdk/publishing>`_
+.. seealso::
+
+   `How to publish your charm on Charmhub <https://juju.is/docs/sdk/publishing>`_
+   
+   `Build a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>`_
 
 
 Metrics
