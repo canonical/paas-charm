@@ -5,7 +5,7 @@ Explanation
 ===========
 
 The following explanations provide context and clarification on key topics related to the use and
-configuration of ``paas-charm`` and web app frameworks.
+configuration of web app frameworks.
 
 .. toctree::
    :maxdepth: 1
