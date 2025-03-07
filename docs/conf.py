@@ -144,7 +144,7 @@ html_context = {
     # Docs location in the repo; used in links for viewing the source files
     #
     # TODO: To customise the directory, uncomment and update as needed.
-    "github_folder": "/docs/",
+    "repo_folder": "/docs/",
     "github_issues": "https://github.com/canonical/paas-charm/issues",
 
     # TODO: To enable or disable the Previous / Next buttons at the bottom of pages
@@ -236,7 +236,8 @@ linkcheck_anchors_ignore_for_url = [r"https://github\.com/.*"]
 extensions = [
     "canonical_sphinx",
     "sphinxcontrib.cairosvgconverter",
-    "sphinx_last_updated_by_git"
+    "sphinxcontrib.mermaid",
+    "sphinx_last_updated_by_git",
 ]
 
 
