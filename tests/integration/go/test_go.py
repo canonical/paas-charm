@@ -84,7 +84,7 @@ async def test_prometheus_integration(
     await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
 
     config = await go_app.get_config()
-    await go_app.set_config({"metrics-port": config["metrics-port"]["value"] + 1})
+    await go_app.set_config({"metrics-port": str(config["metrics-port"]["value"] + 1)})
     await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
 
     for unit_ip in await get_unit_ips(prometheus_app.name):
