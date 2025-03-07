@@ -60,7 +60,9 @@ Metrics
 -------
 Depending on the enabled extension, different support for metrics and tracing is provided.
 
-> See more: `extensions charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
+.. seealso:: 
+
+   `Charmcraft reference | Extensions <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
 
 Integrations
 ------------
