@@ -10,22 +10,6 @@ as databases and ingress, using open source tooling.
 
 The resulting charm design leverages the `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_ pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_ running as the workload container’s entrypoint.
 
-Charm architecture diagram
---------------------------
-
-.. mermaid::
-
-   C4Container
-   System_Boundary(web_app_charm, "Web app charm") {
-      Container_Boundary(charm_container, "Charm Container") {
-         Component(charm_logic, "Charm Logic", "Juju Operator Framework", "Controls application deployment & config")
-      }
-      Container_Boundary(web_app_container, "Workload Container") {
-         Component(workload, "Workload", "Web Application", "Observes events; serves web requests")
-      }
-   }
-   Rel(charm_logic, workload, "Supervises<br>process")
-
 Pebble is a lightweight, API-driven process supervisor that is responsible for configuring processes to run in a container and controlling those processes throughout the workload lifecycle.
 
 Pebble `services` are configured through `layers <https://github.com/canonical/pebble#layer-specification>`_, and the following containers represent each one a layer forming the effective Pebble configuration, or `plan`:
@@ -43,6 +27,22 @@ As a result, if you run a :code:`kubectl get pods` on a namespace named for the 
 This shows there are 2 containers - the named above, as well as a container for the charm code itself.
 
 And if you run :code:`kubectl describe pod web-app-0`, all the containers will have as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the processes startup as explained above.
+
+Charm architecture diagram
+--------------------------
+
+.. mermaid::
+
+   C4Container
+   System_Boundary(web_app_charm, "Web app charm") {
+      Container_Boundary(charm_container, "Charm Container") {
+         Component(charm_logic, "Charm Logic", "Juju Operator Framework", "Controls application deployment & config")
+      }
+      Container_Boundary(web_app_container, "Workload Container") {
+         Component(workload, "Workload", "Web Application", "Observes events; serves web requests")
+      }
+   }
+   Rel(charm_logic, workload, "Supervises<br>process")
 
 OCI images
 ----------
