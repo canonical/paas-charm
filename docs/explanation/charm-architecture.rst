@@ -16,11 +16,11 @@ Charm architecture diagram
 .. mermaid::
 
    C4Container
-   System_Boundary(paas_charm, "PaaS Charm") {
+   System_Boundary(web_app_charm, "Web app charm") {
       Container_Boundary(charm_container, "Charm Container") {
          Component(charm_logic, "Charm Logic", "Juju Operator Framework", "Controls application deployment & config")
       }
-      Container_Boundary(paas_container, "Workload Container") {
+      Container_Boundary(web_app_container, "Workload Container") {
          Component(workload, "Workload", "Web Application", "Observes events; serves web requests")
       }
    }
@@ -33,16 +33,16 @@ Pebble `services` are configured through `layers <https://github.com/canonical/p
 1. An :code:`app` container, which contains the workload to run in any of the supported web frameworks.
 
 
-As a result, if you run a :code:`kubectl get pods` on a namespace named for the Juju model you've deployed the PaaS charm into, you'll see something like the following:
+As a result, if you run a :code:`kubectl get pods` on a namespace named for the Juju model you've deployed the web app charm into, you'll see something like the following:
 
 .. code-block:: text
 
    NAME                          READY   STATUS    RESTARTS   AGE
-   paas-0                        2/2     Running   0          6h4m
+   web-app-0                     2/2     Running   0          6h4m
 
 This shows there are 2 containers - the named above, as well as a container for the charm code itself.
 
-And if you run :code:`kubectl describe pod paas-0`, all the containers will have as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the processes startup as explained above.
+And if you run :code:`kubectl describe pod web-app-0`, all the containers will have as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the processes startup as explained above.
 
 OCI images
 ----------
@@ -58,7 +58,7 @@ We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/
 
 Metrics
 -------
-Depending on the enabled extension, PaaS provides support for metrics and tracing.
+Depending on the enabled extension, different support for metrics and tracing is provided.
 
 > See more: `extensions charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
 
