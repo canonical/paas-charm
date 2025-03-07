@@ -71,12 +71,14 @@ You can use the environments created by `tox` for development:
     tox --notest -e unit
     source .tox/unit/bin/activate
 
-You can create an environment for development with `tox`:
+You can create an environment for development with `python3-venv`:
 
 .. code-block::
   
-    tox devenv -e integration
-    source venv/bin/activate
+    sudo apt install python3-venv
+    python3 -m venv venv
+
+Install `tox` inside the virtual environment for testing.
 
 Submissions
 -----------
