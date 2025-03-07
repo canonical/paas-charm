@@ -68,4 +68,6 @@ Integrations
 ------------
 The list of available integrations and those that are already pre-populated veries from extension to extensions.
 
-> See more: `extensions charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
+.. seealso::
+
+   `Charmcraft reference | Extensions <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
