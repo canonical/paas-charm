@@ -58,7 +58,7 @@ We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/
 
 Metrics
 -------
-Depending on the enabled extension, different support for metrics and tracing is provided.
+The provided support for metrics and tracing depends on the enabled extension.
 
 .. seealso:: 
 
