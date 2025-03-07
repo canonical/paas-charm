@@ -66,7 +66,7 @@ The provided support for metrics and tracing depends on the enabled extension.
 
 Integrations
 ------------
-The list of available integrations and those that are already pre-populated veries from extension to extensions.
+The available integrations, including those that are already pre-populated, varies between extensions.
 
 .. seealso::
 
