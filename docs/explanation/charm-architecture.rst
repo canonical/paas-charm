@@ -47,7 +47,7 @@ And if you run :code:`kubectl describe pod web-app-0`, all the containers will h
 OCI images
 ----------
 
-We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/>`_ to build OCI Images for the PaaS charm. 
+We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/>`_ to build OCI Images for the web app charm. 
 
 .. seealso::
 
