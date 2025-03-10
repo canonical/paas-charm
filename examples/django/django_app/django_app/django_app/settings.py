@@ -15,7 +15,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import json
 import os
-import urllib.parse
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -128,3 +127,10 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("SMTP_HOST")
+EMAIL_USE_TLS = True if os.environ.get("SMTP_TRANSPORT_SECURITY") == "tls" else False
+EMAIL_PORT = os.environ.get("SMTP_PORT")
+EMAIL_USE_SSL = True if os.environ.get("SMTP_TRANSPORT_SECURITY") == "starttls" else False
+EMAIL_HOST_USER = f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}'
+EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")

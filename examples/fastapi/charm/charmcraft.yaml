@@ -87,6 +87,10 @@ requires:
     interface: tracing
     optional: True
     limit: 1
+  smtp:
+    interface: smtp
+    optional: True
+    limit: 1
 resources:
   app-image:
     description: FastAPI application image.

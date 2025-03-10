@@ -5,11 +5,14 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"go-app/internal/service"
 	"io"
 	"log"
+	"net/mail"
+	"net/smtp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,6 +43,100 @@ func (h mainHandler) serveHelloWorld(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, World!")
 }
 
+func handleError(w http.ResponseWriter, error_message error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "application/json")
+	resp := make(map[string]string)
+	resp["message"] = error_message.Error()
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+	w.Write(jsonResp)
+	return
+}
+
+func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
+	h.counter.Inc()
+	log.Printf("Counter %#v\n", h.counter)
+
+	from := mail.Address{"", "tester@example.com"}
+	to := mail.Address{"", "test@example.com"}
+	subj := "hello"
+	body := "Hello world!"
+
+	// Setup headers
+	headers := make(map[string]string)
+	headers["From"] = from.String()
+	headers["To"] = to.String()
+	headers["Subject"] = subj
+
+	// Setup message
+	message := ""
+	for k, v := range headers {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + body
+
+	// Connect to the SMTP Server
+	smtp_host, _ := os.LookupEnv("SMTP_HOST")
+	smtp_port, _ := os.LookupEnv("SMTP_PORT")
+	smtp_servername := smtp_host + ":" + smtp_port
+	smtp_user, _ := os.LookupEnv("SMTP_USER")
+	smtp_domain, _ := os.LookupEnv("SMTP_DOMAIN")
+	smtp_password, _ := os.LookupEnv("SMTP_PASSWORD")
+	auth := smtp.PlainAuth("", smtp_user+"@"+smtp_domain, smtp_password, smtp_host)
+	smtp_transport_security, _ := os.LookupEnv("SMTP_TRANSPORT_SECURITY")
+	c, err := smtp.Dial(smtp_servername)
+	defer c.Quit()
+	if err != nil {
+		handleError(w, err)
+	}
+	if smtp_transport_security == "starttls" {
+		// TLS config
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         smtp_host,
+		}
+		c.StartTLS(tlsconfig)
+	}
+
+	// Auth
+	if smtp_transport_security == "tls" {
+		if err = c.Auth(auth); err != nil {
+			handleError(w, err)
+		}
+	}
+
+	// To && From
+	if err = c.Mail(from.Address); err != nil {
+		handleError(w, err)
+	}
+
+	if err = c.Rcpt(to.Address); err != nil {
+		handleError(w, err)
+	}
+
+	// Data
+	m, err := c.Data()
+	if err != nil {
+		handleError(w, err)
+	}
+
+	_, err = m.Write([]byte(message))
+	if err != nil {
+		handleError(w, err)
+	}
+
+	err = m.Close()
+	if err != nil {
+		handleError(w, err)
+	}
+
+	fmt.Fprintf(w, "Sent")
+
+}
+
 func (h mainHandler) serveUserDefinedConfig(w http.ResponseWriter, r *http.Request) {
 	h.counter.Inc()
 
@@ -68,7 +165,7 @@ var tp *sdktrace.TracerProvider
 
 // initTracer creates and registers trace provider instance.
 func initTracer(ctx context.Context) error {
-  exp, err := otlptracehttp.New(ctx)
+	exp, err := otlptracehttp.New(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize stdouttrace exporter: %w", err)
 	}
@@ -85,7 +182,7 @@ func main() {
 	ctx := context.Background()
 	// initialize trace provider.
 	if err := initTracer(ctx); err != nil {
-		log.Panic(err)
+		log.Printf(err.Error())
 	}
 
 	// Create a named tracer with package path as its name.
@@ -98,8 +195,8 @@ func main() {
 	if err := service.SubOperation(ctx); err != nil {
 		panic(err)
 	}
- 
-  	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+
+	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
 	if !found {
 		metricsPort = "8080"
 	}
@@ -125,6 +222,7 @@ func main() {
 		service: service.Service{PostgresqlURL: postgresqlURL},
 	}
 	mux.HandleFunc("/", mainHandler.serveHelloWorld)
+	mux.HandleFunc("/send_mail", mainHandler.serveMail)
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
 

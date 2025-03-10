@@ -20,7 +20,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from testing.views import environ, get_settings, hello_world, login, sleep, user_count
+from testing.views import environ, get_settings, hello_world, login, send_mail, sleep, user_count
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -29,5 +29,6 @@ urlpatterns = [
     path("environ", environ, name="environ"),
     path("", hello_world, name="hello_world"),
     path("sleep", sleep, name="sleep"),
+    path("send_mail", send_mail, name="send_mail"),
     path("login", login, name="login"),
 ]

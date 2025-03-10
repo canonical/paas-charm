@@ -12,6 +12,40 @@ from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
 
+from django.conf import settings
+from django.core.mail import EmailMessage, get_connection
+
+
+def send_mail(request):
+    try:
+        if request.method == "GET":
+            with get_connection(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=(
+                    settings.EMAIL_HOST_USER
+                    if settings.EMAIL_USE_TLS or settings.EMAIL_USE_SSL
+                    else None
+                ),
+                password=(
+                    settings.EMAIL_HOST_PASSWORD
+                    if settings.EMAIL_USE_TLS or settings.EMAIL_USE_SSL
+                    else None
+                ),
+                use_tls=settings.EMAIL_USE_TLS,
+            ) as connection:
+                subject = "hello"
+                email_from = "tester@example.com"
+                recipient_list = ["test@example.com"]
+                message = "Hello world!"
+                EmailMessage(
+                    subject, message, email_from, recipient_list, connection=connection
+                ).send()
+
+        return HttpResponse("Sent")
+    except Exception as e:
+        return HttpResponse(f"Failed to send information: {e}")
+
 
 def environ(request):
     return JsonResponse(dict(os.environ))

@@ -20,6 +20,7 @@ import pymysql.cursors
 import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
+from flask_mail import Mail, Message
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
@@ -54,8 +55,30 @@ def celery_init_app(app: Flask, broker_url: str) -> Celery:
     return celery_app
 
 
+def init_smtp(app: Flask) -> bool:
+    if os.environ.get("SMTP_HOST"):
+        app.config["MAIL_SERVER"] = os.environ.get("SMTP_HOST")
+        app.config["MAIL_PORT"] = os.environ.get("SMTP_PORT")
+        app.config["MAIL_USERNAME"] = (
+            f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}'
+        )
+        app.config["MAIL_PASSWORD"] = os.environ.get("SMTP_PASSWORD")
+        app.config["MAIL_USE_TLS"] = (
+            True if os.environ.get("SMTP_TRANSPORT_SECURITY") == "tls" else False
+        )
+        app.config["MAIL_USE_SSL"] = (
+            True
+            if os.environ.get("SMTP_TRANSPORT_SECURITY") == "starttls"
+            and os.environ.get("SMTP_SKIPSSL_VERIFY") == "false"
+            else False
+        )
+        return True
+    return False
+
+
 app = Flask(__name__)
 app.config.from_prefixed_env()
+mail = Mail(app) if init_smtp(app) else None
 
 broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
 # Configure Celery only if Redis is configured
@@ -94,6 +117,16 @@ def fibonacci():
             fast_span.set_attribute("nth_fibonacci", answer)
 
     return f"F({n}) is: ({answer})"
+
+
+@app.route("/send_mail")
+def send_mail():
+    if mail:
+        msg = Message("hello", sender="tester@example.com", recipients=["test@example.com"])
+        msg.body = "Hello world!"
+        mail.send(msg)
+        return "Sent"
+    return "Mail not configured correctly"
 
 
 @celery_app.on_after_configure.connect

@@ -4,7 +4,6 @@
 """Integration tests for Flask charm integrations, like S3 and Saml."""
 import logging
 import urllib.parse
-from secrets import token_hex
 
 import ops
 import pytest
