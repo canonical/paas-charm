@@ -171,10 +171,15 @@ The :code:`__init__` method guarantees that the charm observes all events releva
 Take, for example, when a configuration is changed by using the CLI.
 
 1. User runs the command
-.. code-block:: bash
-   juju config sample_config=sample_value
+   .. code-block:: bash
+
+      juju config sample_config=sample_value
+
 2. A :code:`config-changed` event is emitted
 3. In the :code:`__init__` method is defined how to handle this event like this:
-.. code-block:: python
-   self.framework.observe(self.on.config_changed, self._on_config_changed)
+   .. code-block:: python
+      
+      self.framework.observe(self.on.config_changed, self._on_config_changed)
+      
 4. The method :code:`_on_config_changed`, for its turn,  will take the necessary actions such as waiting for all the relations to be ready and then configuring the container.
+
