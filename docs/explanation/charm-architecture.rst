@@ -72,8 +72,8 @@ The available integrations, including those that are already pre-populated, vari
 
    `Charmcraft reference | Extensions <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
 
-Events
-------
+Juju events
+-----------
 
 Accordingly to the `Juju SDK <https://juju.is/docs/sdk/event>`_: "an event is a data structure that encapsulates part of the execution context of a charm".
 
