@@ -79,7 +79,7 @@ Accordingly to the `Juju SDK <https://juju.is/docs/sdk/event>`_: "an event is a 
 
 For a web app charm, the following events are observed:
 
-1. `\<container name\>_pebble_ready <https://juju.is/docs/sdk/container-name-pebble-ready-event>`_: fired on Kubernetes charms when the requested container is ready.
+1. `\<container name\>_pebble_ready <https://canonical-juju.readthedocs-hosted.com/en/3.6/user/reference/hook/#container-pebble-ready>`_: fired on Kubernetes charms when the requested container is ready.
 Action: validate the charm configuration, run pending migrations and restart the workload.
 
 2. `config_changed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#config-changed>`_: usually fired in response to a configuration change using the CLI.
