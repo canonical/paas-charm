@@ -73,4 +73,3 @@ about the project.
 * Added a `docs` folder to hold the
   [Canonical Sphinx starter pack](https://github.com/canonical/sphinx-docs-starter-pack)
   and to eventually publish the docs on Read the Docs.
-
