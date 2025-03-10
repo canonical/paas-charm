@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v1.4.0 - 2025-03-04
+
+### Changed
+
+* Added support for smtp integration.
+
 ## v1.3.2 - 2025-02-27
 
 ### Changed
