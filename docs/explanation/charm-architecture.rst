@@ -75,8 +75,6 @@ The available integrations, including those that are already pre-populated, vari
 Juju events
 -----------
 
-Accordingly to the `Juju SDK <https://juju.is/docs/sdk/event>`_: "an event is a data structure that encapsulates part of the execution context of a charm".
-
 For a web app charm, the following events are observed:
 
 1. `\<container name\>_pebble_ready <https://canonical-juju.readthedocs-hosted.com/en/3.6/user/reference/hook/#container-pebble-ready>`_: fired on Kubernetes charms when the requested container is ready.
