@@ -164,7 +164,7 @@ PaasCharm is the base class from which all Charms are formed, defined by `Ops  <
 
 .. seealso::
 
-   `Charm <https://juju.is/docs/sdk/constructs#heading--charm>`_
+   `Charm <https://canonical-juju.readthedocs-hosted.com/en/3.6/user/reference/charm/>`_
 
 The :code:`__init__` method guarantees that the charm observes all events relevant to its operation and handles them.
 
