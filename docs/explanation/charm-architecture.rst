@@ -107,9 +107,9 @@ For a web app charm, the following events are observed:
 
 15. `saml_data_available <https://github.com/canonical/saml-integrator-operator>`_: fired when new SAML data is present in the relation. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-16. `rabbitmq_ready <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_: fired after a rabbitmq_cjoined event. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+16. `rabbitmq_ready <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_: fired after a ``rabbitmq_cjoined`` event. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-17. `rabbitmq_connected <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_: fired after a rabbitmq_changed or rabbitmq_broken event. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+17. `rabbitmq_connected <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_: fired after a ``rabbitmq_changed`` or ``rabbitmq_broken`` event. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
 18. `rabbitmq_joined <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-joined>`_: fired when a new unit joins in an existing relation. **Action**: request access to the RabbitMQ server and emit a connected event.
 
