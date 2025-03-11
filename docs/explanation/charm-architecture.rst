@@ -125,7 +125,7 @@ For a web app charm, the following events are observed:
 
 24. `smtp_data_available <https://github.com/canonical/smtp-integrator-operator>`_: fired when new SMTP data is present in the relation. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-25. `rotate_secret_key_**Action** <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#**Action**-hooks>`_: fired when rotate-secret-key **Action** is executed.  **Action**: generate a new secret token for the application.
+25. `rotate_secret_key <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#action-hooks>`_: fired when rotate-secret-key is executed.  **Action**: generate a new secret token for the application.
 
 Charm code overview
 -------------------
