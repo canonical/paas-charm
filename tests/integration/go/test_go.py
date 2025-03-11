@@ -136,6 +136,7 @@ async def test_open_ports(
     await go_app.set_config({"app-port": str(new_port)})
     await model.wait_for_idle(apps=[go_app.name, traefik_app.name], status="active")
 
+    _, opened_ports, _ = await ops_test.juju(*juju_cmd)
     assert opened_ports.strip() == f"{new_port}/tcp"
     assert (
         requests.get(
