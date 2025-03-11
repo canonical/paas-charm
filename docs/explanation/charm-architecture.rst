@@ -156,5 +156,4 @@ Take, for example, when a configuration is changed by using the CLI.
 
       self.framework.observe(self.on.config_changed, self._on_config_changed)
       
-4. The method :code:`_on_config_changed`, for its turn,  will take the necessary **Action**s such as waiting for all the relations to be ready and then configuring the container.
-
+4. The method :code:`_on_config_changed`, for its turn,  will take the necessary actions such as waiting for all the relations to be ready and then configuring the container.
