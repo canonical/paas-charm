@@ -39,7 +39,7 @@ Charm architecture diagram
          Component(charm_logic, "Charm Logic", "Juju Operator Framework", "Controls application deployment & config")
       }
       Container_Boundary(web_app_container, "Workload Container") {
-         Component(workload, "Workload", "Web Application", "Observes events; serves web requests")
+         Component(workload, "Workload", "Web Application", "Serves web requests")
       }
    }
    Rel(charm_logic, workload, "Supervises<br>process")
