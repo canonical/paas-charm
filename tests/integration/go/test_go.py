@@ -121,7 +121,7 @@ async def test_open_ports(
     traefik_ip = (await get_unit_ips(traefik_app.name))[0]
 
     juju_cmd = ["exec", "--unit", f"{go_app.name}/0", "opened-ports"]
-    opened_ports = await ops_test.juju(*juju_cmd)
+    _, opened_ports, _ = await ops_test.juju(*juju_cmd)
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
         requests.get(
@@ -149,7 +149,7 @@ async def test_open_ports(
     await go_app.set_config({"app-port": str(WORKLOAD_PORT)})
     await model.wait_for_idle(apps=[go_app.name, traefik_app.name], status="active")
 
-    opened_ports = await ops_test.juju(*juju_cmd)
+    _, opened_ports, _ = await ops_test.juju(*juju_cmd)
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
         requests.get(
