@@ -60,3 +60,26 @@ async def go_app_fixture(charm_file: str, model: Model, go_app_image: str, postg
     await model.integrate(app_name, "postgresql-k8s")
     await model.wait_for_idle(status="active")
     return app
+
+
+@pytest_asyncio.fixture(scope="module", name="traefik_app")
+async def deploy_traefik_fixture(
+    model: Model,
+    flask_app,  # pylint: disable=unused-argument
+    traefik_app_name: str,
+    external_hostname: str,
+):
+    """Deploy traefik."""
+    app = await model.deploy(
+        "traefik-k8s",
+        application_name=traefik_app_name,
+        channel="edge",
+        trust=True,
+        config={
+            "external_hostname": external_hostname,
+            "routing_mode": "subdomain",
+        },
+    )
+    await model.wait_for_idle(raise_on_blocked=True)
+
+    return app
