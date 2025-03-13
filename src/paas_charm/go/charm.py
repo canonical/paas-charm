@@ -59,13 +59,14 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(GoConfig, self.get_framework_config())
+        state_dir = pathlib.Path(f"/tmp/{framework_name}/state")
         return WorkloadConfig(
             framework=framework_name,
             container_name=WORKLOAD_CONTAINER_NAME,
             port=framework_config.port,
             base_dir=base_dir,
             app_dir=base_dir,
-            state_dir=base_dir / "state",
+            state_dir=state_dir,
             service_name=framework_name,
             log_files=[],
             metrics_target=f"*:{framework_config.metrics_port}",
