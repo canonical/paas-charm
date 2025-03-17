@@ -144,7 +144,7 @@ html_context = {
     # Docs location in the repo; used in links for viewing the source files
     #
     # TODO: To customise the directory, uncomment and update as needed.
-    "github_folder": "/docs/",
+    "repo_folder": "/docs/",
     "github_issues": "https://github.com/canonical/paas-charm/issues",
 
     # TODO: To enable or disable the Previous / Next buttons at the bottom of pages

@@ -1,7 +1,14 @@
+async
+changelog
 Charmcraft
 FastAPI
+Gunicorn
+init
+Jinja
 lifecycle
 natively
 OCI
 Postgres
+pypi
 Rockcraft
+smtp
