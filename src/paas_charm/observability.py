@@ -48,6 +48,7 @@ class Observability(ops.Object):
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
             jobs=jobs,
             relation_name="metrics-endpoint",
+            refresh_event=[charm.on.config_changed, charm.on[container_name].pebble_ready],
         )
         # The charm isn't necessarily bundled with charms.loki_k8s.v1
         # Dynamically switches between two versions here.
