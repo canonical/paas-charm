@@ -3,17 +3,19 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Flask charm COS integration."""
+
 import asyncio
 import logging
 import typing
 
-
+import juju.client.client
+import juju.model
 import pytest
 import requests
 from juju.application import Application
+from juju.errors import JujuError
 
-import juju.client.client
-import juju.model
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
@@ -29,11 +31,11 @@ import juju.model
 async def test_non_root_loki_integration(
     model: juju.model.Model,
     loki_app_name: str,
-    non_root_app_fixture: Application,
+    non_root_app_fixture: str,
     port: int,
-    loki_app,  # pylint: disable=unused-argument
+    loki_app: Application,  # pylint: disable=unused-argument
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
-    request
+    request,
 ):
     """
     arrange: after Flask charm has been deployed.
@@ -62,26 +64,50 @@ async def test_non_root_loki_integration(
     assert result
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
-    assert log["values"]#any("python-requests" in line[1] for line in log["values"])
+    assert log["values"]  # any("python-requests" in line[1] for line in log["values"])
     if model.info.agent_version < juju.client.client.Number.from_json("3.4.0"):
         assert "filename" in log["stream"]
     else:
         assert "filename" not in log["stream"]
 
 
-
 @pytest.mark.parametrize(
-    "non_root_app_fixture, endpoint, port",
+    "non_root_app_fixture, app_name, endpoint, port",
     [
-        pytest.param("flask_non_root_db_app", "tables/users", 8000, id="Flask non-root"),
-        pytest.param("django_non_root_app", "len/users", 8000, id="Django non-root"),
-        pytest.param("fastapi_non_root_app", "table/users", 8080, id="FastAPI non-root"),
-        pytest.param("go_non_root_app", "postgresql/migratestatus", 8080, id="Go non-root"),
+        pytest.param(
+            "flask_non_root_db_app",
+            "flask-db-k8s",
+            "tables/users",
+            8000,
+            id="Flask non-root",
+        ),
+        pytest.param("django_non_root_app", "django-k8s", "len/users", 8000, id="Django non-root"),
+        pytest.param(
+            "fastapi_non_root_app",
+            "fastapi-k8s",
+            "table/users",
+            8080,
+            id="FastAPI non-root",
+        ),
+        pytest.param(
+            "go_non_root_app",
+            "go-k8s",
+            "postgresql/migratestatus",
+            8080,
+            id="Go non-root",
+        ),
     ],
 )
 @pytest.mark.skip_juju_version("3.6")  # Only Juju>=3.6 supports non-root users
 async def test_non_root_db_migration(
-    non_root_app_fixture: Application, endpoint: str, port: int, model: juju.model.Model, get_unit_ips, postgresql_k8s,request
+    non_root_app_fixture: str,
+    app_name: str,
+    endpoint: str,
+    port: int,
+    model: juju.model.Model,
+    get_unit_ips,
+    postgresql_k8s: Application,
+    request,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -89,11 +115,17 @@ async def test_non_root_db_migration(
     assert: requesting the charm should return a correct response indicate
         the database migration script has been executed and only executed once.
     """
-    non_root_app = request.getfixturevalue(non_root_app_fixture)
+    try:
+        request.getfixturevalue(non_root_app_fixture)
+    except JujuError as e:
+        if "application already exists" in str(e):
+            logger.info(f"smtp-integrator is already deployed {e}")
+        else:
+            raise e
     await model.wait_for_idle(
-        apps=[non_root_app.name, postgresql_k8s.name], status="active", idle_period=20 * 60
+        apps=[app_name, postgresql_k8s.name], status="active", idle_period=20 * 60
     )
 
-    for unit_ip in await get_unit_ips(non_root_app.name):
+    for unit_ip in await get_unit_ips(app_name):
         assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=1).ok
         # assert requests.head(f"http://{unit_ip}:{port}/tables/users", timeout=5).status_code == 200
