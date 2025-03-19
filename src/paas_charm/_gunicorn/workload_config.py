@@ -26,7 +26,9 @@ def create_workload_config(
        new WorkloadConfig
     """
     base_dir = pathlib.Path(f"/{framework_name}")
-    state_dir = pathlib.Path(f"/tmp/{framework_name}/state")
+    # It is  fine to use the tmp directory here as it is only used for storing the state
+    # of the application. State only supposed to live within the lifecycle of the container.
+    state_dir = pathlib.Path(f"/tmp/{framework_name}/state")  # nosec: B108
     return WorkloadConfig(
         framework=framework_name,
         container_name=f"{framework_name}-app",

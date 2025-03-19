@@ -65,7 +65,9 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
-        state_dir = pathlib.Path(f"/tmp/{framework_name}/state")
+        # It is  fine to use the tmp directory here as it is only used for storing the state
+        # of the application. State only supposed to live within the lifecycle of the container.
+        state_dir = pathlib.Path(f"/tmp/{framework_name}/state")  # nosec: B108
         return WorkloadConfig(
             framework=framework_name,
             container_name="app",
