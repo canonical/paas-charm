@@ -1,3 +1,4 @@
+async
 CHANGELOG
 Changelog
 changelog
@@ -5,6 +6,9 @@ Charmcraft
 config
 entrypoint
 FastAPI
+Gunicorn
+init
+Jinja
 lifecycle
 Integrations
 integrations
@@ -14,6 +18,7 @@ natively
 OCI
 PaasCharm
 Postgres
+pypi
 rabbitmq
 RabbitMQ
 redis
