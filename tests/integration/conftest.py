@@ -186,7 +186,7 @@ async def deploy_loki_fixture(
     await model.wait_for_idle(raise_on_blocked=True)
 
     yield app
-    model.remove_application(loki_app_name)
+    await model.remove_application(loki_app_name, force=True, no_wait=True)
 
 
 @pytest_asyncio.fixture(scope="module", name="flask_non_root_db_app")
@@ -199,7 +199,7 @@ async def flask_non_root_db_app_fixture(
     test_db_flask_image: str,
 ):
     """Build and deploy the flask charm with test-db-flask image."""
-    app_name = "flask-db-k8s"
+    app_name = "flask-k8s"
 
     resources = {
         "flask-app-image": test_db_flask_image,
@@ -637,19 +637,17 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
     version = json.loads(status)["model"]["version"]
     try:
         if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
-            yield await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
+            return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
         else:
-            yield await model.deploy(
+            return await model.deploy(
                 "postgresql-k8s", channel="14/stable", revision=300, trust=True
             )
     except JujuError as e:
         if 'cannot add application "postgresql-k8s": application already exists' in e.message:
             logger.info("Application 'postgresql-k8s' already exists")
-            yield model.applications["postgresql-k8s"]
+            return model.applications["postgresql-k8s"]
         else:
             raise e
-
-    model.remove_application("postgresql-k8s")
 
 
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
     [
         pytest.param(
             "flask_non_root_db_app",
-            "flask-db-k8s",
+            "flask-k8s",
             "tables/users",
             8000,
             id="Flask non-root",
@@ -68,9 +68,10 @@ async def test_non_root_db_migration(
         else:
             raise e
     await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", idle_period=20 * 60
+        apps=[app_name, postgresql_k8s.name], status="active",timeout=20 * 60, idle_period=5 * 60
     )
-
+    # for unit_ip in await get_unit_ips(app_name):
+    #     assert requests.head(f"http://{unit_ip}:8000/tables/users", timeout=5).status_code == 200
     for unit_ip in await get_unit_ips(app_name):
-        assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=1).ok
+        assert requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
         # assert requests.head(f"http://{unit_ip}:{port}/tables/users", timeout=5).status_code == 200
