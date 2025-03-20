@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+These are changes subject to release
+
 ## v1.4.0 - 2025-03-04
 
 ### Changed
@@ -71,8 +73,6 @@ about the project.
 * Added support for async workers for Gunicorn services (flask and Django).
 
 ## v1.0.0 - 2024-11-29
-
-## 2024-11-29
 
 ### Changes
 
