@@ -4,8 +4,6 @@
 """Unit tests for worker services."""
 
 import copy
-import unittest.mock
-from secrets import token_hex
 
 import ops
 import pytest

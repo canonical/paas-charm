@@ -4,6 +4,7 @@
 """Provide the WsgiApp class to represent the WSGI application."""
 
 import logging
+import shlex
 
 import ops
 
@@ -45,13 +46,13 @@ class WsgiApp(App):
             framework_config_prefix=f"{workload_config.framework.upper()}_",
         )
         self._webserver = webserver
-        current_command = self._app_layer()["services"][self._workload_config.framework][
+        new_command = [x for x in shlex.split(self._app_layer()["services"][self._workload_config.framework][
             "command"
-        ].split("-k")[0]
-        new_command = f"{current_command} -k sync"
+        ]) if x not in ["[", "]"]]
         if webserver._webserver_config.worker_class:
-            new_command = f"{current_command} -k {webserver._webserver_config.worker_class}"
-        self._alternate_service_command = new_command
+            new_command = [webserver._webserver_config.worker_class if x in ["sync", "gevent" ] else x for x in new_command]
+            
+        self._alternate_service_command = ' '.join(new_command)
 
     def _prepare_service_for_restart(self) -> None:
         """Specific framework operations before restarting the service."""

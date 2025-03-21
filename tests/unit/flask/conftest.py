@@ -6,14 +6,12 @@ import os
 import pathlib
 import shlex
 import typing
-import unittest.mock
 
 import ops
 import pytest
 from ops.testing import Harness
 
 from examples.flask.src.charm import FlaskCharm
-from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 
@@ -41,13 +39,21 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["flask"]["command"].split("-k")[0]),
+    check_config_command =[*[x for x in shlex.split(DEFAULT_LAYER["services"]["flask"][
+            "command"
+        ]) if x not in ["[", "]"]],
         "--check-config",
     ]
     harness.handle_exec(
         FLASK_CONTAINER_NAME,
         check_config_command,
+        handler=check_config_handler,
+    )
+
+    gevent_check_config_command = ["gevent" if x == "sync" else x for x in check_config_command]
+    harness.handle_exec(
+        FLASK_CONTAINER_NAME,
+        gevent_check_config_command,
         handler=check_config_handler,
     )
 

@@ -112,8 +112,9 @@ def _build_harness(meta=None):
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["django"]["command"].split("-k")[0]),
+    check_config_command =[*[x for x in shlex.split(DEFAULT_LAYER["services"]["django"][
+            "command"
+        ]) if x not in ["[", "]"]],
         "--check-config",
     ]
     harness.handle_exec(
@@ -121,4 +122,12 @@ def _build_harness(meta=None):
         check_config_command,
         handler=check_config_handler,
     )
+
+    gevent_check_config_command = ["gevent" if x == "sync" else x for x in check_config_command]
+    harness.handle_exec(
+        DJANGO_CONTAINER_NAME,
+        gevent_check_config_command,
+        handler=check_config_handler,
+    )
+
     return harness
