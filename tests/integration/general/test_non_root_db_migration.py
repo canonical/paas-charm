@@ -72,7 +72,10 @@ async def test_non_root_db_migration(
     )
     for unit_ip in await get_unit_ips(app_name):
         if non_root_app_fixture == "fastapi_non_root_app":
-            assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+            assert (
+                requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+            )
         else:
-            assert requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
-
+            assert (
+                requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+            )
