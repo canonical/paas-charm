@@ -39,9 +39,12 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command =[*[x for x in shlex.split(DEFAULT_LAYER["services"]["flask"][
-            "command"
-        ]) if x not in ["[", "]"]],
+    check_config_command = [
+        *[
+            x
+            for x in shlex.split(DEFAULT_LAYER["services"]["flask"]["command"])
+            if x not in ["[", "]"]
+        ],
         "--check-config",
     ]
     harness.handle_exec(

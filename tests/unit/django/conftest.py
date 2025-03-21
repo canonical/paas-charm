@@ -112,9 +112,12 @@ def _build_harness(meta=None):
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command =[*[x for x in shlex.split(DEFAULT_LAYER["services"]["django"][
-            "command"
-        ]) if x not in ["[", "]"]],
+    check_config_command = [
+        *[
+            x
+            for x in shlex.split(DEFAULT_LAYER["services"]["django"]["command"])
+            if x not in ["[", "]"]
+        ],
         "--check-config",
     ]
     harness.handle_exec(

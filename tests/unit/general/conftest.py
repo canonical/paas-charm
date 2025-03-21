@@ -128,7 +128,10 @@ def _set_check_config_handler(
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command =[ *[x for x in shlex.split(layer["services"][framework]["command"]) if x not in ["[", "]"]], "--check-config"]
+    check_config_command = [
+        *[x for x in shlex.split(layer["services"][framework]["command"]) if x not in ["[", "]"]],
+        "--check-config",
+    ]
     harness.handle_exec(
         container_name,
         check_config_command,
