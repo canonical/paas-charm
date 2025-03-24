@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """pytest fixtures for the integration test."""
-
 import os
 import pathlib
 import shlex
