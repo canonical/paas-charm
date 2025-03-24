@@ -2,7 +2,8 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask charm COS integration."""
+"""Integration tests for non-root Charms Loki integration."""
+
 import asyncio
 import logging
 import typing
@@ -36,7 +37,7 @@ async def test_non_root_loki_integration(
     request,
 ):
     """
-    arrange: after Flask charm has been deployed.
+    arrange: after non-root charm has been deployed.
     act: establish relations established with loki charm.
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.

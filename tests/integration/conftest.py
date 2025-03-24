@@ -72,14 +72,15 @@ def fixture_test_db_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-async def build_special_charm_file(
+async def build_charm_file_with_dict(
     pytestconfig: pytest.Config,
     ops_test: OpsTest,
     tmp_path_factory,
     framework,
     charm_dict: dict,
 ) -> str:
-    """Get the existing charm file if exists, build a new one if not."""
+    """Get the existing charm file if it exists. If not, build a new one and append
+    the supplied dictionary to the charmcraft.yaml file."""
     charm_file = next(
         (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f),
         None,
@@ -91,7 +92,9 @@ async def build_special_charm_file(
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
 
-        charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
+        charmcraft_yaml = yaml.safe_load(
+            (charm_location / "charmcraft.yaml").read_text()
+        )
         charmcraft_yaml.update(charm_dict)
         (tmp_charm_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
         charm_file = await ops_test.build_charm(charm_location)
@@ -114,7 +117,6 @@ async def build_charm_file(
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
-        tmp_path_factory.mktemp(framework)
         charm_file = await ops_test.build_charm(charm_location)
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
@@ -166,11 +168,15 @@ async def flask_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
+    charm_file = await build_charm_file(
+        pytestconfig, ops_test, tmp_path_factory, "flask"
+    )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
-    await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
+    await model.wait_for_idle(
+        apps=[app_name], status="active", timeout=300, raise_on_blocked=True
+    )
     return app
 
 
@@ -185,8 +191,7 @@ async def deploy_loki_fixture(
     )
     await model.wait_for_idle(raise_on_blocked=True)
 
-    yield app
-    await model.remove_application(loki_app_name, force=True, no_wait=True)
+    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="flask_non_root_db_app")
@@ -198,20 +203,22 @@ async def flask_non_root_db_app_fixture(
     model: Model,
     test_db_flask_image: str,
 ):
-    """Build and deploy the flask charm with test-db-flask image."""
+    """Build and deploy the non-root flask charm with test-db-flask image."""
     app_name = "flask-k8s"
 
     resources = {
         "flask-app-image": test_db_flask_image,
     }
-    charm_file = await build_special_charm_file(
+    charm_file = await build_charm_file_with_dict(
         pytestconfig, ops_test, tmp_path_factory, "flask", {"charm-user": "non-root"}
     )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
+    )
     return app
 
 
@@ -223,13 +230,13 @@ async def flask_non_root_app_fixture(
     model: Model,
     test_flask_image: str,
 ):
-    """Build and deploy the flask charm with test-flask image and non-root charm user."""
+    """Build and deploy the non-root flask charm with test-flask image and non-root charm user."""
     app_name = "flask-k8s"
 
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_special_charm_file(
+    charm_file = await build_charm_file_with_dict(
         pytestconfig, ops_test, tmp_path_factory, "flask", {"charm-user": "non-root"}
     )
     app = await model.deploy(
@@ -278,7 +285,9 @@ async def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
+    charm_file = await build_charm_file(
+        pytestconfig, ops_test, tmp_path_factory, "django"
+    )
 
     app = await model.deploy(
         charm_file,
@@ -288,7 +297,9 @@ async def django_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
+    )
     return app
 
 
@@ -333,13 +344,13 @@ async def django_non_root_app_fixture(
     django_app_image: str,
     postgresql_k8s: Application,
 ):
-    """Build and deploy the Django charm with django-app image."""
+    """Build and deploy the non-root Django charm with django-app image."""
     app_name = "django-k8s"
 
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_special_charm_file(
+    charm_file = await build_charm_file_with_dict(
         pytestconfig, ops_test, tmp_path_factory, "django", {"charm-user": "non-root"}
     )
 
@@ -351,7 +362,9 @@ async def django_non_root_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
+    )
     return app
 
 
@@ -370,7 +383,9 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
+    charm_file = await build_charm_file(
+        pytestconfig, ops_test, tmp_path_factory, "fastapi"
+    )
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -378,7 +393,9 @@ async def fastapi_app_fixture(
         config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
+    )
     return app
 
 
@@ -414,11 +431,11 @@ async def fastapi_non_root_app_fixture(
     fastapi_app_image: str,
     postgresql_k8s: Application,
 ):
-    """Build and deploy the FastAPI charm with fastapi-app image."""
+    """Build and deploy the non-root FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = await build_special_charm_file(
+    charm_file = await build_charm_file_with_dict(
         pytestconfig, ops_test, tmp_path_factory, "fastapi", {"charm-user": "non-root"}
     )
     app = await model.deploy(
@@ -428,7 +445,9 @@ async def fastapi_non_root_app_fixture(
         config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
+    )
     return app
 
 
@@ -450,7 +469,9 @@ async def go_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
+    )
     return app
 
 
@@ -488,18 +509,20 @@ async def go_non_root_app_fixture(
     go_app_image: str,
     postgresql_k8s,
 ):
-    """Build and deploy the Go charm with go-app image."""
+    """Build and deploy the non-root Go charm with go-app image."""
     app_name = "go-k8s"
 
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_special_charm_file(
+    charm_file = await build_charm_file_with_dict(
         pytestconfig, ops_test, tmp_path_factory, "go", {"charm-user": "non-root"}
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    await model.wait_for_idle(
+        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
+    )
     return app
 
 
@@ -568,7 +591,9 @@ async def fixture_get_unit_ips(ops_test: OpsTest):
         units = status["applications"][application_name]["units"]
         return tuple(
             unit_status["address"]
-            for _, unit_status in sorted(units.items(), key=lambda kv: int(kv[0].split("/")[-1]))
+            for _, unit_status in sorted(
+                units.items(), key=lambda kv: int(kv[0].split("/")[-1])
+            )
         )
 
     return get_unit_ips
@@ -643,7 +668,10 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
                 "postgresql-k8s", channel="14/stable", revision=300, trust=True
             )
     except JujuError as e:
-        if 'cannot add application "postgresql-k8s": application already exists' in e.message:
+        if (
+            'cannot add application "postgresql-k8s": application already exists'
+            in e.message
+        ):
             logger.info("Application 'postgresql-k8s' already exists")
             return model.applications["postgresql-k8s"]
         else:
@@ -688,7 +716,9 @@ def skip_by_juju_version(request, model):
         current_version = JujuVersion(
             f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
         )
-        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
+        min_version = JujuVersion(
+            request.node.get_closest_marker("skip_juju_version").args[0]
+        )
         if current_version < min_version:
             pytest.skip("Juju version is too old")
 

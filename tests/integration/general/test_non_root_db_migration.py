@@ -2,7 +2,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask charm COS integration."""
+"""Integration tests for non-root Charms db migration."""
 
 import logging
 
@@ -57,18 +57,12 @@ async def test_non_root_db_migration(
     request,
 ):
     """
-    arrange: build and deploy the flask charm.
+    arrange: build and deploy the non-root charm.
     act: deploy the database and relate it to the charm.
     assert: requesting the charm should return a correct response indicate
         the database migration script has been executed and only executed once.
     """
-    try:
-        request.getfixturevalue(non_root_app_fixture)
-    except JujuError as e:
-        if "application already exists" in str(e):
-            logger.info(f"smtp-integrator is already deployed {e}")
-        else:
-            raise e
+    request.getfixturevalue(non_root_app_fixture)
     await model.wait_for_idle(
         apps=[app_name, postgresql_k8s.name],
         status="active",
@@ -76,7 +70,7 @@ async def test_non_root_db_migration(
         idle_period=2 * 60,
     )
     for unit_ip in await get_unit_ips(app_name):
-        if non_root_app_fixture == "fastapi_non_root_app":
+        if app_name == "fastapi-k8s":
             assert (
                 requests.get(
                     f"http://{unit_ip}:{port}/{endpoint}", timeout=5
