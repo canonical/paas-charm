@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """pytest fixtures for the integration test."""
+
 import os
 import pathlib
 import shlex
@@ -13,6 +14,8 @@ import pytest
 from ops.testing import Harness
 
 from examples.flask.src.charm import FlaskCharm
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
@@ -64,3 +67,13 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
 
     yield harness
     harness.cleanup()
+
+
+@pytest.fixture(name="webserver")
+def webserver_fixture(flask_container_mock):
+    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    return GunicornWebserver(
+        webserver_config=WebserverConfig(),
+        workload_config=workload_config,
+        container=flask_container_mock,
+    )

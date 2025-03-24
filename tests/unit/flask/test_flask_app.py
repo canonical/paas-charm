@@ -33,7 +33,11 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
     ],
 )
 def test_flask_env(
-    flask_config: dict, user_defined_config: dict, database_migration_mock, flask_container_mock
+    flask_config: dict,
+    user_defined_config: dict,
+    database_migration_mock,
+    flask_container_mock,
+    webserver,
 ):
     """
     arrange: create the Flask app object with a controlled charm state.
@@ -48,11 +52,6 @@ def test_flask_env(
         user_defined_config=user_defined_config,
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
-    webserver = GunicornWebserver(
-        webserver_config=WebserverConfig(),
-        workload_config=workload_config,
-        container=flask_container_mock,
-    )
     flask_app = WsgiApp(
         container=flask_container_mock,
         charm_state=charm_state,
@@ -117,6 +116,7 @@ def test_http_proxy(
     monkeypatch,
     database_migration_mock,
     flask_container_mock,
+    webserver,
 ):
     """
     arrange: set juju charm http proxy related environment variables.
@@ -131,11 +131,6 @@ def test_http_proxy(
         is_secret_storage_ready=True,
     )
     workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
-    webserver = GunicornWebserver(
-        webserver_config=WebserverConfig(),
-        workload_config=workload_config,
-        container=flask_container_mock,
-    )
     flask_app = WsgiApp(
         container=flask_container_mock,
         charm_state=charm_state,

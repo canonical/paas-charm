@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.4.1 - 2025-03-24
 
-### Changed
+### Fixed
 
 * Fixed a bug that occurred when users attempted to use `[ args ]` in service
   commands for the Django and Flask frameworks.
