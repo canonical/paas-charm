@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
             8000,
             id="Flask non-root",
         ),
-        pytest.param("django_non_root_app", "django-k8s", "len/users", 8000, id="Django non-root"),
+        pytest.param(
+            "django_non_root_app", "django-k8s", "len/users", 8000, id="Django non-root"
+        ),
         pytest.param(
             "fastapi_non_root_app",
             "fastapi-k8s",
@@ -68,14 +70,23 @@ async def test_non_root_db_migration(
         else:
             raise e
     await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=20 * 60, idle_period=5 * 60
+        apps=[app_name, postgresql_k8s.name],
+        status="active",
+        timeout=20 * 60,
+        idle_period=2 * 60,
     )
     for unit_ip in await get_unit_ips(app_name):
         if non_root_app_fixture == "fastapi_non_root_app":
             assert (
-                requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+                requests.get(
+                    f"http://{unit_ip}:{port}/{endpoint}", timeout=5
+                ).status_code
+                == 200
             )
         else:
             assert (
-                requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+                requests.head(
+                    f"http://{unit_ip}:{port}/{endpoint}", timeout=5
+                ).status_code
+                == 200
             )
