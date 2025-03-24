@@ -92,9 +92,7 @@ async def build_charm_file_with_dict(
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
 
-        charmcraft_yaml = yaml.safe_load(
-            (charm_location / "charmcraft.yaml").read_text()
-        )
+        charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
         charmcraft_yaml.update(charm_dict)
         (tmp_charm_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
         charm_file = await ops_test.build_charm(charm_location)
@@ -210,9 +208,7 @@ async def flask_non_root_db_app_fixture(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
 
 
@@ -352,9 +348,7 @@ async def django_non_root_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
 
 
@@ -431,9 +425,7 @@ async def fastapi_non_root_app_fixture(
         config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
 
 
@@ -504,9 +496,7 @@ async def go_non_root_app_fixture(
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[postgresql_k8s.name, app_name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
 
 
@@ -695,9 +685,7 @@ def skip_by_juju_version(request, model):
         current_version = JujuVersion(
             f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
         )
-        min_version = JujuVersion(
-            request.node.get_closest_marker("skip_juju_version").args[0]
-        )
+        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
         if current_version < min_version:
             pytest.skip("Juju version is too old")
 
