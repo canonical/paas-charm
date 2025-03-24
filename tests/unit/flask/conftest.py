@@ -6,12 +6,14 @@ import os
 import pathlib
 import shlex
 import typing
+import unittest.mock
 
 import ops
 import pytest
 from ops.testing import Harness
 
 from examples.flask.src.charm import FlaskCharm
+from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 

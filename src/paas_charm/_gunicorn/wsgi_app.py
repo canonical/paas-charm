@@ -53,6 +53,7 @@ class WsgiApp(App):
             )
             if x not in ["[", "]"]
         ]
+
         if webserver._webserver_config.worker_class:
             new_command = [
                 webserver._webserver_config.worker_class if x in ["sync", "gevent"] else x

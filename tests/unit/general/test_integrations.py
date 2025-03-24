@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Integrations unit tests."""
+
 import itertools
 import json
 import unittest
@@ -10,12 +11,13 @@ from types import NoneType
 import pytest
 from charms.smtp_integrator.v0.smtp import SmtpRequires
 from ops import ActiveStatus, RelationMeta, RelationRole
+from ops.testing import Harness
 
 import paas_charm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.app import App, map_integrations_to_env
+from paas_charm.app import App, WorkloadConfig, map_integrations_to_env
 from paas_charm.charm_state import (
     CharmState,
     IntegrationsState,
@@ -24,11 +26,15 @@ from paas_charm.charm_state import (
     SamlParameters,
     SmtpParameters,
     TempoParameters,
+    _create_config_attribute,
     generate_relation_parameters,
 )
 from paas_charm.exceptions import CharmConfigInvalidError
+from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
+from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.flask.constants import (
     FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
@@ -36,6 +42,7 @@ from tests.unit.flask.constants import (
     SMTP_RELATION_DATA_EXAMPLE,
 )
 from tests.unit.general.conftest import MockTracingEndpointRequirer
+from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -246,7 +253,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
 
 
 def _test_map_integrations_to_env_parameters():
-
     prefixes = ["FLASK_", "DJANGO_", ""]
     return itertools.chain.from_iterable(
         _generate_map_integrations_to_env_parameters(prefix) for prefix in prefixes
@@ -396,7 +402,10 @@ def _test_integrations_state_build_parameters():
             id="Saml wrong parameters",
         ),
         pytest.param(
-            {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
+            {
+                **relation_dict,
+                "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
+            },
             False,
             id="S3 correct parameters",
         ),
@@ -425,7 +434,10 @@ def _test_integrations_state_build_parameters():
             id="Tempo empty parameters",
         ),
         pytest.param(
-            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
+            {
+                **relation_dict,
+                "tracing_requirer": MockTracingEndpointRequirer(False, ""),
+            },
             False,
             id="Tempo not ready",
         ),
@@ -512,7 +524,6 @@ def test_integrations_state_build(
 
 
 def _test_integrations_env_parameters():
-
     parameters_with_empty_prefix = _generate_map_integrations_to_env_parameters()
 
     return [pytest.param(p.values[0], p.values[2], id=p.id) for p in parameters_with_empty_prefix]

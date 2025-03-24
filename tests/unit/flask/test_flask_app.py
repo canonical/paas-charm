@@ -14,7 +14,8 @@ import pytest
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState
+from paas_charm.app import map_integrations_to_env
+from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
 
 
 @pytest.mark.parametrize(
@@ -32,7 +33,10 @@ from paas_charm.charm_state import CharmState
     ],
 )
 def test_flask_env(
-    flask_config: dict, user_defined_config: dict, database_migration_mock, flask_container_mock
+    flask_config: dict,
+    user_defined_config: dict,
+    database_migration_mock,
+    flask_container_mock,
 ):
     """
     arrange: create the Flask app object with a controlled charm state.

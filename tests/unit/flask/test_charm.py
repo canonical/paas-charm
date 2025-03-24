@@ -74,7 +74,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
         },
         "override": "replace",
         "startup": "enabled",
-        "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k sync",
+        "command": f"/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k sync",
         "after": ["statsd-exporter"],
         "user": "_daemon_",
     }
@@ -253,7 +253,9 @@ def test_rabbitmq_remove_integration(harness: Harness):
     assert: The relation should not have the env variables related to RabbitMQ.
     """
     relation_id = harness.add_relation(
-        "rabbitmq", "rabbitmq", app_data={"hostname": "example.com", "password": token_hex(16)}
+        "rabbitmq",
+        "rabbitmq",
+        app_data={"hostname": "example.com", "password": token_hex(16)},
     )
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
@@ -308,7 +310,9 @@ def test_missing_integrations(harness: Harness, integrate_to, required_integrati
         assert integration not in harness.model.unit.status.message
 
 
-def test_missing_required_integration_stops_all_and_sets_migration_to_pending(harness: Harness):
+def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
+    harness: Harness,
+):
     """
     arrange: Prepare the harness. Instantiate the charm with all the required integrations
         so it is active. Include a migrate.sh file so migrations run.
