@@ -109,8 +109,7 @@ async def build_charm_file(
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f),
-        None,
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
     )
 
     if not charm_file:
@@ -133,8 +132,7 @@ async def build_charm_file_with_config_options(
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f),
-        None,
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
     )
 
     if not charm_file:
@@ -168,15 +166,11 @@ async def flask_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file(
-        pytestconfig, ops_test, tmp_path_factory, "flask"
-    )
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
-    await model.wait_for_idle(
-        apps=[app_name], status="active", timeout=300, raise_on_blocked=True
-    )
+    await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
     return app
 
 
@@ -285,9 +279,7 @@ async def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file(
-        pytestconfig, ops_test, tmp_path_factory, "django"
-    )
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
 
     app = await model.deploy(
         charm_file,
@@ -297,9 +289,7 @@ async def django_app_fixture(
         series="jammy",
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -383,9 +373,7 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = await build_charm_file(
-        pytestconfig, ops_test, tmp_path_factory, "fastapi"
-    )
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -393,9 +381,7 @@ async def fastapi_app_fixture(
         config={"non-optional-string": "non-optional-value"},
     )
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -469,9 +455,7 @@ async def go_app_fixture(
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name], status="active", timeout=300
-    )
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
@@ -591,9 +575,7 @@ async def fixture_get_unit_ips(ops_test: OpsTest):
         units = status["applications"][application_name]["units"]
         return tuple(
             unit_status["address"]
-            for _, unit_status in sorted(
-                units.items(), key=lambda kv: int(kv[0].split("/")[-1])
-            )
+            for _, unit_status in sorted(units.items(), key=lambda kv: int(kv[0].split("/")[-1]))
         )
 
     return get_unit_ips
@@ -668,10 +650,7 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
                 "postgresql-k8s", channel="14/stable", revision=300, trust=True
             )
     except JujuError as e:
-        if (
-            'cannot add application "postgresql-k8s": application already exists'
-            in e.message
-        ):
+        if 'cannot add application "postgresql-k8s": application already exists' in e.message:
             logger.info("Application 'postgresql-k8s' already exists")
             return model.applications["postgresql-k8s"]
         else:
