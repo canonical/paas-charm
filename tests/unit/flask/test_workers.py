@@ -135,9 +135,7 @@ def test_worker_multiple_units(harness: Harness):
     # in the peer relation for the secret..
     harness.set_leader(False)
     harness.add_relation(
-        "secret-storage",
-        harness.framework.model.app.name,
-        app_data={"flask_secret_key": "XX"},
+        "secret-storage", harness.framework.model.app.name, app_data={"flask_secret_key": "XX"}
     )
 
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)

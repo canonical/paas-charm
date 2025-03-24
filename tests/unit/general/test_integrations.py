@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Integrations unit tests."""
-
 import itertools
 import json
 import unittest
@@ -253,6 +252,7 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
 
 
 def _test_map_integrations_to_env_parameters():
+
     prefixes = ["FLASK_", "DJANGO_", ""]
     return itertools.chain.from_iterable(
         _generate_map_integrations_to_env_parameters(prefix) for prefix in prefixes
@@ -402,10 +402,7 @@ def _test_integrations_state_build_parameters():
             id="Saml wrong parameters",
         ),
         pytest.param(
-            {
-                **relation_dict,
-                "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
-            },
+            {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
         ),
@@ -434,10 +431,7 @@ def _test_integrations_state_build_parameters():
             id="Tempo empty parameters",
         ),
         pytest.param(
-            {
-                **relation_dict,
-                "tracing_requirer": MockTracingEndpointRequirer(False, ""),
-            },
+            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
             False,
             id="Tempo not ready",
         ),
@@ -524,6 +518,7 @@ def test_integrations_state_build(
 
 
 def _test_integrations_env_parameters():
+
     parameters_with_empty_prefix = _generate_map_integrations_to_env_parameters()
 
     return [pytest.param(p.values[0], p.values[2], id=p.id) for p in parameters_with_empty_prefix]

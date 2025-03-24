@@ -33,10 +33,7 @@ from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
     ],
 )
 def test_flask_env(
-    flask_config: dict,
-    user_defined_config: dict,
-    database_migration_mock,
-    flask_container_mock,
+    flask_config: dict, user_defined_config: dict, database_migration_mock, flask_container_mock
 ):
     """
     arrange: create the Flask app object with a controlled charm state.
