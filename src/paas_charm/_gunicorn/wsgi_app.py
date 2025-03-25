@@ -46,6 +46,7 @@ class WsgiApp(App):
             framework_config_prefix=f"{workload_config.framework.upper()}_",
         )
         self._webserver = webserver
+
         new_command = [
             x
             for x in shlex.split(
@@ -53,13 +54,9 @@ class WsgiApp(App):
             )
             if x not in ["[", "]"]
         ]
-
         if webserver._webserver_config.worker_class:
-            new_command = [
-                webserver._webserver_config.worker_class if x in ["sync", "gevent"] else x
-                for x in new_command
-            ]
-
+            k_index = new_command.index("-k")
+            new_command[k_index + 1] = webserver._webserver_config.worker_class
         self._alternate_service_command = " ".join(new_command)
 
     def _prepare_service_for_restart(self) -> None:

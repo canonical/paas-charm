@@ -6,7 +6,6 @@ import os
 import pathlib
 import shlex
 import typing
-import unittest.mock
 
 import ops
 import pytest
@@ -15,7 +14,6 @@ from ops.testing import Harness
 from examples.flask.src.charm import FlaskCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
-from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
 
@@ -51,13 +49,34 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         ],
         "--check-config",
     ]
+    check_config_command = [
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/flask/gunicorn.conf.py",
+        "app:app",
+        "-k",
+        "sync",
+        "--check-config",
+    ]
     harness.handle_exec(
         FLASK_CONTAINER_NAME,
         check_config_command,
         handler=check_config_handler,
     )
 
-    gevent_check_config_command = ["gevent" if x == "sync" else x for x in check_config_command]
+    gevent_check_config_command = [
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/flask/gunicorn.conf.py",
+        "app:app",
+        "-k",
+        "gevent",
+        "--check-config",
+    ]
     harness.handle_exec(
         FLASK_CONTAINER_NAME,
         gevent_check_config_command,
