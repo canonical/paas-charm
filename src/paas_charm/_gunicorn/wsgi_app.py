@@ -47,15 +47,21 @@ class WsgiApp(App):
         )
         self._webserver = webserver
 
+        if not webserver._webserver_config.worker_class:
+            return
+        if " -k " not in self._app_layer()["services"][self._workload_config.framework]["command"]:
+            return
+
         current_command = shlex.split(
             self._app_layer()["services"][self._workload_config.framework]["command"]
         )
         k_index = current_command.index("-k")
-        sync_index = k_index + 1 if current_command[k_index + 1] != "[" else k_index + 2
+        worker_class_index = k_index + 1 if current_command[k_index + 1] != "[" else k_index + 2
+        if webserver._webserver_config.worker_class == current_command[worker_class_index]:
+            return
+
         new_command = current_command
-        new_command[sync_index] = "sync"
-        if webserver._webserver_config.worker_class:
-            new_command[sync_index] = webserver._webserver_config.worker_class
+        new_command[worker_class_index] = webserver._webserver_config.worker_class
         self._alternate_service_command = " ".join(new_command)
 
     def _prepare_service_for_restart(self) -> None:
