@@ -58,7 +58,7 @@ for more!
 
 Additional resources:
 
-* [Tutorial to build a rock for a Flask application](https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask.html)
+* [Tutorial to build a rock for a Flask application](https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask)
 * [Charmcraft `flask-framework` reference](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/flask-framework-extension/)
 * [Charmcraft `flask-framework` how to guides](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/howto/manage-a-12-factor-app-charm/)
 * [Rockcraft`flask-framework`
