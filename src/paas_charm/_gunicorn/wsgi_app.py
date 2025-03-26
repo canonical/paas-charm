@@ -12,6 +12,7 @@ from paas_charm._gunicorn.webserver import GunicornWebserver
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.exceptions import CharmConfigInvalidError
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,10 @@ class WsgiApp(App):
             workload_config: The state of the workload that the WsgiApp belongs to.
             database_migration: The database migration manager object.
             webserver: The webserver manager object.
+
+        Raises:
+            CharmConfigInvalidError: When the worker-class config option is set but
+              the `-k` worker-class selector argument is not in the service command.
         """
         super().__init__(
             container=container,
@@ -49,13 +54,17 @@ class WsgiApp(App):
 
         if not webserver._webserver_config.worker_class:
             return
-        if " -k " not in self._app_layer()["services"][self._workload_config.framework]["command"]:
-            return
 
         current_command = shlex.split(
             self._app_layer()["services"][self._workload_config.framework]["command"]
         )
-        k_index = current_command.index("-k")
+        try:
+            k_index = current_command.index("-k")
+        except ValueError as exc:
+            raise CharmConfigInvalidError(
+                "Worker class is set through `juju config` but the"
+                " `-k` worker class argument is not in the service command."
+            ) from exc
         worker_class_index = k_index + 1 if current_command[k_index + 1] != "[" else k_index + 2
         if webserver._webserver_config.worker_class == current_command[worker_class_index]:
             return
