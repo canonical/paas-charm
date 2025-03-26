@@ -4,7 +4,6 @@
 """pytest fixtures for the integration test."""
 import os
 import pathlib
-import shlex
 import typing
 
 import ops
@@ -15,7 +14,7 @@ from examples.flask.src.charm import FlaskCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
+from .constants import FLASK_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -41,14 +40,6 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
             return ops.testing.ExecResult(0)
         return ops.testing.ExecResult(1)
 
-    check_config_command = [
-        *[
-            x
-            for x in shlex.split(DEFAULT_LAYER["services"]["flask"]["command"])
-            if x not in ["[", "]"]
-        ],
-        "--check-config",
-    ]
     check_config_command = [
         "/bin/python3",
         "-m",
