@@ -11,20 +11,51 @@ from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 
 
 @pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message, exec_res",
+    "django_layer, worker_class, expected_status, expected_message, exec_res",
     [
-        (
+        pytest.param(
+            DEFAULT_LAYER,
             "eventlet",
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/django-async-doc",
             1,
+            id="fail-eventlet",
         ),
-        ("gevent", "active", "", 0),
-        ("sync", "active", "", 0),
+        pytest.param(
+            {
+                **DEFAULT_LAYER,
+                "services": {
+                    "django": {
+                        "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application"
+                    }
+                },
+            },
+            "gevent",
+            "blocked",
+            "Worker class is set through `juju config` but the `-k` worker class argument is not in the service command.",
+            0,
+            id="fail-no-k",
+        ),
+        pytest.param(
+            DEFAULT_LAYER,
+            "gevent",
+            "active",
+            "",
+            0,
+            id="success-gevent",
+        ),
+        pytest.param(
+            DEFAULT_LAYER,
+            "sync",
+            "active",
+            "",
+            0,
+            id="success-sync",
+        ),
     ],
 )
 def test_async_workers_config(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
+    harness: Harness, django_layer, worker_class, expected_status, expected_message, exec_res
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -40,14 +71,26 @@ def test_async_workers_config(
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
     container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    container.add_layer("a_layer", django_layer)
 
     harness.handle_exec(
         container.name,
         ["python3", "-c", "import gevent"],
         result=ExecResult(exit_code=exec_res),
     )
-
+    harness.handle_exec(
+        container.name,
+        [
+            "/bin/python3",
+            "-m",
+            "gunicorn",
+            "-c",
+            "/django/gunicorn.conf.py",
+            "django_app.wsgi:application",
+            "--check-config",
+        ],
+        result=ExecResult(exit_code=exec_res),
+    )
     harness.begin_with_initial_hooks()
     harness.update_config({"webserver-worker-class": worker_class})
     assert harness.model.unit.status == ops.StatusBase.from_name(

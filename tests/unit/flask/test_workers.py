@@ -4,8 +4,6 @@
 """Unit tests for worker services."""
 
 import copy
-import unittest.mock
-from secrets import token_hex
 
 import ops
 import pytest
@@ -78,25 +76,51 @@ def test_async_workers_config(
 
 
 @pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message, exec_res",
+    "flask_layer, worker_class, expected_status, expected_message, exec_res",
     [
-        (
+        pytest.param(
+            DEFAULT_LAYER,
             "eventlet",
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/flask-async-doc",
             1,
+            id="fail-eventlet",
         ),
-        (
+        pytest.param(
+            DEFAULT_LAYER,
             "gevent",
             "blocked",
             "gunicorn[gevent] must be installed in the rock. https://bit.ly/flask-async-doc",
             1,
+            id="fail-gevent",
         ),
-        ("sync", "active", "", 0),
+        pytest.param(
+            {
+                **DEFAULT_LAYER,
+                "services": {
+                    "flask": {
+                        "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app"
+                    }
+                },
+            },
+            "gevent",
+            "blocked",
+            "Worker class is set through `juju config` but the `-k` worker class argument is not in the service command.",
+            0,
+            id="fail-no-k",
+        ),
+        pytest.param(
+            DEFAULT_LAYER,
+            "sync",
+            "active",
+            "",
+            0,
+            id="success-sync",
+        ),
     ],
 )
 def test_async_workers_config_fail(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
+    harness: Harness, flask_layer, worker_class, expected_status, expected_message, exec_res
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -105,11 +129,25 @@ def test_async_workers_config_fail(
     then `sync`.
     """
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    container.add_layer("a_layer", flask_layer)
 
     harness.handle_exec(
         container.name,
         ["python3", "-c", "import gevent"],
+        result=ExecResult(exit_code=exec_res),
+    )
+
+    harness.handle_exec(
+        container.name,
+        [
+            "/bin/python3",
+            "-m",
+            "gunicorn",
+            "-c",
+            "/flask/gunicorn.conf.py",
+            "app:app",
+            "--check-config",
+        ],
         result=ExecResult(exit_code=exec_res),
     )
     harness.begin_with_initial_hooks()

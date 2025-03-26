@@ -4,7 +4,6 @@
 """pytest fixtures for the integration test."""
 import os
 import pathlib
-import shlex
 import textwrap
 import typing
 import unittest.mock
@@ -113,7 +112,14 @@ def _build_harness(meta=None):
         return ops.testing.ExecResult(1)
 
     check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["django"]["command"].split("-k")[0]),
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/django/gunicorn.conf.py",
+        "django_app.wsgi:application",
+        "-k",
+        "sync",
         "--check-config",
     ]
     harness.handle_exec(
@@ -121,4 +127,22 @@ def _build_harness(meta=None):
         check_config_command,
         handler=check_config_handler,
     )
+
+    gevent_check_config_command = [
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/django/gunicorn.conf.py",
+        "django_app.wsgi:application",
+        "-k",
+        "gevent",
+        "--check-config",
+    ]
+    harness.handle_exec(
+        DJANGO_CONTAINER_NAME,
+        gevent_check_config_command,
+        handler=check_config_handler,
+    )
+
     return harness

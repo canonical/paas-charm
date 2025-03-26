@@ -13,6 +13,7 @@ from ops import ActiveStatus, RelationMeta, RelationRole
 from ops.testing import Harness
 
 import paas_charm
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App, WorkloadConfig, map_integrations_to_env
@@ -558,11 +559,16 @@ def test_integrations_env(
     )
     workload_config = create_workload_config(framework_name=framework, unit_name=f"{framework}/0")
     if framework == ("flask" or "django"):
+        webserver = GunicornWebserver(
+            webserver_config=WebserverConfig(),
+            workload_config=workload_config,
+            container=request.getfixturevalue(container_mock),
+        )
         app = WsgiApp(
             container=request.getfixturevalue(container_mock),
             charm_state=charm_state,
             workload_config=workload_config,
-            webserver=unittest.mock.MagicMock(),
+            webserver=webserver,
             database_migration=database_migration_mock,
         )
     else:
