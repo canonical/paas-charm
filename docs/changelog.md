@@ -11,7 +11,8 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## v1.4.1 - 2025-03.25
 
-* fix: Added event handler for `secret_storage_relation_changed` event.
+* fix: Added event handler for `secret_storage_relation_changed` 
+  event.
 
 ## v1.4.0 - 2025-03-04
 
