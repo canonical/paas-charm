@@ -366,7 +366,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     @block_if_invalid_config
     def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
-        """Handle the secret-storage-relation-departed event"""
+        """Handle the secret-storage-relation-departed event."""
         self.restart()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
