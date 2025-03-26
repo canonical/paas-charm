@@ -136,6 +136,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on.secret_storage_relation_changed,
             self._on_secret_storage_relation_changed,
         )
+        self.framework.observe(
+            self.on.secret_storage_relation_departed,
+            self._on_secret_storage_relation_departed,
+        )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._on_secret_changed)
         for database, database_requirer in self._database_requirers.items():
@@ -358,6 +362,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_secret_storage_relation_changed(self, _: ops.RelationEvent) -> None:
         """Handle the secret-storage-relation-changed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
+        """Handle the secret-storage-relation-departed event."""
         self.restart()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:

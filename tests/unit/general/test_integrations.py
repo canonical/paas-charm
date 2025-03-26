@@ -865,3 +865,28 @@ def test_smtp_not_activated(
     assert service_env.get("SMTP_PORT") is None
     assert service_env.get("SMTP_SKIP_SSL_VERIFY") is None
     assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
+
+
+@pytest.mark.parametrize(
+    "app_harness", ["flask_harness", "django_harness", "fastapi_harness", "go_harness"]
+)
+def test_secret_storage_relation_departed_hook(
+    app_harness: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Run initial hooks. Add a unit to the secret-storage relation.
+    act: Remove one unit from the secret-storage relation.
+    assert: The restart function should be called once.
+    """
+    harness = request.getfixturevalue(app_harness)
+    harness.begin_with_initial_hooks()
+    harness.charm.restart = unittest.mock.MagicMock()
+    peer_relation_name = "secret-storage"
+    rel_id = harness.model.get_relation(peer_relation_name).id
+    harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
+
+    harness.charm.restart.reset_mock()
+    harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
+
+    harness.charm.restart.assert_called_once()
