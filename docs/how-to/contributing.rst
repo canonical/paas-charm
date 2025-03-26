@@ -100,6 +100,9 @@ also, reference the issue or bug number when you submit the changes.
 - Make sure the updated project builds and runs without warnings or errors;
   this includes linting, documentation, code and tests.
 
+- If you are adding a feature that interacts with the filesystem, please include an integration test for it,
+  ensuring that it runs as a non-root user. You can add the test in the 'tests/integration/general' folder.
+
 - Submit the changes as a `pull request (PR)
   <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_.
 
