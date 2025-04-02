@@ -77,19 +77,19 @@ Juju events
 
 For a web app charm, the following events are observed:
 
-1. `\<container name\>_pebble_ready <https://canonical-juju.readthedocs-hosted.com/en/3.6/user/reference/hook/#container-pebble-ready>`_: fired on Kubernetes charms when the requested container is ready. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+1. `\<container name\>_pebble_ready <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#container-pebble-ready>`_: fired on Kubernetes charms when the requested container is ready. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-2. `config_changed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#config-changed>`_: usually fired in response to a configuration change using the CLI. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+2. `config_changed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#config-changed>`_: usually fired in response to a configuration change using the CLI. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-3. `secret_storage_relation_created <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-created>`_: fired when the relation is first created. **Action**: generate a new secret and store it in the relation data.
+3. `secret_storage_relation_created <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-created>`_: fired when the relation is first created. **Action**: generate a new secret and store it in the relation data.
 
-4. `secret_storage_relation_changed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-changed>`_: fired when a new unit joins in an existing relation and whenever the related unit changes its settings. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+4. `secret_storage_relation_changed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-changed>`_: fired when a new unit joins in an existing relation and whenever the related unit changes its settings. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-5. `secret_storage_relation_departed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-departed>`_: fired when a unit departs from an existing relation. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+5. `secret_storage_relation_departed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-departed>`_: fired when a unit departs from an existing relation. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-6. `update_status <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#update-status>`_: fired at regular intervals. **Action**: validate the configuration, run pending migrations and restart the workload.
+6. `update_status <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#update-status>`_: fired at regular intervals. **Action**: validate the configuration, run pending migrations and restart the workload.
 
-7. `secret_changed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#secret-changed>`_: fired when the secret owner publishes a new secret revision. **Action**: validate the configuration, run pending migrations and restart the workload.
+7. `secret_changed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#secret-changed>`_: fired when the secret owner publishes a new secret revision. **Action**: validate the configuration, run pending migrations and restart the workload.
 
 8. `database_created <https://github.com/canonical/data-platform-libs>`_: fired when a new database is created. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
@@ -113,13 +113,13 @@ For a web app charm, the following events are observed:
 
 18. `rabbitmq_connected <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_: fired after a ``rabbitmq_changed`` or ``rabbitmq_broken`` event. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
-19. `rabbitmq_joined <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-joined>`_: fired when a new unit joins in an existing relation. **Action**: request access to the RabbitMQ server and emit a connected event.
+19. `rabbitmq_joined <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-joined>`_: fired when a new unit joins in an existing relation. **Action**: request access to the RabbitMQ server and emit a connected event.
 
-20. `rabbitmq_changed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-changed>`_: fired when a new unit joins in an existing relation and whenever the related unit changes its settings. **Action**: request access to the RabbitMQ server and emit a ready event.
+20. `rabbitmq_changed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-changed>`_: fired when a new unit joins in an existing relation and whenever the related unit changes its settings. **Action**: request access to the RabbitMQ server and emit a ready event.
 
-21. `rabbitmq_broken <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-broken>`_: fired when a unit participating in a non-peer relation is removed. **Action**: emit a ready event.
+21. `rabbitmq_broken <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-broken>`_: fired when a unit participating in a non-peer relation is removed. **Action**: emit a ready event.
 
-22. `rabbitmq_departed <https://canonical-juju.readthedocs-hosted.com/en/latest/user/reference/hook/#endpoint-relation-departed>`_: fired when a related unit is no longer related. **Action**: validate the charm configuration, run pending migrations and restart the workload.
+22. `rabbitmq_departed <https://documentation.ubuntu.com/juju/latest/reference/hook/index.html#endpoint-relation-departed>`_: fired when a related unit is no longer related. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
 23. `tracing_endpoint_changed <https://github.com/canonical/tempo-coordinator-k8s-operator>`_: fired when one of the receiver endpoints changes. **Action**: validate the charm configuration, run pending migrations and restart the workload.
 
