@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix: Added event handler for `secret_storage_relation_changed` 
   event.
 
+## v1.4.1 - 2025-03-26
+
+* feat: Added support for [rootless charms](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/files/metadata-yaml-file/#charm-user).
+
 ## v1.4.0 - 2025-03-04
 
 * feat: Added support for smtp integration.

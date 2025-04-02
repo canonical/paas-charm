@@ -7,6 +7,7 @@
 # pylint: disable=protected-access
 
 import json
+import pathlib
 import typing
 import unittest.mock
 
@@ -14,8 +15,7 @@ import pytest
 
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.app import map_integrations_to_env
-from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
+from paas_charm.charm_state import CharmState
 
 
 @pytest.mark.parametrize(
@@ -47,7 +47,9 @@ def test_flask_env(
         framework_config=flask_config,
         user_defined_config=user_defined_config,
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")
+    )
     flask_app = WsgiApp(
         container=flask_container_mock,
         charm_state=charm_state,
@@ -125,7 +127,9 @@ def test_http_proxy(
         secret_key="foobar",
         is_secret_storage_ready=True,
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")
+    )
     flask_app = WsgiApp(
         container=flask_container_mock,
         charm_state=charm_state,
