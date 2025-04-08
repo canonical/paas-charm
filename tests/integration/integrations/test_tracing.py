@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
         ("django_app", 8000),
         ("fastapi_app", 8080),
         ("go_app", 8080),
+        ("expressjs_app", 8080),
     ],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4

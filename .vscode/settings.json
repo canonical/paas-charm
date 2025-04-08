@@ -1,0 +1,15 @@
+{
+    "python.testing.pytestArgs": [
+        "tests",
+        "-v",
+        "--tb",
+        "native",
+        "--log-cli-level=INFO",
+        "-s",
+        "--go-app-image=localhost:32000/go-app:0.1",
+        "--expressjs-app-image=localhost:32000/expressjs:0.1",
+        "--keep-models"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}

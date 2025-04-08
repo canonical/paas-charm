@@ -61,6 +61,15 @@ def fixture_go_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="expressjs_app_image")
+def fixture_expressjs_app_image(pytestconfig: Config):
+    """Return the --expressjs-app-image test parameter."""
+    image = pytestconfig.getoption("--expressjs-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --expressjs-app-image")
+    return image
+
+
 async def build_charm_file(
     pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
 ) -> str:
@@ -313,10 +322,57 @@ async def go_blocked_app_fixture(
     return app
 
 
+@pytest_asyncio.fixture(scope="module", name="expressjs_app")
+async def expressjs_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    expressjs_app_image: str,
+    # postgresql_k8s,
+):
+    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "expressjs")
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    # await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="expressjs_blocked_app")
+async def expressjs_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    expressjs_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "expressjs", NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
+    return app
+
+
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")
 async def ops_test_lxd_fixture(request, tmp_path_factory, ops_test: OpsTest):
     """Return a ops_test fixture for lxd, creating the lxd controller if it does not exist."""
-    if not "lxd" in Juju().get_controllers():
+    if "lxd" not in Juju().get_controllers():
         logger.info("bootstrapping lxd")
         _, _, _ = await ops_test.juju("bootstrap", "localhost", "lxd", check=True)
 
