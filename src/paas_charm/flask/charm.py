@@ -2,8 +2,8 @@
 # See LICENSE file for licensing details.
 
 """Flask Charm service."""
+
 import logging
-import pathlib
 
 import ops
 from pydantic import ConfigDict, Field, field_validator
@@ -77,11 +77,3 @@ class Charm(GunicornBase):
             framework: operator framework.
         """
         super().__init__(framework=framework, framework_name="flask")
-
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
-
-        Returns:
-            Return the directory with COS related files.
-        """
-        return str((pathlib.Path(__file__).parent / "cos").absolute())

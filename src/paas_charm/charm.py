@@ -2,8 +2,10 @@
 # See LICENSE file for licensing details.
 
 """The base charm class for all application charms."""
+
 import abc
 import logging
+import pathlib
 import typing
 
 import ops
@@ -73,10 +75,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     """
 
     framework_config_class: type[BaseModel]
-
-    @abc.abstractmethod
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files."""
 
     @property
     @abc.abstractmethod
@@ -158,7 +156,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(self._ingress.on.ready, self._on_ingress_ready)
         self.framework.observe(self._ingress.on.revoked, self._on_ingress_revoked)
         self.framework.observe(
-            self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
+            self.on[self._workload_config.container_name].pebble_ready,
+            self._on_pebble_ready,
         )
 
     def _init_redis(self, requires: dict[str, RelationMeta]) -> "RedisRequires | None":
@@ -327,6 +326,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
+    def get_cos_dir(self) -> str:
+        """Return the directory with COS related files.
+
+        Returns:
+            Return the directory with COS related files.
+        """
+        return str((pathlib.Path(__file__).parent / "cos").absolute())
+
     @property
     def _container(self) -> Container:
         """Return the workload container."""
@@ -389,7 +396,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         if not self._container.can_connect():
             logger.info(
-                "pebble client in the %s container is not ready", self._workload_config.framework
+                "pebble client in the %s container is not ready",
+                self._workload_config.framework,
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False
