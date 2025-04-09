@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """The base charm class for all application charms."""
-
 import abc
 import logging
 import pathlib

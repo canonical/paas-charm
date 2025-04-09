@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 """Flask Charm service."""
-
 import logging
 
 import ops
