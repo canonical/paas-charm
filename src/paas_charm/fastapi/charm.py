@@ -71,7 +71,7 @@ class Charm(PaasCharm):
             port=framework_config.uvicorn_port,
             base_dir=base_dir,
             app_dir=base_dir,
-            state_dir=base_dir / "state",
+            state_dir=self._state_dir,
             service_name=framework_name,
             log_files=[],
             metrics_target=f"*:{framework_config.metrics_port}",

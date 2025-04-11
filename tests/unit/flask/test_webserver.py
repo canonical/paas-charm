@@ -26,7 +26,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         {"workers": 10},
         False,
         textwrap.dedent(
-            f"""\
+            """\
                 bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
@@ -40,7 +40,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         {"threads": 2, "timeout": 3, "keepalive": 4},
         False,
         textwrap.dedent(
-            f"""\
+            """\
                 bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
@@ -56,7 +56,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         {},
         True,
         textwrap.dedent(
-            f"""\
+            """\
                 from opentelemetry import trace
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
                 from opentelemetry.sdk.trace import TracerProvider
@@ -107,7 +107,10 @@ def test_gunicorn_config(
         is_secret_storage_ready=True,
     )
     workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", tracing_enabled=tracing_enabled
+        framework_name="flask",
+        unit_name="flask/0",
+        state_dir=harness.charm._state_dir,
+        tracing_enabled=tracing_enabled,
     )
     webserver_config = WebserverConfig(**charm_state_params)
     webserver = GunicornWebserver(
@@ -129,7 +132,7 @@ def test_gunicorn_config(
         command=DEFAULT_LAYER["services"]["flask"]["command"],
     )
 
-    assert container.pull(f"/flask/gunicorn.conf.py").read() == config_file
+    assert container.pull("/flask/gunicorn.conf.py").read() == config_file
 
 
 @pytest.mark.parametrize("is_running", [True, False])
@@ -145,14 +148,16 @@ def test_webserver_reload(monkeypatch, harness: Harness, is_running, database_mi
     harness.set_can_connect(container, True)
     container.add_layer("default", DEFAULT_LAYER)
 
-    container.push(f"/flask/gunicorn.conf.py", "")
+    container.push("/flask/gunicorn.conf.py", "")
     charm_state = CharmState(
         framework="flask",
         secret_key="",
         is_secret_storage_ready=True,
     )
     webserver_config = WebserverConfig()
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,
@@ -207,7 +212,9 @@ def test_gunicorn_config_with_pebble_log_forwarding(
         secret_key="",
         is_secret_storage_ready=True,
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    )
     webserver_config = WebserverConfig()
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
@@ -227,6 +234,6 @@ def test_gunicorn_config_with_pebble_log_forwarding(
         environment=flask_app.gen_environment(),
         command=DEFAULT_LAYER["services"]["flask"]["command"],
     )
-    config = container.pull(f"/flask/gunicorn.conf.py").read()
+    config = container.pull("/flask/gunicorn.conf.py").read()
     assert "accesslog = '-'" in config
     assert "errorlog = '-'" in config

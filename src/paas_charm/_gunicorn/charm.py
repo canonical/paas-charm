@@ -26,6 +26,7 @@ class GunicornBase(PaasCharm):
         return create_workload_config(
             framework_name=self._framework_name,
             unit_name=self.unit.name,
+            state_dir=self._state_dir,
             tracing_enabled=bool(self._tracing and self._tracing.is_ready()),
         )
 

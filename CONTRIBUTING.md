@@ -18,6 +18,8 @@ enhancements to the 12-Factor app support project.
 - Please help us out in ensuring easy to review branches by rebasing your pull request branch onto the `main` branch.
   This also avoids merge commits and creates a linear Git commit history.
 - Please generate src documentation for every commit. See the section below for more details.
+- If you are adding a feature that interacts with the filesystem, please include an integration test for it,
+  ensuring that it runs as a non-root user. You can add the test in the 'tests/integration/general' folder.
 
 ## Canonical Contributor Agreement
 
