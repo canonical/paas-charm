@@ -11,7 +11,8 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## v1.4.3 - 2025-04-11
 
-* feat: Added support for [rootless charms](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/files/metadata-yaml-file/#charm-user).
+* feat: Added support for 
+[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027#rootless-charms-on-k8s-3).
 
 ## v1.4.2 - 2025-04-03
 
