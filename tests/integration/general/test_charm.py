@@ -44,6 +44,7 @@ async def test_charm_is_up(
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
+
 # @pytest.mark.parametrize(
 #     "app_fixture, port",
 #     [

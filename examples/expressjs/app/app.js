@@ -1,3 +1,8 @@
+/*
+ * Copyright 2025 Canonical Ltd.
+ * See LICENSE file for licensing details.
+ */
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');

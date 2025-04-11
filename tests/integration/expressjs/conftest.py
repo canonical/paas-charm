@@ -73,4 +73,3 @@ async def deploy_cos_fixture(
     )
     await model.wait_for_idle(status="active")
     return cos_apps
-

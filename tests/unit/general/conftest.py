@@ -39,6 +39,13 @@ def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
         ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app"
     )
 
+    postgresql_relation_data = {
+        "database": "test-database",
+        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
     yield harness
 
     harness.cleanup()

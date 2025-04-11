@@ -20,10 +20,12 @@ class ExpressJSConfig(FrameworkConfig):
     """Represent ExpressJS builtin configuration values.
 
     Attrs:
+        node_env: environment where the application is running.
+            It can be "production" or "development".
         port: port where the application is listening
         metrics_port: port where the metrics are collected
         metrics_path: path where the metrics are collected
-        secret_key: a secret key that will be used for securely signing the session cookie
+        app_secret_key: a secret key that will be used for securely signing the session cookie
             and can be used for any other security related needs by your ExpressJS application.
         model_config: Pydantic model configuration.
     """
@@ -67,8 +69,8 @@ class Charm(PaasCharm):
             base_dir=base_dir,
             app_dir=base_dir,
             state_dir=base_dir / "state",
-            service_name=framework_name,
             log_files=[],
+            service_name=framework_name,
             metrics_target=f"*:{framework_config.metrics_port}",
             metrics_path=framework_config.metrics_path,
             unit_name=self.unit.name,

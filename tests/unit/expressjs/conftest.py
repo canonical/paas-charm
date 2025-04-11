@@ -29,6 +29,15 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
     root = harness.get_filesystem_root(EXPRESSJS_CONTAINER_NAME)
     (root / "app").mkdir(parents=True)
     harness.set_can_connect(EXPRESSJS_CONTAINER_NAME, True)
-
+    harness.add_relation(
+        "postgresql",
+        "postgresql-k8s",
+        app_data={
+            "database": "test-database",
+            "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
+            "password": "test-password",
+            "username": "test-username",
+        },
+    )
     yield harness
     harness.cleanup()
