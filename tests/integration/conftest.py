@@ -329,7 +329,7 @@ async def expressjs_app_fixture(
     tmp_path_factory,
     model: Model,
     expressjs_app_image: str,
-    # postgresql_k8s,
+    postgresql_k8s,
 ):
     """Build and deploy the ExpressJS charm with expressjs-app image."""
     app_name = "expressjs-k8s"
@@ -339,8 +339,8 @@ async def expressjs_app_fixture(
     }
     charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "expressjs")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    # await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name], status="active", timeout=300)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 

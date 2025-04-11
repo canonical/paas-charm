@@ -22,7 +22,11 @@ assumes:
 
 config:
   options:
-    app-port:
+    node-env:
+      type: string
+      description: Path where the prometheus metrics will be scraped.
+      default: production
+    port:
       type: int
       description: Default port where the application will listen
       default: 8080
@@ -68,7 +72,7 @@ requires:
     interface: loki_push_api
   postgresql:
     interface: postgresql_client
-    optional: True
+    optional: False
     limit: 1
   tracing:
     interface: tracing

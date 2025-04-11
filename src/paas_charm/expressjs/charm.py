@@ -28,11 +28,11 @@ class ExpressJSConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    node_env: str | None = Field(alias="node-env", default="production", min_length=1)
-    port: int = Field(alias="app-port", default=8080, gt=0)
+    node_env: str = Field(alias="node-env", default="production", min_length=1)
+    port: int = Field(alias="port", default=8080, gt=0)
     metrics_port: int | None = Field(alias="metrics-port", default=None, gt=0)
     metrics_path: str | None = Field(alias="metrics-path", default=None, min_length=1)
-    secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
+    app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
 
@@ -94,4 +94,5 @@ class Charm(PaasCharm):
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
+            framework_config_prefix="",
         )

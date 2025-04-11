@@ -797,7 +797,6 @@ def test_missing_required_other_integrations(
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
         pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
-
     ],
 )
 def test_smtp_relation(
@@ -873,7 +872,8 @@ def test_smtp_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness", ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"]
+    "app_harness",
+    ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
 )
 def test_secret_storage_relation_departed_hook(
     app_harness: str,

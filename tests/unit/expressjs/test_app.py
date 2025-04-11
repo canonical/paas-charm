@@ -22,8 +22,8 @@ from paas_charm.expressjs.charm import ExpressJSConfig
             {},
             None,
             {
-                "APP_NODE_ENV": "production",
-                "APP_PORT": "8080",
+                "PORT": "8080",
+                "NODE_ENV": "production",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OTHERCONFIG": "othervalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -38,10 +38,10 @@ from paas_charm.expressjs.charm import ExpressJSConfig
                 rabbitmq_uri="amqp://expressjs-app:test-password@rabbitmq.example.com/%2f",
             ),
             {
-                "APP_NODE_ENV": "production",
-                "APP_PORT": "8080",
-                "APP_METRICS_PATH": "/m",
-                "APP_METRICS_PORT": "9000",
+                "PORT": "8080",
+                "NODE_ENV": "production",
+                "METRICS_PATH": "/m",
+                "METRICS_PORT": "9000",
                 "APP_SECRET_KEY": "notfoobar",
                 "APP_OTHERCONFIG": "othervalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -114,6 +114,7 @@ def test_expressjs_environment_vars(
         charm_state=charm_state,
         workload_config=workload_config,
         database_migration=unittest.mock.MagicMock(),
+        framework_config_prefix="",
     )
     env = app.gen_environment()
     assert env == expected

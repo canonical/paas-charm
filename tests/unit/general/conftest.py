@@ -35,7 +35,9 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
     """ExpressJS harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
-    harness = _build_harness(ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app")
+    harness = _build_harness(
+        ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app"
+    )
 
     yield harness
 
