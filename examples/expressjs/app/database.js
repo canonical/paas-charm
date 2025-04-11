@@ -1,3 +1,8 @@
+/*
+ * Copyright 2025 Canonical Ltd.
+ * See LICENSE file for licensing details.
+ */
+
 const pgp = require('pg-promise')(/* options */)
 const PG_CONNECT_STR = process.env["POSTGRESQL_DB_CONNECT_STRING"]
 
