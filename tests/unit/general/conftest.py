@@ -4,7 +4,6 @@
 
 import os
 import pathlib
-import shlex
 import typing
 import unittest
 
@@ -129,7 +128,14 @@ def _set_check_config_handler(
         return ops.testing.ExecResult(1)
 
     check_config_command = [
-        *shlex.split(layer["services"][framework]["command"].split("-k")[0]),
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        f"/{framework}/gunicorn.conf.py",
+        "app:app" if framework == "flask" else "django_app.wsgi:application",
+        "-k",
+        "sync",
         "--check-config",
     ]
     harness.handle_exec(

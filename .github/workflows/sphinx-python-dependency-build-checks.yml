@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           set -ex
-          sudo apt -y install \
+          sudo apt update && sudo apt -y install \
             cargo \
             libpython3-dev \
             libxml2-dev \

@@ -9,10 +9,10 @@
 import json
 import pathlib
 import typing
-import unittest.mock
 
 import pytest
 
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState
@@ -33,7 +33,11 @@ from paas_charm.charm_state import CharmState
     ],
 )
 def test_flask_env(
-    flask_config: dict, user_defined_config: dict, database_migration_mock, flask_container_mock
+    flask_config: dict,
+    user_defined_config: dict,
+    database_migration_mock,
+    flask_container_mock,
+    webserver,
 ):
     """
     arrange: create the Flask app object with a controlled charm state.
@@ -54,7 +58,7 @@ def test_flask_env(
         container=flask_container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
-        webserver=unittest.mock.MagicMock(),
+        webserver=webserver,
         database_migration=database_migration_mock,
     )
     env = flask_app.gen_environment()
@@ -114,6 +118,7 @@ def test_http_proxy(
     monkeypatch,
     database_migration_mock,
     flask_container_mock,
+    webserver,
 ):
     """
     arrange: set juju charm http proxy related environment variables.
@@ -134,7 +139,7 @@ def test_http_proxy(
         container=flask_container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
-        webserver=unittest.mock.MagicMock(),
+        webserver=webserver,
         database_migration=database_migration_mock,
     )
     env = flask_app.gen_environment()

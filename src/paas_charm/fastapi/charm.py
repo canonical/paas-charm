@@ -79,17 +79,6 @@ class Charm(PaasCharm):
             unit_name=self.unit.name,
         )
 
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
-
-        Returns:
-            Return the directory with COS related files.
-        """
-        # __file__ is different depending on the file, so moving this method
-        # to the superclass will not work correctly.
-        # pylint: disable=R0801
-        return str((pathlib.Path(__file__).parent / "cos").absolute())
-
     def _create_app(self) -> App:
         """Build a App instance.
 

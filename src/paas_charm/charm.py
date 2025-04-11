@@ -75,10 +75,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     framework_config_class: type[BaseModel]
 
-    @abc.abstractmethod
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files."""
-
     @property
     @abc.abstractmethod
     def _workload_config(self) -> WorkloadConfig:
@@ -144,6 +140,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on.secret_storage_relation_changed,
             self._on_secret_storage_relation_changed,
         )
+        self.framework.observe(
+            self.on.secret_storage_relation_departed,
+            self._on_secret_storage_relation_departed,
+        )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._on_secret_changed)
         for database, database_requirer in self._database_requirers.items():
@@ -162,7 +162,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(self._ingress.on.ready, self._on_ingress_ready)
         self.framework.observe(self._ingress.on.revoked, self._on_ingress_revoked)
         self.framework.observe(
-            self.on[self._workload_config.container_name].pebble_ready, self._on_pebble_ready
+            self.on[self._workload_config.container_name].pebble_ready,
+            self._on_pebble_ready,
         )
 
     def _init_redis(self, requires: dict[str, RelationMeta]) -> "RedisRequires | None":
@@ -331,6 +332,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
+    def get_cos_dir(self) -> str:
+        """Return the directory with COS related files.
+
+        Returns:
+            Return the directory with COS related files.
+        """
+        return str((pathlib.Path(__file__).parent / f"{self._framework_name}/cos").absolute())
+
     @property
     def _container(self) -> Container:
         """Return the workload container."""
@@ -368,6 +377,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle the secret-storage-relation-changed event."""
         self.restart()
 
+    @block_if_invalid_config
+    def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
+        """Handle the secret-storage-relation-departed event."""
+        self.restart()
+
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
 
@@ -388,7 +402,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         if not self._container.can_connect():
             logger.info(
-                "pebble client in the %s container is not ready", self._workload_config.framework
+                "pebble client in the %s container is not ready",
+                self._workload_config.framework,
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False

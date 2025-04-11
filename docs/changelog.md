@@ -9,9 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## v1.4.1 - 2025-03-26
+## v1.4.3 - 2025-04-11
 
 * feat: Added support for [rootless charms](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/files/metadata-yaml-file/#charm-user).
+
+## v1.4.2 - 2025-04-03
+
+* fix: Fixed a bug that occurred when users attempted to use [ args ] in service
+  commands for the Django and Flask frameworks.
+
+* fix: Updated broken doc links.
+
+## v1.4.1 - 2025-03-26
+
+* feat(docs): Add Google Analytics capabilities to RTD build.
+
+## v1.4.1 - 2025-03.25
+
+* fix: Added event handler for `secret_storage_relation_changed` 
+  event.
 
 ## v1.4.0 - 2025-03-04
 

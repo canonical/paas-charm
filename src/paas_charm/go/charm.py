@@ -68,18 +68,10 @@ class Charm(PaasCharm):
             state_dir=self._state_dir,
             service_name=framework_name,
             log_files=[],
+            unit_name=self.unit.name,
             metrics_target=f"*:{framework_config.metrics_port}",
             metrics_path=framework_config.metrics_path,
-            unit_name=self.unit.name,
         )
-
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
-
-        Returns:
-            Return the directory with COS related files.
-        """
-        return str((pathlib.Path(__file__).parent / "cos").absolute())
 
     def _create_app(self) -> App:
         """Build a App instance.
