@@ -9,7 +9,7 @@ import re
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Type, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from charms.redis_k8s.v0.redis import RedisRequires
@@ -67,6 +67,15 @@ except ImportError:
     # we already logged it in charm.py
     pass
 
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
 class CharmState:  # pylint: disable=too-many-instance-attributes
@@ -111,7 +120,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.base_url = base_url
 
     @classmethod
-    def from_charm(  # pylint: disable=too-many-arguments
+    def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
         config: dict[str, bool | int | float | str | dict[str, str]],
@@ -184,6 +193,14 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 if (
                     integration_requirers.smtp
                     and (smtp_data := integration_requirers.smtp.get_relation_data())
+                )
+                else None
+            ),
+            openfga_relation_data=(
+                store_info_to_relation_data(store_info)
+                if (
+                    integration_requirers.openfga
+                    and (store_info := integration_requirers.openfga.get_store_info())
                 )
                 else None
             ),
@@ -265,7 +282,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
 
 @dataclass
-class IntegrationRequirers:
+class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     """Collection of integration requirers.
 
     Attrs:
@@ -276,6 +293,7 @@ class IntegrationRequirers:
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
         smtp: Smtp requirer object.
+        openfga: OpenFGA requirer object.
     """
 
     databases: dict[str, DatabaseRequires]
@@ -285,10 +303,11 @@ class IntegrationRequirers:
     saml: "SamlRequires | None" = None
     tracing: "TracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
+    openfga: "OpenFGARequires | None" = None
 
 
 @dataclass
-class IntegrationsState:
+class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     """State of the integrations.
 
     This state is related to all the relations that can be optional, like databases, redis...
@@ -301,6 +320,7 @@ class IntegrationsState:
         rabbitmq_uri: RabbitMQ uri.
         tempo_parameters: Tracing parameters.
         smtp_parameters: Smtp parameters.
+        openfga_parameters: OpenFGA parameters.
     """
 
     redis_uri: str | None = None
@@ -310,10 +330,11 @@ class IntegrationsState:
     rabbitmq_uri: str | None = None
     tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
+    openfga_parameters: "OpenfgaParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
-    def build(  # pylint: disable=too-many-arguments
+    def build(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
         redis_uri: str | None,
@@ -324,6 +345,7 @@ class IntegrationsState:
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
         smtp_relation_data: dict | None = None,
+        openfga_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -336,6 +358,7 @@ class IntegrationsState:
             rabbitmq_uri: RabbitMQ uri.
             tracing_requirer: The tracing relation data provided by the Tempo charm.
             smtp_relation_data: Smtp relation data from smtp lib.
+            openfga_relation_data: OpenFGA relation data from openfga lib.
 
         Return:
             The IntegrationsState instance created.
@@ -350,6 +373,7 @@ class IntegrationsState:
             }
         tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
         smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
+        openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -368,11 +392,17 @@ class IntegrationsState:
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
+            openfga_parameters=openfga_parameters,
         )
 
 
 RelationParam = TypeVar(
-    "RelationParam", "SamlParameters", "S3Parameters", "TempoParameters", "SmtpParameters"
+    "RelationParam",
+    "SamlParameters",
+    "S3Parameters",
+    "TempoParameters",
+    "SmtpParameters",
+    "OpenfgaParameters",
 )
 
 
@@ -596,6 +626,42 @@ class SmtpParameters(BaseModel, extra=Extra.allow):
         if transport_security == TransportSecurity.NONE:
             return None
         return transport_security
+
+
+class OpenfgaParameters(BaseModel, extra=Extra.allow):
+    """Represent the OpenFGA relation data.
+
+    Attributes:
+        store_id: The store id to use on the OpenFGA server.
+        token: The token to use for api authentication.
+        grpc_api_url: The gRPC api url of the OpenFGA server.
+        http_api_url: The HTTP api url of the OpenFGA server.
+    """
+
+    store_id: str | None = None
+    token: str | None = None
+    grpc_api_url: str = Field(...)
+    http_api_url: str = Field(...)
+
+
+def store_info_to_relation_data(store_info: OpenfgaProviderAppData) -> Dict[str, str]:
+    """Convert store info to relation data.
+
+    Args:
+        store_info: Store info as returned from openfga lib.
+
+    Returns:
+        A dict containing relation info.
+    """
+    result = {
+        "grpc_api_url": str(store_info.grpc_api_url),
+        "http_api_url": str(store_info.http_api_url),
+    }
+    if store_info.store_id is not None:
+        result["store_id"] = str(store_info.store_id)
+    if store_info.token is not None:
+        result["token"] = str(store_info.token)
+    return result
 
 
 def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple]:
