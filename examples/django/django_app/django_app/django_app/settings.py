@@ -134,3 +134,7 @@ EMAIL_PORT = os.environ.get("SMTP_PORT")
 EMAIL_USE_SSL = True if os.environ.get("SMTP_TRANSPORT_SECURITY") == "starttls" else False
 EMAIL_HOST_USER = f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}'
 EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")
+
+FGA_STORE_ID = os.environ.get("FGA_STORE_ID")
+FGA_TOKEN = os.environ.get("FGA_TOKEN")
+FGA_HTTP_API_URL = os.environ.get("FGA_HTTP_API_URL")

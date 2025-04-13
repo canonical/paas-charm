@@ -20,7 +20,16 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from testing.views import environ, get_settings, hello_world, login, send_mail, sleep, user_count
+from testing.views import (
+    environ,
+    get_settings,
+    hello_world,
+    list_authorization_models,
+    login,
+    send_mail,
+    sleep,
+    user_count,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -30,5 +39,10 @@ urlpatterns = [
     path("", hello_world, name="hello_world"),
     path("sleep", sleep, name="sleep"),
     path("send_mail", send_mail, name="send_mail"),
+    path(
+        "openfga/list-authorization-models",
+        list_authorization_models,
+        name="list_authorization_models",
+    ),
     path("login", login, name="login"),
 ]
