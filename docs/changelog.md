@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## v1.4.1 - 2025-04-14
+
+* feat: Added peer FQDN as an environment variable
+
 ## v1.4.1 - 2025-03-26
 
 * feat(docs): Add Google Analytics capabilities to RTD build.
