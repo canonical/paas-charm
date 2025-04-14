@@ -13,6 +13,13 @@ Place any unreleased changes here, that are subject to release in coming version
 
 * feat: Added peer FQDN as an environment variable
 
+## v1.4.2 - 2025-04-03
+
+* fix: Fixed a bug that occurred when users attempted to use [ args ] in service
+  commands for the Django and Flask frameworks.
+
+* fix: Updated broken doc links.
+
 ## v1.4.1 - 2025-03-26
 
 * feat(docs): Add Google Analytics capabilities to RTD build.

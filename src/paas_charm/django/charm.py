@@ -3,7 +3,6 @@
 
 """Django Charm service."""
 import logging
-import pathlib
 import secrets
 import typing
 from urllib.parse import urlsplit
@@ -67,14 +66,6 @@ class Charm(GunicornBase):
         """
         super().__init__(framework=framework, framework_name="django")
         self.framework.observe(self.on.create_superuser_action, self._on_create_superuser_action)
-
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
-
-        Returns:
-            Return the directory with COS related files.
-        """
-        return str((pathlib.Path(__file__).parent / "cos").absolute())
 
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.

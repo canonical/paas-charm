@@ -316,7 +316,7 @@ async def go_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")
 async def ops_test_lxd_fixture(request, tmp_path_factory, ops_test: OpsTest):
     """Return a ops_test fixture for lxd, creating the lxd controller if it does not exist."""
-    if not "lxd" in Juju().get_controllers():
+    if "lxd" not in Juju().get_controllers():
         logger.info("bootstrapping lxd")
         _, _, _ = await ops_test.juju("bootstrap", "localhost", "lxd", check=True)
 
@@ -338,12 +338,23 @@ async def lxd_model_fixture(ops_test_lxd: OpsTest) -> Model:
 @pytest_asyncio.fixture(scope="module", name="rabbitmq_server_app")  # autouse=True)
 async def deploy_rabbitmq_server_fixture(
     lxd_model: Model,
+    ops_test: OpsTest,
 ) -> Application:
     """Deploy rabbitmq-server machine app."""
-    app = await lxd_model.deploy(
-        "rabbitmq-server",
-        channel="latest/edge",
-    )
+    _, status, _ = await ops_test.juju("status", "--format", "json")
+    version = json.loads(status)["model"]["version"]
+    if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
+        app = await lxd_model.deploy(
+            "rabbitmq-server",
+            channel="latest/edge",
+        )
+    else:
+        app = await lxd_model.deploy(
+            "rabbitmq-server",
+            channel="latest/edge",
+            series="jammy",
+        )
+
     await lxd_model.wait_for_idle(raise_on_blocked=True)
     await lxd_model.create_offer("rabbitmq-server:amqp")
     yield app
@@ -352,13 +363,25 @@ async def deploy_rabbitmq_server_fixture(
 @pytest_asyncio.fixture(scope="module", name="rabbitmq_k8s_app")  # autouse=True)
 async def deploy_rabbitmq_k8s_fixture(
     model: Model,
+    ops_test: OpsTest,
 ) -> Application:
     """Deploy rabbitmq-k8s app."""
-    app = await model.deploy(
-        "rabbitmq-k8s",
-        channel="3.12/edge",
-        trust=True,
-    )
+    _, status, _ = await ops_test.juju("status", "--format", "json")
+    version = json.loads(status)["model"]["version"]
+    if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
+        app = await model.deploy(
+            "rabbitmq-k8s",
+            channel="3.12/edge",
+            trust=True,
+        )
+    else:
+        app = await model.deploy(
+            "rabbitmq-k8s",
+            channel="3.12/edge",
+            trust=True,
+            series="jammy",
+        )
+
     await model.wait_for_idle(raise_on_blocked=True)
     yield app
 
