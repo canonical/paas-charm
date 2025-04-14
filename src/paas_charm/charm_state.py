@@ -100,6 +100,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
             secret_key: The secret storage manager associated with the charm.
+            peer_units: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
         """
@@ -202,7 +203,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             ),
             is_secret_storage_ready=secret_storage.is_initialized,
             peer_units=(
-                secret_storage.peer_unit_fdqns if secret_storage.is_initialized else None
+                secret_storage.get_peer_unit_fdqns() if secret_storage.is_initialized else None
             ),
             integrations=integrations,
             base_url=base_url,

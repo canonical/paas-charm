@@ -57,15 +57,17 @@ class SecretStorage(ops.Object, abc.ABC):
                     initial_value = self.gen_initial_value()
                 relation_data[key] = initial_value[key]
 
-    @property
-    def peer_unit_fdqns(self) -> str:
+    def get_peer_unit_fdqns(self) -> str:
         """Get the FQDN of units in the peer relation.
 
         Returns:
             Comma-separated list of unit FQDNs in the peer relation.
         """
         unit_fqdns = []
-        for unit in self.model.get_relation(self._peer_relation_name).units:
+        peer_relation = typing.cast(
+            ops.Relation, self.model.get_relation(self._peer_relation_name)
+        )
+        for unit in peer_relation.units:
             unit_fqdn = (
                 f"{unit.name.replace('/', '-')}."
                 f"{self.model.app.name}-endpoints."
