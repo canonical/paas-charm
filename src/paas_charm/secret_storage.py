@@ -62,6 +62,9 @@ class SecretStorage(ops.Object, abc.ABC):
 
         Returns:
             Comma-separated list of unit FQDNs in the peer relation.
+
+        Raises:
+            RuntimeError: If SecretStorage is not initialized.
         """
         if not self.is_initialized:
             raise RuntimeError("SecretStorage is not initialized")
@@ -76,7 +79,7 @@ class SecretStorage(ops.Object, abc.ABC):
                 f"{self.model.name}.svc.cluster.local"
             )
             unit_fqdns.append(unit_fqdn)
-        if unit_fqdns == []:
+        if not unit_fqdns:
             return None
         return ",".join(unit_fqdns)
 
