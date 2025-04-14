@@ -88,7 +88,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Construct the App instance.
 
         Args:
-            container: phe application container.
+            container: the application container.
             charm_state: the state of the charm.
             workload_config: the state of the workload that the App belongs to.
             database_migration: the database migration manager object.
@@ -168,6 +168,9 @@ class App:  # pylint: disable=too-many-instance-attributes
             if proxy_value:
                 env[proxy_variable] = str(proxy_value)
                 env[proxy_variable.upper()] = str(proxy_value)
+
+        if self._charm_state.peer_units is not None:
+            env[f"{prefix}PEER_UNITS"] = self._charm_state.peer_units
 
         if self._charm_state.integrations:
             env.update(

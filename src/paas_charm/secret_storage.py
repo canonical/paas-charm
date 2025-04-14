@@ -58,6 +58,23 @@ class SecretStorage(ops.Object, abc.ABC):
                 relation_data[key] = initial_value[key]
 
     @property
+    def peer_unit_fdqns(self) -> str:
+        """Get the FQDN of units in the peer relation.
+
+        Returns:
+            Comma-separated list of unit FQDNs in the peer relation.
+        """
+        unit_fqdns = []
+        for unit in self.model.get_relation(self._peer_relation_name).units:
+            unit_fqdn = (
+                f"{unit.name.replace('/', '-')}."
+                f"{self.model.app.name}-endpoints."
+                f"{self.model.name}.svc.cluster.local"
+            )
+            unit_fqdns.append(unit_fqdn)
+        return ",".join(unit_fqdns)
+
+    @property
     def is_initialized(self) -> bool:
         """Check if the SecretStorage has been initialized.
 

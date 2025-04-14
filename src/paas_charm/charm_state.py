@@ -88,6 +88,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
+        peer_units: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
     ):
@@ -107,6 +108,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self._user_defined_config = user_defined_config if user_defined_config is not None else {}
         self._is_secret_storage_ready = is_secret_storage_ready
         self._secret_key = secret_key
+        self.peer_units = peer_units
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
 
@@ -199,6 +201,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 secret_storage.get_secret_key() if secret_storage.is_initialized else None
             ),
             is_secret_storage_ready=secret_storage.is_initialized,
+            peer_units=(
+                secret_storage.peer_unit_fdqns if secret_storage.is_initialized else None
+            ),
             integrations=integrations,
             base_url=base_url,
         )
