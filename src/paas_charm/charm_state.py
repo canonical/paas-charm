@@ -399,7 +399,7 @@ def generate_relation_parameters(
         return None
 
     try:
-        return parameter_type.parse_obj(relation_data)
+        return parameter_type.model_validate(relation_data)
     except ValidationError as exc:
         error_messages = build_validation_error_message(exc)
         logger.error(error_messages.long)
