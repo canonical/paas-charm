@@ -83,6 +83,7 @@ async def test_port_without_ingress(
 
     assert response.status_code == 200
 
+
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
