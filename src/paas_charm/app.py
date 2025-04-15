@@ -156,8 +156,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             A dictionary representing the application environment variables.
         """
         prefix = self.configuration_prefix
-        env = {}
-        self.redis_environment_mapper_class(prefix, self._charm_state.integrations.redis_uri).generate_env()
+        env = {**self.redis_environment_mapper_class(prefix, self._charm_state.integrations.redis_uri).generate_env()}
         for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
