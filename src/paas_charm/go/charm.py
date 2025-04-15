@@ -35,6 +35,14 @@ class GoConfig(FrameworkConfig):
 
     model_config = ConfigDict(extra="ignore")
 
+class GoRedisEnvironmentMapper:
+    prefix: str
+    url: str
+
+    def generate_env(self) -> dict:
+        return {
+            "GO_CUSTOM": "REDIS URL"
+        }
 
 class Charm(PaasCharm):
     """Go Charm service.
@@ -81,9 +89,10 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        return App(
+        app = App(
             container=self._container,
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
         )
+        app.redis_environment_mapper_class = GoRedisEnvironmentMapper

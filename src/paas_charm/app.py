@@ -69,10 +69,27 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+class RedisEnvironmentMapper:
+    prefix: str
+    url: str
+
+    def generate_env(self) -> dict:
+        prefix = self.prefix + "_DB"
+        envvars = _url_env_vars(prefix, self.url)
+        parsed_url = urllib.parse.urlparse(self.url)
+
+        # database name is usually parsed this way.
+        db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
+        if db_name is not None:
+            envvars[f"{prefix}_NAME"] = db_name
+        return envvars
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager."""
+
+    redis_environment_mapper_class = RedisEnvironmentMapper
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -140,6 +157,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """
         prefix = self.configuration_prefix
         env = {}
+        self.redis_environment_mapper_class(prefix, self._charm_state.integrations.redis_uri).generate_env()
         for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
