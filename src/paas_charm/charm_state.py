@@ -15,7 +15,6 @@ from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import (
     BaseModel,
-    Extra,
     Field,
     ValidationError,
     ValidationInfo,
@@ -474,7 +473,7 @@ class S3Parameters(BaseModel):
         return self.s3_uri_style
 
 
-class SamlParameters(BaseModel, extra=Extra.allow):
+class SamlParameters(BaseModel, extra="allow"):
     """Configuration for accessing SAML.
 
     Attributes:
@@ -540,7 +539,7 @@ class AuthType(str, Enum):
     PLAIN = "plain"
 
 
-class SmtpParameters(BaseModel, extra=Extra.allow):
+class SmtpParameters(BaseModel, extra="allow"):
     """Represent the SMTP relation data.
 
     Attributes:
