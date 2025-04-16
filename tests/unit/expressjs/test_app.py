@@ -71,7 +71,14 @@ from paas_charm.expressjs.charm import ExpressJSConfig
     ],
 )
 def test_expressjs_environment_vars(
-    monkeypatch, set_env, user_defined_config, framework_config, integrations, expected,expressjs_container_mock,database_migration_mock
+    monkeypatch,
+    set_env,
+    user_defined_config,
+    framework_config,
+    integrations,
+    expected,
+    expressjs_container_mock,
+    database_migration_mock,
 ):
     """
     arrange: set juju charm generic app with distinct combinations of configuration.

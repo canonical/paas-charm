@@ -65,7 +65,7 @@ def test_loki_integration(
     for _ in range(120):
         requests.get(f"http://{expressjs_ip}:8080", timeout=10)
         time.sleep(1)
-    loki_ip  = status.apps[loki_app_name].units[f"{loki_app_name}/0"].address
+    loki_ip = status.apps[loki_app_name].units[f"{loki_app_name}/0"].address
     log_query = requests.get(
         f"http://{loki_ip}:3100/loki/api/v1/query_range",
         timeout=10,

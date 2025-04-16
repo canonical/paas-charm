@@ -6,6 +6,7 @@
 import logging
 
 import jubilant
+import pytest
 import requests
 
 from tests.integration.types import App
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_expressjs_is_up(expressjs_app: App, juju: jubilant.Juju):
     """Check that the charm is active.
     Assume that the charm has already been built and is running.
@@ -28,6 +30,7 @@ def test_expressjs_is_up(expressjs_app: App, juju: jubilant.Juju):
         assert "Hello, World!" in response.text
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_user_defined_config(expressjs_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the fastapi charm. Set the config user-defined-config to a new value.
@@ -47,6 +50,7 @@ def test_user_defined_config(expressjs_app: App, juju: jubilant.Juju):
         assert "newvalue" in response.text
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_migration(expressjs_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the fastapi charm with postgresql integration.
