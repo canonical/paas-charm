@@ -7,9 +7,9 @@ const pgp = require('pg-promise')(/* options */);
 const PG_CONNECT_STR = process.env["POSTGRESQL_DB_CONNECT_STRING"];
 
 console.log("PG_CONNECT_STR", PG_CONNECT_STR);
+let db = null;
 
-const db = PG_CONNECT_STR
-  ? pgp(PG_CONNECT_STR)
-  : (console.error("POSTGRESQL_DB_CONNECT_STRING is not set"), null);
+if (PG_CONNECT_STR) {db= pgp(PG_CONNECT_STR)}
+
 
 module.exports = db;
