@@ -17,6 +17,16 @@ from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
 
+try:
+    # the import is used for type hinting
+    # pylint: disable=ungrouped-imports
+    # pylint: disable=unused-import
+    from paas_charm.s3 import S3RelationData
+except ImportError:
+    # we already logged it in charm.py
+    pass
+
+
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
 
@@ -69,10 +79,60 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+class S3EnvironmentMapper:  # pylint: disable=too-few-public-methods
+    """Class to map S3 environment variables for the application."""
+
+    @staticmethod
+    def generate_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
+        """Generate environment variable from S3 requirer data.
+
+        Args:
+            relation_data: The charm S3 integration relation data.
+
+        Returns:
+            Default S3 environment mappings if S3Requirer is available, empty
+            dictionary otherwise.
+        """
+        env: dict[str, str] = {}
+        if not relation_data:
+            return env
+        env.update(
+            (k, v)
+            for k, v in (
+                ("S3_ACCESS_KEY", relation_data.access_key),
+                ("S3_SECRET_KEY", relation_data.secret_key),
+                ("S3_REGION", relation_data.region),
+                ("S3_STORAGE_CLASS", relation_data.storage_class),
+                ("S3_BUCKET", relation_data.bucket),
+                ("S3_ENDPOINT", relation_data.endpoint),
+                ("S3_PATH", relation_data.path),
+                ("S3_API_VERSION", relation_data.s3_api_version),
+                ("S3_URI_STYLE", relation_data.s3_uri_style),
+                ("S3_ADDRESSING_STYLE", relation_data.addressing_style),
+                (
+                    "S3_ATTRIBUTES",
+                    json.dumps(relation_data.attributes) if relation_data.attributes else None,
+                ),
+                (
+                    "S3_TLS_CA_CHAIN",
+                    json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
+                ),
+            )
+            if v is not None
+        )
+        return env
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
-    """Base class for the application manager."""
+    """Base class for the application manager.
+
+    Attributes:
+        s3_environ_mapper: Maps S3 connection information to environment variables.
+    """
+
+    s3_environ_mapper = S3EnvironmentMapper
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -175,6 +235,9 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.s3_environ_mapper.generate_env(relation_data=self._charm_state.integrations.s3)
+        )
         return env
 
     @property
@@ -283,27 +346,6 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
             env.update({"OTEL_SERVICE_NAME": service_name})
         if endpoint := integrations.tempo_parameters.endpoint:
             env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    if integrations.s3_parameters:
-        s3 = integrations.s3_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("S3_ACCESS_KEY", s3.access_key),
-                ("S3_SECRET_KEY", s3.secret_key),
-                ("S3_REGION", s3.region),
-                ("S3_STORAGE_CLASS", s3.storage_class),
-                ("S3_BUCKET", s3.bucket),
-                ("S3_ENDPOINT", s3.endpoint),
-                ("S3_PATH", s3.path),
-                ("S3_API_VERSION", s3.s3_api_version),
-                ("S3_URI_STYLE", s3.s3_uri_style),
-                ("S3_ADDRESSING_STYLE", s3.addressing_style),
-                ("S3_ATTRIBUTES", json.dumps(s3.attributes) if s3.attributes else None),
-                ("S3_TLS_CA_CHAIN", json.dumps(s3.tls_ca_chain) if s3.attributes else None),
-            )
-            if v is not None
-        )
 
     if integrations.saml_parameters:
         saml = integrations.saml_parameters
