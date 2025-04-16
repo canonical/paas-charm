@@ -15,9 +15,10 @@ const metricsMiddleware = promBundle({
 });
 
 var indexRouter = require('./routes/index');
-var tablesRouter = require('./routes/tables');
+var tableRouter = require('./routes/table');
 var usersRouter = require('./routes/users');
 var mailRouter = require('./routes/send_mail');
+var envRouter = require('./routes/env');
 
 require('./instrumentation');
 
@@ -37,8 +38,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/users', usersRouter);
-app.use('/tables', tablesRouter);
+app.use('/table', tableRouter);
 app.use('/send_mail', mailRouter);
+app.use('/env', envRouter);
 app.use('/', indexRouter);
 
 // catch 404 and forward to error handler

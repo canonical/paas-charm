@@ -7,8 +7,8 @@ var express = require('express');
 var router = express.Router();
 const db = require('../database');
 
-/* HEAD /tables/:table - Check if a table exists */
-router.head('/:table', async function (req, res) {
+/* GET /table/:table - Check if a table exists */
+router.get('/:table', async function (req, res) {
   const tableName = req.params.table;
 
   try {
@@ -19,7 +19,7 @@ router.head('/:table', async function (req, res) {
     );
 
     if (result) {
-      res.status(200).end(); // Table exists
+      res.status(200).send("SUCCESS"); // Table exists
     } else {
       res.status(404).end(); // Table does not exist
     }

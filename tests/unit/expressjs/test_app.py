@@ -4,7 +4,6 @@
 """ExpressJS charm unit tests for the generic app module."""
 
 import pathlib
-import unittest
 
 import pytest
 
@@ -72,7 +71,7 @@ from paas_charm.expressjs.charm import ExpressJSConfig
     ],
 )
 def test_expressjs_environment_vars(
-    monkeypatch, set_env, user_defined_config, framework_config, integrations, expected
+    monkeypatch, set_env, user_defined_config, framework_config, integrations, expected,expressjs_container_mock,database_migration_mock
 ):
     """
     arrange: set juju charm generic app with distinct combinations of configuration.
@@ -110,10 +109,10 @@ def test_expressjs_environment_vars(
     )
 
     app = App(
-        container=unittest.mock.MagicMock(),
+        container=expressjs_container_mock,
         charm_state=charm_state,
         workload_config=workload_config,
-        database_migration=unittest.mock.MagicMock(),
+        database_migration=database_migration_mock,
         framework_config_prefix="",
     )
     env = app.gen_environment()

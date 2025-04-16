@@ -3,25 +3,26 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for ExpressJS charm COS integration."""
-import asyncio
 import logging
-import typing
-
-import juju.client.client
-import juju.model
-import requests
-from juju.application import Application
+import time
 
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
+import jubilant
+import requests
+
+from tests.integration.types import App
+
+logger = logging.getLogger(__name__)
+
+WORKLOAD_PORT = 8080
 
 
-async def test_prometheus_integration(
-    model: juju.model.Model,
+def test_prometheus_integration(
+    expressjs_app: App,
+    juju: jubilant.Juju,
     prometheus_app_name: str,
-    expressjs_app: Application,
     prometheus_app,  # pylint: disable=unused-argument
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
     arrange: after Flask charm has been deployed.
@@ -29,20 +30,23 @@ async def test_prometheus_integration(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
-    await model.add_relation(prometheus_app_name, expressjs_app.name)
-    await model.wait_for_idle(apps=[expressjs_app.name, prometheus_app_name], status="active")
+    juju.integrate(expressjs_app.name, prometheus_app_name)
+    juju.wait(jubilant.all_active)
 
-    for unit_ip in await get_unit_ips(prometheus_app_name):
-        query_targets = requests.get(f"http://{unit_ip}:9090/api/v1/targets", timeout=10).json()
+    status = juju.status()
+    assert status.apps[prometheus_app_name].units[prometheus_app_name + "/0"].is_active
+    for unit in status.apps[prometheus_app_name].units.values():
+        query_targets = requests.get(
+            f"http://{unit.address}:9090/api/v1/targets", timeout=10
+        ).json()
         assert len(query_targets["data"]["activeTargets"])
 
 
-async def test_loki_integration(
-    model: juju.model.Model,
+def test_loki_integration(
+    expressjs_app: App,
+    juju: jubilant.Juju,
     loki_app_name: str,
-    expressjs_app: Application,
     loki_app,  # pylint: disable=unused-argument
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
     arrange: after Flask charm has been deployed.
@@ -50,17 +54,18 @@ async def test_loki_integration(
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.
     """
-    await model.add_relation(loki_app_name, expressjs_app.name)
 
-    await model.wait_for_idle(
-        apps=[expressjs_app.name, loki_app_name], status="active", idle_period=60
-    )
-    expressj_ip = (await get_unit_ips(expressjs_app.name))[0]
+    juju.integrate(expressjs_app.name, loki_app_name)
+    juju.wait(jubilant.all_active)
+
+    status = juju.status()
+
+    expressjs_ip = status.apps[expressjs_app.name].units[f"{expressjs_app.name}/0"].address
     # populate the access log
     for _ in range(120):
-        requests.get(f"http://{expressj_ip}:8080", timeout=10)
-        await asyncio.sleep(1)
-    loki_ip = (await get_unit_ips(loki_app_name))[0]
+        requests.get(f"http://{expressjs_ip}:8080", timeout=10)
+        time.sleep(1)
+    loki_ip  = status.apps[loki_app_name].units[f"{loki_app_name}/0"].address
     log_query = requests.get(
         f"http://{loki_ip}:3100/loki/api/v1/query_range",
         timeout=10,
@@ -71,42 +76,35 @@ async def test_loki_integration(
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
     assert any("python-requests" in line[1] for line in log["values"])
-    if model.info.agent_version < juju.client.client.Number.from_json("3.4.0"):
+    if status.model.version < juju.client.client.Number.from_json("3.4.0"):
         assert "filename" in log["stream"]
     else:
         assert "filename" not in log["stream"]
 
 
-async def test_grafana_integration(
-    model: juju.model.Model,
-    expressjs_app: Application,
+def test_grafana_integration(
+    expressjs_app: App,
+    juju: jubilant.Juju,
     prometheus_app_name: str,
     loki_app_name: str,
     grafana_app_name: str,
     cos_apps,  # pylint: disable=unused-argument
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
     arrange: after Flask charm has been deployed.
     act: establish relations established with grafana charm.
     assert: grafana Flask dashboard can be found.
     """
-    await model.relate(
-        f"{prometheus_app_name}:grafana-source", f"{grafana_app_name}:grafana-source"
-    )
-    await model.relate(f"{loki_app_name}:grafana-source", f"{grafana_app_name}:grafana-source")
-    await model.relate(expressjs_app.name, grafana_app_name)
 
-    await model.wait_for_idle(
-        apps=[expressjs_app.name, prometheus_app_name, loki_app_name, grafana_app_name],
-        status="active",
-        idle_period=60,
-    )
+    juju.integrate(f"{prometheus_app_name}:grafana-source", f"{grafana_app_name}:grafana-source")
+    juju.integrate(f"{loki_app_name}:grafana-source", f"{grafana_app_name}:grafana-source")
+    juju.integrate(expressjs_app.name, grafana_app_name)
+    juju.wait(jubilant.all_active)
 
-    action = await model.applications[grafana_app_name].units[0].run_action("get-admin-password")
-    await action.wait()
-    password = action.results["admin-password"]
-    grafana_ip = (await get_unit_ips(grafana_app_name))[0]
+    status = juju.status()
+    task = juju.run(f"{grafana_app_name}/0", "get-admin-password")
+    password = task.results["admin-password"]
+    grafana_ip = status.apps[grafana_app_name].units[f"{grafana_app_name}/0"].address
     sess = requests.session()
     sess.post(
         f"http://{grafana_ip}:3000/login",
