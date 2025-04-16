@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.s3 import PaaSS3Requirer, S3RelationData
 
 
@@ -14,6 +15,7 @@ from paas_charm.s3 import PaaSS3Requirer, S3RelationData
     "relation_data, expected",
     [
         pytest.param(None, None, id="No data"),
+        pytest.param({}, None, id="Empty data"),
         pytest.param(
             {
                 "access-key": "access_key",
@@ -74,10 +76,31 @@ from paas_charm.s3 import PaaSS3Requirer, S3RelationData
         ),
     ],
 )
-def test_generate_relation_parameters(monkeypatch, relation_data, expected):
+def test_requirer_to_relation_data(monkeypatch, relation_data, expected):
     s3_requirer = PaaSS3Requirer(MagicMock(), "test-s3-integration", "test-bucket")
     monkeypatch.setattr(
         s3_requirer, "get_s3_connection_info", MagicMock(return_value=relation_data)
     )
 
     assert s3_requirer.to_relation_data() == expected
+
+
+@pytest.mark.parametrize(
+    "relation_data",
+    [
+        pytest.param({"invalid": "data"}, id="Invalid data"),
+        pytest.param({"secret-key": "key", "bucket": "bucket"}, id="Missing data (access-key)"),
+        pytest.param({"access-key": "key", "bucket": "bucket"}, id="Missing data (secret-key)"),
+        pytest.param({"access-key": "key", "secret-key": "key"}, id="Missing data (bucket)"),
+    ],
+)
+def test_requirer_to_validation_error(monkeypatch, relation_data):
+    s3_requirer = PaaSS3Requirer(MagicMock(), "test-s3-integration", "test-bucket")
+    monkeypatch.setattr(
+        s3_requirer, "get_s3_connection_info", MagicMock(return_value=relation_data)
+    )
+
+    with pytest.raises(CharmConfigInvalidError) as exc:
+        s3_requirer.to_relation_data()
+
+    assert "S3" in exc.value.msg
