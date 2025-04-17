@@ -3,14 +3,11 @@
 
 """Integration tests for Flask workers and schedulers."""
 
-import asyncio
 import logging
 
-import aiohttp
+import jubilant
 import pytest
-from juju.errors import JujuError
-from juju.model import Model
-from pytest_operator.plugin import OpsTest
+import requests
 
 from tests.integration.helpers import get_traces_patiently
 
@@ -28,45 +25,33 @@ logger = logging.getLogger(__name__)
     ],
 )
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
-async def test_workload_tracing(
-    ops_test: OpsTest,
-    model: Model,
+def test_workload_tracing(
+    juju: jubilant.Juju,
     tracing_app_fixture: str,
     port: int,
     request: pytest.FixtureRequest,
-    get_unit_ips,
 ):
     """
     arrange: Deploy Tempo cluster, app to test and postgres if required.
     act: Send 5 requests to the app.
     assert: Tempo should have tracing info about the app.
     """
-    try:
-        tempo_app = request.getfixturevalue("tempo_app")
-    except JujuError as e:
-        if "application already exists" in str(e):
-            logger.info(f"Tempo is already deployed  {e}")
-            tempo_app = model.applications["tempo"]
-        else:
-            raise e
+    tempo_app = "tempo"
+    if not juju.status().apps.get(tempo_app):
+        request.getfixturevalue("tempo_app")
     tracing_app = request.getfixturevalue(tracing_app_fixture)
 
-    await ops_test.model.integrate(f"{tracing_app.name}:tracing", f"{tempo_app.name}:tracing")
+    juju.integrate(f"{tracing_app.name}:tracing", f"{tempo_app}:tracing")
 
-    await ops_test.model.wait_for_idle(
-        apps=[tracing_app.name, tempo_app.name], status="active", timeout=600
+    juju.wait(
+        lambda status: jubilant.all_active(status, [tracing_app.name, tempo_app]), timeout=600
     )
+    status = juju.status()
+    unit_ip = status.apps[tracing_app.name].units[tracing_app.name + "/0"].address
+    tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
 
-    unit_ip = (await get_unit_ips(tracing_app.name))[0]
-    tempo_host = (await get_unit_ips(tempo_app.name))[0]
-
-    async def _fetch_page(session):
-        async with session.get(f"http://{unit_ip}:{port}") as response:
-            return await response.text()
-
-    async with aiohttp.ClientSession() as session:
-        pages = [_fetch_page(session) for _ in range(5)]
-        await asyncio.gather(*pages)
+    for _ in range(5):
+        requests.get(f"http://{unit_ip}:{port}")
 
     # verify workload traces are ingested into Tempo
-    assert await get_traces_patiently(tempo_host, tracing_app.name)
+    assert get_traces_patiently(tempo_host, tracing_app.name)

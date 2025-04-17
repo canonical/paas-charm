@@ -88,9 +88,7 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
         return
 
 
-def build_charm_file(
-    pytestconfig: pytest.Config, framework
-) -> str:
+def build_charm_file(pytestconfig: pytest.Config, framework) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
         (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None

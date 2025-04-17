@@ -62,7 +62,7 @@ def get_traces(tempo_host: str, service_name: str):
 
 
 @retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
-async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
+def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
     """Get traces directly from Tempo REST API, but also try multiple times.
 
     Useful for cases when Tempo might not return the traces immediately (its API is known for returning data in

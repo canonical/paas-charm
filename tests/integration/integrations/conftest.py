@@ -50,6 +50,7 @@ def pytest_configure(config):
 def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask")
 
+
 @pytest.fixture(scope="module")
 def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""
@@ -80,7 +81,11 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
         show_debug_log(juju)
         return
 
-def build_charm_file( tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config, framework,
+
+def build_charm_file(
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config,
+    framework,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -93,7 +98,7 @@ def build_charm_file( tmp_path_factory: pytest.TempPathFactory, pytestconfig: py
             charm_location = PROJECT_ROOT / f"examples/{framework}"
         try:
             subprocess.run(
-                ["charmcraft", "pack"], #, "--project-dir", charm_location
+                ["charmcraft", "pack"],  # , "--project-dir", charm_location
                 check=True,
                 cwd=charm_location,
                 capture_output=True,
@@ -101,7 +106,9 @@ def build_charm_file( tmp_path_factory: pytest.TempPathFactory, pytestconfig: py
             )  # nosec B603, B607
 
             app_name = f"{framework}-k8s"
-            charm_path = pathlib.Path(charm_location)#.parent.parent.parent.parent / "examples/{framework}"
+            charm_path = pathlib.Path(
+                charm_location
+            )  # .parent.parent.parent.parent / "examples/{framework}"
             charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
             assert charms, f"{app_name} .charm file not found"
             assert (
@@ -151,56 +158,92 @@ def deploy_postgresql(
 
 @pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(
-    juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
-    pytestconfig: pytest.Config
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
     framework = "flask"
-    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"test-{framework}-image",use_postgres=False)
+    return generate_app_fixture(
+        juju,
+        tmp_path_factory,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"test-{framework}-image",
+        use_postgres=False,
+    )
+
 
 @pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(
-    juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
-    pytestconfig: pytest.Config
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
     framework = "django"
-    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+    return generate_app_fixture(
+        juju,
+        tmp_path_factory,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=True,
+    )
+
+
 @pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(
-    juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
-    pytestconfig: pytest.Config
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
     framework = "fastapi"
-    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+    return generate_app_fixture(
+        juju,
+        tmp_path_factory,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=True,
+    )
+
+
 @pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(
-    juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
-    pytestconfig: pytest.Config
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
     framework = "go"
-    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
- 
- 
+    return generate_app_fixture(
+        juju,
+        tmp_path_factory,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=True,
+    )
+
+
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
-    juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
-    pytestconfig: pytest.Config
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
     framework = "expressjs"
-    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+    return generate_app_fixture(
+        juju,
+        tmp_path_factory,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=True,
+    )
+
 
 def generate_app_fixture(
     juju: jubilant.Juju,
     tmp_path_factory: pytest.TempPathFactory,
     pytestconfig: pytest.Config,
     framework: str,
-    app_name:str,
-    image_name:str,
-    use_postgres:bool = False,
+    app_name: str,
+    image_name: str,
+    use_postgres: bool = False,
 ):
     # pylint: disable=too-many-locals
     """Discourse charm used for integration testing.
@@ -209,7 +252,6 @@ def generate_app_fixture(
     use_existing = pytestconfig.getoption("--use-existing", default=False)
     if use_existing:
         return App(app_name)
-        
 
     config = {}
     resources = {
@@ -224,6 +266,8 @@ def generate_app_fixture(
             "django-app-image": pytestconfig.getoption(f"--{image_name}"),
         }
         config = {"django-allowed-hosts": "*"}
+    if framework == "fastapi":
+        config = {"non-optional-string": "string"}
     charm_file = build_charm_file(tmp_path_factory, pytestconfig, framework)
     juju.deploy(
         charm=charm_file,
@@ -243,12 +287,9 @@ def generate_app_fixture(
     return App(app_name)
 
 
-
-
 def deploy_and_configure_minio(
     juju: jubilant.Juju,
-        ) -> None:
-
+) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = {
         "access-key": "accesskey",
@@ -256,17 +297,15 @@ def deploy_and_configure_minio(
     }
     minio_app_name = "minio"
     juju.deploy(
-     minio_app_name,
+        minio_app_name,
         channel="edge",
         config=config,
         trust=True,
     )
 
-    juju.wait(
-        lambda status: status.apps[minio_app_name].is_active,
-        timeout=2000)
+    juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=2000)
     status = juju.status()
-    minio_addr =status.apps[minio_app_name].units[minio_app_name + "/0"].address
+    minio_addr = status.apps[minio_app_name].units[minio_app_name + "/0"].address
 
     mc_client = Minio(
         f"{minio_addr}:9000",
@@ -281,21 +320,22 @@ def deploy_and_configure_minio(
         mc_client.make_bucket("tempo")
 
     # configure s3-integrator
-    juju.config("s3-integrator",
+    juju.config(
+        "s3-integrator",
         {
             "endpoint": f"minio-0.minio-endpoints.{juju.status().model.name}.svc.cluster.local:9000",
             "bucket": "tempo",
-        }
+        },
     )
 
-    task = juju.run("s3-integrator/0", "sync-s3-credentials", **config)
+    task = juju.run("s3-integrator/0", "sync-s3-credentials", config)
     assert task.status == "completed"
 
 
 @pytest.fixture(scope="module", name="tempo_app")
 def deploy_tempo_cluster(
     juju: jubilant.Juju,
-    ):
+):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
     worker_app = "tempo-worker"
@@ -311,7 +351,8 @@ def deploy_tempo_cluster(
         tempo_coordinator_charm_url,
         app=tempo_app,
         channel=coordinator_channel,
-        trust=True,)
+        trust=True,
+    )
     juju.deploy(
         "s3-integrator",
         channel="edge",
@@ -323,7 +364,7 @@ def deploy_tempo_cluster(
     juju.wait(
         lambda status: jubilant.all_active(status, [tempo_app, worker_app, "s3-integrator"]),
         timeout=2000,
-    ) 
+    )
     return App(tempo_app)
 
 
@@ -335,7 +376,7 @@ def load_kube_config_fixture(pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="module")
-def mailcatcher(load_kube_config,juju):
+def mailcatcher(load_kube_config, juju):
     """Deploy test mailcatcher service."""
     namespace = juju.status().model.name
     v1 = kubernetes.client.CoreV1Api()
