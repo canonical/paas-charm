@@ -2,8 +2,8 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Flask workers and schedulers."""
-
 import logging
+import time
 
 import jubilant
 import pytest
@@ -52,6 +52,8 @@ def test_workload_tracing(
 
     for _ in range(5):
         requests.get(f"http://{unit_ip}:{port}")
+    
+    time.sleep(10)
 
     # verify workload traces are ingested into Tempo
     assert get_traces_patiently(tempo_host, tracing_app.name)
