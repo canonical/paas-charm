@@ -31,3 +31,5 @@ smtp
 SMTP
 src
 tox
+OpenFGA
+openfga

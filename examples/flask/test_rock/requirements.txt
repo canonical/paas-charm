@@ -13,3 +13,4 @@ opentelemetry-exporter-otlp-proto-http
 opentelemetry-instrumentation-flask
 opentelemetry-sdk
 Flask-Mail
+openfga_sdk

@@ -21,6 +21,9 @@ import redis
 from celery import Celery, Task
 from flask import Flask, g, jsonify, request
 from flask_mail import Mail, Message
+from openfga_sdk import ClientConfiguration
+from openfga_sdk.credentials import CredentialConfiguration, Credentials
+from openfga_sdk.sync import OpenFgaClient
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
@@ -127,6 +130,24 @@ def send_mail():
         mail.send(msg)
         return "Sent"
     return "Mail not configured correctly"
+
+
+@app.route("/openfga/list-authorization-models")
+def list_authorization_models():
+    try:
+        configuration = ClientConfiguration(
+            api_url=os.environ["FGA_HTTP_API_URL"],
+            store_id=os.environ["FGA_STORE_ID"],
+            credentials=Credentials(
+                method="api_token",
+                configuration=CredentialConfiguration(api_token=os.environ["FGA_TOKEN"]),
+            ),
+        )
+        fga_client = OpenFgaClient(configuration)
+        fga_client.read_authorization_models()
+        return "Listed authorization models"
+    except Exception as e:
+        return f"Failed to list authorization models: {e}"
 
 
 @celery_app.on_after_configure.connect

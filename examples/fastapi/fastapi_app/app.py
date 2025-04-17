@@ -5,6 +5,9 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi_mail.errors import ConnectionErrors
+from openfga_sdk import ClientConfiguration
+from openfga_sdk.credentials import CredentialConfiguration, Credentials
+from openfga_sdk.sync import OpenFgaClient
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -81,6 +84,24 @@ async def simple_send() -> JSONResponse:
         return "Sent"
     except ConnectionErrors as e:
         return f"Failed to send mail: {e}"
+
+
+@app.get("/openfga/list-authorization-models")
+def list_authorization_models():
+    try:
+        configuration = ClientConfiguration(
+            api_url=os.environ["FGA_HTTP_API_URL"],
+            store_id=os.environ["FGA_STORE_ID"],
+            credentials=Credentials(
+                method="api_token",
+                configuration=CredentialConfiguration(api_token=os.environ["FGA_TOKEN"]),
+            ),
+        )
+        fga_client = OpenFgaClient(configuration)
+        fga_client.read_authorization_models()
+        return "Listed authorization models"
+    except Exception as e:
+        return f"Failed to list authorization models: {e}"
 
 
 @app.get("/table/{table}")

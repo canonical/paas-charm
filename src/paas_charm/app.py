@@ -261,7 +261,9 @@ def encode_env(value: str | int | float | bool | list | dict) -> str:
     return value if isinstance(value, str) else json.dumps(value)
 
 
-def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -> dict[str, str]:
+def map_integrations_to_env(  # noqa: C901
+    integrations: IntegrationsState, prefix: str = ""
+) -> dict[str, str]:
     """Generate environment variables for the IntegrationState.
 
     Args:
@@ -335,6 +337,19 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
                 ("SMTP_TRANSPORT_SECURITY", smtp.transport_security),
                 ("SMTP_DOMAIN", smtp.domain),
                 ("SMTP_SKIP_SSL_VERIFY", smtp.skip_ssl_verify),
+            )
+            if v is not None
+        )
+
+    if integrations.openfga_parameters:
+        fga = integrations.openfga_parameters
+        env.update(
+            (k, v)
+            for k, v in (
+                ("FGA_STORE_ID", fga.store_id),
+                ("FGA_TOKEN", fga.token),
+                ("FGA_GRPC_API_URL", fga.grpc_api_url),
+                ("FGA_HTTP_API_URL", fga.http_api_url),
             )
             if v is not None
         )

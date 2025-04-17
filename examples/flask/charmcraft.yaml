@@ -141,6 +141,10 @@ requires:
     interface: smtp
     optional: True
     limit: 1
+  openfga:
+    interface: openfga
+    optional: True
+    limit: 1
 resources:
   flask-app-image:
     description: flask application image.
