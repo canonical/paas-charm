@@ -44,7 +44,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.saml_integrator.v0.saml import SamlRequires
+    from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -166,12 +166,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 else None
             ),
             saml_relation_data=(
-                saml_data.to_relation_data()
-                if (
-                    integration_requirers.saml
-                    and (saml_data := integration_requirers.saml.get_relation_data())
-                )
-                else None
+                integration_requirers.saml.to_relation_data()
+                if integration_requirers.saml
+                else None,
             ),
             rabbitmq_uri=(
                 integration_requirers.rabbitmq.rabbitmq_uri()
@@ -282,7 +279,7 @@ class IntegrationRequirers:
     redis: RedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
     s3: "S3Requirer | None" = None
-    saml: "SamlRequires | None" = None
+    saml: "PaaSSAMLRequirer | None" = None
     tracing: "TracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
 
@@ -297,7 +294,7 @@ class IntegrationsState:
         redis_uri: The redis uri provided by the redis charm.
         databases_uris: Map from interface_name to the database uri.
         s3_parameters: S3 parameters.
-        saml_parameters: SAML parameters.
+        saml: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
         tempo_parameters: Tracing parameters.
         smtp_parameters: Smtp parameters.
@@ -306,7 +303,7 @@ class IntegrationsState:
     redis_uri: str | None = None
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3_parameters: "S3Parameters | None" = None
-    saml_parameters: "SamlParameters | None" = None
+    saml: "PaaSSAMLRelationData | None" = None
     rabbitmq_uri: str | None = None
     tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
@@ -319,7 +316,7 @@ class IntegrationsState:
         redis_uri: str | None,
         database_requirers: dict[str, DatabaseRequires],
         s3_connection_info: dict[str, str] | None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
+        saml_relation_data: "PaaSSAMLRelationData| None" = None,
         rabbitmq_uri: str | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
@@ -341,7 +338,6 @@ class IntegrationsState:
             The IntegrationsState instance created.
         """
         s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
-        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
         tempo_data = {}
         if tracing_requirer and tracing_requirer.is_ready():
             tempo_data = {
@@ -364,7 +360,7 @@ class IntegrationsState:
                 if (uri := get_uri(requirers)) is not None
             },
             s3_parameters=s3_parameters,
-            saml_parameters=saml_parameters,
+            saml=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
