@@ -10,6 +10,7 @@ import time
 # pylint: disable=too-many-arguments
 import jubilant
 import requests
+from ops import JujuVersion
 
 from tests.integration.types import App
 
@@ -75,8 +76,9 @@ def test_loki_integration(
     assert result
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
-    assert any("python-requests" in line[1] for line in log["values"])
-    if status.model.version < juju.client.client.Number.from_json("3.4.0"):
+    assert expressjs_app.name in log["stream"]["juju_application"]
+
+    if JujuVersion(status.model.version) < JujuVersion("3.4.0"):
         assert "filename" in log["stream"]
     else:
         assert "filename" not in log["stream"]
