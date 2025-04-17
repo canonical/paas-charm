@@ -64,3 +64,5 @@ def test_smtp_integrations(
     assert "<tester@example.com>" in mails[0]["sender"]
     assert mails[0]["recipients"] == ["<test@example.com>"]
     assert mails[0]["subject"] == "hello"
+    juju.remove_relation(smtp_app.name, f"{smtp_integrator_app}:smtp", force=True)
+    juju.remove_application(smtp_app.name, destroy_storage=True, force=True)

@@ -5,7 +5,6 @@
 
 import collections
 import logging
-import os
 import pathlib
 import subprocess  # nosec B404
 import time
@@ -44,11 +43,6 @@ def pytest_configure(config):
         "markers",
         "skip_juju_version(version): skip test if Juju version is lower than version",
     )
-
-
-@pytest.fixture(autouse=True)
-def cwd():
-    return os.chdir(PROJECT_ROOT / "examples/flask")
 
 
 @pytest.fixture(scope="module")
