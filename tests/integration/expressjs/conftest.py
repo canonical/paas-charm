@@ -89,7 +89,7 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
 
 
 def build_charm_file(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
+    pytestconfig: pytest.Config, framework
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -160,7 +160,7 @@ def expressjs_app_fixture(
     resources = {
         "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
-    charm_file = build_charm_file(pytestconfig, ops_test, tmp_path_factory, "expressjs")
+    charm_file = build_charm_file(pytestconfig, "expressjs")
     juju.deploy(
         charm=charm_file,
         resources=resources,

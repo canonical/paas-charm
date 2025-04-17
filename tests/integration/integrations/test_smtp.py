@@ -5,12 +5,10 @@
 
 import logging
 
+import jubilant
 import pytest
 import requests
 from juju.application import Application
-from juju.errors import JujuError
-from juju.model import Model
-from pytest_operator.plugin import OpsTest
 
 from tests.integration.helpers import get_mails_patiently
 
@@ -27,12 +25,10 @@ logger = logging.getLogger(__name__)
         ("expressjs_app", 8080),
     ],
 )
-async def test_smtp_integrations(
-    ops_test: OpsTest,
+def test_smtp_integrations(
+    juju: jubilant.Juju,
     smtp_app_fixture: Application,
     port,
-    model: Model,
-    get_unit_ips,
     request: pytest.FixtureRequest,
     mailcatcher,
 ):
@@ -47,35 +43,24 @@ async def test_smtp_integrations(
         "host": mailcatcher.host,
         "port": mailcatcher.port,
     }
-    try:
-        smtp_integrator_app = await model.deploy(
-            "smtp-integrator",
-            channel="latest/edge",
-            config=smtp_config,
-        )
-    except JujuError as e:
-        if "application already exists" in str(e):
-            logger.info(f"smtp-integrator is already deployed {e}")
-            smtp_integrator_app = model.applications["smtp-integrator"]
-        else:
-            raise e
-
+    smtp_integrator_app = "smtp-integrator"
+    if not juju.status().apps.get(smtp_integrator_app):
+        juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
+    
     smtp_app = request.getfixturevalue(smtp_app_fixture)
-    await model.wait_for_idle()
+    juju.wait(jubilant.all_active)
 
-    await model.add_relation(smtp_app.name, f"{smtp_integrator_app.name}:smtp")
-    await model.wait_for_idle(
-        idle_period=30,
-        apps=[smtp_app.name, smtp_integrator_app.name],
-        status="active",
-    )
 
-    unit_ip = (await get_unit_ips(smtp_app.name))[0]
+    juju.integrate(smtp_app.name, f"{smtp_integrator_app}:smtp")
+    juju.wait(lambda status: jubilant.all_active(status, [smtp_app.name, smtp_integrator_app]))
+
+    status = juju.status()
+    unit_ip = status.apps[smtp_app.name].units[smtp_app.name + "/0"].address
     response = requests.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
     assert response.status_code == 200
     assert "Sent" in response.text
 
-    mails = await get_mails_patiently(mailcatcher.pod_ip)
+    mails = get_mails_patiently(mailcatcher.pod_ip)
     assert mails[0]
     assert "<tester@example.com>" in mails[0]["sender"]
     assert mails[0]["recipients"] == ["<test@example.com>"]

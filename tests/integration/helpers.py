@@ -74,7 +74,7 @@ async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
 
 
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
-async def get_mails_patiently(mailcatcher_pod_ip):
+def get_mails_patiently(mailcatcher_pod_ip):
     """Get mails directly from Mailcatcher REST API, but also try multiple times."""
     url = f"http://{mailcatcher_pod_ip}:1080/messages"
     req = requests.get(

@@ -7,19 +7,21 @@ import collections
 import logging
 import os
 import pathlib
+import subprocess  # nosec B404
 import time
+from collections.abc import Generator
+from typing import cast
 
+import jubilant
 import kubernetes
-import nest_asyncio
 import pytest
-import pytest_asyncio
-from juju.application import Application
 from minio import Minio
 from ops import JujuVersion
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.helpers import inject_venv
+from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
-nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 
@@ -48,18 +50,223 @@ def pytest_configure(config):
 def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask")
 
+@pytest.fixture(scope="module")
+def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
+    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
 
-async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:
+    def show_debug_log(juju: jubilant.Juju):
+        if request.session.testsfailed:
+            log = juju.debug_log(limit=1000)
+            print(log, end="")
+
+    use_existing = request.config.getoption("--use-existing", default=False)
+    if use_existing:
+        juju = jubilant.Juju()
+        yield juju
+        show_debug_log(juju)
+        return
+
+    model = request.config.getoption("--model")
+    if model:
+        juju = jubilant.Juju(model=model)
+        yield juju
+        show_debug_log(juju)
+        return
+
+    keep_models = cast(bool, request.config.getoption("--keep-models"))
+    with jubilant.temp_model(keep=keep_models) as juju:
+        juju.wait_timeout = 10 * 60
+        yield juju
+        show_debug_log(juju)
+        return
+
+def build_charm_file( tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config, framework,
+) -> str:
+    """Get the existing charm file if exists, build a new one if not."""
+    charm_file = next(
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
+    )
+
+    if not charm_file:
+        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
+        if framework == "flask":
+            charm_location = PROJECT_ROOT / f"examples/{framework}"
+        try:
+            subprocess.run(
+                ["charmcraft", "pack"], #, "--project-dir", charm_location
+                check=True,
+                cwd=charm_location,
+                capture_output=True,
+                text=True,
+            )  # nosec B603, B607
+
+            app_name = f"{framework}-k8s"
+            charm_path = pathlib.Path(charm_location)#.parent.parent.parent.parent / "examples/{framework}"
+            charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
+            assert charms, f"{app_name} .charm file not found"
+            assert (
+                len(charms) == 1
+            ), f"{app_name} has more than one .charm file, unsure which to use"
+            charm_file = str(charms[0])
+        except subprocess.CalledProcessError as exc:
+            raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
+
+    elif charm_file[0] != "/":
+        charm_file = PROJECT_ROOT / charm_file
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+    return pathlib.Path(charm_file).absolute()
+
+
+def deploy_postgresql(
+    juju: jubilant.Juju,
+):
+    """Deploy and set up postgresql charm needed for the 12-factor charm."""
+
+    if juju.status().apps.get("postgresql-k8s"):
+        logger.info("postgresql-k8s already deployed")
+        return
+    juju.deploy(
+        "postgresql-k8s",
+        channel="14/stable",
+        base="ubuntu@22.04",
+        revision=300,
+        trust=True,
+        config={"profile": "testing"},
+    )
+    juju.wait(
+        lambda status: jubilant.all_active(status, ["postgresql-k8s"]),
+        timeout=20 * 60,
+    )
+
+    # configure postgres
+    juju.config(
+        "postgresql-k8s",
+        {
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+        },
+    )
+    juju.wait(lambda status: jubilant.all_active(status, ["postgresql-k8s"]))
+
+
+@pytest.fixture(scope="module", name="flask_app")
+def flask_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config
+):
+    framework = "flask"
+    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"test-{framework}-image",use_postgres=False)
+
+@pytest.fixture(scope="module", name="django_app")
+def django_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config
+):
+    framework = "django"
+    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+@pytest.fixture(scope="module", name="fastapi_app")
+def fastapi_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config
+):
+    framework = "fastapi"
+    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+@pytest.fixture(scope="module", name="go_app")
+def go_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config
+):
+    framework = "go"
+    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+ 
+ 
+@pytest.fixture(scope="module", name="expressjs_app")
+def expressjs_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config
+):
+    framework = "expressjs"
+    return generate_app_fixture(juju,tmp_path_factory, pytestconfig,app_name=f"{framework}-k8s", framework=framework, image_name=f"{framework}-app-image",use_postgres=True)
+
+def generate_app_fixture(
+    juju: jubilant.Juju,
+    tmp_path_factory: pytest.TempPathFactory,
+    pytestconfig: pytest.Config,
+    framework: str,
+    app_name:str,
+    image_name:str,
+    use_postgres:bool = False,
+):
+    # pylint: disable=too-many-locals
+    """Discourse charm used for integration testing.
+    Builds the charm and deploys it and the relations it depends on.
+    """
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        return App(app_name)
+        
+
+    config = {}
+    resources = {
+        "app-image": pytestconfig.getoption(f"--{image_name}"),
+    }
+    if framework == "flask":
+        resources = {
+            "flask-app-image": pytestconfig.getoption(f"--{image_name}"),
+        }
+    if framework == "django":
+        resources = {
+            "django-app-image": pytestconfig.getoption(f"--{image_name}"),
+        }
+        config = {"django-allowed-hosts": "*"}
+    charm_file = build_charm_file(tmp_path_factory, pytestconfig, framework)
+    juju.deploy(
+        charm=charm_file,
+        resources=resources,
+        config=config,
+    )
+
+    juju.wait(lambda status: jubilant.all_waiting(status, [app_name]))
+    # Add required relations
+    status = juju.status()
+    assert status.apps[app_name].units[app_name + "/0"].is_waiting
+    if use_postgres:
+        deploy_postgresql(juju)
+        juju.integrate(app_name, "postgresql-k8s:database")
+    juju.wait(jubilant.all_active)
+
+    return App(app_name)
+
+
+
+
+def deploy_and_configure_minio(
+    juju: jubilant.Juju,
+        ) -> None:
+
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = {
         "access-key": "accesskey",
         "secret-key": "secretkey",
     }
-    minio_app = await ops_test.model.deploy("minio", channel="edge", trust=True, config=config)
-    await ops_test.model.wait_for_idle(
-        apps=[minio_app.name], status="active", timeout=2000, idle_period=45
+    minio_app_name = "minio"
+    juju.deploy(
+     minio_app_name,
+        channel="edge",
+        config=config,
+        trust=True,
     )
-    minio_addr = (await get_unit_ips(minio_app.name))[0]
+
+    juju.wait(
+        lambda status: status.apps[minio_app_name].is_active,
+        timeout=2000)
+    status = juju.status()
+    minio_addr =status.apps[minio_app_name].units[minio_app_name + "/0"].address
 
     mc_client = Minio(
         f"{minio_addr}:9000",
@@ -74,55 +281,50 @@ async def deploy_and_configure_minio(ops_test: OpsTest, get_unit_ips) -> None:
         mc_client.make_bucket("tempo")
 
     # configure s3-integrator
-    s3_integrator_app: Application = ops_test.model.applications["s3-integrator"]
-    s3_integrator_leader: Unit = s3_integrator_app.units[0]
-
-    await s3_integrator_app.set_config(
+    juju.config("s3-integrator",
         {
-            "endpoint": f"minio-0.minio-endpoints.{ops_test.model.name}.svc.cluster.local:9000",
+            "endpoint": f"minio-0.minio-endpoints.{juju.status().model.name}.svc.cluster.local:9000",
             "bucket": "tempo",
         }
     )
 
-    action = await s3_integrator_leader.run_action("sync-s3-credentials", **config)
-    action_result = await action.wait()
-    assert action_result.status == "completed"
+    task = juju.run("s3-integrator/0", "sync-s3-credentials", **config)
+    assert task.status == "completed"
 
 
-@pytest_asyncio.fixture(scope="module", name="tempo_app")
-async def deploy_tempo_cluster(ops_test: OpsTest, get_unit_ips):
+@pytest.fixture(scope="module", name="tempo_app")
+def deploy_tempo_cluster(
+    juju: jubilant.Juju,
+    ):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
     worker_app = "tempo-worker"
     tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "edge"
     tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "edge"
-    await ops_test.model.deploy(
+    juju.deploy(
         tempo_worker_charm_url,
-        application_name=worker_app,
+        app=worker_app,
         channel=worker_channel,
         trust=True,
     )
-    app = await ops_test.model.deploy(
+    juju.deploy(
         tempo_coordinator_charm_url,
-        application_name=tempo_app,
+        app=tempo_app,
         channel=coordinator_channel,
-        trust=True,
+        trust=True,)
+    juju.deploy(
+        "s3-integrator",
+        channel="edge",
     )
-    await ops_test.model.deploy("s3-integrator", channel="edge")
-    await ops_test.model.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
-    await ops_test.model.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
-    await deploy_and_configure_minio(ops_test, get_unit_ips)
+    juju.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
+    juju.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
+    deploy_and_configure_minio(juju)
 
-    async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[tempo_app, worker_app, "s3-integrator"],
-            status="active",
-            timeout=2000,
-            idle_period=30,
-            # TODO: remove when https://github.com/canonical/tempo-coordinator-k8s-operator/issues/90 is fixed
-            raise_on_error=False,
-        )
-    return app
+    juju.wait(
+        lambda status: jubilant.all_active(status, [tempo_app, worker_app, "s3-integrator"]),
+        timeout=2000,
+    ) 
+    return App(tempo_app)
 
 
 @pytest.fixture(scope="module", name="load_kube_config")
@@ -133,10 +335,9 @@ def load_kube_config_fixture(pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="module")
-def mailcatcher(load_kube_config, ops_test: OpsTest):
+def mailcatcher(load_kube_config,juju):
     """Deploy test mailcatcher service."""
-    assert ops_test.model
-    namespace = ops_test.model.name
+    namespace = juju.status().model.name
     v1 = kubernetes.client.CoreV1Api()
     pod = kubernetes.client.V1Pod(
         api_version="v1",
