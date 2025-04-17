@@ -305,8 +305,8 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
             if v is not None
         )
 
-    if integrations.saml_parameters:
-        saml = integrations.saml_parameters
+    if integrations.saml:
+        saml = integrations.saml
         env.update(
             (k, v)
             for k, v in (
