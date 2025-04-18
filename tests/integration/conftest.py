@@ -1,16 +1,19 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 import json
 import logging
 import pathlib
+from collections.abc import Generator
+from typing import cast
 
+import jubilant
 import pytest
 import pytest_asyncio
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
+from ops import JujuVersion
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
@@ -58,6 +61,15 @@ def fixture_go_app_image(pytestconfig: Config):
     image = pytestconfig.getoption("--go-app-image")
     if not image:
         raise ValueError("the following arguments are required: --go-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="expressjs_app_image")
+def fixture_expressjs_app_image(pytestconfig: Config):
+    """Return the --expressjs-app-image test parameter."""
+    image = pytestconfig.getoption("--expressjs-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --expressjs-app-image")
     return image
 
 
@@ -313,6 +325,53 @@ async def go_blocked_app_fixture(
     return app
 
 
+@pytest_asyncio.fixture(scope="module", name="expressjs_app")
+async def expressjs_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    expressjs_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "expressjs")
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="expressjs_blocked_app")
+async def expressjs_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    expressjs_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = await build_charm_file_with_config_options(
+        pytestconfig, ops_test, tmp_path_factory, "expressjs", NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
+    return app
+
+
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")
 async def ops_test_lxd_fixture(request, tmp_path_factory, ops_test: OpsTest):
     """Return a ops_test fixture for lxd, creating the lxd controller if it does not exist."""
@@ -512,3 +571,53 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
+
+
+@pytest.fixture(scope="module")
+def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
+    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
+
+    def show_debug_log(juju: jubilant.Juju):
+        if request.session.testsfailed:
+            log = juju.debug_log(limit=1000)
+            print(log, end="")
+
+    use_existing = request.config.getoption("--use-existing", default=False)
+    if use_existing:
+        juju = jubilant.Juju()
+        yield juju
+        show_debug_log(juju)
+        return
+
+    model = request.config.getoption("--model")
+    if model:
+        juju = jubilant.Juju(model=model)
+        yield juju
+        show_debug_log(juju)
+        return
+
+    keep_models = cast(bool, request.config.getoption("--keep-models"))
+    with jubilant.temp_model(keep=keep_models) as juju:
+        juju.wait_timeout = 10 * 60
+        yield juju
+        show_debug_log(juju)
+        return
+
+
+@pytest.fixture(autouse=True)
+def skip_by_juju_version(request, juju: jubilant.Juju):
+    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
+    if request.node.get_closest_marker("skip_juju_version"):
+        status = juju.status()
+        current_version = JujuVersion(status.model.version)
+        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
+        if current_version < min_version:
+            pytest.skip("Juju version is too old")
+
+
+def pytest_configure(config):
+    """Add new marker."""
+    config.addinivalue_line(
+        "markers",
+        "skip_juju_version(version): skip test if Juju version is lower than version",
+    )
