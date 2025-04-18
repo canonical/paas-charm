@@ -1,16 +1,19 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 import json
 import logging
 import pathlib
+from collections.abc import Generator
+from typing import cast
 
+import jubilant
 import pytest
 import pytest_asyncio
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
+from ops import JujuVersion
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
@@ -568,3 +571,53 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
+
+
+@pytest.fixture(scope="module")
+def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
+    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
+
+    def show_debug_log(juju: jubilant.Juju):
+        if request.session.testsfailed:
+            log = juju.debug_log(limit=1000)
+            print(log, end="")
+
+    use_existing = request.config.getoption("--use-existing", default=False)
+    if use_existing:
+        juju = jubilant.Juju()
+        yield juju
+        show_debug_log(juju)
+        return
+
+    model = request.config.getoption("--model")
+    if model:
+        juju = jubilant.Juju(model=model)
+        yield juju
+        show_debug_log(juju)
+        return
+
+    keep_models = cast(bool, request.config.getoption("--keep-models"))
+    with jubilant.temp_model(keep=keep_models) as juju:
+        juju.wait_timeout = 10 * 60
+        yield juju
+        show_debug_log(juju)
+        return
+
+
+@pytest.fixture(autouse=True)
+def skip_by_juju_version(request, juju: jubilant.Juju):
+    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
+    if request.node.get_closest_marker("skip_juju_version"):
+        status = juju.status()
+        current_version = JujuVersion(status.model.version)
+        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
+        if current_version < min_version:
+            pytest.skip("Juju version is too old")
+
+
+def pytest_configure(config):
+    """Add new marker."""
+    config.addinivalue_line(
+        "markers",
+        "skip_juju_version(version): skip test if Juju version is lower than version",
+    )

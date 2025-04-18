@@ -8,14 +8,11 @@ import logging
 import pathlib
 import subprocess  # nosec B404
 import time
-from collections.abc import Generator
-from typing import cast
 
 import jubilant
 import kubernetes
 import pytest
 from minio import Minio
-from ops import JujuVersion
 
 from tests.integration.helpers import inject_venv
 from tests.integration.types import App
@@ -25,59 +22,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(autouse=True)
-def skip_by_juju_version(request, model):
-    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
-    if request.node.get_closest_marker("skip_juju_version"):
-        current_version = JujuVersion(
-            f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
-        )
-        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
-        if current_version < min_version:
-            pytest.skip("Juju version is too old")
-
-
-def pytest_configure(config):
-    """Add new marker."""
-    config.addinivalue_line(
-        "markers",
-        "skip_juju_version(version): skip test if Juju version is lower than version",
-    )
-
-
-@pytest.fixture(scope="module")
-def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
-    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
-
-    def show_debug_log(juju: jubilant.Juju):
-        if request.session.testsfailed:
-            log = juju.debug_log(limit=1000)
-            print(log, end="")
-
-    use_existing = request.config.getoption("--use-existing", default=False)
-    if use_existing:
-        juju = jubilant.Juju()
-        yield juju
-        show_debug_log(juju)
-        return
-
-    model = request.config.getoption("--model")
-    if model:
-        juju = jubilant.Juju(model=model)
-        yield juju
-        show_debug_log(juju)
-        return
-
-    keep_models = cast(bool, request.config.getoption("--keep-models"))
-    with jubilant.temp_model(keep=keep_models) as juju:
-        juju.wait_timeout = 10 * 60
-        yield juju
-        show_debug_log(juju)
-        return
-
-
 def build_charm_file(
-    tmp_path_factory: pytest.TempPathFactory,
     pytestconfig: pytest.Config,
     framework,
 ) -> str:
@@ -157,7 +102,6 @@ def flask_app_fixture(
     framework = "flask"
     return generate_app_fixture(
         juju,
-        tmp_path_factory,
         pytestconfig,
         app_name=f"{framework}-k8s",
         framework=framework,
@@ -173,7 +117,6 @@ def django_app_fixture(
     framework = "django"
     return generate_app_fixture(
         juju,
-        tmp_path_factory,
         pytestconfig,
         app_name=f"{framework}-k8s",
         framework=framework,
@@ -189,7 +132,6 @@ def fastapi_app_fixture(
     framework = "fastapi"
     return generate_app_fixture(
         juju,
-        tmp_path_factory,
         pytestconfig,
         app_name=f"{framework}-k8s",
         framework=framework,
@@ -205,7 +147,6 @@ def go_app_fixture(
     framework = "go"
     return generate_app_fixture(
         juju,
-        tmp_path_factory,
         pytestconfig,
         app_name=f"{framework}-k8s",
         framework=framework,
@@ -221,7 +162,6 @@ def expressjs_app_fixture(
     framework = "expressjs"
     return generate_app_fixture(
         juju,
-        tmp_path_factory,
         pytestconfig,
         app_name=f"{framework}-k8s",
         framework=framework,
@@ -232,7 +172,6 @@ def expressjs_app_fixture(
 
 def generate_app_fixture(
     juju: jubilant.Juju,
-    tmp_path_factory: pytest.TempPathFactory,
     pytestconfig: pytest.Config,
     framework: str,
     app_name: str,
@@ -262,7 +201,7 @@ def generate_app_fixture(
         config = {"django-allowed-hosts": "*"}
     if framework == "fastapi":
         config = {"non-optional-string": "string"}
-    charm_file = build_charm_file(tmp_path_factory, pytestconfig, framework)
+    charm_file = build_charm_file(pytestconfig, framework)
     juju.deploy(
         charm=charm_file,
         resources=resources,

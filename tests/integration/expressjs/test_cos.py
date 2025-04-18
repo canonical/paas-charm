@@ -9,8 +9,8 @@ import time
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
 import jubilant
+import pytest
 import requests
-from ops import JujuVersion
 
 from tests.integration.types import App
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_prometheus_integration(
     expressjs_app: App,
     juju: jubilant.Juju,
@@ -43,6 +44,7 @@ def test_prometheus_integration(
         assert len(query_targets["data"]["activeTargets"])
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_loki_integration(
     expressjs_app: App,
     juju: jubilant.Juju,
@@ -77,13 +79,10 @@ def test_loki_integration(
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
     assert expressjs_app.name in log["stream"]["juju_application"]
-
-    if JujuVersion(status.model.version) < JujuVersion("3.4.0"):
-        assert "filename" in log["stream"]
-    else:
-        assert "filename" not in log["stream"]
+    assert "filename" not in log["stream"]
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_grafana_integration(
     expressjs_app: App,
     juju: jubilant.Juju,
