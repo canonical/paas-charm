@@ -123,6 +123,7 @@ def build_charm_file(pytestconfig: pytest.Config, framework) -> str:
     return pathlib.Path(charm_file).absolute()
 
 
+@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
