@@ -3,7 +3,7 @@
 
 """Go charm unit tests."""
 
-import unittest.mock
+import unittest
 
 import ops
 import pytest
