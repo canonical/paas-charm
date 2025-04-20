@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## v1.4.1 - 2025-04-14
+## v1.4.2 - 2025-04-20
 
 * feat: Added peer address as an environment variable
 
