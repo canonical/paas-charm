@@ -72,9 +72,10 @@ class SecretStorage(ops.Object, abc.ABC):
         peer_relation = typing.cast(
             ops.Relation, self.model.get_relation(self._peer_relation_name)
         )
-        for unit in peer_relation.units:
+        unit_names = [unit.name for unit in peer_relation.units]
+        for unit_name in sorted(unit_names):
             unit_fqdn = (
-                f"{unit.name.replace('/', '-')}."
+                f"{unit_name.replace('/', '-')}."
                 f"{self.model.app.name}-endpoints."
                 f"{self.model.name}.svc.cluster.local"
             )
