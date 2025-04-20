@@ -6,7 +6,6 @@ import os
 import pathlib
 import typing
 import unittest
-import unittest.mock
 
 import ops
 import pytest
