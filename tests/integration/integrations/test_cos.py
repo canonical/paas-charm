@@ -125,22 +125,22 @@ def test_grafana_integration(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(
-        f"{cos_apps["prometheus_app"].name}:grafana-source",
-        f"{cos_apps["grafana_app"].name}:grafana-source",
+        f"{cos_apps['prometheus_app'].name}:grafana-source",
+        f"{cos_apps['grafana_app'].name}:grafana-source",
     )
     juju.integrate(
-        f"{cos_apps["loki_app"].name}:grafana-source",
-        f"{cos_apps["grafana_app"].name}:grafana-source",
+        f"{cos_apps['loki_app'].name}:grafana-source",
+        f"{cos_apps['grafana_app'].name}:grafana-source",
     )
     juju.integrate(app.name, cos_apps["grafana_app"].name)
     juju.wait(jubilant.all_active)
 
     status = juju.status()
-    task = juju.run(f"{cos_apps["grafana_app"].name}/0", "get-admin-password")
+    task = juju.run(f"{cos_apps['grafana_app'].name}/0", "get-admin-password")
     password = task.results["admin-password"]
     grafana_ip = (
         status.apps[cos_apps["grafana_app"].name]
-        .units[f"{cos_apps["grafana_app"].name}/0"]
+        .units[f"{cos_apps['grafana_app'].name}/0"]
         .address
     )
     sess = requests.session()
