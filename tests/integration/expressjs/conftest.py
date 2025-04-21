@@ -113,7 +113,7 @@ def build_charm_file(pytestconfig: pytest.Config, framework) -> str:
     return pathlib.Path(charm_file).absolute()
 
 
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
@@ -179,6 +179,7 @@ def cwd():
 
 
 @pytest.fixture(scope="module", name="prometheus_app")
+@pytest.mark.skip_juju_version("3.4")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
     prometheus_app_name: str,
@@ -199,6 +200,7 @@ def deploy_prometheus_fixture(
 
 
 @pytest.fixture(scope="module", name="loki_app")
+@pytest.mark.skip_juju_version("3.4")
 def deploy_loki_fixture(
     juju: jubilant.Juju,
     loki_app_name: str,
@@ -213,6 +215,7 @@ def deploy_loki_fixture(
 
 
 @pytest.fixture(scope="module", name="cos_apps")
+@pytest.mark.skip_juju_version("3.4")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
     loki_app,  # pylint: disable=unused-argument

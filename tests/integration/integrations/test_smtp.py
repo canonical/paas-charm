@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
         ("expressjs_app", 8080),
     ],
 )
+@pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
     smtp_app_fixture: Application,
