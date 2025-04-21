@@ -18,10 +18,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "smtp_app_fixture, port",
     [
-        ("flask_app", 8000),
-        ("django_app", 8000),
-        ("fastapi_app", 8080),
-        ("go_app", 8080),
+        ("expressjs_app", 8080),
     ],
 )
 @pytest.mark.skip_juju_version("3.4")
