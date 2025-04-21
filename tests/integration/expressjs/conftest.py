@@ -10,7 +10,6 @@ from typing import Any, Dict, cast
 
 import jubilant
 import pytest
-from pytest_operator.plugin import OpsTest
 
 from tests.integration.types import App
 
@@ -18,20 +17,11 @@ logger = logging.getLogger(__name__)
 
 import os
 
-import pytest_asyncio
-from juju.model import Model
-
 from tests.integration.helpers import inject_venv
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 import pathlib
-
-
-@pytest.fixture(scope="session")
-def app_config():
-    """Provides app config."""
-    yield {}
 
 
 @pytest.fixture(scope="session")
@@ -127,10 +117,7 @@ def build_charm_file(pytestconfig: pytest.Config, framework) -> str:
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
-    app_config: Dict[str, str],
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
 ):
     # pylint: disable=too-many-locals
     """Discourse charm used for integration testing.
@@ -191,42 +178,20 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/expressjs")
 
 
-@pytest_asyncio.fixture(scope="module", name="traefik_app")
-async def deploy_traefik_fixture(
-    model: Model,
-    expressjs_app,  # pylint: disable=unused-argument
-    traefik_app_name: str,
-    external_hostname: str,
-):
-    """Deploy traefik."""
-    app = await model.deploy(
-        "traefik-k8s",
-        application_name=traefik_app_name,
-        channel="edge",
-        trust=True,
-        config={
-            "external_hostname": external_hostname,
-            "routing_mode": "subdomain",
-        },
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
-
-
 @pytest.fixture(scope="module", name="prometheus_app")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
     prometheus_app_name: str,
 ):
     """Deploy prometheus."""
-    juju.deploy(
-        prometheus_app_name,
-        channel="1.0/stable",
-        revision=129,
-        base="ubuntu@20.04",
-        trust=True,
-    )
+    if not juju.status().apps.get(prometheus_app_name):
+        juju.deploy(
+            prometheus_app_name,
+            channel="1.0/stable",
+            revision=129,
+            base="ubuntu@20.04",
+            trust=True,
+        )
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
         error=jubilant.any_blocked,
@@ -239,7 +204,8 @@ def deploy_loki_fixture(
     loki_app_name: str,
 ):
     """Deploy loki."""
-    juju.deploy(loki_app_name, channel="latest/stable", trust=True)
+    if not juju.status().apps.get(loki_app_name):
+        juju.deploy(loki_app_name, channel="latest/stable", trust=True)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
@@ -254,11 +220,12 @@ def deploy_cos_fixture(
     grafana_app_name: str,
 ):
     """Deploy the cos applications."""
-    juju.deploy(
-        grafana_app_name,
-        channel="1.0/stable",
-        revision=82,
-        base="ubuntu@20.04",
-        trust=True,
-    )
+    if not juju.status().apps.get(grafana_app_name):
+        juju.deploy(
+            grafana_app_name,
+            channel="1.0/stable",
+            revision=82,
+            base="ubuntu@20.04",
+            trust=True,
+        )
     juju.wait(jubilant.all_active)
