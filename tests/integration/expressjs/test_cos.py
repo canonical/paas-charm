@@ -12,8 +12,6 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.types import App
-
 logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8080
@@ -21,7 +19,7 @@ WORKLOAD_PORT = 8080
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_prometheus_integration(
-    expressjs_app: App,
+    request: pytest.FixtureRequest,
     juju: jubilant.Juju,
     prometheus_app_name: str,
     prometheus_app,  # pylint: disable=unused-argument
@@ -32,6 +30,7 @@ def test_prometheus_integration(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
     juju.integrate(expressjs_app.name, prometheus_app_name)
     juju.wait(jubilant.all_active)
 
@@ -46,7 +45,7 @@ def test_prometheus_integration(
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_loki_integration(
-    expressjs_app: App,
+    request: pytest.FixtureRequest,
     juju: jubilant.Juju,
     loki_app_name: str,
     loki_app,  # pylint: disable=unused-argument
@@ -57,6 +56,7 @@ def test_loki_integration(
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
 
     juju.integrate(expressjs_app.name, loki_app_name)
     juju.wait(jubilant.all_active)
@@ -84,7 +84,7 @@ def test_loki_integration(
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_grafana_integration(
-    expressjs_app: App,
+    request: pytest.FixtureRequest,
     juju: jubilant.Juju,
     prometheus_app_name: str,
     loki_app_name: str,
@@ -96,6 +96,7 @@ def test_grafana_integration(
     act: establish relations established with grafana charm.
     assert: grafana Flask dashboard can be found.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
 
     juju.integrate(f"{prometheus_app_name}:grafana-source", f"{grafana_app_name}:grafana-source")
     juju.integrate(f"{loki_app_name}:grafana-source", f"{grafana_app_name}:grafana-source")

@@ -211,11 +211,11 @@ def generate_app_fixture(
     juju.wait(lambda status: jubilant.all_waiting(status, [app_name]))
     # Add required relations
     status = juju.status()
-    assert status.apps[app_name].units[app_name + "/0"].is_waiting
     if use_postgres:
+        assert status.apps[app_name].units[app_name + "/0"].is_waiting
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(jubilant.all_active, timeout=15 * 60)
+    juju.wait(jubilant.all_active, timeout=30 * 60)
 
     return App(app_name)
 

@@ -9,18 +9,17 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.types import App
-
 logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8080
 
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
-def test_expressjs_is_up(expressjs_app: App, juju: jubilant.Juju):
+def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """Check that the charm is active.
     Assume that the charm has already been built and is running.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
     assert status.apps[expressjs_app.name].units[expressjs_app.name + "/0"].is_active
     for unit in status.apps[expressjs_app.name].units.values():
@@ -31,12 +30,13 @@ def test_expressjs_is_up(expressjs_app: App, juju: jubilant.Juju):
 
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
-def test_user_defined_config(expressjs_app: App, juju: jubilant.Juju):
+def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the fastapi charm. Set the config user-defined-config to a new value.
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
     juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
     juju.wait(jubilant.all_active)
 
@@ -51,12 +51,13 @@ def test_user_defined_config(expressjs_app: App, juju: jubilant.Juju):
 
 
 @pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
-def test_migration(expressjs_app: App, juju: jubilant.Juju):
+def test_migration(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the fastapi charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the micration script.
     assert: the fastapi application should return a correct response.
     """
+    expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
     for unit in status.apps[expressjs_app.name].units.values():
         response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
