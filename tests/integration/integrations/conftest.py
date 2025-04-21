@@ -126,6 +126,7 @@ def django_app_fixture(
 
 
 @pytest.fixture(scope="module", name="fastapi_app")
+@pytest.mark.skip_juju_version("3.4")
 def fastapi_app_fixture(
     juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
@@ -156,6 +157,7 @@ def go_app_fixture(
 
 
 @pytest.fixture(scope="module", name="expressjs_app")
+@pytest.mark.skip_juju_version("3.4")
 def expressjs_app_fixture(
     juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
 ):
@@ -368,3 +370,66 @@ def mailcatcher(load_kube_config, juju):
     return SmtpCredential(
         host=f"mailcatcher-service.{namespace}.svc.cluster.local", port=1025, pod_ip=pod_ip
     )
+
+
+@pytest.fixture(scope="module", name="prometheus_app")
+@pytest.mark.skip_juju_version("3.4")
+def deploy_prometheus_fixture(
+    juju: jubilant.Juju,
+    prometheus_app_name: str,
+) -> App:
+    """Deploy prometheus."""
+    if not juju.status().apps.get(prometheus_app_name):
+        juju.deploy(
+            prometheus_app_name,
+            channel="1.0/stable",
+            revision=129,
+            base="ubuntu@20.04",
+            trust=True,
+        )
+    juju.wait(
+        lambda status: status.apps[prometheus_app_name].is_active,
+        error=jubilant.any_blocked,
+    )
+    return App(prometheus_app_name)
+
+
+@pytest.fixture(scope="module", name="loki_app")
+@pytest.mark.skip_juju_version("3.4")
+def deploy_loki_fixture(
+    juju: jubilant.Juju,
+    loki_app_name: str,
+) -> App:
+    """Deploy loki."""
+    if not juju.status().apps.get(loki_app_name):
+        juju.deploy(loki_app_name, channel="latest/stable", trust=True)
+    juju.wait(
+        lambda status: status.apps[loki_app_name].is_active,
+        error=jubilant.any_blocked,
+    )
+    return App(loki_app_name)
+
+
+@pytest.fixture(scope="module", name="cos_apps")
+@pytest.mark.skip_juju_version("3.4")
+def deploy_cos_fixture(
+    juju: jubilant.Juju,
+    loki_app,  # pylint: disable=unused-argument
+    prometheus_app,  # pylint: disable=unused-argument
+    grafana_app_name: str,
+) -> dict[str:App]:
+    """Deploy the cos applications."""
+    if not juju.status().apps.get(grafana_app_name):
+        juju.deploy(
+            grafana_app_name,
+            channel="1.0/stable",
+            revision=82,
+            base="ubuntu@20.04",
+            trust=True,
+        )
+    juju.wait(jubilant.all_active)
+    return {
+        "loki_app": loki_app,
+        "prometheus_app": prometheus_app,
+        "grafana_app_name": App(grafana_app_name),
+    }
