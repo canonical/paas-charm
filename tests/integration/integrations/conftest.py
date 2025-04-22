@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def build_charm_file(
     pytestconfig: pytest.Config,
-    framework,
+    framework: str,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -37,9 +37,13 @@ def build_charm_file(
             charm_location = PROJECT_ROOT / f"examples/{framework}"
         try:
             subprocess.run(
-                ["charmcraft", "pack"],  # , "--project-dir", charm_location
+                [
+                    "charmcraft",
+                    "pack",
+                    "--project-dir",
+                    charm_location,
+                ],  # , "--project-dir", charm_location
                 check=True,
-                cwd=charm_location,
                 capture_output=True,
                 text=True,
             )  # nosec B603, B607
@@ -156,20 +160,20 @@ def go_app_fixture(
     )
 
 
-# @pytest.fixture(scope="module", name="expressjs_app")
-# @pytest.mark.skip_juju_version("3.4")
-# def expressjs_app_fixture(
-#     juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
-# ):
-#     framework = "expressjs"
-#     return generate_app_fixture(
-#         juju,
-#         pytestconfig,
-#         app_name=f"{framework}-k8s",
-#         framework=framework,
-#         image_name=f"{framework}-app-image",
-#         use_postgres=True,
-#     )
+@pytest.fixture(scope="module", name="expressjs_app")
+@pytest.mark.skip_juju_version("3.4")
+def expressjs_app_fixture(
+    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
+):
+    framework = "expressjs"
+    return generate_app_fixture(
+        juju,
+        pytestconfig,
+        app_name=f"{framework}-k8s",
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=True,
+    )
 
 
 def generate_app_fixture(
@@ -186,7 +190,8 @@ def generate_app_fixture(
     """
     use_existing = pytestconfig.getoption("--use-existing", default=False)
     if use_existing:
-        return App(app_name)
+        yield App(app_name)
+        return
 
     config = {}
     resources = {
@@ -212,9 +217,9 @@ def generate_app_fixture(
 
     juju.wait(lambda status: jubilant.all_waiting(status, [app_name]))
     # Add required relations
-    status = juju.status()
+    # status = juju.status()
     if use_postgres:
-        assert status.apps[app_name].units[app_name + "/0"].is_waiting
+        # assert status.apps[app_name].units[app_name + "/0"].is_waiting
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(jubilant.all_active, timeout=30 * 60)

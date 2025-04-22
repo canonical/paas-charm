@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "tracing_app_fixture, port",
     [
+        ("expressjs_app", 8080),
         ("flask_app", 8000),
         ("django_app", 8000),
         ("fastapi_app", 8080),
@@ -35,10 +36,10 @@ def test_workload_tracing(
     act: Send 5 requests to the app.
     assert: Tempo should have tracing info about the app.
     """
+    tracing_app = request.getfixturevalue(tracing_app_fixture)
     tempo_app = "tempo"
     if not juju.status().apps.get(tempo_app):
         request.getfixturevalue("tempo_app")
-    tracing_app = request.getfixturevalue(tracing_app_fixture)
 
     juju.integrate(f"{tracing_app.name}:tracing", f"{tempo_app}:tracing")
 

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "smtp_app_fixture, port",
     [
+        ("expressjs_app", 8080),
         ("flask_app", 8000),
         ("django_app", 8000),
         ("fastapi_app", 8080),
@@ -37,6 +38,7 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
+    smtp_app = request.getfixturevalue(smtp_app_fixture)
     smtp_config = {
         "auth_type": "none",
         "domain": "example.com",
@@ -47,7 +49,6 @@ def test_smtp_integrations(
     if not juju.status().apps.get(smtp_integrator_app):
         juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
 
-    smtp_app = request.getfixturevalue(smtp_app_fixture)
     juju.wait(jubilant.all_active)
 
     juju.integrate(smtp_app.name, f"{smtp_integrator_app}:smtp")
