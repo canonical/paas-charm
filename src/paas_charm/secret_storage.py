@@ -57,11 +57,11 @@ class SecretStorage(ops.Object, abc.ABC):
                     initial_value = self.gen_initial_value()
                 relation_data[key] = initial_value[key]
 
-    def get_peer_unit_fdqns(self) -> str | None:
+    def get_peer_unit_fdqns(self) -> list | None:
         """Get the FQDN of units in the peer relation.
 
         Returns:
-            Comma-separated list of unit FQDNs in the peer relation.
+            List of unit FQDNs in the peer relation.
 
         Raises:
             RuntimeError: If SecretStorage is not initialized.
@@ -82,7 +82,7 @@ class SecretStorage(ops.Object, abc.ABC):
             unit_fqdns.append(unit_fqdn)
         if not unit_fqdns:
             return None
-        return ",".join(unit_fqdns)
+        return unit_fqdns
 
     @property
     def is_initialized(self) -> bool:

@@ -191,6 +191,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 else None
             ),
         )
+        if secret_storage.is_initialized and (peer_fqdns := secret_storage.get_peer_unit_fdqns()):
+            peer_units = ",".join(peer_fqdns)
+        else:   
+            peer_units = None
+
 
         return cls(
             framework=framework,
@@ -202,9 +207,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 secret_storage.get_secret_key() if secret_storage.is_initialized else None
             ),
             is_secret_storage_ready=secret_storage.is_initialized,
-            peer_units=(
-                secret_storage.get_peer_unit_fdqns() if secret_storage.is_initialized else None
-            ),
+            peer_units=peer_units,
             integrations=integrations,
             base_url=base_url,
         )

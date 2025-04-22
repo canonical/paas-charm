@@ -304,3 +304,32 @@ async def test_with_ingress(
     )
     assert response.status_code == 200
     assert response.json() == f"http://{ops_test.model_name}-{flask_app.name}.{external_hostname}/"
+
+
+async def test_app_peer_address(
+    model: juju.model.Model,
+    flask_app: Application,
+    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+):
+    """
+    arrange: build and deploy the flask charm.
+    act: add a unit and request env variables through the unit IP addresses.
+    assert: the peer address must be present in the units' env.
+    """
+    await flask_app.add_unit()
+    await model.wait_for_idle(status="active", apps=[flask_app.name])
+
+    for unit_ip in await get_unit_ips(flask_app.name):
+        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+        assert response.status_code == 200
+        env_vars = response.json()
+        assert "FLASK_PEER_UNITS" in env_vars
+
+    await flask_app.scale(scale=1)
+    await model.wait_for_idle(status="active", apps=[flask_app.name])
+
+    for unit_ip in await get_unit_ips(flask_app.name):
+        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+        assert response.status_code == 200
+        env_vars = response.json()
+        assert "FLASK_PEER_UNITS" not in env_vars
