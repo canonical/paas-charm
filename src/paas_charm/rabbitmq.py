@@ -31,7 +31,6 @@ See https://github.com/openstack-charmers/charm-rabbitmq-k8s/blob/main/lib/charm
 
 import logging
 import urllib.parse
-from typing import Optional
 
 from ops import CharmBase, HookEvent
 from ops.framework import EventBase, EventSource, Object, ObjectEvents
@@ -85,12 +84,19 @@ class RabbitMQRelationData(BaseModel):
         amqp_uri: amqp uri for connecting to RabbitMQ server.
     """
 
-    vhost: Optional[str] = None
+    vhost: str
     port: int
     hostname: str
     username: str
     password: str
-    amqp_uri: str
+
+    @property
+    def amqp_uri(self) -> str:
+        """AMQP URI for rabbitmq from parameters."""
+        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
+        # vhost component of a uri should be url encoded
+        vhost = urllib.parse.quote(self.vhost, safe="")
+        return f"amqp://{self.username}:{self.password}@{self.hostname}:{self.port}/{vhost}"
 
 
 class RabbitMQRequires(Object):
@@ -142,12 +148,12 @@ class RabbitMQRequires(Object):
 
     def _on_rabbitmq_relation_changed(self, _: HookEvent) -> None:
         """Handle RabbitMQ changed."""
-        if self.rabbitmq_uri():
+        if self.get_relation_data():
             self.on.ready.emit()
 
     def _on_rabbitmq_relation_departed(self, _: HookEvent) -> None:
         """Handle RabbitMQ departed."""
-        if self.rabbitmq_uri():
+        if self.get_relation_data():
             self.on.ready.emit()
 
     def _on_rabbitmq_relation_broken(self, _: HookEvent) -> None:
@@ -160,7 +166,7 @@ class RabbitMQRequires(Object):
         return self.framework.model.get_relation(self.relation_name)
 
     @property
-    def _rabbitmq_password(self) -> str | None:
+    def _rabbitmq_server_connection_params(self) -> tuple[str, str] | None:
         """The RabbitMQ password."""
         if not self._rabbitmq_rel:
             return None
@@ -168,40 +174,21 @@ class RabbitMQRequires(Object):
             unit_data = self._rabbitmq_rel.data[unit]
             # All of the passwords should be equal. If it is
             # in the unit data, get it and override the password
+            hostname = unit_data.get("hostname", None)
             password = unit_data.get("password", None)
-            if password:
-                return password
-        return self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("password", None)
+            if hostname and password:
+                return (hostname, password)
+        return None
 
     @property
-    def _rabbitmq_hostname(self) -> str | None:
-        """The RabbitMQ hostname."""
+    def _rabbitmq_k8s_connection_params(self) -> tuple[str, str]:
         if not self._rabbitmq_rel:
             return None
-        for unit in self._rabbitmq_rel.units:
-            unit_data = self._rabbitmq_rel.data[unit]
-            # All of the passwords should be equal. If it is
-            # in the unit data, get it and override the password
-            unit_hostname = unit_data.get("hostname")
-            if unit_hostname:
-                return unit_hostname
-        return self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname", None)
-
-    def rabbitmq_uri(self) -> str | None:
-        """Return RabbitMQ urs with the data in the relation.
-
-        It will try to use the format in rabbitmq-k8s or rabbitmq-server.
-        If there is no relation or the data is not complete, it returns None.
-
-        Returns:
-            The parameters for RabbitMQ or None.
-        """
-        rabbitmq_k8s_params = self._rabbitmq_k8s_uri()
-        if rabbitmq_k8s_params:
-            return rabbitmq_k8s_params
-
-        # rabbitmq-server parameters or None.
-        return self._rabbitmq_server_uri()
+        hostname = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname", None)
+        password = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("password", None)
+        if hostname and password:
+            return (hostname, password)
+        return None
 
     def request_access(self, username: str, vhost: str) -> None:
         """Request access to the RabbitMQ server.
@@ -217,65 +204,6 @@ class RabbitMQRequires(Object):
             self._rabbitmq_rel.data[self.charm.app]["username"] = username
             self._rabbitmq_rel.data[self.charm.app]["vhost"] = vhost
 
-    def _rabbitmq_server_uri(self) -> str | None:
-        """Return uri for rabbitmq-server.
-
-        Returns:
-            Returns uri for rabbitmq-server or None if the relation data is not valid/complete.
-        """
-        if not self._rabbitmq_rel:
-            return None
-
-        password = None
-        hostnames = []
-        for unit in self._rabbitmq_rel.units:
-            unit_data = self._rabbitmq_rel.data[unit]
-            # All of the passwords should be equal. If it is
-            # in the unit data, get it and override the password
-            password = unit_data.get("password", password)
-            unit_hostname = unit_data.get("hostname")
-            if unit_hostname:
-                hostnames.append(unit_hostname)
-
-        if not password or len(hostnames) == 0:
-            return None
-
-        hostname = hostnames[0]
-        return self._build_amqp_uri(password=password, hostname=hostname)
-
-    def _rabbitmq_k8s_uri(self) -> str | None:
-        """Return URI for rabbitmq-k8s.
-
-        Returns:
-            Returns uri for rabbitmq-k8s or None if the relation data is not valid/complete.
-        """
-        if not self._rabbitmq_rel:
-            return None
-
-        # A password in the _rabbitmq_rel data differentiates rabbitmq-k8s from rabbitmq-server
-        password = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("password")
-        hostname = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname")
-
-        if not password or not hostname:
-            return None
-
-        return self._build_amqp_uri(password=password, hostname=hostname)
-
-    def _build_amqp_uri(self, password: str, hostname: str) -> str:
-        """Return amqp URI for rabbitmq from parameters.
-
-        Args:
-           password: password for amqp uri
-           hostname: hostname for amqp uri
-
-        Returns:
-            Returns amqp uri for rabbitmq from parameters
-        """
-        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
-        # vhost component of a uri should be url encoded
-        vhost = urllib.parse.quote(self.vhost, safe="")
-        return f"amqp://{self.username}:{password}@{hostname}:{self.port}/{vhost}"
-
     def get_relation_data(self) -> RabbitMQRelationData | None:
         """Return RabbitMQ relation data.
 
@@ -285,17 +213,24 @@ class RabbitMQRequires(Object):
         Returns:
             RabbitMQ relation data if it is valid. None otherwise.
         """
-        rabbitmq_uri = self.rabbitmq_uri()
-        if not self._rabbitmq_password or not self._rabbitmq_hostname or not rabbitmq_uri:
+        password = None
+        hostname = None
+        if self._rabbitmq_k8s_connection_params:
+            hostname = self._rabbitmq_k8s_connection_params[0]
+            password = self._rabbitmq_k8s_connection_params[1]
+        elif self._rabbitmq_server_connection_params:
+            hostname = self._rabbitmq_server_connection_params[0]
+            password = self._rabbitmq_server_connection_params[1]
+
+        if not password or not hostname:
             return None
         try:
             return RabbitMQRelationData(
                 username=self.username,
-                password=self._rabbitmq_password,
-                hostname=self._rabbitmq_hostname,
+                password=password,
+                hostname=hostname,
                 port=self.port,
                 vhost=self.vhost,
-                amqp_uri=rabbitmq_uri,
             )
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)

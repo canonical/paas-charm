@@ -42,7 +42,7 @@ from paas_charm.rabbitmq import RabbitMQRelationData
                 hostname="testinghostname",
                 username="flask-k8s",
                 password="testingvalue",
-                amqp_uri="amqp://flask-k8s:testingvalue@testinghostname:5672/%2F",
+                amqp_uri="amqp://flask-k8s:testingvalue@testinghostname:5672/",
             ),
             id="unit relation data",
         ),
