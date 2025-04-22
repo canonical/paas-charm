@@ -114,7 +114,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.base_url = base_url
 
     @classmethod
-    def from_charm(  # pylint: disable=too-many-arguments
+    def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
         config: dict[str, bool | int | float | str | dict[str, str]],
@@ -193,9 +193,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         )
         if secret_storage.is_initialized and (peer_fqdns := secret_storage.get_peer_unit_fdqns()):
             peer_units = ",".join(peer_fqdns)
-        else:   
+        else:
             peer_units = None
-
 
         return cls(
             framework=framework,
