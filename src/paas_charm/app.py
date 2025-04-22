@@ -8,7 +8,7 @@ import logging
 import pathlib
 import urllib.parse
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List
 
 import ops
 
@@ -80,46 +80,42 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-class S3EnvironmentMapper:  # pylint: disable=too-few-public-methods
-    """Class to map S3 environment variables for the application."""
+def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from S3 requirer data.
 
-    @staticmethod
-    def generate_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
-        """Generate environment variable from S3 requirer data.
+    Args:
+        relation_data: The charm S3 integration relation data.
 
-        Args:
-            relation_data: The charm S3 integration relation data.
-
-        Returns:
-            Default S3 environment mappings if S3Requirer is available, empty
-            dictionary otherwise.
-        """
-        if not relation_data:
-            return {}
-        return {
-            k: v
-            for k, v in (
-                ("S3_ACCESS_KEY", relation_data.access_key),
-                ("S3_SECRET_KEY", relation_data.secret_key),
-                ("S3_REGION", relation_data.region),
-                ("S3_STORAGE_CLASS", relation_data.storage_class),
-                ("S3_BUCKET", relation_data.bucket),
-                ("S3_ENDPOINT", relation_data.endpoint),
-                ("S3_PATH", relation_data.path),
-                ("S3_API_VERSION", relation_data.s3_api_version),
-                ("S3_URI_STYLE", relation_data.s3_uri_style),
-                ("S3_ADDRESSING_STYLE", relation_data.addressing_style),
-                (
-                    "S3_ATTRIBUTES",
-                    json.dumps(relation_data.attributes) if relation_data.attributes else None,
-                ),
-                (
-                    "S3_TLS_CA_CHAIN",
-                    json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
-                ),
-            )
-            if v is not None
-        }
+    Returns:
+        Default S3 environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("S3_ACCESS_KEY", relation_data.access_key),
+            ("S3_SECRET_KEY", relation_data.secret_key),
+            ("S3_REGION", relation_data.region),
+            ("S3_STORAGE_CLASS", relation_data.storage_class),
+            ("S3_BUCKET", relation_data.bucket),
+            ("S3_ENDPOINT", relation_data.endpoint),
+            ("S3_PATH", relation_data.path),
+            ("S3_API_VERSION", relation_data.s3_api_version),
+            ("S3_URI_STYLE", relation_data.s3_uri_style),
+            ("S3_ADDRESSING_STYLE", relation_data.addressing_style),
+            (
+                "S3_ATTRIBUTES",
+                json.dumps(relation_data.attributes) if relation_data.attributes else None,
+            ),
+            (
+                "S3_TLS_CA_CHAIN",
+                json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
+            ),
+        )
+        if v is not None
+    }
 
 
 # too-many-instance-attributes is disabled because this class
@@ -128,10 +124,10 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        s3_environ_mapper: Maps S3 connection information to environment variables.
+        map_s3_environ: Maps S3 connection information to environment variables.
     """
 
-    s3_environ_mapper = S3EnvironmentMapper
+    map_s3_environ: Callable[["S3RelationData | None"], dict[str, str]] = generate_s3_env
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -234,9 +230,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
-        env.update(
-            self.s3_environ_mapper.generate_env(relation_data=self._charm_state.integrations.s3)
-        )
+        env.update(self.map_s3_environ(relation_data=self._charm_state.integrations.s3))
         return env
 
     @property
