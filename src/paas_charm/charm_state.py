@@ -88,7 +88,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
-        peer_units: str | None = None,
+        peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
     ):
@@ -100,7 +100,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
             secret_key: The secret storage manager associated with the charm.
-            peer_units: The FQDN of units in the peer relation.
+            peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
         """
@@ -109,7 +109,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self._user_defined_config = user_defined_config if user_defined_config is not None else {}
         self._is_secret_storage_ready = is_secret_storage_ready
         self._secret_key = secret_key
-        self.peer_units = peer_units
+        self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
 
@@ -191,9 +191,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 else None
             ),
         )
-        peer_units = None
-        if secret_storage.is_initialized and (peer_fqdns := secret_storage.get_peer_unit_fdqns()):
-            peer_units = ",".join(peer_fqdns)
+        peer_fqdns = None
+        if secret_storage.is_initialized and (peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()):
+            peer_fqdns = ",".join(peer_unit_fqdns)
 
         return cls(
             framework=framework,
@@ -205,7 +205,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 secret_storage.get_secret_key() if secret_storage.is_initialized else None
             ),
             is_secret_storage_ready=secret_storage.is_initialized,
-            peer_units=peer_units,
+            peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
         )
