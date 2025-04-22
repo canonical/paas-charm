@@ -89,6 +89,7 @@ class RabbitMQEnvironmentMapper:  # pylint: disable=too-few-public-methods
         """
         if not relation_data:
             return {}
+        prefix = prefix or ""
         envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
         parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
         if len(parsed_url.path) > 1:
