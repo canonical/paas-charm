@@ -94,11 +94,10 @@ class S3EnvironmentMapper:  # pylint: disable=too-few-public-methods
             Default S3 environment mappings if S3Requirer is available, empty
             dictionary otherwise.
         """
-        env: dict[str, str] = {}
         if not relation_data:
-            return env
-        env.update(
-            (k, v)
+            return {}
+        return {
+            k: v
             for k, v in (
                 ("S3_ACCESS_KEY", relation_data.access_key),
                 ("S3_SECRET_KEY", relation_data.secret_key),
@@ -120,8 +119,7 @@ class S3EnvironmentMapper:  # pylint: disable=too-few-public-methods
                 ),
             )
             if v is not None
-        )
-        return env
+        }
 
 
 # too-many-instance-attributes is disabled because this class
