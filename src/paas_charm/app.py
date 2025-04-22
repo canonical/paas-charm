@@ -170,7 +170,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 env[proxy_variable.upper()] = str(proxy_value)
 
         if self._charm_state.peer_units is not None:
-            env[f"{prefix}PEER_UNITS"] = self._charm_state.peer_units
+            env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_units
 
         if self._charm_state.integrations:
             env.update(

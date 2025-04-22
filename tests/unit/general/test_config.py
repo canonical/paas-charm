@@ -442,6 +442,7 @@ def test_secret_storage_config(
     assert: The app service must have the right peer configuration.
     """
     harness = request.getfixturevalue(app_harness)
+    harness.set_model_name("test-model")
     harness.begin_with_initial_hooks()
 
     peer_relation_name = "secret-storage"
@@ -453,5 +454,5 @@ def test_secret_storage_config(
     harness.update_config()
     container = harness.model.unit.get_container(container_name)
     service_env = container.get_plan().services[framework].environment
-    expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.None.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.None.svc.cluster.local"
-    assert service_env[f"{app_prefix}_PEER_UNITS"] == expected_output
+    expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.test-model.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.test-model.svc.cluster.local"
+    assert service_env[f"{app_prefix}_PEER_FQDNS"] == expected_output

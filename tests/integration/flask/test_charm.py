@@ -13,6 +13,7 @@ import ops
 import pytest
 import requests
 from juju.application import Application
+from juju.client._definitions import UnitStatus
 from pytest_operator.plugin import OpsTest
 
 # caused by pytest fixtures
@@ -319,11 +320,24 @@ async def test_app_peer_address(
     await flask_app.add_unit()
     await model.wait_for_idle(status="active", apps=[flask_app.name])
 
-    for unit_ip in await get_unit_ips(flask_app.name):
+    units = flask_app.units.values()
+    for i, unit in enumerate(units):
+        other_unit = units[1 - i]
+        unit_status: UnitStatus = unit
+        unit_ip: str = (
+            unit_status.address.decode()
+            if isinstance(unit_status.address, bytes)
+            else typing.cast(str, unit_status.address)
+        )
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
-        assert "FLASK_PEER_UNITS" in env_vars
+        assert "FLASK_PEER_FQDNS" in env_vars
+        # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
+        assert (
+            env_vars["FLASK_PEER_FQDNS"]
+            == f"{other_unit.name}.{flask_app.name}-endpoints.{model.name}.svc.cluster.local"
+        )
 
     await flask_app.scale(scale=1)
     await model.wait_for_idle(status="active", apps=[flask_app.name])
@@ -332,4 +346,4 @@ async def test_app_peer_address(
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
-        assert "FLASK_PEER_UNITS" not in env_vars
+        assert "FLASK_PEER_FQDNS" not in env_vars
