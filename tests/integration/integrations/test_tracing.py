@@ -58,5 +58,5 @@ def test_workload_tracing(
     assert get_traces_patiently(tempo_host, paas_app.name)
 
     juju.remove_relation(f"{paas_app.name}:tracing", f"{tempo_app}:tracing", force=True)
-    juju.remove_unit(paas_app.name, num_units=1, destroy_storage=True, force=True)
+    juju.remove_unit(paas_app.name, num_units=1, force=True)
     juju.remove_application(paas_app.name, destroy_storage=True, force=True)

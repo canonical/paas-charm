@@ -49,7 +49,8 @@ def build_charm_file(
             )  # nosec B603, B607
 
             app_name = f"{framework}-k8s"
-            charm_path = pathlib.Path(PROJECT_ROOT 
+            charm_path = pathlib.Path(
+                PROJECT_ROOT
             )  # .parent.parent.parent.parent / "examples/{framework}"
             charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
             assert charms, f"{app_name} .charm file not found"
@@ -99,9 +100,7 @@ def deploy_postgresql(
 
 
 @pytest.fixture(scope="module", name="flask_app")
-def flask_app_fixture(
-    juju: jubilant.Juju, pytestconfig: pytest.Config
-):
+def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask"
     return generate_app_fixture(
         juju,
@@ -114,9 +113,7 @@ def flask_app_fixture(
 
 
 @pytest.fixture(scope="module", name="django_app")
-def django_app_fixture(
-    juju: jubilant.Juju,  pytestconfig: pytest.Config
-):
+def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "django"
     return generate_app_fixture(
         juju,
@@ -130,9 +127,7 @@ def django_app_fixture(
 
 @pytest.fixture(scope="module", name="fastapi_app")
 @pytest.mark.skip_juju_version("3.4")
-def fastapi_app_fixture(
-    juju: jubilant.Juju, pytestconfig: pytest.Config
-):
+def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "fastapi"
     return generate_app_fixture(
         juju,
@@ -145,9 +140,7 @@ def fastapi_app_fixture(
 
 
 @pytest.fixture(scope="module", name="go_app")
-def go_app_fixture(
-    juju: jubilant.Juju, pytestconfig: pytest.Config
-):
+def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "go"
     return generate_app_fixture(
         juju,
@@ -161,9 +154,7 @@ def go_app_fixture(
 
 @pytest.fixture(scope="module", name="expressjs_app")
 @pytest.mark.skip_juju_version("3.4")
-def expressjs_app_fixture(
-    juju: jubilant.Juju, pytestconfig: pytest.Config
-):
+def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "expressjs"
     return generate_app_fixture(
         juju,
