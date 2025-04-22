@@ -8,7 +8,7 @@ import logging
 import pathlib
 import urllib.parse
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import ops
 
@@ -17,14 +17,15 @@ from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
 
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from paas_charm.s3 import S3RelationData
-except ImportError:
-    # we already logged it in charm.py
-    pass
+if TYPE_CHECKING:
+    try:
+        # the import is used for type hinting
+        # pylint: disable=ungrouped-imports
+        # pylint: disable=unused-import
+        from paas_charm.s3 import S3RelationData
+    except ImportError:
+        # we already logged it in charm.py
+        pass
 
 
 WORKER_SUFFIX = "-worker"
