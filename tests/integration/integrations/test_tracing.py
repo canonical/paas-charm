@@ -37,7 +37,6 @@ def test_workload_tracing(
     assert: Tempo should have tracing info about the app.
     """
 
-    
     paas_app = request.getfixturevalue(paas_app_fixture)
     tempo_app = "tempo"
     if not juju.status().apps.get(tempo_app):
@@ -45,9 +44,7 @@ def test_workload_tracing(
 
     juju.integrate(f"{paas_app.name}:tracing", f"{tempo_app}:tracing")
 
-    juju.wait(
-        lambda status: jubilant.all_active(status, [paas_app.name, tempo_app]), timeout=600
-    )
+    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, tempo_app]), timeout=600)
     status = juju.status()
     unit_ip = status.apps[paas_app.name].units[paas_app.name + "/0"].address
     tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
@@ -61,5 +58,5 @@ def test_workload_tracing(
     assert get_traces_patiently(tempo_host, paas_app.name)
 
     juju.remove_relation(f"{paas_app.name}:tracing", f"{tempo_app}:tracing", force=True)
-    juju.remove_unit(paas_app.name, destroy_storage=True, force=True)
+    juju.remove_unit(paas_app.name, num_units=1, destroy_storage=True, force=True)
     juju.remove_application(paas_app.name, destroy_storage=True, force=True)
