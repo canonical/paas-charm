@@ -161,10 +161,14 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         try:
             integrations = IntegrationsState.build(
                 app_name=app_name,
-                redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
+                redis_uri=(
+                    integration_requirers.redis.url if integration_requirers.redis else None
+                ),
                 database_requirers=integration_requirers.databases,
                 s3_relation_data=(
-                    integration_requirers.s3.to_relation_data() if integration_requirers.s3 else None
+                    integration_requirers.s3.to_relation_data()
+                    if integration_requirers.s3
+                    else None
                 ),
                 saml_relation_data=(
                     saml_data.to_relation_data()
