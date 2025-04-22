@@ -31,10 +31,14 @@ See https://github.com/openstack-charmers/charm-rabbitmq-k8s/blob/main/lib/charm
 
 import logging
 import urllib.parse
+from typing import Optional
 
 from ops import CharmBase, HookEvent
 from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
+from pydantic import BaseModel, ValidationError
+
+from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +67,30 @@ class RabbitMQServerEvents(ObjectEvents):
     connected = EventSource(RabbitMQConnectedEvent)
     ready = EventSource(RabbitMQReadyEvent)
     departed = EventSource(RabbitMQDepartedEvent)
+
+
+class InvalidRabbitMQRelationDataError(Exception):
+    """Represents an error with invalid RabbitMQ relation data."""
+
+
+class RabbitMQRelationData(BaseModel):
+    """Rabbit MQ relation data.
+
+    Attributes:
+        vhost: virtual host to use for RabbitMQ.
+        port: RabbitMQ port.
+        hostname: hostname of the RabbitMQ server.
+        username: username to use for RabbitMQ.
+        password: password to use for RabbitMQ.
+        amqp_uri: amqp uri for connecting to RabbitMQ server.
+    """
+
+    vhost: Optional[str] = None
+    port: int
+    hostname: str
+    username: str
+    password: str
+    amqp_uri: str
 
 
 class RabbitMQRequires(Object):
@@ -130,6 +158,34 @@ class RabbitMQRequires(Object):
     def _rabbitmq_rel(self) -> Relation | None:
         """The RabbitMQ relation."""
         return self.framework.model.get_relation(self.relation_name)
+
+    @property
+    def _rabbitmq_password(self) -> str | None:
+        """The RabbitMQ password."""
+        if not self._rabbitmq_rel:
+            return None
+        for unit in self._rabbitmq_rel.units:
+            unit_data = self._rabbitmq_rel.data[unit]
+            # All of the passwords should be equal. If it is
+            # in the unit data, get it and override the password
+            password = unit_data.get("password", None)
+            if password:
+                return password
+        return self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("password", None)
+
+    @property
+    def _rabbitmq_hostname(self) -> str | None:
+        """The RabbitMQ hostname."""
+        if not self._rabbitmq_rel:
+            return None
+        for unit in self._rabbitmq_rel.units:
+            unit_data = self._rabbitmq_rel.data[unit]
+            # All of the passwords should be equal. If it is
+            # in the unit data, get it and override the password
+            unit_hostname = unit_data.get("hostname")
+            if unit_hostname:
+                return unit_hostname
+        return self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname", None)
 
     def rabbitmq_uri(self) -> str | None:
         """Return RabbitMQ urs with the data in the relation.
@@ -219,3 +275,31 @@ class RabbitMQRequires(Object):
         # vhost component of a uri should be url encoded
         vhost = urllib.parse.quote(self.vhost, safe="")
         return f"amqp://{self.username}:{password}@{hostname}:{self.port}/{vhost}"
+
+    def get_relation_data(self) -> RabbitMQRelationData | None:
+        """Return RabbitMQ relation data.
+
+        Raises:
+            InvalidRabbitMQRelationDataError: If any invalid data was found over the relation data.
+
+        Returns:
+            RabbitMQ relation data if it is valid. None otherwise.
+        """
+        rabbitmq_uri = self.rabbitmq_uri()
+        if not self._rabbitmq_password or not self._rabbitmq_hostname or not rabbitmq_uri:
+            return None
+        try:
+            return RabbitMQRelationData(
+                username=self.username,
+                password=self._rabbitmq_password,
+                hostname=self._rabbitmq_hostname,
+                port=self.port,
+                vhost=self.vhost,
+                amqp_uri=rabbitmq_uri,
+            )
+        except ValidationError as exc:
+            error_messages = build_validation_error_message(exc, underscore_to_dash=True)
+            logger.error(error_messages.long)
+            raise InvalidRabbitMQRelationDataError(
+                f"Invalid {RabbitMQRelationData.__name__}: {error_messages.short}"
+            ) from exc

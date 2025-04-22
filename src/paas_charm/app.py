@@ -14,6 +14,7 @@ import ops
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,44 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+class RabbitMQEnvironmentMapper:  # pylint: disable=too-few-public-methods
+    """Class to map S3 environment variables for the application."""
+
+    @staticmethod
+    def generate_env(
+        relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
+    ) -> dict[str, str]:
+        """Generate environment variable from RabbitMQ requirer data.
+
+        Args:
+            relation_data: The charm RabbitMQ integration relation data.
+            prefix: The environment variable prefix.
+
+        Returns:
+            RabbitMQ environment mappings if S3Requirer is available, empty
+            dictionary otherwise.
+        """
+        if not relation_data:
+            return {}
+        envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
+        parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
+        if len(parsed_url.path) > 1:
+            envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(
+                parsed_url.path.split("/")[1]
+            )
+        return envvars
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
-    """Base class for the application manager."""
+    """Base class for the application manager.
+
+    Attributes:
+        rabbitmq_environ_mapper: Maps RabbitMQ connection information to environment variables.
+    """
+
+    rabbitmq_environ_mapper = RabbitMQEnvironmentMapper
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -175,6 +210,12 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.rabbitmq_environ_mapper.generate_env(
+                relation_data=self._charm_state.integrations.rabbitmq,
+                prefix=self.integrations_prefix,
+            )
+        )
         return env
 
     @property
@@ -317,10 +358,6 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
             )
             if v is not None
         )
-
-    if integrations.rabbitmq_uri:
-        rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
-        env.update(rabbitmq_envvars)
 
     if integrations.smtp_parameters:
         smtp = integrations.smtp_parameters

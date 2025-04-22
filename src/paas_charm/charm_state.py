@@ -25,7 +25,7 @@ from pydantic import (
 
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.rabbitmq import RabbitMQRelationData, RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -173,8 +173,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 )
                 else None
             ),
-            rabbitmq_uri=(
-                integration_requirers.rabbitmq.rabbitmq_uri()
+            rabbitmq_relation_data=(
+                integration_requirers.rabbitmq.get_relation_data()
                 if integration_requirers.rabbitmq
                 else None
             ),
@@ -298,7 +298,7 @@ class IntegrationsState:
         databases_uris: Map from interface_name to the database uri.
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
-        rabbitmq_uri: RabbitMQ uri.
+        rabbitmq: RabbitMQ relation data.
         tempo_parameters: Tracing parameters.
         smtp_parameters: Smtp parameters.
     """
@@ -307,7 +307,7 @@ class IntegrationsState:
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
-    rabbitmq_uri: str | None = None
+    rabbitmq: RabbitMQRelationData | None = None
     tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
 
@@ -320,7 +320,7 @@ class IntegrationsState:
         database_requirers: dict[str, DatabaseRequires],
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        rabbitmq_uri: str | None = None,
+        rabbitmq_relation_data: RabbitMQRelationData | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
         smtp_relation_data: dict | None = None,
@@ -333,7 +333,7 @@ class IntegrationsState:
             database_requirers: All database requirers object declared by the charm.
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
-            rabbitmq_uri: RabbitMQ uri.
+            rabbitmq_relation_data: RabbitMQ relation data.
             tracing_requirer: The tracing relation data provided by the Tempo charm.
             smtp_relation_data: Smtp relation data from smtp lib.
 
@@ -365,7 +365,7 @@ class IntegrationsState:
             },
             s3_parameters=s3_parameters,
             saml_parameters=saml_parameters,
-            rabbitmq_uri=rabbitmq_uri,
+            rabbitmq=rabbitmq_relation_data,
             tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
         )

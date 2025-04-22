@@ -9,7 +9,7 @@ import unittest
 import pytest
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, IntegrationsState
+from paas_charm.charm_state import CharmState, IntegrationsState, RabbitMQRelationData
 from paas_charm.go.charm import GoConfig
 
 
@@ -34,7 +34,14 @@ from paas_charm.go.charm import GoConfig
             {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
             IntegrationsState(
                 redis_uri="redis://10.1.88.132:6379",
-                rabbitmq_uri="amqp://go-app:test-password@rabbitmq.example.com/%2f",
+                rabbitmq=RabbitMQRelationData(
+                    vhost="/",
+                    port=5672,
+                    hostname="rabbitmq.example.com",
+                    username="go-app",
+                    password="test-password",
+                    amqp_uri="amqp://go-app:test-password@rabbitmq.example.com/%2f",
+                ),
             ),
             {
                 "APP_PORT": "8080",
