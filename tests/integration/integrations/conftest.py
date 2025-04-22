@@ -156,20 +156,20 @@ def go_app_fixture(
     )
 
 
-@pytest.fixture(scope="module", name="expressjs_app")
-@pytest.mark.skip_juju_version("3.4")
-def expressjs_app_fixture(
-    juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
-):
-    framework = "expressjs"
-    return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
-        framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=True,
-    )
+# @pytest.fixture(scope="module", name="expressjs_app")
+# @pytest.mark.skip_juju_version("3.4")
+# def expressjs_app_fixture(
+#     juju: jubilant.Juju, tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config
+# ):
+#     framework = "expressjs"
+#     return generate_app_fixture(
+#         juju,
+#         pytestconfig,
+#         app_name=f"{framework}-k8s",
+#         framework=framework,
+#         image_name=f"{framework}-app-image",
+#         use_postgres=True,
+#     )
 
 
 def generate_app_fixture(

@@ -180,6 +180,7 @@ def expressjs_app_fixture(
 def cwd():
     return os.chdir(PROJECT_ROOT / "examples/expressjs")
 
+
 def deploy_and_configure_minio(
     juju: jubilant.Juju,
 ) -> None:
