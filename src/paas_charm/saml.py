@@ -20,14 +20,9 @@ class PaaSSAMLRelationData(SamlRelationData):
     """Configuration for accessing SAML.
 
     Attributes:
-        entity_id: Entity Id of the SP.
-        metadata_url: URL for the metadata for the SP.
         signing_certificate: Signing certificate for the SP.
         single_sign_on_redirect_url: Sign on redirect URL for the SP.
     """
-
-    entity_id: str
-    metadata_url: str
 
     @property
     def signing_certificate(self) -> str:
@@ -42,27 +37,9 @@ class PaaSSAMLRelationData(SamlRelationData):
                 return str(endpoint.url)
         return None
 
-    @field_validator("signing_certificate")
-    @classmethod
-    def validate_signing_certificate_exists(cls, certs: str, _: ValidationInfo) -> str:
-        """Validate that at least a certificate exists in the list of certificates.
 
-        It is a prerequisite that the fist certificate is the signing certificate,
-        otherwise this method would return a wrong certificate.
-
-        Args:
-            certs: Original x509certs field
-
-        Returns:
-            The validated signing certificate
-
-        Raises:
-            ValueError: If there is no certificate.
-        """
-        certificate = certs.split(",")[0]
-        if not certificate:
-            raise ValueError("Missing x509certs. There should be at least one certificate.")
-        return certificate
+class InvalidSAMLRelationDataError(Exception):
+    """Represents an error with invalid SAML relation data."""
 
 
 class PaaSSAMLRequirer(SamlRequires):
@@ -77,16 +54,21 @@ class PaaSSAMLRequirer(SamlRequires):
         Returns:
             Data required to integrate with SAML.
         """
-        saml_data = self.get_relation_data()
-        if not saml_data:
-            return None
         try:
+            saml_data = self.get_relation_data()
+            if not saml_data:
+                return None
             # We need to dump and reload the PaaSSAMLRelationData since there's no way
             # to inherit it from parent SamlRelationData.
-            return PaaSSAMLRelationData.model_validate(**saml_data.model_dump())
+            return PaaSSAMLRelationData(
+                entity_id=saml_data.entity_id,
+                metadata_url=saml_data.metadata_url,
+                certificates=saml_data.certificates,
+                endpoints=saml_data.endpoints,
+            )
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
-            raise CharmConfigInvalidError(
+            raise InvalidSAMLRelationDataError(
                 f"Invalid {PaaSSAMLRelationData.__name__}: {error_messages.short}"
             ) from exc

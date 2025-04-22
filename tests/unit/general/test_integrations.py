@@ -69,9 +69,7 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
     )
     saml_env = pytest.param(
         IntegrationsState(
-            saml_parameters=generate_relation_parameters(
-                SAML_APP_RELATION_DATA_EXAMPLE, SamlParameters, True
-            )
+            saml=generate_relation_parameters(SAML_APP_RELATION_DATA_EXAMPLE, SamlParameters, True)
         ),
         prefix,
         {
@@ -386,21 +384,6 @@ def _test_integrations_state_build_parameters():
     }
 
     return [
-        pytest.param(
-            {**relation_dict, "saml_relation_data": SAML_APP_RELATION_DATA_EXAMPLE},
-            False,
-            id="Saml correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "saml_relation_data": {}},
-            True,
-            id="Saml empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "saml_relation_data": {"wrong_key": "wrong_value"}},
-            True,
-            id="Saml wrong parameters",
-        ),
         pytest.param(
             {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
