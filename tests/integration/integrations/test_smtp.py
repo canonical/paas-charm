@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "smtp_app_fixture, port",
+    "paas_app_fixture, port",
     [
         ("expressjs_app", 8080),
         ("flask_app", 8000),
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
-    smtp_app_fixture: Application,
+    paas_app_fixture: Application,
     port,
     request: pytest.FixtureRequest,
     mailcatcher,
@@ -38,7 +38,7 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
-    smtp_app = request.getfixturevalue(smtp_app_fixture)
+    paas_app = request.getfixturevalue(paas_app_fixture)
     smtp_config = {
         "auth_type": "none",
         "domain": "example.com",
@@ -51,11 +51,11 @@ def test_smtp_integrations(
 
     juju.wait(jubilant.all_active)
 
-    juju.integrate(smtp_app.name, f"{smtp_integrator_app}:smtp")
-    juju.wait(lambda status: jubilant.all_active(status, [smtp_app.name, smtp_integrator_app]))
+    juju.integrate(paas_app.name, f"{smtp_integrator_app}:smtp")
+    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, smtp_integrator_app]))
 
     status = juju.status()
-    unit_ip = status.apps[smtp_app.name].units[smtp_app.name + "/0"].address
+    unit_ip = status.apps[paas_app.name].units[paas_app.name + "/0"].address
     response = requests.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
     assert response.status_code == 200
     assert "Sent" in response.text
@@ -65,5 +65,6 @@ def test_smtp_integrations(
     assert "<tester@example.com>" in mails[0]["sender"]
     assert mails[0]["recipients"] == ["<test@example.com>"]
     assert mails[0]["subject"] == "hello"
-    juju.remove_relation(smtp_app.name, f"{smtp_integrator_app}:smtp", force=True)
-    juju.remove_application(smtp_app.name, destroy_storage=True, force=True)
+    juju.remove_relation(paas_app.name, f"{smtp_integrator_app}:smtp", force=True)
+    juju.remove_unit(paas_app.name, destroy_storage=True, force=True)
+    juju.remove_application(paas_app.name, destroy_storage=True, force=True)
