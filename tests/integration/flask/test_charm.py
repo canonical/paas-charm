@@ -320,8 +320,10 @@ async def test_app_peer_address(
     await flask_app.add_unit()
     await model.wait_for_idle(status="active", apps=[flask_app.name])
 
-    units = flask_app.units.values()
-    for i, unit in enumerate(units):
+    status = await model.get_status()
+    flask_application = typing.cast(Application, status.applications[flask_app.name])
+    units = flask_application.units
+    for i, unit in enumerate(units.values()):
         other_unit = units[1 - i]
         unit_status: UnitStatus = unit
         unit_ip: str = (
@@ -338,6 +340,45 @@ async def test_app_peer_address(
             env_vars["FLASK_PEER_FQDNS"]
             == f"{other_unit.name}.{flask_app.name}-endpoints.{model.name}.svc.cluster.local"
         )
+
+    await flask_app.scale(scale=1)
+    await model.wait_for_idle(status="active", apps=[flask_app.name])
+
+    for unit_ip in await get_unit_ips(flask_app.name):
+        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+        assert response.status_code == 200
+        env_vars = response.json()
+        assert "FLASK_PEER_FQDNS" not in env_vars
+
+
+async def test_app_peer_address(
+    model: juju.model.Model,
+    flask_app: Application,
+    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+):
+    """
+    arrange: build and deploy the flask charm.
+    act: add a unit and request env variables through the unit IP addresses.
+    assert: the peer address must be present in the units' env.
+    """
+    await flask_app.add_unit()
+    await model.wait_for_idle(status="active", apps=[flask_app.name])
+
+    actual_result = set()
+    for unit_ip in await get_unit_ips(flask_app.name):
+        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+        assert response.status_code == 200
+        env_vars = response.json()
+        assert "FLASK_PEER_FQDNS" in env_vars
+        actual_result.add(env_vars["FLASK_PEER_FQDNS"])
+
+    expected_result = set()
+    for unit in flask_app.units:
+        # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
+        expected_result.add(
+            f"{unit.name.replace('/', '-')}.{flask_app.name}-endpoints.{model.name}.svc.cluster.local"
+        )
+    assert actual_result == expected_result
 
     await flask_app.scale(scale=1)
     await model.wait_for_idle(status="active", apps=[flask_app.name])
