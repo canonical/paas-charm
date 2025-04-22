@@ -7,8 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.s3 import PaaSS3Requirer, S3RelationData
+from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3RelationData
 
 
 @pytest.mark.parametrize(
@@ -100,7 +99,7 @@ def test_requirer_to_validation_error(monkeypatch, relation_data):
         s3_requirer, "get_s3_connection_info", MagicMock(return_value=relation_data)
     )
 
-    with pytest.raises(CharmConfigInvalidError) as exc:
+    with pytest.raises(InvalidS3RelationDataError) as exc:
         s3_requirer.to_relation_data()
 
-    assert "S3" in exc.value.msg
+    assert "S3" in str(exc.value)

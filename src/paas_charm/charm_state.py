@@ -34,7 +34,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from paas_charm.s3 import PaaSS3Requirer, S3RelationData
+    from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3RelationData
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -158,40 +158,43 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         # 2025/04/15 When done ejecting IntegrationParameters, we should remove the build function
         # and just wrap the PydanticObjects from IntegrationRequirer libs into the
         # IntegrationState, without the build function. See integration_requirers.s3.
-        integrations = IntegrationsState.build(
-            app_name=app_name,
-            redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
-            database_requirers=integration_requirers.databases,
-            s3_relation_data=(
-                integration_requirers.s3.to_relation_data() if integration_requirers.s3 else None
-            ),
-            saml_relation_data=(
-                saml_data.to_relation_data()
-                if (
-                    integration_requirers.saml
-                    and (saml_data := integration_requirers.saml.get_relation_data())
-                )
-                else None
-            ),
-            rabbitmq_uri=(
-                integration_requirers.rabbitmq.rabbitmq_uri()
-                if integration_requirers.rabbitmq
-                else None
-            ),
-            tracing_requirer=integration_requirers.tracing,
-            smtp_relation_data=(
-                smtp_data.to_relation_data()
-                if (
-                    integration_requirers.smtp
-                    and (smtp_data := integration_requirers.smtp.get_relation_data())
-                )
-                else None
-            ),
-        )
+        try:
+            integrations = IntegrationsState.build(
+                app_name=app_name,
+                redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
+                database_requirers=integration_requirers.databases,
+                s3_relation_data=(
+                    integration_requirers.s3.to_relation_data() if integration_requirers.s3 else None
+                ),
+                saml_relation_data=(
+                    saml_data.to_relation_data()
+                    if (
+                        integration_requirers.saml
+                        and (saml_data := integration_requirers.saml.get_relation_data())
+                    )
+                    else None
+                ),
+                rabbitmq_uri=(
+                    integration_requirers.rabbitmq.rabbitmq_uri()
+                    if integration_requirers.rabbitmq
+                    else None
+                ),
+                tracing_requirer=integration_requirers.tracing,
+                smtp_relation_data=(
+                    smtp_data.to_relation_data()
+                    if (
+                        integration_requirers.smtp
+                        and (smtp_data := integration_requirers.smtp.get_relation_data())
+                    )
+                    else None
+                ),
+            )
+        except InvalidS3RelationDataError as exc:
+            raise CharmConfigInvalidError("Invalid S3 relation data") from exc
 
         return cls(
             framework=framework,
-            framework_config=framework_config.dict(exclude_none=True),
+            framework_config=framework_config.model_dump(exclude_none=True),
             user_defined_config=typing.cast(
                 dict[str, str | int | bool | dict[str, str]], user_defined_config
             ),
