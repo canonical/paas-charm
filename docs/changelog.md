@@ -11,7 +11,7 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## v1.4.2 - 2025-04-20
 
-* feat: Added peer address as an environment variable
+* feat: Added peer(s) FQDN(s) as an environment variable
 
 ## v1.4.2 - 2025-04-03
 
