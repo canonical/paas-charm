@@ -8,9 +8,8 @@ import logging
 # and let the caller (charm.py) handle it, to make this wrapper act like the
 # native lib module.
 from charms.saml_integrator.v0.saml import SamlRelationData, SamlRequires
-from pydantic import ValidationError, ValidationInfo, field_validator
+from pydantic import ValidationError
 
-from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,7 @@ class PaaSSAMLRequirer(SamlRequires):
         """Get SAML relation data object.
 
         Raises:
-            CharmConfigInvalidError: If invalid SAML connection parameters were provided.
+            InvalidSAMLRelationDataError: If invalid SAML connection parameters were provided.
 
         Returns:
             Data required to integrate with SAML.
