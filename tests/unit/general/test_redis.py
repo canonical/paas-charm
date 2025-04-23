@@ -88,7 +88,7 @@ def test_paas_redis_url():
         ),
         pytest.param(
             {
-                "hostname": "overriden.url",
+                "hostname": "overridden.url",
             },
             {"leader-host": "invalid:url:segments@noturl"},
             id="invalid leader-hostname",
