@@ -181,7 +181,7 @@ class RabbitMQRequires(Object):
         return None
 
     @property
-    def _rabbitmq_k8s_connection_params(self) -> tuple[str, str]:
+    def _rabbitmq_k8s_connection_params(self) -> tuple[str, str] | None:
         if not self._rabbitmq_rel:
             return None
         hostname = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname", None)
