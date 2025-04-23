@@ -70,5 +70,5 @@ class PaaSRedisRequires(RedisRequires):
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidRedisRelationDataError(
-                f"Invalid {InvalidRedisRelationDataError.__name__}: {error_messages.short}"
+                f"Invalid {PaaSRedisRelationData.__name__}: {error_messages.short}"
             ) from exc
