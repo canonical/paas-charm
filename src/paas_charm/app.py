@@ -113,7 +113,13 @@ class SAMLEnvironmentMapper:  # pylint: disable=too-few-public-methods
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
-    """Base class for the application manager."""
+    """Base class for the application manager.
+
+    Attributes:
+        saml_environ_mapper: Maps SAML connection information to environment variables.
+    """
+
+    saml_environ_mapper = SAMLEnvironmentMapper
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -216,6 +222,11 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.saml_environ_mapper.generate_env(
+                relation_data=self._charm_state.integrations.saml
+            )
+        )
         return env
 
     @property
