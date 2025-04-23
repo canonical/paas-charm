@@ -8,7 +8,7 @@ import logging
 import pathlib
 import urllib.parse
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import ops
 
@@ -16,6 +16,10 @@ from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from paas_charm.saml import PaaSSAMLRelationData
+
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -67,6 +71,43 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         """
         unit_id = self.unit_name.split("/")[1]
         return unit_id == "0"
+
+
+class SAMLEnvironmentMapper:  # pylint: disable=too-few-public-methods
+    """Class to map SAML environment variables for the application."""
+
+    @staticmethod
+    def generate_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
+        """Generate environment variable from SAML relation data.
+
+        Args:
+            relation_data: The charm SAML integration relation data.
+
+        Returns:
+            SAML environment mappings if SAML relation data is available, empty
+            dictionary otherwise.
+        """
+        if not relation_data:
+            return {}
+        return {
+            k: v
+            for k, v in (
+                (k, v)
+                for k, v in (
+                    ("SAML_ENTITY_ID", relation_data.entity_id),
+                    (
+                        "SAML_METADATA_URL",
+                        str(relation_data.metadata_url) if relation_data.metadata_url else None,
+                    ),
+                    (
+                        "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                        relation_data.single_sign_on_redirect_url,
+                    ),
+                    ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
+                )
+                if v is not None
+            )
+        }
 
 
 # too-many-instance-attributes is disabled because this class
@@ -301,19 +342,6 @@ def map_integrations_to_env(integrations: IntegrationsState, prefix: str = "") -
                 ("S3_ADDRESSING_STYLE", s3.addressing_style),
                 ("S3_ATTRIBUTES", json.dumps(s3.attributes) if s3.attributes else None),
                 ("S3_TLS_CA_CHAIN", json.dumps(s3.tls_ca_chain) if s3.attributes else None),
-            )
-            if v is not None
-        )
-
-    if integrations.saml:
-        saml = integrations.saml
-        env.update(
-            (k, v)
-            for k, v in (
-                ("SAML_ENTITY_ID", saml.entity_id),
-                ("SAML_METADATA_URL", saml.metadata_url),
-                ("SAML_SINGLE_SIGN_ON_REDIRECT_URL", saml.single_sign_on_redirect_url),
-                ("SAML_SIGNING_CERTIFICATE", saml.signing_certificate),
             )
             if v is not None
         )
