@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # if new optional libs are not fetched, as it will not be backwards compatible.
 try:
     # pylint: disable=ungrouped-imports
-    from charms.data_platform_libs.v0.s3 import S3Requirer
+    from paas_charm.s3 import PaaSS3Requirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
@@ -193,7 +193,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _redis
 
-    def _init_s3(self, requires: dict[str, RelationMeta]) -> "S3Requirer | None":
+    def _init_s3(self, requires: dict[str, RelationMeta]) -> "PaaSS3Requirer | None":
         """Initialize the S3 relation if its required.
 
         Args:
@@ -205,7 +205,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _s3 = None
         if "s3" in requires and requires["s3"].interface_name == "s3":
             try:
-                _s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
+                _s3 = PaaSS3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
                 self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
                 self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
             except NameError:
@@ -483,7 +483,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["redis"].optional:
                 yield "redis"
 
-        if self._s3 and not charm_state.integrations.s3_parameters:
+        if self._s3 and not charm_state.integrations.s3:
             if not requires["s3"].optional:
                 yield "s3"
 

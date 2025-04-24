@@ -9,13 +9,12 @@ import re
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Type, TypeVar
+from typing import Dict, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import (
     BaseModel,
-    Extra,
     Field,
     ValidationError,
     ValidationInfo,
@@ -35,7 +34,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.data_platform_libs.v0.s3 import S3Requirer
+    from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3RelationData
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -165,50 +164,58 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-        integrations = IntegrationsState.build(
-            app_name=app_name,
-            redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
-            database_requirers=integration_requirers.databases,
-            s3_connection_info=(
-                integration_requirers.s3.get_s3_connection_info()
-                if integration_requirers.s3
-                else None
-            ),
-            saml_relation_data=(
-                saml_data.to_relation_data()
-                if (
-                    integration_requirers.saml
-                    and (saml_data := integration_requirers.saml.get_relation_data())
-                )
-                else None
-            ),
-            rabbitmq_relation_data=(
-                integration_requirers.rabbitmq.get_relation_data()
-                if integration_requirers.rabbitmq
-                else None
-            ),
-            tracing_requirer=integration_requirers.tracing,
-            smtp_relation_data=(
-                smtp_data.to_relation_data()
-                if (
-                    integration_requirers.smtp
-                    and (smtp_data := integration_requirers.smtp.get_relation_data())
-                )
-                else None
-            ),
-            openfga_relation_data=(
-                store_info_to_relation_data(store_info)
-                if (
-                    integration_requirers.openfga
-                    and (store_info := integration_requirers.openfga.get_store_info())
-                )
-                else None
-            ),
-        )
+        # 2025/04/15 When done ejecting IntegrationParameters, we should remove the build function
+        # and just wrap the PydanticObjects from IntegrationRequirer libs into the
+        # IntegrationState, without the build function. See integration_requirers.s3.
+        try:
+            integrations = IntegrationsState.build(
+                app_name=app_name,
+                redis_uri=(
+                    integration_requirers.redis.url if integration_requirers.redis else None
+                ),
+                database_requirers=integration_requirers.databases,
+                s3_relation_data=(
+                    integration_requirers.s3.to_relation_data()
+                    if integration_requirers.s3
+                    else None
+                ),
+                saml_relation_data=(
+                    saml_data.to_relation_data()
+                    if (
+                        integration_requirers.saml
+                        and (saml_data := integration_requirers.saml.get_relation_data())
+                    )
+                    else None
+                ),
+                rabbitmq_relation_data=(
+                    integration_requirers.rabbitmq.get_relation_data()
+                    if integration_requirers.rabbitmq
+                    else None
+                ),
+                tracing_requirer=integration_requirers.tracing,
+                smtp_relation_data=(
+                    smtp_data.to_relation_data()
+                    if (
+                        integration_requirers.smtp
+                        and (smtp_data := integration_requirers.smtp.get_relation_data())
+                    )
+                    else None
+                ),
+                openfga_relation_data=(
+                    store_info_to_relation_data(store_info)
+                    if (
+                        integration_requirers.openfga
+                        and (store_info := integration_requirers.openfga.get_store_info())
+                    )
+                    else None
+                ),
+            )
+        except InvalidS3RelationDataError as exc:
+            raise CharmConfigInvalidError("Invalid S3 relation data") from exc
 
         return cls(
             framework=framework,
-            framework_config=framework_config.dict(exclude_none=True),
+            framework_config=framework_config.model_dump(exclude_none=True),
             user_defined_config=typing.cast(
                 dict[str, str | int | bool | dict[str, str]], user_defined_config
             ),
@@ -299,7 +306,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     databases: dict[str, DatabaseRequires]
     redis: RedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
-    s3: "S3Requirer | None" = None
+    s3: "PaaSS3Requirer | None" = None
     saml: "SamlRequires | None" = None
     tracing: "TracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
@@ -315,7 +322,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     Attrs:
         redis_uri: The redis uri provided by the redis charm.
         databases_uris: Map from interface_name to the database uri.
-        s3_parameters: S3 parameters.
+        s3: S3 connection information from relation data.
         saml_parameters: SAML parameters.
         rabbitmq: RabbitMQ relation data.
         tempo_parameters: Tracing parameters.
@@ -325,7 +332,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
 
     redis_uri: str | None = None
     databases_uris: dict[str, str] = field(default_factory=dict)
-    s3_parameters: "S3Parameters | None" = None
+    s3: "S3RelationData | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq: RabbitMQRelationData | None = None
     tempo_parameters: "TempoParameters | None" = None
@@ -339,7 +346,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         *,
         redis_uri: str | None,
         database_requirers: dict[str, DatabaseRequires],
-        s3_connection_info: dict[str, str] | None,
+        s3_relation_data: "S3RelationData | None" = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_relation_data: RabbitMQRelationData | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
@@ -353,7 +360,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
             app_name: Name of the application.
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
-            s3_connection_info: S3 connection info from S3 lib.
+            s3_relation_data: S3 relation data from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_relation_data: RabbitMQ relation data.
             tracing_requirer: The tracing relation data provided by the Tempo charm.
@@ -363,7 +370,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         Return:
             The IntegrationsState instance created.
         """
-        s3_parameters = generate_relation_parameters(s3_connection_info, S3Parameters)
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
         tempo_data = {}
         if tracing_requirer and tracing_requirer.is_ready():
@@ -387,7 +393,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
                 for interface_name, requirers in database_requirers.items()
                 if (uri := get_uri(requirers)) is not None
             },
-            s3_parameters=s3_parameters,
+            s3=s3_relation_data,
             saml_parameters=saml_parameters,
             rabbitmq=rabbitmq_relation_data,
             tempo_parameters=tempo_parameters,
@@ -397,12 +403,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
 
 
 RelationParam = TypeVar(
-    "RelationParam",
-    "SamlParameters",
-    "S3Parameters",
-    "TempoParameters",
-    "SmtpParameters",
-    "OpenfgaParameters",
+    "RelationParam", "SamlParameters", "TempoParameters", "SmtpParameters", "OpenfgaParameters"
 )
 
 
@@ -430,7 +431,7 @@ def generate_relation_parameters(
         return None
 
     try:
-        return parameter_type.parse_obj(relation_data)
+        return parameter_type.model_validate(relation_data)
     except ValidationError as exc:
         error_messages = build_validation_error_message(exc)
         logger.error(error_messages.long)
@@ -465,46 +466,7 @@ class TempoParameters(BaseModel):
     service_name: str = Field(alias="service_name")
 
 
-class S3Parameters(BaseModel):
-    """Configuration for accessing S3 bucket.
-
-    Attributes:
-        access_key: AWS access key.
-        secret_key: AWS secret key.
-        region: The region to connect to the object storage.
-        storage_class: Storage Class for objects uploaded to the object storage.
-        bucket: The bucket name.
-        endpoint: The endpoint used to connect to the object storage.
-        path: The path inside the bucket to store objects.
-        s3_api_version: S3 protocol specific API signature.
-        s3_uri_style: The S3 protocol specific bucket path lookup type. Can be "path" or "host".
-        addressing_style: S3 protocol addressing style, can be "path" or "virtual".
-        attributes: The custom metadata (HTTP headers).
-        tls_ca_chain: The complete CA chain, which can be used for HTTPS validation.
-    """
-
-    access_key: str = Field(alias="access-key")
-    secret_key: str = Field(alias="secret-key")
-    region: Optional[str] = None
-    storage_class: Optional[str] = Field(alias="storage-class", default=None)
-    bucket: str
-    endpoint: Optional[str] = None
-    path: Optional[str] = None
-    s3_api_version: Optional[str] = Field(alias="s3-api-version", default=None)
-    s3_uri_style: Optional[str] = Field(alias="s3-uri-style", default=None)
-    tls_ca_chain: Optional[list[str]] = Field(alias="tls-ca-chain", default=None)
-    attributes: Optional[list[str]] = None
-
-    @property
-    def addressing_style(self) -> Optional[str]:
-        """Translates s3_uri_style to AWS addressing_style."""
-        if self.s3_uri_style == "host":
-            return "virtual"
-        # If None or "path", it does not change.
-        return self.s3_uri_style
-
-
-class SamlParameters(BaseModel, extra=Extra.allow):
+class SamlParameters(BaseModel, extra="allow"):
     """Configuration for accessing SAML.
 
     Attributes:
@@ -570,7 +532,7 @@ class AuthType(str, Enum):
     PLAIN = "plain"
 
 
-class SmtpParameters(BaseModel, extra=Extra.allow):
+class SmtpParameters(BaseModel, extra="allow"):
     """Represent the SMTP relation data.
 
     Attributes:
@@ -628,7 +590,7 @@ class SmtpParameters(BaseModel, extra=Extra.allow):
         return transport_security
 
 
-class OpenfgaParameters(BaseModel, extra=Extra.allow):
+class OpenfgaParameters(BaseModel, extra="allow"):
     """Represent the OpenFGA relation data.
 
     Attributes:
