@@ -8,7 +8,7 @@ import logging
 import pathlib
 import urllib.parse
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import ops
 
@@ -16,6 +16,9 @@ from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from paas_charm.redis import PaaSRedisRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -69,10 +72,31 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from Redis relation data.
+
+    Args:
+        relation_data: The charm Redis integration relation data.
+
+    Returns:
+        Redis environment mappings if Redis relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
-    """Base class for the application manager."""
+    """Base class for the application manager.
+
+    Attributes:
+        generate_redis_env: Maps Redis connection information to environment variables.
+    """
+
+    generate_redis_env = staticmethod(generate_redis_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -175,6 +199,11 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.generate_redis_env(
+                relation_data=self._charm_state.integrations.redis_relation_data
+            )
+        )
         return env
 
     @property
@@ -274,9 +303,6 @@ def map_integrations_to_env(  # noqa: C901
        A dictionary representing the environment variables for the IntegrationState.
     """
     env = {}
-    if integrations.redis_uri:
-        redis_envvars = _db_url_to_env_variables("REDIS", integrations.redis_uri)
-        env.update(redis_envvars)
     for interface_name, uri in integrations.databases_uris.items():
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)

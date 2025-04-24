@@ -5,14 +5,12 @@
 import logging
 import os
 import pathlib
-import re
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, Type, TypeVar
 
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
-from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import (
     BaseModel,
     Extra,
@@ -26,6 +24,7 @@ from pydantic import (
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -167,7 +166,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         integrations = IntegrationsState.build(
             app_name=app_name,
-            redis_uri=(integration_requirers.redis.url if integration_requirers.redis else None),
+            redis_relation_data=(
+                integration_requirers.redis.to_relation_data()
+                if integration_requirers.redis
+                else None
+            ),
             database_requirers=integration_requirers.databases,
             s3_connection_info=(
                 integration_requirers.s3.get_s3_connection_info()
@@ -297,7 +300,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     """
 
     databases: dict[str, DatabaseRequires]
-    redis: RedisRequires | None = None
+    redis: PaaSRedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
     s3: "S3Requirer | None" = None
     saml: "SamlRequires | None" = None
@@ -313,7 +316,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     This state is related to all the relations that can be optional, like databases, redis...
 
     Attrs:
-        redis_uri: The redis uri provided by the redis charm.
+        redis_relation_data: The Redis connection info from redis lib.
         databases_uris: Map from interface_name to the database uri.
         s3_parameters: S3 parameters.
         saml_parameters: SAML parameters.
@@ -323,7 +326,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         openfga_parameters: OpenFGA parameters.
     """
 
-    redis_uri: str | None = None
+    redis_relation_data: PaaSRedisRelationData | None = None
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3_parameters: "S3Parameters | None" = None
     saml_parameters: "SamlParameters | None" = None
@@ -337,7 +340,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     def build(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
-        redis_uri: str | None,
+        redis_relation_data: PaaSRedisRelationData | None,
         database_requirers: dict[str, DatabaseRequires],
         s3_connection_info: dict[str, str] | None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
@@ -351,7 +354,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
 
         Args:
             app_name: Name of the application.
-            redis_uri: The redis uri provided by the redis charm.
+            redis_relation_data: The Redis connection info from redis lib.
             database_requirers: All database requirers object declared by the charm.
             s3_connection_info: S3 connection info from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
@@ -375,13 +378,8 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
         openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
-        # Workaround as the Redis library temporarily sends the port
-        # as None while the integration is being created.
-        if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
-            redis_uri = None
-
         return cls(
-            redis_uri=redis_uri,
+            redis_relation_data=redis_relation_data,
             databases_uris={
                 interface_name: uri
                 for interface_name, requirers in database_requirers.items()
