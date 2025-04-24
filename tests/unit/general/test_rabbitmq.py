@@ -65,7 +65,7 @@ def test_rabbitmq_get_relation_data(
     """
     arrange: given RabbitMQ relation data.
     act: when RabbitMQ get_relation_data is called.
-    assert: expected releation data is returned.
+    assert: expected relation data is returned.
     """
     flask_harness.begin()
     # Define some relations.
