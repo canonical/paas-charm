@@ -73,40 +73,36 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-class SAMLEnvironmentMapper:  # pylint: disable=too-few-public-methods
-    """Class to map SAML environment variables for the application."""
+def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from SAML relation data.
 
-    @staticmethod
-    def generate_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
-        """Generate environment variable from SAML relation data.
+    Args:
+        relation_data: The charm SAML integration relation data.
 
-        Args:
-            relation_data: The charm SAML integration relation data.
-
-        Returns:
-            SAML environment mappings if SAML relation data is available, empty
-            dictionary otherwise.
-        """
-        if not relation_data:
-            return {}
-        return dict(
-            (
-                (k, v)
-                for (k, v) in (
-                    ("SAML_ENTITY_ID", relation_data.entity_id),
-                    (
-                        "SAML_METADATA_URL",
-                        str(relation_data.metadata_url) if relation_data.metadata_url else None,
-                    ),
-                    (
-                        "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
-                        relation_data.single_sign_on_redirect_url,
-                    ),
-                    ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
-                )
-                if v is not None
+    Returns:
+        SAML environment mappings if SAML relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return dict(
+        (
+            (k, v)
+            for (k, v) in (
+                ("SAML_ENTITY_ID", relation_data.entity_id),
+                (
+                    "SAML_METADATA_URL",
+                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
+                ),
+                (
+                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                    relation_data.single_sign_on_redirect_url,
+                ),
+                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
             )
+            if v is not None
         )
+    )
 
 
 # too-many-instance-attributes is disabled because this class
@@ -115,10 +111,10 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        saml_environ_mapper: Maps SAML connection information to environment variables.
+        generate_saml_env: Maps SAML connection information to environment variables.
     """
 
-    saml_environ_mapper = SAMLEnvironmentMapper
+    generate_saml_env = generate_saml_env
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -221,11 +217,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
-        env.update(
-            self.saml_environ_mapper.generate_env(
-                relation_data=self._charm_state.integrations.saml
-            )
-        )
+        env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         return env
 
     @property

@@ -5,7 +5,7 @@
 import pytest
 from charms.saml_integrator.v0.saml import SamlEndpoint
 
-from paas_charm.app import SAMLEnvironmentMapper
+from paas_charm.app import generate_saml_env
 from paas_charm.saml import PaaSSAMLRelationData
 
 
@@ -69,4 +69,4 @@ def test_saml_environ_mapper_generate_env(relation_data, expected_env):
     act: when generate_env method is called.
     assert: expected environment variables are generated.
     """
-    assert SAMLEnvironmentMapper.generate_env(relation_data) == expected_env
+    assert generate_saml_env(relation_data) == expected_env
