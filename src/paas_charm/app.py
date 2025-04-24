@@ -89,11 +89,10 @@ class SAMLEnvironmentMapper:  # pylint: disable=too-few-public-methods
         """
         if not relation_data:
             return {}
-        return {
-            k: v
-            for k, v in (
+        return dict(
+            (
                 (k, v)
-                for k, v in (
+                for (k, v) in (
                     ("SAML_ENTITY_ID", relation_data.entity_id),
                     (
                         "SAML_METADATA_URL",
@@ -107,7 +106,7 @@ class SAMLEnvironmentMapper:  # pylint: disable=too-few-public-methods
                 )
                 if v is not None
             )
-        }
+        )
 
 
 # too-many-instance-attributes is disabled because this class

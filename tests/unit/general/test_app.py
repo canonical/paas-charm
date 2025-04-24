@@ -35,9 +35,9 @@ from paas_charm.saml import PaaSSAMLRelationData
         ),
         pytest.param(
             PaaSSAMLRelationData.model_construct(
-                entity_id="test-entity-id",
-                metadata_url="http://test-metadata.url",
-                certificates=("test-certificate-1", "test-certificate-2"),
+                entity_id="https://login.staging.ubuntu.com",
+                metadata_url="https://login.staging.ubuntu.com/saml/metadata",
+                certificates=("https://login.staging.ubuntu.com/saml/", "test-certificate-2"),
                 endpoints=(
                     SamlEndpoint(
                         name="single_sign_on_service_redirect_url",
@@ -54,10 +54,10 @@ from paas_charm.saml import PaaSSAMLRelationData
                 ),
             ),
             {
-                "SAML_ENTITY_ID": "test-entity-id",
-                "SAML_METADATA_URL": "http://test-metadata.url",
+                "SAML_ENTITY_ID": "https://login.staging.ubuntu.com",
+                "SAML_METADATA_URL": "https://login.staging.ubuntu.com/saml/metadata",
                 "SAML_SINGLE_SIGN_ON_REDIRECT_URL": "http://testing-redirect-url.test/",
-                "SAML_SIGNING_CERTIFICATE": "test-certificate-1,test-certificate-2",
+                "SAML_SIGNING_CERTIFICATE": "https://login.staging.ubuntu.com/saml/,test-certificate-2",
             },
             id="All relation data",
         ),
