@@ -17,21 +17,20 @@ logger = logging.getLogger(__name__)
 class PaaSRedisDsn(AnyUrl):
     """A type that will accept any Redis DSN.
 
-    * User info required
-    * TLD not required
-    * Host required (e.g., `rediss://:pass@localhost`)
+    Attributes:
+        host: The Redis host.
     """
 
     _constraints = UrlConstraints(
         allowed_schemes=["redis", "rediss"],
-        default_host="localhost",
+        default_host=None,
         default_port=6379,
         default_path="",
         host_required=True,
     )
 
     @property
-    def host(self) -> str:
+    def host(self) -> str | None:
         """The required URL host."""
         return self._url.host  # pyright: ignore[reportReturnType]
 
@@ -57,7 +56,7 @@ class PaaSRedisRequires(RedisRequires):
         """Get SAML relation data object.
 
         Raises:
-            InvalidSAMLRelationDataError: If invalid SAML connection parameters were provided.
+            InvalidRedisRelationDataError: If invalid SAML connection parameters were provided.
 
         Returns:
             Data required to integrate with SAML.
