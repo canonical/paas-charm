@@ -3,13 +3,10 @@
 
 """S3 lib wrapper unit tests."""
 
-from unittest.mock import MagicMock
-
 import pytest
 
-from paas_charm.app import S3EnvironmentMapper
-from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.s3 import PaaSS3Requirer, S3RelationData
+from paas_charm.app import generate_s3_env
+from paas_charm.s3 import S3RelationData
 
 
 @pytest.mark.parametrize(
@@ -60,7 +57,7 @@ from paas_charm.s3 import PaaSS3Requirer, S3RelationData
 def test_s3_environ_mapper_generate_env(relation_data, expected_env):
     """
     arrange: given S3 relation data.
-    act: when generate_env method is called.
+    act: when generate_s3_env method is called.
     assert: expected environment variables are generated.
     """
-    assert S3EnvironmentMapper.generate_env(relation_data) == expected_env
+    assert generate_s3_env(relation_data) == expected_env
