@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
         ("expressjs_app"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_prometheus_integration(
     request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
 ):
@@ -60,7 +60,7 @@ def test_prometheus_integration(
         ("expressjs_app", 8080),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_loki_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -109,7 +109,7 @@ def test_loki_integration(
         ("expressjs_app", "ExpressJS Operator"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_grafana_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,

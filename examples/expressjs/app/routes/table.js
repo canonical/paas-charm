@@ -3,12 +3,12 @@
  * See LICENSE file for licensing details.
  */
 
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-const db = require('../database');
+const db = require("../database");
 
 /* GET /table/:table - Check if a table exists */
-router.get('/:table', async function (req, res) {
+router.get("/:table", async function (req, res) {
   const tableName = req.params.table;
 
   try {
@@ -24,7 +24,7 @@ router.get('/:table', async function (req, res) {
       res.status(404).end(); // Table does not exist
     }
   } catch (error) {
-    console.error('Error checking table existence:', error);
+    console.error("Error checking table existence:", error);
     res.status(500).end(); // Internal server error
   }
 });

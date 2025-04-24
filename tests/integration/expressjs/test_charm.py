@@ -14,11 +14,9 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
-    """Check that the charm is active.
-    Assume that the charm has already been built and is running.
-    """
+    """Check that the charm is active."""
     expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
     assert status.apps[expressjs_app.name].units[expressjs_app.name + "/0"].is_active
@@ -29,10 +27,10 @@ def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
         assert "Hello, World!" in response.text
 
 
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
-    arrange: build and deploy the fastapi charm. Set the config user-defined-config to a new value.
+    arrange: build and deploy the ExpressJS charm. Set the config user-defined-config to a new value.
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
@@ -50,12 +48,13 @@ def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju
         assert "newvalue" in response.text
 
 
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
+@pytest.mark.skip_juju_version("3.4")
 def test_migration(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
-    arrange: build and deploy the fastapi charm with postgresql integration.
-    act: send a request to an endpoint that checks the table created by the micration script.
-    assert: the fastapi application should return a correct response.
+    arrange: build and deploy the ExpressJS charm with postgresql integration.
+    act: send a request to an endpoint that checks the table created by the migration script.
+        Then try to add same user twice.
+    assert: the ExpressJS application should add the user only once.
     """
     expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()

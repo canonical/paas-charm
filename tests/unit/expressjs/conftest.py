@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""pytest fixtures for the expressjs unit test."""
+"""pytest fixtures for the ExpressJS unit test."""
 import os
 import pathlib
 import typing

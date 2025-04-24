@@ -62,7 +62,7 @@ def get_traces(tempo_host: str, service_name: str):
 
 
 @retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
-def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
+def get_traces_patiently(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API, but also try multiple times.
 
     Useful for cases when Tempo might not return the traces immediately (its API is known for returning data in
@@ -74,7 +74,7 @@ def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
 
 
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
-def get_mails_patiently(mailcatcher_pod_ip):
+def get_mails_patiently(mailcatcher_pod_ip: str):
     """Get mails directly from Mailcatcher REST API, but also try multiple times."""
     url = f"http://{mailcatcher_pod_ip}:1080/messages"
     req = requests.get(

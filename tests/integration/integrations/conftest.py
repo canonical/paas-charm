@@ -6,7 +6,7 @@
 import collections
 import logging
 import pathlib
-import subprocess  # nosec B404
+import subprocess
 import time
 
 import jubilant
@@ -42,16 +42,14 @@ def build_charm_file(
                     "pack",
                     "--project-dir",
                     charm_location,
-                ],  # , "--project-dir", charm_location
+                ],
                 check=True,
                 capture_output=True,
                 text=True,
-            )  # nosec B603, B607
+            )
 
             app_name = f"{framework}-k8s"
-            charm_path = pathlib.Path(
-                PROJECT_ROOT
-            )  # .parent.parent.parent.parent / "examples/{framework}"
+            charm_path = pathlib.Path(PROJECT_ROOT)
             charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
             assert charms, f"{app_name} .charm file not found"
             assert (
@@ -75,6 +73,7 @@ def deploy_postgresql(
     if juju.status().apps.get("postgresql-k8s"):
         logger.info("postgresql-k8s already deployed")
         return
+
     juju.deploy(
         "postgresql-k8s",
         channel="14/stable",
@@ -87,8 +86,6 @@ def deploy_postgresql(
         lambda status: jubilant.all_active(status, ["postgresql-k8s"]),
         timeout=20 * 60,
     )
-
-    # configure postgres
     juju.config(
         "postgresql-k8s",
         {
@@ -103,9 +100,8 @@ def deploy_postgresql(
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask"
     return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
+        juju=juju,
+        pytestconfig=pytestconfig,
         framework=framework,
         image_name=f"test-{framework}-image",
         use_postgres=False,
@@ -116,12 +112,9 @@ def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "django"
     return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
+        juju=juju,
+        pytestconfig=pytestconfig,
         framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=True,
     )
 
 
@@ -130,12 +123,9 @@ def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "fastapi"
     return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
+        juju=juju,
+        pytestconfig=pytestconfig,
         framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=True,
     )
 
 
@@ -143,12 +133,9 @@ def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "go"
     return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
+        juju=juju,
+        pytestconfig=pytestconfig,
         framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=True,
     )
 
 
@@ -157,12 +144,9 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "expressjs"
     return generate_app_fixture(
-        juju,
-        pytestconfig,
-        app_name=f"{framework}-k8s",
+        juju=juju,
+        pytestconfig=pytestconfig,
         framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=True,
     )
 
 
@@ -170,14 +154,15 @@ def generate_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
     framework: str,
-    app_name: str,
-    image_name: str,
-    use_postgres: bool = False,
+    image_name: str = "",
+    use_postgres: bool = True,
 ):
-    # pylint: disable=too-many-locals
     """Discourse charm used for integration testing.
     Builds the charm and deploys it and the relations it depends on.
     """
+    app_name = f"{framework}-k8s"
+    if image_name == "":
+        image_name = f"{framework}-app-image"
     use_existing = pytestconfig.getoption("--use-existing", default=False)
     if use_existing:
         return App(app_name)
@@ -206,9 +191,7 @@ def generate_app_fixture(
 
     juju.wait(lambda status: jubilant.all_waiting(status, [app_name]))
     # Add required relations
-    # status = juju.status()
     if use_postgres:
-        # assert status.apps[app_name].units[app_name + "/0"].is_waiting
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(jubilant.all_active, timeout=30 * 60)
@@ -408,8 +391,8 @@ def deploy_loki_fixture(
 @pytest.mark.skip_juju_version("3.4")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
-    loki_app,  # pylint: disable=unused-argument
-    prometheus_app,  # pylint: disable=unused-argument
+    loki_app,
+    prometheus_app,
     grafana_app_name: str,
 ) -> dict[str:App]:
     """Deploy the cos applications."""

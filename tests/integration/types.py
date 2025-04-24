@@ -10,16 +10,3 @@ class App(NamedTuple):
     """Holds deployed application information for app_fixture."""
 
     name: str
-
-
-class Credentials(NamedTuple):
-    """Credentials to login to an application.
-    Attrs:
-        email: The contact information to use to login.
-        username: The identification to use to login.
-        password: The secret to use to login.
-    """
-
-    email: str
-    username: str
-    password: str

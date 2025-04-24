@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask workers and schedulers."""
+"""Integration tests for Tracing Integration."""
 import logging
 import time
 
@@ -36,7 +36,6 @@ def test_workload_tracing(
     act: Send 5 requests to the app.
     assert: Tempo should have tracing info about the app.
     """
-
     paas_app = request.getfixturevalue(paas_app_fixture)
     tempo_app = "tempo"
     if not juju.status().apps.get(tempo_app):

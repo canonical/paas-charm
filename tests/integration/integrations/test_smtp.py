@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask workers and schedulers."""
+"""Integration tests for SMTP Integration."""
 
 import logging
 
@@ -65,6 +65,7 @@ def test_smtp_integrations(
     assert "<tester@example.com>" in mails[0]["sender"]
     assert mails[0]["recipients"] == ["<test@example.com>"]
     assert mails[0]["subject"] == "hello"
+
     juju.remove_relation(paas_app.name, f"{smtp_integrator_app}:smtp", force=True)
     juju.remove_unit(paas_app.name, num_units=1, force=True)
     juju.remove_application(paas_app.name, destroy_storage=True, force=True)

@@ -84,7 +84,7 @@ requires:
     limit: 1
 resources:
   app-image:
-    description: expressjs application image.
+    description: ExpressJS application image.
     type: oci-image
 type: charm
 
