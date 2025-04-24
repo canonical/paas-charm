@@ -100,6 +100,13 @@ SMTP_RELATION_DATA_EXAMPLE = {
     "transport_security": "none",
 }
 
+OPENFGA_RELATION_DATA_EXAMPLE = {
+    "store_id": "test-store-id",
+    "token": "test-token",
+    "grpc_api_url": "localhost:8081",
+    "http_api_url": "localhost:8080",
+}
+
 INTEGRATIONS_RELATION_DATA = {
     "postgresql": {
         "app_data": {
