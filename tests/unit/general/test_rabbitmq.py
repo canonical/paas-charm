@@ -62,6 +62,7 @@ def test_rabbitmq_get_relation_data(
     paas_app_data: dict | None,
     expected_relation_data: RabbitMQRelationData | None,
 ):
+    """Test the RabbitMQ relation data Pydantic object creation."""
     flask_harness.begin()
     # Define some relations.
     rel_id = flask_harness.add_relation("rabbitmq", "rabbitmq")
