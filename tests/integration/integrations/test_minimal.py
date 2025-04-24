@@ -19,7 +19,7 @@ async def test_openfga_integrations(
     ops_test: OpsTest,
     model: Model,
     get_unit_ips,
-    pytestconfig: Config,
+    pytestconfig: pytest.Config,
 ):
     """
     arrange: Build and deploy the charm with minimal integrations.
