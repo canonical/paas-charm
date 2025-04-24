@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+
+## v1.4.2 - 2025-04-24
+
+* feat: Added peer(s) FQDN(s) as an environment variable
+
 ## v1.5.0 - 2025-04-14
 
 * feat: Added support for OpenFGA integration.

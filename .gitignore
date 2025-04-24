@@ -163,5 +163,5 @@ cython_debug/
 *.rock
 !examples/**/lib
 
-# VSCode
-.vscode/
+# Development environment
+.vscode

@@ -22,7 +22,7 @@ from paas_charm.charm_state import (
     IntegrationsState,
     OpenfgaParameters,
     RelationParam,
-    S3Parameters,
+    S3RelationData,
     SamlParameters,
     SmtpParameters,
     TempoParameters,
@@ -39,6 +39,7 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
+
 from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
@@ -179,63 +180,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With several databases, one of them None. prefix: {prefix}",
     )
-    small_s3 = pytest.param(
-        IntegrationsState(
-            s3_parameters=S3Parameters.model_construct(
-                access_key="access_key",
-                secret_key="secret_key",
-                bucket="bucket",
-            ),
-        ),
-        prefix,
-        {
-            f"{prefix}S3_ACCESS_KEY": "access_key",
-            f"{prefix}S3_SECRET_KEY": "secret_key",
-            f"{prefix}S3_BUCKET": "bucket",
-        },
-        id=f"With minimal variables in S3 Integration. prefix: {prefix}",
-    )
-    full_s3 = pytest.param(
-        IntegrationsState(
-            s3_parameters=S3Parameters.model_construct(
-                access_key="access_key",
-                secret_key="secret_key",
-                region="region",
-                storage_class="GLACIER",
-                bucket="bucket",
-                endpoint="https://s3.example.com",
-                path="/path/subpath/",
-                s3_api_version="s3v4",
-                uri_style="host",
-                tls_ca_chain=(
-                    ca_chain := [
-                        "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                        "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                    ]
-                ),
-                attributes=(
-                    attributes := [
-                        "header1:value1",
-                        "header2:value2",
-                    ]
-                ),
-            ),
-        ),
-        prefix,
-        {
-            f"{prefix}S3_ACCESS_KEY": "access_key",
-            f"{prefix}S3_SECRET_KEY": "secret_key",
-            f"{prefix}S3_API_VERSION": "s3v4",
-            f"{prefix}S3_BUCKET": "bucket",
-            f"{prefix}S3_ENDPOINT": "https://s3.example.com",
-            f"{prefix}S3_PATH": "/path/subpath/",
-            f"{prefix}S3_REGION": "region",
-            f"{prefix}S3_STORAGE_CLASS": "GLACIER",
-            f"{prefix}S3_ATTRIBUTES": json.dumps(attributes),
-            f"{prefix}S3_TLS_CA_CHAIN": json.dumps(ca_chain),
-        },
-        id=f"With all variables in S3 Integration. prefix: {prefix}",
-    )
     openfga_env = pytest.param(
         IntegrationsState(
             openfga_parameters=generate_relation_parameters(
@@ -259,8 +203,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         rabbitmq_env,
         smtp_env,
         databases_env,
-        small_s3,
-        full_s3,
         openfga_env,
     ]
 
@@ -312,21 +254,21 @@ def test_map_integrations_to_env(
         ),
         pytest.param(
             INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
-            S3Parameters,
+            S3RelationData,
             False,
-            S3Parameters,
+            S3RelationData,
             False,
             id="S3 correct parameters",
         ),
         pytest.param(
             {"wrong_key": "wrong_value"},
-            S3Parameters,
+            S3RelationData,
             False,
             NoneType,
             True,
             id="S3 wrong parameters",
         ),
-        pytest.param({}, S3Parameters, True, NoneType, True, id="S3 empty parameters"),
+        pytest.param({}, S3RelationData, True, NoneType, True, id="S3 empty parameters"),
         pytest.param(
             {"service_name": "app_name", "endpoint": "localhost:1234"},
             TempoParameters,
@@ -408,7 +350,7 @@ def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
         "redis_uri": None,
         "database_requirers": {},
-        "s3_connection_info": None,
+        "s3": None,
         "saml_relation_data": None,
         "rabbitmq_uri": None,
         "tracing_requirer": None,
@@ -434,19 +376,9 @@ def _test_integrations_state_build_parameters():
             id="Saml wrong parameters",
         ),
         pytest.param(
-            {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
+            {**relation_dict, "s3": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "s3_connection_info": {}},
-            False,
-            id="S3 empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "s3_connection_info": {"wrong_key": "wrong_value"}},
-            True,
-            id="S3 wrong parameters",
         ),
         pytest.param(
             {
@@ -541,7 +473,7 @@ def test_integrations_state_build(
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
                 database_requirers=relation_dict["database_requirers"],
-                s3_connection_info=relation_dict["s3_connection_info"],
+                s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
                 tracing_requirer=relation_dict["tracing_requirer"],
@@ -554,7 +486,7 @@ def test_integrations_state_build(
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
                 database_requirers=relation_dict["database_requirers"],
-                s3_connection_info=relation_dict["s3_connection_info"],
+                s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
                 tracing_requirer=relation_dict["tracing_requirer"],

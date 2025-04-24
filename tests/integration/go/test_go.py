@@ -57,7 +57,7 @@ async def test_migration(
 ):
     """
     arrange: build and deploy the go charm with postgresql integration.
-    act: send a request to an endpoint that uses the table created by the micration script.
+    act: send a request to an endpoint that uses the table created by the migration script.
     assert: the go application should return a correct response.
     """
     for unit_ip in await get_unit_ips(go_app.name):

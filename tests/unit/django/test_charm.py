@@ -64,6 +64,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage = unittest.mock.MagicMock()
     secret_storage.is_secret_storage_ready = True
     secret_storage.get_secret_key.return_value = "test"
+    secret_storage.get_peer_unit_fdqns.return_value = None
     harness.update_config(config)
     charm_state = CharmState.from_charm(
         config=harness.charm.config,
@@ -168,6 +169,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage = unittest.mock.MagicMock()
     secret_storage.is_secret_storage_ready = True
     secret_storage.get_secret_key.return_value = "test"
+    secret_storage.get_peer_unit_fdqns.return_value = None
     config["webserver-worker-class"] = "gevent"
     harness.update_config(config)
     charm_state = CharmState.from_charm(

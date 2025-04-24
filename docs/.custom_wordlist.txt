@@ -8,6 +8,7 @@ Charmcraft
 config
 entrypoint
 FastAPI
+FQDN
 Gunicorn
 init
 Jinja

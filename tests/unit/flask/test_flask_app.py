@@ -11,11 +11,9 @@ import typing
 
 import pytest
 
-from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.app import map_integrations_to_env
-from paas_charm.charm_state import CharmState, IntegrationsState, S3Parameters
+from paas_charm.charm_state import CharmState
 
 
 @pytest.mark.parametrize(
