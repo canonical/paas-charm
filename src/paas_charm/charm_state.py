@@ -615,7 +615,7 @@ class OpenfgaParameters(BaseModel, extra="allow"):
     http_api_url: str = Field(...)
 
 
-def store_info_to_relation_data(store_info: OpenfgaProviderAppData) -> Dict[str, str]:
+def store_info_to_relation_data(store_info: "OpenfgaProviderAppData") -> Dict[str, str]:
     """Convert store info to relation data.
 
     Args:
