@@ -116,7 +116,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        s3_environ_mapper: Maps S3 connection information to environment variables.
+        generate_s3_env: Maps S3 connection information to environment variables.
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
