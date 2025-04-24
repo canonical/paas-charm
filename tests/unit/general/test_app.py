@@ -14,18 +14,20 @@ from paas_charm.s3 import S3RelationData
     [
         pytest.param(None, {}, id="No relation data"),
         pytest.param(
-            S3RelationData.model_construct(access_key="key", secret_key="key", bucket="bucket"),
+            S3RelationData.model_construct(
+                access_key="access_key", secret_key="secret_key", bucket="bucket"
+            ),
             {
-                "S3_ACCESS_KEY": "key",
-                "S3_SECRET_KEY": "key",
+                "S3_ACCESS_KEY": "access_key",
+                "S3_SECRET_KEY": "secret_key",
                 "S3_BUCKET": "bucket",
             },
             id="Minimum relation data",
         ),
         pytest.param(
             S3RelationData.model_construct(
-                access_key="key",
-                secret_key="key",
+                access_key="access_key",
+                secret_key="secret_key",
                 region="region",
                 storage_class="standard",
                 bucket="bucket",
@@ -37,7 +39,7 @@ from paas_charm.s3 import S3RelationData
                 attributes=["key1", "key2"],
             ),
             {
-                "S3_ACCESS_KEY": "key",
+                "S3_ACCESS_KEY": "access_key",
                 "S3_ADDRESSING_STYLE": "url-style",
                 "S3_API_VERSION": "version",
                 "S3_ATTRIBUTES": '["key1", "key2"]',
@@ -45,7 +47,7 @@ from paas_charm.s3 import S3RelationData
                 "S3_ENDPOINT": "endpoint",
                 "S3_PATH": "path",
                 "S3_REGION": "region",
-                "S3_SECRET_KEY": "key",
+                "S3_SECRET_KEY": "secret_key",
                 "S3_STORAGE_CLASS": "standard",
                 "S3_URI_STYLE": "url-style",
                 "S3_TLS_CA_CHAIN": '["---first---", "---second---"]',

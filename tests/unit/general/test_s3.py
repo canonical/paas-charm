@@ -76,6 +76,11 @@ from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3Relation
     ],
 )
 def test_requirer_to_relation_data(monkeypatch, relation_data, expected):
+    """
+    arrange: given s3 relation data.
+    act: when to_relation_data is called.
+    assert: expected relation data is returned.
+    """
     s3_requirer = PaaSS3Requirer(MagicMock(), "test-s3-integration", "test-bucket")
     monkeypatch.setattr(
         s3_requirer, "get_s3_connection_info", MagicMock(return_value=relation_data)
@@ -94,6 +99,11 @@ def test_requirer_to_relation_data(monkeypatch, relation_data, expected):
     ],
 )
 def test_requirer_to_validation_error(monkeypatch, relation_data):
+    """
+    arrange: given incomplete/invalid relation data.
+    act: when to_relation_data is called.
+    assert: InvalidS3RelationDataError is raised.
+    """
     s3_requirer = PaaSS3Requirer(MagicMock(), "test-s3-integration", "test-bucket")
     monkeypatch.setattr(
         s3_requirer, "get_s3_connection_info", MagicMock(return_value=relation_data)
