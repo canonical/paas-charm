@@ -3,13 +3,10 @@
 
 """S3 lib wrapper unit tests."""
 
-from unittest.mock import MagicMock
-
 import pytest
 
-from paas_charm.app import RabbitMQEnvironmentMapper
-from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRelationData, RabbitMQRequires
+from paas_charm.app import generate_rabbitmq_env
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 
 @pytest.mark.parametrize(
@@ -48,4 +45,4 @@ def test_rabbitmq_environ_mapper_generate_env(relation_data, expected_env):
     act: when generate_env method is called.
     assert: expected environment variables are generated.
     """
-    assert RabbitMQEnvironmentMapper.generate_env(relation_data) == expected_env
+    assert generate_rabbitmq_env(relation_data) == expected_env

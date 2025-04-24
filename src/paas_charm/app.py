@@ -70,33 +70,27 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-class RabbitMQEnvironmentMapper:  # pylint: disable=too-few-public-methods
-    """Class to map S3 environment variables for the application."""
+def generate_rabbitmq_env(
+    relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
+) -> dict[str, str]:
+    """Generate environment variable from RabbitMQ requirer data.
 
-    @staticmethod
-    def generate_env(
-        relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
-    ) -> dict[str, str]:
-        """Generate environment variable from RabbitMQ requirer data.
+    Args:
+        relation_data: The charm RabbitMQ integration relation data.
+        prefix: The environment variable prefix.
 
-        Args:
-            relation_data: The charm RabbitMQ integration relation data.
-            prefix: The environment variable prefix.
-
-        Returns:
-            RabbitMQ environment mappings if S3Requirer is available, empty
-            dictionary otherwise.
-        """
-        if not relation_data:
-            return {}
-        prefix = prefix or ""
-        envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
-        parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
-        if len(parsed_url.path) > 1:
-            envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(
-                parsed_url.path.split("/")[1]
-            )
-        return envvars
+    Returns:
+        RabbitMQ environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    prefix = prefix or ""
+    envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
+    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
+    if len(parsed_url.path) > 1:
+        envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+    return envvars
 
 
 # too-many-instance-attributes is disabled because this class
@@ -105,10 +99,10 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        rabbitmq_environ_mapper: Maps RabbitMQ connection information to environment variables.
+        generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
     """
 
-    rabbitmq_environ_mapper = RabbitMQEnvironmentMapper
+    generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -212,7 +206,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 )
             )
         env.update(
-            self.rabbitmq_environ_mapper.generate_env(
+            self.generate_rabbitmq_env(
                 relation_data=self._charm_state.integrations.rabbitmq,
                 prefix=self.integrations_prefix,
             )
