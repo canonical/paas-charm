@@ -483,6 +483,24 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
             raise e
 
 
+@pytest_asyncio.fixture(scope="module", name="openfga_server_app")
+async def deploy_openfga_server_fixture(model: Model, postgresql_k8s: Application):
+    """Deploy openfga k8s charm."""
+    try:
+        openfga_server_app = await model.deploy("openfga-k8s", channel="latest/stable")
+        await model.integrate(openfga_server_app.name, postgresql_k8s.name)
+        await model.wait_for_idle(
+            apps=[openfga_server_app.name, postgresql_k8s.name], status="active"
+        )
+        return openfga_server_app
+    except JujuError as e:
+        if "application already exists" in str(e):
+            logger.info(f"openfga-k8s is already deployed {e}")
+            return model.applications["openfga-k8s"]
+        else:
+            raise e
+
+
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
 async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
     """Deploy Redis k8s charm."""
