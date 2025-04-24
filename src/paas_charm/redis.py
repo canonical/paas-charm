@@ -5,18 +5,35 @@
 import logging
 
 from charms.redis_k8s.v0.redis import RedisRequires
-from pydantic import BaseModel, RedisDsn, ValidationError
+from pydantic import AnyUrl, BaseModel, Field, UrlConstraints, ValidationError
 
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
 
 
-# # Override RedisDsn because it defaults the path to /0 database which is not
-# # desired.
-PaaSRedisDsn = RedisDsn
-# trying this
-PaaSRedisDsn._constraints.default_path = ""  # pylint: disable=protected-access
+# Pydantic provided RedisDsn because it defaults the path to /0 database which
+# is not desired.
+class PaaSRedisDsn(AnyUrl):
+    """A type that will accept any Redis DSN.
+
+    * User info required
+    * TLD not required
+    * Host required (e.g., `rediss://:pass@localhost`)
+    """
+
+    _constraints = UrlConstraints(
+        allowed_schemes=["redis", "rediss"],
+        default_host="localhost",
+        default_port=6379,
+        default_path="",
+        host_required=True,
+    )
+
+    @property
+    def host(self) -> str:
+        """The required URL host."""
+        return self._url.host  # pyright: ignore[reportReturnType]
 
 
 class PaaSRedisRelationData(BaseModel):
@@ -26,7 +43,7 @@ class PaaSRedisRelationData(BaseModel):
         url: The connection URL to Redis instance.
     """
 
-    url: PaaSRedisDsn
+    url: PaaSRedisDsn = Field()
 
 
 class InvalidRedisRelationDataError(Exception):
@@ -40,7 +57,7 @@ class PaaSRedisRequires(RedisRequires):
         """Get SAML relation data object.
 
         Raises:
-            InvalidRedisRelationDataError: If invalid SAML connection parameters were provided.
+            InvalidSAMLRelationDataError: If invalid SAML connection parameters were provided.
 
         Returns:
             Data required to integrate with SAML.
