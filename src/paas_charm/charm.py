@@ -41,7 +41,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.saml_integrator.v0.saml import SamlRequires
+    from paas_charm.saml import PaaSSAMLRequirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
@@ -215,7 +215,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
         return _s3
 
-    def _init_saml(self, requires: dict[str, RelationMeta]) -> "SamlRequires | None":
+    def _init_saml(self, requires: dict[str, RelationMeta]) -> "PaaSSAMLRequirer | None":
         """Initialize the SAML relation if its required.
 
         Args:
@@ -227,7 +227,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _saml = None
         if "saml" in requires and requires["saml"].interface_name == "saml":
             try:
-                _saml = SamlRequires(self)
+                _saml = PaaSSAMLRequirer(self)
                 self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
             except NameError:
                 logger.exception(
@@ -500,7 +500,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._saml and not charm_state.integrations.saml_parameters:
+        if self._saml and not charm_state.integrations.saml:
             if not requires["saml"].optional:
                 yield "saml"
 
