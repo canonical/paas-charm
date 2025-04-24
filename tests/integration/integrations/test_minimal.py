@@ -4,11 +4,10 @@
 """Integration tests for Flask workers and schedulers."""
 
 import logging
+import pathlib
 
 import pytest
 import requests
-from juju.application import Application
-from juju.errors import JujuError
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 
@@ -57,6 +56,6 @@ async def test_flask_minimal(
     await model.wait_for_idle()
 
     unit_ip = (await get_unit_ips(f"{example_app}-k8s"))[0]
-    response = requests.get(f"http://{unit_ip}:{port}/", timeout=5)
+    response = requests.get(f"http://{unit_ip}:8000/", timeout=5)
     assert "Hello" in response.text
     assert response.status_code == 200
