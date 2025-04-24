@@ -13,8 +13,6 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
-WORKLOAD_CONTAINER_NAME = "app"
-
 
 class ExpressJSConfig(FrameworkConfig):
     """Represent ExpressJS builtin configuration values.
@@ -64,7 +62,6 @@ class Charm(PaasCharm):
         framework_config = typing.cast(ExpressJSConfig, self.get_framework_config())
         return WorkloadConfig(
             framework=framework_name,
-            container_name=WORKLOAD_CONTAINER_NAME,
             port=framework_config.port,
             base_dir=base_dir,
             app_dir=base_dir,

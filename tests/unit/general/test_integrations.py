@@ -39,7 +39,6 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-
 from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
