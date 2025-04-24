@@ -90,7 +90,11 @@ from paas_charm.charm_state import (
     ],
 )
 def test_paas_saml_requirer_to_relation_data(relation_data, expected_relation_data):
-    """Test PaaSSAMLRequirer to relation data conversion."""
+    """
+    arrange: given test relation data.
+    act: when to_relation_data is called on PaaSSAMLRequirer.
+    assert: expected relation data is returned.
+    """
     saml_requirer = PaaSSAMLRequirer(charm=MagicMock())
     saml_requirer.get_relation_data = MagicMock(return_value=relation_data)
 
@@ -125,7 +129,11 @@ def test_paas_saml_relation_data_properties():
 
 
 def test_paas_saml_relation_data_invalid():
-    """Test invalid relation data error."""
+    """
+    arrange: given mocked get_relation_data function that raises ValidationError.
+    act: when to_relation_data is called.
+    assert: InvalidSAMLRelationDataError is raised.
+    """
     saml_requirer = PaaSSAMLRequirer(charm=MagicMock())
     saml_requirer.get_relation_data = MagicMock(
         side_effect=ValidationError(MagicMock(), MagicMock())
