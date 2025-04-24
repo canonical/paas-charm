@@ -12,10 +12,14 @@ from juju.errors import JujuError
 from juju.model import Model
 from pytest_operator.plugin import OpsTest
 
+from tests.integration.helpers import inject_venv
+
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
 logger = logging.getLogger(__name__)
 
 
-async def test_openfga_integrations(
+async def test_flask_minimal(
     ops_test: OpsTest,
     model: Model,
     get_unit_ips,
@@ -44,7 +48,12 @@ async def test_openfga_integrations(
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    await model.deploy(pathlib.Path(charm_file).absolute(), resources=resources, application_name=f"{example_app}-k8s", series="jammy")
+    await model.deploy(
+        pathlib.Path(charm_file).absolute(),
+        resources=resources,
+        application_name=f"{example_app}-k8s",
+        series="jammy",
+    )
     await model.wait_for_idle()
 
     unit_ip = (await get_unit_ips(f"{example_app}-k8s"))[0]
