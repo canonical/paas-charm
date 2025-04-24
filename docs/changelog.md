@@ -12,7 +12,7 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## v1.5.1 - 2025-04-24
 
-* fix: Fix issue with typehint leading to errors due to missing import
+* fix: Fix issue with `typehint` leading to errors due to missing import
 
 ## v1.5.0 - 2025-04-14
 
