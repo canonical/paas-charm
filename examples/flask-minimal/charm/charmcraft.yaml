@@ -121,6 +121,10 @@ charm-libs:
   version: '1'
 - lib: prometheus-k8s.prometheus_scrape
   version: '0'
+- lib: redis_k8s.redis
+  version: '0'
+- lib: data_platform_libs.data_interfaces
+  version: '0'
 
 parts:
   charm:
