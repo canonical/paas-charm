@@ -38,8 +38,6 @@ async def test_openfga_integrations(
     await model.wait_for_idle()
 
     unit_ip = (await get_unit_ips(app_name))[0]
-    response = requests.get(
-        f"http://{unit_ip}:{port}/", timeout=5
-    )
+    response = requests.get(f"http://{unit_ip}:{port}/", timeout=5)
     assert "Hello" in response.text
     assert response.status_code == 200
