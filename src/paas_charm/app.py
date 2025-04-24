@@ -72,23 +72,19 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-class RedisEnvironmentMapper:  # pylint: disable=too-few-public-methods
-    """Class to map SAML environment variables for the application."""
+def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from Redis relation data.
 
-    @staticmethod
-    def generate_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
-        """Generate environment variable from Redis relation data.
+    Args:
+        relation_data: The charm Redis integration relation data.
 
-        Args:
-            relation_data: The charm Redis integration relation data.
-
-        Returns:
-            Redis environment mappings if Redis relation data is available, empty
-            dictionary otherwise.
-        """
-        if not relation_data:
-            return {}
-        return _db_url_to_env_variables("REDIS", str(relation_data.url))
+    Returns:
+        Redis environment mappings if Redis relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables("REDIS", str(relation_data.url))
 
 
 # too-many-instance-attributes is disabled because this class
@@ -97,10 +93,10 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        redis_environ_mapper: Maps Redis connection information to environment variables.
+        generate_redis_env: Maps Redis connection information to environment variables.
     """
 
-    redis_environ_mapper = RedisEnvironmentMapper
+    generate_redis_env = staticmethod(generate_redis_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -204,7 +200,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 )
             )
         env.update(
-            self.redis_environ_mapper.generate_env(
+            self.generate_redis_env(
                 relation_data=self._charm_state.integrations.redis_relation_data
             )
         )

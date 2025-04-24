@@ -4,7 +4,7 @@
 """App unit tests."""
 import pytest
 
-from paas_charm.app import RedisEnvironmentMapper
+from paas_charm.app import generate_redis_env
 from paas_charm.redis import PaaSRedisRelationData
 
 
@@ -64,4 +64,4 @@ def test_redis_environ_mapper_generate_env(relation_data, expected_env):
     act: when generate_env method is called.
     assert: expected environment variables are generated.
     """
-    assert RedisEnvironmentMapper.generate_env(relation_data) == expected_env
+    assert generate_redis_env(relation_data) == expected_env
