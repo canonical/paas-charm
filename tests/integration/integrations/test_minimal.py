@@ -26,18 +26,28 @@ async def test_openfga_integrations(
     act: Send a request to the web application.
     assert: The request succeeds.
     """
-    test_flask_image = pytestconfig.getoption("--flask-minimal-app-image")
+    example_app = "flask-minimal"
+    test_flask_image = pytestconfig.getoption(f"--{example_app}-app-image")
     if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-flask-image")
+        raise ValueError(f"the following arguments are required: --{example_app}-app-image")
 
-    app_name = "flask-minimal-k8s"
     resources = {
         "flask-app-image": test_flask_image,
     }
-    await model.deploy(build_charm, resources=resources, application_name=app_name, series="jammy")
+    charm_file = next(
+        (f for f in pytestconfig.getoption("--charm-file") if f"/{example_app}-k8s" in f), None
+    )
+
+    if not charm_file:
+        charm_location = PROJECT_ROOT / f"examples/{example_app}/charm"
+        charm_file = await ops_test.build_charm(charm_location)
+    elif charm_file[0] != "/":
+        charm_file = PROJECT_ROOT / charm_file
+    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+    await model.deploy(pathlib.Path(charm_file).absolute(), resources=resources, application_name=f"{example_app}-k8s", series="jammy")
     await model.wait_for_idle()
 
-    unit_ip = (await get_unit_ips(app_name))[0]
+    unit_ip = (await get_unit_ips(f"{example_app}-k8s"))[0]
     response = requests.get(f"http://{unit_ip}:{port}/", timeout=5)
     assert "Hello" in response.text
     assert response.status_code == 200
