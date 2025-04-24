@@ -114,7 +114,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_saml_env: Maps SAML connection information to environment variables.
     """
 
-    generate_saml_env = generate_saml_env
+    generate_saml_env = staticmethod(generate_saml_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
