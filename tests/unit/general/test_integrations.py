@@ -39,7 +39,7 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.general.conftest import MockTracingEndpointRequirer
+from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -451,7 +451,7 @@ def _test_integrations_state_build_parameters():
         pytest.param(
             {
                 **relation_dict,
-                "tracing_requirer": MockTracingEndpointRequirer(True, "localhost:1234"),
+                "tracing_requirer": FakeTracingEndpointRequirer(True, "localhost:1234"),
                 "app_name": "app_name",
             },
             False,
@@ -463,7 +463,7 @@ def _test_integrations_state_build_parameters():
             id="Tempo empty parameters",
         ),
         pytest.param(
-            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
+            {**relation_dict, "tracing_requirer": FakeTracingEndpointRequirer(False, "")},
             False,
             id="Tempo not ready",
         ),
@@ -953,6 +953,7 @@ def test_smtp_not_activated(
     assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
 
 
+@pytest.mark.parametrize(
     "app_harness, framework, container_name",
     [
         pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
@@ -1036,7 +1037,8 @@ def test_openfga_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness", ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"]
+    "app_harness",
+    ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
 )
 def test_secret_storage_relation_departed_hook(
     app_harness: str,

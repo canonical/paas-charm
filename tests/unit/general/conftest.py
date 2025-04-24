@@ -5,7 +5,6 @@
 import os
 import pathlib
 import typing
-import unittest
 
 import ops
 import pytest
@@ -168,9 +167,21 @@ def _set_check_config_handler(
     )
 
 
-def MockTracingEndpointRequirer(is_ready: bool, endpoint: str):
-    mock = unittest.mock.MagicMock()
-    mock.is_ready.return_value = is_ready
-    mock.get_endpoint.return_value = endpoint
+class FakeTracingEndpointRequirer:
+    """Fake tracing endpoint requirer."""
 
-    return mock
+    def __init__(self, is_ready: bool, endpoint: str):
+        """Fake tracing endpoint requirer.
+
+        Args:
+            is_ready: Whether the endpoint is ready.
+            endpoint: The endpoint to be mocked.
+        """
+        self._is_ready = is_ready
+        self._endpoint = endpoint
+
+    def is_ready(self) -> bool:
+        return self._is_ready
+
+    def get_endpoint(self, protocol="") -> str:
+        return self._endpoint
