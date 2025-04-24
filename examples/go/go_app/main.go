@@ -30,6 +30,9 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
+
+	. "github.com/openfga/go-sdk/client"
+	"github.com/openfga/go-sdk/credentials"
 )
 
 type mainHandler struct {
@@ -54,6 +57,32 @@ func handleError(w http.ResponseWriter, error_message error) {
 	}
 	w.Write(jsonResp)
 	return
+}
+
+func (h mainHandler) serveOpenFgaListAuthorizationModels(w http.ResponseWriter, r *http.Request) {
+	h.counter.Inc()
+	log.Printf("Counter %#v\n", h.counter)
+
+	fgaClient, err := NewSdkClient(&ClientConfiguration{
+		ApiUrl:  os.Getenv("FGA_HTTP_API_URL"),
+		StoreId: os.Getenv("FGA_STORE_ID"),
+		Credentials: &credentials.Credentials{
+			Method: credentials.CredentialsMethodApiToken,
+			Config: &credentials.Config{
+				ApiToken: os.Getenv("FGA_TOKEN"),
+			},
+		},
+	})
+	if err != nil {
+		handleError(w, err)
+	}
+
+	_, err = fgaClient.ReadAuthorizationModels(context.Background()).Execute()
+	if err != nil {
+		handleError(w, err)
+	}
+
+	fmt.Fprintf(w, "Listed authorization models")
 }
 
 func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
@@ -223,6 +252,7 @@ func main() {
 	}
 	mux.HandleFunc("/", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
+	mux.HandleFunc("/openfga/list-authorization-models", mainHandler.serveOpenFgaListAuthorizationModels)
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
 
