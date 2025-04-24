@@ -3,6 +3,7 @@
 import json
 import logging
 import pathlib
+import subprocess
 from collections.abc import Generator
 from typing import cast
 
@@ -73,8 +74,9 @@ def fixture_expressjs_app_image(pytestconfig: Config):
     return image
 
 
-async def build_charm_file(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
+def build_charm_file(
+    pytestconfig: pytest.Config,
+    framework: str,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -85,7 +87,29 @@ async def build_charm_file(
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
-        charm_file = await ops_test.build_charm(charm_location)
+        try:
+            subprocess.run(
+                [
+                    "charmcraft",
+                    "pack",
+                ],
+                cwd=charm_location,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            app_name = f"{framework}-k8s"
+            charm_path = pathlib.Path(charm_location)
+            charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
+            assert charms, f"{app_name} .charm file not found"
+            assert (
+                len(charms) == 1
+            ), f"{app_name} has more than one .charm file, unsure which to use"
+            charm_file = str(charms[0])
+        except subprocess.CalledProcessError as exc:
+            raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
+
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
@@ -124,8 +148,6 @@ async def build_charm_file_with_config_options(
 @pytest_asyncio.fixture(scope="module", name="flask_app")
 async def flask_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     test_flask_image: str,
 ):
@@ -135,7 +157,7 @@ async def flask_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
+    charm_file = build_charm_file(pytestconfig, "flask")
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -182,7 +204,7 @@ async def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
+    charm_file = build_charm_file(pytestconfig, "django")
 
     app = await model.deploy(
         charm_file,
@@ -243,7 +265,7 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
+    charm_file = build_charm_file(pytestconfig, "fastapi")
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -293,7 +315,7 @@ async def go_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
+    charm_file = build_charm_file(pytestconfig, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
@@ -340,7 +362,7 @@ async def expressjs_app_fixture(
     resources = {
         "app-image": expressjs_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "expressjs")
+    charm_file = build_charm_file(pytestconfig, "expressjs")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)

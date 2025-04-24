@@ -13,7 +13,6 @@ import ops
 import pytest
 import requests
 from juju.application import Application
-from juju.client._definitions import UnitStatus
 from pytest_operator.plugin import OpsTest
 
 # caused by pytest fixtures
