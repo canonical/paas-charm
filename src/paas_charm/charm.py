@@ -67,7 +67,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.openfga_k8s.v1.openfga import OpenFGARequires, OpenFGAStoreCreateEvent
+    from charms.openfga_k8s.v1.openfga import OpenFGARequires
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
@@ -719,6 +719,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.restart()
 
     @block_if_invalid_config
-    def _on_openfga_store_created(self, _: OpenFGAStoreCreateEvent) -> None:
+    def _on_openfga_store_created(self, _: ops.HookEvent) -> None:
         """Handle openfga store created event."""
         self.restart()
