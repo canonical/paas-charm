@@ -21,7 +21,3 @@ For creating and deploying your first web app on Juju:
 
 Eventually, this project will contain developer tutorials for the tooling.
 
-.. toctree::
-   :maxdepth: 1
-
-
