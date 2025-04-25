@@ -14,6 +14,7 @@ import ops
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.databases import DatabaseRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +74,13 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
 
 
 def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from S3 requirer data.
+    """Generate environment variable from S3 relation data.
 
     Args:
         relation_data: The charm S3 integration relation data.
 
     Returns:
-        Default S3 environment mappings if S3Requirer is available, empty
+        Default S3 environment mappings if S3RelationData is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -110,6 +111,23 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
     }
 
 
+def generate_db_env(
+    database_name: str, relation_data: "DatabaseRelationData | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from Database relation data.
+
+    Args:
+        relation_data: The charm database integration relation data.
+
+    Returns:
+        Default database environment mappings if DatabaseRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -120,6 +138,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
+    generate_db_env = staticmethod(generate_db_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -226,6 +245,11 @@ class App:  # pylint: disable=too-many-instance-attributes
                 )
             )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
+        for (
+            database_name,
+            db_relation_data,
+        ) in self._charm_state.integrations.databases_relation_data.items():
+            env.update(self.generate_db_env(database_name, db_relation_data))
         return env
 
     @property
@@ -328,9 +352,6 @@ def map_integrations_to_env(  # noqa: C901
     if integrations.redis_uri:
         redis_envvars = _db_url_to_env_variables("REDIS", integrations.redis_uri)
         env.update(redis_envvars)
-    for interface_name, uri in integrations.databases_uris.items():
-        interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
-        env.update(interface_envvars)
     if integrations.tempo_parameters:
         if service_name := integrations.tempo_parameters.service_name:
             env.update({"OTEL_SERVICE_NAME": service_name})

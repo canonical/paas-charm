@@ -297,7 +297,6 @@ def test_flask_secret_key_id_no_value():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
-            database_requirers={},
         )
 
 
@@ -320,7 +319,6 @@ def test_flask_secret_key_id_duplication():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
-            database_requirers={},
         )
 
 
