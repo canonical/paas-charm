@@ -66,8 +66,9 @@ Additional resources:
 
 ## Documentation
 
-The 12-Factor documentation provides guidance and learning material about the tooling, getting started,
-customization, and usage. The documentation is hosted on Read the Docs.
+The 12-Factor framework support documentation provides guidance and learning material about
+the tooling, getting started, customization, and usage.
+The documentation is hosted on Read the Docs.
 
 Build the 12-Factor app support documentation located in this repository:
 
