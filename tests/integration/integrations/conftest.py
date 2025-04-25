@@ -157,7 +157,7 @@ def generate_app_fixture(
         config=config,
     )
 
-    juju.wait(lambda status: jubilant.all_waiting(status, [app_name]))
+    juju.wait(lambda status: status.apps[app_name].is_active)
     # Add required relations
     if use_postgres:
         deploy_postgresql(juju)
