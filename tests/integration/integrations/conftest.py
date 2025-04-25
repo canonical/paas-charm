@@ -64,6 +64,18 @@ def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     )
 
 
+@pytest.fixture(scope="module", name="flask_minimal_app")
+def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+    framework = "flask-minimal"
+    return generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        image_name=f"{framework}-app-image",
+        use_postgres=False,
+    )
+
+
 @pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "django"
@@ -127,7 +139,7 @@ def generate_app_fixture(
     resources = {
         "app-image": pytestconfig.getoption(f"--{image_name}"),
     }
-    if framework == "flask":
+    if framework.startswith("flask"):
         resources = {
             "flask-app-image": pytestconfig.getoption(f"--{image_name}"),
         }
@@ -367,10 +379,11 @@ def deploy_cos_fixture(
         "grafana_app_name": App(grafana_app_name),
     }
 
+
 @pytest.fixture(scope="module", name="openfga_server_app")
 def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     """Deploy openfga k8s charm."""
-    openfga_server_app= App("openfga-k8s")
+    openfga_server_app = App("openfga-k8s")
     if juju.status().apps.get(openfga_server_app.name):
         logger.info(f"{openfga_server_app.name} is already deployed")
         return openfga_server_app
@@ -378,5 +391,7 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(lambda status: jubilant.all_active(status,[openfga_server_app.name, "postgresql-k8s"]))
+    juju.wait(
+        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
+    )
     return openfga_server_app

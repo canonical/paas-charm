@@ -74,6 +74,15 @@ def fixture_expressjs_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="flask_minimal_app_image")
+def fixture_flask_minimal_app_image(pytestconfig: Config):
+    """Return the --expressjs-app-image test parameter."""
+    image = pytestconfig.getoption("--flask-minimal-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --flask-minimal-app-image")
+    return image
+
+
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
@@ -562,8 +571,6 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
             return model.applications["postgresql-k8s"]
         else:
             raise e
-
-
 
 
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
