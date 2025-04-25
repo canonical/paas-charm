@@ -5,12 +5,11 @@
 
 import logging
 
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from juju.errors import JujuError
-from juju.model import Model
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +24,12 @@ logger = logging.getLogger(__name__)
     ],
 )
 async def test_openfga_integrations(
-    ops_test: OpsTest,
-    openfga_app_fixture: Application,
+    juju: jubilant.Juju,
+    openfga_app_fixture: App,
     port,
-    model: Model,
-    get_unit_ips,
     request: pytest.FixtureRequest,
-    openfga_server_app: Application,
-    postgresql_k8s: Application,
+    openfga_server_app: App,
+    postgresql_k8s: App,
 ):
     """
     arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
@@ -40,16 +37,13 @@ async def test_openfga_integrations(
     assert: The request succeeds.
     """
     openfga_app = request.getfixturevalue(openfga_app_fixture)
-    await model.wait_for_idle()
+    juju.wait(jubilant.all_active)
 
-    await model.add_relation(openfga_app.name, f"{openfga_server_app.name}:openfga")
-    await model.wait_for_idle(
-        idle_period=30,
-        apps=[openfga_app.name, openfga_server_app.name, postgresql_k8s.name],
-        status="active",
-    )
+    juju.integrate(openfga_app.name, f"{openfga_server_app.name}:openfga")
+    juju.wait(lambda status: jubilant.all_active(status, [openfga_app.name, openfga_server_app.name, postgresql_k8s.name]))
 
-    unit_ip = (await get_unit_ips(openfga_app.name))[0]
+    status = juju.status()
+    unit_ip = status.apps[openfga_app.name].units[openfga_app.name + "/0"].address
     response = requests.get(
         f"http://{unit_ip}:{port}/openfga/list-authorization-models", timeout=5
     )

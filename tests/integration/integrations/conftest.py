@@ -366,3 +366,17 @@ def deploy_cos_fixture(
         "prometheus_app": prometheus_app,
         "grafana_app_name": App(grafana_app_name),
     }
+
+@pytest.fixture(scope="module", name="openfga_server_app")
+def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
+    """Deploy openfga k8s charm."""
+    openfga_server_app= App("openfga-k8s")
+    if juju.status().apps.get(openfga_server_app.name):
+        logger.info(f"{openfga_server_app.name} is already deployed")
+        return openfga_server_app
+
+    deploy_postgresql(juju)
+    juju.deploy(openfga_server_app.name, channel="latest/stable")
+    juju.integrate(openfga_server_app.name, "postgresql-k8s")
+    juju.wait(lambda status: jubilant.all_active(status,[openfga_server_app.name, "postgresql-k8s"]))
+    return openfga_server_app

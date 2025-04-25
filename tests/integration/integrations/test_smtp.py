@@ -8,9 +8,9 @@ import logging
 import jubilant
 import pytest
 import requests
-from juju.application import Application
 
 from tests.integration.helpers import get_mails_patiently
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
-    paas_app_fixture: Application,
+    paas_app_fixture: App,
     port,
     request: pytest.FixtureRequest,
     mailcatcher,
