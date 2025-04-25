@@ -589,7 +589,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 smtp=self._smtp,
                 openfga=self._openfga,
             ),
-            app_name=self.app.name,
             base_url=self._base_url,
         )
 

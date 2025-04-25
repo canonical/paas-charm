@@ -140,6 +140,7 @@ class App:  # pylint: disable=too-many-instance-attributes
 
     Attributes:
         generate_s3_env: Maps S3 connection information to environment variables.
+        generate_tempo_env: Maps tempo tracing connection information to environment variables.
     """
 
     generate_s3_env = staticmethod(generate_s3_env)

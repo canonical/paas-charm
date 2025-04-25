@@ -130,7 +130,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config: BaseModel,
         secret_storage: KeySecretStorage,
         integration_requirers: "IntegrationRequirers",
-        app_name: str | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -141,7 +140,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
             integration_requirers: The collection of integration requirers.
-            app_name: Name of the application.
             base_url: Base URL for the service.
 
         Return:
