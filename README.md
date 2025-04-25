@@ -78,6 +78,7 @@ make run
 ```
 
 Additional resources:
+
 * [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/en/latest/)
 * [Rockcraft](https://documentation.ubuntu.com/rockcraft/en/latest/):
   Documentation related to the OCI image containers
