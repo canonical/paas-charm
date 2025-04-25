@@ -52,7 +52,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+    from paas_charm.tempo import PaaSTracingEndpointRequirer, TempoRelationData
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -172,7 +172,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         # IntegrationState, without the build function. See integration_requirers.s3.
         try:
             integrations = IntegrationsState.build(
-                app_name=app_name,
                 redis_uri=(
                     integration_requirers.redis.url if integration_requirers.redis else None
                 ),
@@ -195,7 +194,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                tracing_requirer=integration_requirers.tracing,
+                tempo_relation_data=(
+                    integration_requirers.tracing.to_relation_data()
+                    if integration_requirers.tracing
+                    else None
+                ),
                 smtp_relation_data=(
                     smtp_data.to_relation_data()
                     if (
@@ -317,7 +320,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     rabbitmq: RabbitMQRequires | None = None
     s3: "PaaSS3Requirer | None" = None
     saml: "SamlRequires | None" = None
-    tracing: "TracingEndpointRequirer | None" = None
+    tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
     openfga: "OpenFGARequires | None" = None
 
@@ -334,7 +337,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         s3: S3 connection information from relation data.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
-        tempo_parameters: Tracing parameters.
+        tempo: Tracing parameters.
         smtp_parameters: Smtp parameters.
         openfga_parameters: OpenFGA parameters.
     """
@@ -344,7 +347,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     s3: "S3RelationData | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
-    tempo_parameters: "TempoParameters | None" = None
+    tempo: "TempoRelationData | None" = None
     smtp_parameters: "SmtpParameters | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
 
@@ -358,21 +361,19 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         s3_relation_data: "S3RelationData | None" = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
-        tracing_requirer: "TracingEndpointRequirer | None" = None,
-        app_name: str | None = None,
+        tempo_relation_data: "TempoRelationData | None" = None,
         smtp_relation_data: dict | None = None,
         openfga_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
         Args:
-            app_name: Name of the application.
             redis_uri: The redis uri provided by the redis charm.
             database_requirers: All database requirers object declared by the charm.
             s3_relation_data: S3 relation data from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing relation data provided by the Tempo charm.
+            tempo_relation_data: The tracing relation data provided by the Tempo charm.
             smtp_relation_data: Smtp relation data from smtp lib.
             openfga_relation_data: OpenFGA relation data from openfga lib.
 
@@ -380,13 +381,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
             The IntegrationsState instance created.
         """
         saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_data = {}
-        if tracing_requirer and tracing_requirer.is_ready():
-            tempo_data = {
-                "service_name": app_name,
-                "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
-            }
-        tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
         smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
         openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
@@ -405,15 +399,13 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
             s3=s3_relation_data,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
-            tempo_parameters=tempo_parameters,
+            tempo=tempo_relation_data,
             smtp_parameters=smtp_parameters,
             openfga_parameters=openfga_parameters,
         )
 
 
-RelationParam = TypeVar(
-    "RelationParam", "SamlParameters", "TempoParameters", "SmtpParameters", "OpenfgaParameters"
-)
+RelationParam = TypeVar("RelationParam", "SamlParameters", "SmtpParameters", "OpenfgaParameters")
 
 
 def generate_relation_parameters(

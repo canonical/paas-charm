@@ -49,7 +49,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+    from paas_charm.tempo import PaaSTracingEndpointRequirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run "
@@ -259,7 +259,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _rabbitmq
 
-    def _init_tracing(self, requires: dict[str, RelationMeta]) -> "TracingEndpointRequirer | None":
+    def _init_tracing(
+        self, requires: dict[str, RelationMeta]
+    ) -> "PaaSTracingEndpointRequirer | None":
         """Initialize the Tracing relation if its required.
 
         Args:
@@ -271,7 +273,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _tracing = None
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
             try:
-                _tracing = TracingEndpointRequirer(
+                _tracing = PaaSTracingEndpointRequirer(
                     self, relation_name="tracing", protocols=["otlp_http"]
                 )
                 self.framework.observe(
@@ -504,7 +506,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["saml"].optional:
                 yield "saml"
 
-        if self._tracing and not charm_state.integrations.tempo_parameters:
+        if self._tracing and not charm_state.integrations.tempo:
             if not requires["tracing"].optional:
                 yield "tracing"
 

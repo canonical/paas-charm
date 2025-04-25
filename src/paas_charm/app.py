@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from paas_charm.s3 import S3RelationData
+    from paas_charm.tempo import TempoRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -110,6 +111,28 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
     }
 
 
+def generate_tempo_env(relation_data: "TempoRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from TempoRelationData.
+
+    Args:
+        relation_data: The charm Tempo integration relation data.
+
+    Returns:
+        Default Tempo tracing environment mappings if TempoRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("OTEL_SERVICE_NAME", relation_data.service_name),
+            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
+        )
+        if v is not None
+    }
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -120,6 +143,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
+    generate_tempo_env = staticmethod(generate_tempo_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -226,6 +250,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 )
             )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
+        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tempo))
         return env
 
     @property
@@ -331,11 +356,6 @@ def map_integrations_to_env(  # noqa: C901
     for interface_name, uri in integrations.databases_uris.items():
         interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
         env.update(interface_envvars)
-    if integrations.tempo_parameters:
-        if service_name := integrations.tempo_parameters.service_name:
-            env.update({"OTEL_SERVICE_NAME": service_name})
-        if endpoint := integrations.tempo_parameters.endpoint:
-            env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
 
     if integrations.saml_parameters:
         saml = integrations.saml_parameters
