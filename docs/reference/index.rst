@@ -4,11 +4,11 @@ Reference
 The Rockcraft documentation contains in-depth descriptions of the native
 12-factor framework support in the Rockcraft tool:
 
-* `Rockcraft Extensions | django-framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/django-framework/>`_
-* `Rockcraft Extensions | expressjs-framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/expressjs-framework/>`_
-* `Rockcraft Extensions | fastapi-framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/fastapi-framework/>`_
-* `Rockcraft Extensions | flask-framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/>`_
-* `Rockcraft Extensions | go-framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/go-framework/>`_
+* `Rockcraft Extensions | Django framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/django-framework/>`_
+* `Rockcraft Extensions | ExpressJS framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/expressjs-framework/>`_
+* `Rockcraft Extensions | FastAPI framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/fastapi-framework/>`_
+* `Rockcraft Extensions | Flask framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/>`_
+* `Rockcraft Extensions | Go framework <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/go-framework/>`_
 
 The Charmcraft documentation contains in-depth descriptions of the native
 12-factor framework support in the Charmcraft tool:

@@ -7,6 +7,7 @@ changelog
 Charmcraft
 config
 entrypoint
+ExpressJS
 FastAPI
 FQDN
 Gunicorn
