@@ -14,11 +14,11 @@ import ops
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
-from paas_charm.databases import DatabaseRelationData
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from paas_charm.databases import DatabaseRelationData
     from paas_charm.s3 import S3RelationData
 
 WORKER_SUFFIX = "-worker"
@@ -117,6 +117,7 @@ def generate_db_env(
     """Generate environment variable from Database relation data.
 
     Args:
+        database_name: The name of the database, i.e. POSTGRESQL.
         relation_data: The charm database integration relation data.
 
     Returns:
@@ -135,6 +136,7 @@ class App:  # pylint: disable=too-many-instance-attributes
 
     Attributes:
         generate_s3_env: Maps S3 connection information to environment variables.
+        generate_db_env: Maps database connection information to environment variables.
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
@@ -188,7 +190,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         self._run_migrations()
         self._container.replan()
 
-    def gen_environment(self) -> dict[str, str]:
+    # 2024/04/25 - we're refactoring this method which will get rid of map_integrations_to_env
+    # wrapper function. Ignore too-complex error from flake8 for now.
+    def gen_environment(self) -> dict[str, str]:  # noqa: too-complex
         """Generate a environment dictionary from the charm configurations.
 
         The environment generation follows these rules:
@@ -336,6 +340,7 @@ def encode_env(value: str | int | float | bool | list | dict) -> str:
     return value if isinstance(value, str) else json.dumps(value)
 
 
+# 2024/04/25 - refactor to get rid of this wrapper function.
 def map_integrations_to_env(  # noqa: C901
     integrations: IntegrationsState, prefix: str = ""
 ) -> dict[str, str]:
