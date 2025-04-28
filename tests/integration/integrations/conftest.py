@@ -245,7 +245,7 @@ def deploy_tempo_cluster(
     deploy_and_configure_minio(juju)
 
     juju.wait(
-        lambda status: jubilant.all_active(status, [tempo_app, worker_app, "s3-integrator"]),
+        lambda status: jubilant.all_active,
         timeout=2000,
     )
     return App(tempo_app)
@@ -395,6 +395,5 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
     juju.wait(
-        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
-    )
+        lambda status: jubilant.all_active)
     return openfga_server_app
