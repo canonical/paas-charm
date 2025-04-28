@@ -160,7 +160,9 @@ def generate_app_fixture(
 
     # Add required relations
     if use_postgres:
-        juju.wait(lambda status: status.apps[app_name].is_blocked)
+        juju.wait(
+            lambda status: status.apps[app_name].is_waiting or status.apps[app_name].is_blocked
+        )
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(jubilant.all_active, timeout=30 * 60)
@@ -377,7 +379,7 @@ def deploy_cos_fixture(
     return {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,
-        "grafana_app_name": App(grafana_app_name),
+        "grafana_app": App(grafana_app_name),
     }
 
 
@@ -392,5 +394,7 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(lambda status: jubilant.all_active(status, ["postgresql-k8s", openfga_server_app.name]))
+    juju.wait(
+        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
+    )
     return openfga_server_app

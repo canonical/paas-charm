@@ -43,7 +43,10 @@ def test_workload_tracing(
 
     juju.integrate(f"{paas_app.name}:tracing", f"{tempo_app}:tracing")
 
-    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, tempo_app]), timeout=600)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [paas_app.name, tempo_app]),
+        timeout=600,
+    )
     status = juju.status()
     unit_ip = status.apps[paas_app.name].units[paas_app.name + "/0"].address
     tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
