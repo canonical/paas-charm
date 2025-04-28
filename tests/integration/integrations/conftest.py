@@ -38,8 +38,7 @@ def deploy_postgresql(
         trust=True,
         config={"profile": "testing"},
     )
-    juju.wait(
-        lambda status: jubilant.all_active(status, ["postgresql-k8s"]),
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active,
         timeout=20 * 60,
     )
     juju.config(
@@ -49,7 +48,7 @@ def deploy_postgresql(
             "plugin_pg_trgm_enable": "true",
         },
     )
-    juju.wait(lambda status: jubilant.all_active(status, ["postgresql-k8s"]))
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
 
 
 @pytest.fixture(scope="module", name="flask_app")
@@ -139,6 +138,7 @@ def generate_app_fixture(
     resources = {
         "app-image": pytestconfig.getoption(f"--{image_name}"),
     }
+    # covers both flask and flask-minimal
     if framework.startswith("flask"):
         resources = {
             "flask-app-image": pytestconfig.getoption(f"--{image_name}"),
@@ -157,9 +157,9 @@ def generate_app_fixture(
         config=config,
     )
 
-    juju.wait(lambda status: status.apps[app_name].is_active)
     # Add required relations
     if use_postgres:
+        juju.wait(lambda status: status.apps[app_name].is_blocked)
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(jubilant.all_active, timeout=30 * 60)
@@ -241,8 +241,7 @@ def deploy_tempo_cluster(
     juju.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
     deploy_and_configure_minio(juju)
 
-    juju.wait(
-        lambda status: jubilant.all_active(status, [tempo_app, worker_app, "s3-integrator"]),
+    juju.wait(lambda status: status.apps[tempo_app, worker_app, "s3-integrator"].is_active,
         timeout=2000,
     )
     return App(tempo_app)
@@ -391,7 +390,5 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(
-        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
-    )
+    juju.wait(lambda status: status.apps["postgresql-k8s",openfga_server_app.name].is_active)
     return openfga_server_app

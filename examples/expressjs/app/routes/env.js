@@ -13,11 +13,14 @@ router.get("/", function (req, res) {
 
 /* GET /env/:envvar - Check if a env variable exists */
 router.get("/:envvar", function (req, res) {
-  const envVar = "APP_" + req.params.envvar.split("-").join("_").toUpperCase();
+  const envVar = req.params.envvar.split("-").join("_").toUpperCase();
+  const envAppVar = "APP_" + req.params.envvar.split("-").join("_").toUpperCase();
 
   // Check if the environment variable exists
   if (process.env[envVar]) {
-    res.status(200).send(value); // Return the value of the environment variable
+    res.status(200).send(process.env[envVar]); // Return the value of the environment variable
+  } else if (process.env[envAppVar]) {
+    res.status(200).send(process.env[envAppVar]); // Return the value of the environment variable
   } else {
     res.status(404).send(`Environment variable ${envVar} not found`); // Not found
   }
