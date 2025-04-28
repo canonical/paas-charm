@@ -19,6 +19,7 @@ from pytest import Config
 from pytest_operator.plugin import OpsTest
 
 from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
@@ -356,26 +357,61 @@ async def go_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="expressjs_app")
-async def expressjs_app_fixture(
+@pytest.mark.skip_juju_version("3.4")
+@pytest.fixture(scope="module", name="expressjs_app")
+def expressjs_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    model: Model,
-    expressjs_app_image: str,
-    postgresql_k8s,
 ):
-    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    """ExpressJS charm used for integration testing.
+    Builds the charm and deploys it and the relations it depends on.
+    """
     app_name = "expressjs-k8s"
 
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        yield App(app_name)
+        return
+
+    juju.deploy(
+        "postgresql-k8s",
+        channel="14/stable",
+        base="ubuntu@22.04",
+        revision=300,
+        trust=True,
+        config={"profile": "testing"},
+    )
+    juju.wait(
+        lambda status: status.apps["postgresql-k8s"].is_active,
+        timeout=20 * 60,
+    )
+
     resources = {
-        "app-image": expressjs_app_image,
+        "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
     charm_file = build_charm_file(pytestconfig, "expressjs")
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
-    return app
+    juju.deploy(
+        charm=charm_file,
+        resources=resources,
+    )
+
+    juju.wait(lambda status: status.apps[app_name].is_blocked)
+
+    # configure postgres
+    juju.config(
+        "postgresql-k8s",
+        {
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+        },
+    )
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
+
+    # Add required relations
+    juju.integrate(app_name, "postgresql-k8s:database")
+    juju.wait(jubilant.all_active)
+
+    yield App(app_name)
 
 
 @pytest_asyncio.fixture(scope="module", name="expressjs_blocked_app")
