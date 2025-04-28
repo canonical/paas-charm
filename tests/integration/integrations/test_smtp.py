@@ -52,7 +52,7 @@ def test_smtp_integrations(
     juju.wait(jubilant.all_active)
 
     juju.integrate(paas_app.name, f"{smtp_integrator_app}:smtp")
-    juju.wait(lambda status: status.apps[paas_app.name, smtp_integrator_app].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, smtp_integrator_app]))
 
     status = juju.status()
     unit_ip = status.apps[paas_app.name].units[paas_app.name + "/0"].address

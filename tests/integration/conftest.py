@@ -395,7 +395,8 @@ def expressjs_app_fixture(
         resources=resources,
     )
 
-    juju.wait(lambda status: status.apps[app_name].is_blocked)
+    juju.wait(lambda status: status.apps[app_name].is_blocked,
+              timwout=5 * 60)
 
     # configure postgres
     juju.config(

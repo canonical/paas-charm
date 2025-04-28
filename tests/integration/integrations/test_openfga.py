@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
         ("go_app", 8080),
     ],
 )
-async def test_openfga_integrations(
+def test_openfga_integrations(
     juju: jubilant.Juju,
     openfga_app_fixture: App,
     port,
@@ -41,9 +41,9 @@ async def test_openfga_integrations(
 
     juju.integrate(openfga_app.name, f"{openfga_server_app.name}:openfga")
     juju.wait(
-        lambda status: status.apps[
+        lambda status: jubilant.all_active(status, [
             openfga_app.name, openfga_server_app.name, postgresql_k8s.name
-        ].is_active
+        ])
     )
 
     status = juju.status()
