@@ -394,6 +394,5 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(
-        lambda status: jubilant.all_active)
+    juju.wait(lambda status: jubilant.all_active)
     return openfga_server_app
