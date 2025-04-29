@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+## v1.5.2 - 2025-04-29
 
-* Properly update ingress integration and opened ports when configuration changes.
-* Ensure Prometheus scraping information refreshes correctly on configuration changes.
-
+* fix: Properly update ingress integration and opened ports when 
+  configuration changes.
+* fix: Ensure Prometheus scraping information refreshes correctly on 
+  configuration changes.
 
 ## v1.5.1 - 2025-04-24
 
