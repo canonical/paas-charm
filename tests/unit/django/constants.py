@@ -6,7 +6,7 @@ DEFAULT_LAYER = {
         "django": {
             "override": "replace",
             "startup": "enabled",
-            "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k sync",
+            "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             "after": ["statsd-exporter"],
             "user": "_daemon_",
         },

@@ -12,6 +12,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Properly update ingress integration and opened ports when configuration changes.
 * Ensure Prometheus scraping information refreshes correctly on configuration changes.
 
+
+## v1.5.1 - 2025-04-24
+
+* fix: Fix issue with `typehint` leading to errors due to missing import
+
+## v1.5.0 - 2025-04-14
+
+* feat: Added support for OpenFGA integration.
+
+## v1.4.2 - 2025-04-24
+
+* feat: Added peer(s) FQDN(s) as an environment variable
+
+## v1.4.2 - 2025-04-03
+
+* fix: Fixed a bug that occurred when users attempted to use [ args ] in service
+  commands for the Django and Flask frameworks.
+
+* fix: Updated broken doc links.
+
+## v1.4.1 - 2025-03-26
+
+* feat(docs): Add Google Analytics capabilities to RTD build.
+
+## v1.4.1 - 2025-03.25
+
+* fix: Added event handler for `secret_storage_relation_changed` 
+  event.
+
 ## v1.4.0 - 2025-03-04
 
 * feat: Added support for smtp integration.

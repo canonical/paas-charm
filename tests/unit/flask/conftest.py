@@ -4,18 +4,17 @@
 """pytest fixtures for the integration test."""
 import os
 import pathlib
-import shlex
 import typing
-import unittest.mock
 
 import ops
 import pytest
 from ops.testing import Harness
 
 from examples.flask.src.charm import FlaskCharm
-from paas_charm.database_migration import DatabaseMigrationStatus
+from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
+from paas_charm._gunicorn.workload_config import create_workload_config
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
+from .constants import FLASK_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -42,7 +41,14 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         return ops.testing.ExecResult(1)
 
     check_config_command = [
-        *shlex.split(DEFAULT_LAYER["services"]["flask"]["command"].split("-k")[0]),
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/flask/gunicorn.conf.py",
+        "app:app",
+        "-k",
+        "sync",
         "--check-config",
     ]
     harness.handle_exec(
@@ -51,5 +57,32 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         handler=check_config_handler,
     )
 
+    gevent_check_config_command = [
+        "/bin/python3",
+        "-m",
+        "gunicorn",
+        "-c",
+        "/flask/gunicorn.conf.py",
+        "app:app",
+        "-k",
+        "gevent",
+        "--check-config",
+    ]
+    harness.handle_exec(
+        FLASK_CONTAINER_NAME,
+        gevent_check_config_command,
+        handler=check_config_handler,
+    )
+
     yield harness
     harness.cleanup()
+
+
+@pytest.fixture(name="webserver")
+def webserver_fixture(flask_container_mock):
+    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    return GunicornWebserver(
+        webserver_config=WebserverConfig(),
+        workload_config=workload_config,
+        container=flask_container_mock,
+    )

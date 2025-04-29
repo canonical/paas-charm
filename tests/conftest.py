@@ -27,6 +27,7 @@ def pytest_addoption(parser):
     parser.addoption("--django-async-app-image", action="store")
     parser.addoption("--fastapi-app-image", action="store")
     parser.addoption("--go-app-image", action="store")
+    parser.addoption("--flask-minimal-app-image", action="store")
     parser.addoption("--localstack-address", action="store")
     parser.addoption("--kube-config", action="store")
 

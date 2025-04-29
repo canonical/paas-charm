@@ -57,6 +57,33 @@ class SecretStorage(ops.Object, abc.ABC):
                     initial_value = self.gen_initial_value()
                 relation_data[key] = initial_value[key]
 
+    def get_peer_unit_fdqns(self) -> list | None:
+        """Get the FQDN of units in the peer relation.
+
+        Returns:
+            List of unit FQDNs in the peer relation.
+
+        Raises:
+            RuntimeError: If SecretStorage is not initialized.
+        """
+        if not self.is_initialized:
+            raise RuntimeError("SecretStorage is not initialized")
+        unit_fqdns = []
+        peer_relation = typing.cast(
+            ops.Relation, self.model.get_relation(self._peer_relation_name)
+        )
+        unit_names = [unit.name for unit in peer_relation.units]
+        for unit_name in sorted(unit_names):
+            unit_fqdn = (
+                f"{unit_name.replace('/', '-')}."
+                f"{self.model.app.name}-endpoints."
+                f"{self.model.name}.svc.cluster.local"
+            )
+            unit_fqdns.append(unit_fqdn)
+        if not unit_fqdns:
+            return None
+        return unit_fqdns
+
     @property
     def is_initialized(self) -> bool:
         """Check if the SecretStorage has been initialized.
