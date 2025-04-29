@@ -163,7 +163,7 @@ def generate_app_fixture(
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(
-        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=30 * 60
+        lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]), timeout=30 * 60
     )
 
     return App(app_name)
@@ -398,6 +398,6 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
     juju.wait(
-        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s")
+        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
     )
     return openfga_server_app
