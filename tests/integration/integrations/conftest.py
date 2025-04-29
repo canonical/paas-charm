@@ -163,7 +163,7 @@ def generate_app_fixture(
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
         juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
-    juju.wait(lambda status: status.apps[app_name].is_active)
+    juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
 
     return App(app_name)
 
