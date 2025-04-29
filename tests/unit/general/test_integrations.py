@@ -38,7 +38,6 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.general.conftest import MockTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -78,23 +77,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
             f"{prefix}SAML_SINGLE_SIGN_ON_REDIRECT_URL": "https://login.staging.ubuntu.com/saml/",
         },
         id=f"With Saml, prefix: {prefix}",
-    )
-    tempo_env = pytest.param(
-        IntegrationsState(
-            tempo_parameters=generate_relation_parameters(
-                {
-                    "service_name": "test_app",
-                    "endpoint": "http://test-ip:4318",
-                },
-                TempoParameters,
-            )
-        ),
-        prefix,
-        {
-            f"{prefix}OTEL_EXPORTER_OTLP_ENDPOINT": "http://test-ip:4318",
-            f"{prefix}OTEL_SERVICE_NAME": "test_app",
-        },
-        id=f"With Tempo, prefix: {prefix}",
     )
     rabbitmq_env = pytest.param(
         IntegrationsState(
@@ -197,7 +179,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         empty_env,
         redis_env,
         saml_env,
-        tempo_env,
         rabbitmq_env,
         smtp_env,
         databases_env,
@@ -351,8 +332,7 @@ def _test_integrations_state_build_parameters():
         "s3": None,
         "saml_relation_data": None,
         "rabbitmq_uri": None,
-        "tracing_requirer": None,
-        "app_name": None,
+        "tempo_relation_data": None,
         "smtp_relation_data": None,
         "openfga_relation_data": None,
     }
@@ -377,25 +357,6 @@ def _test_integrations_state_build_parameters():
             {**relation_dict, "s3": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
-        ),
-        pytest.param(
-            {
-                **relation_dict,
-                "tracing_requirer": MockTracingEndpointRequirer(True, "localhost:1234"),
-                "app_name": "app_name",
-            },
-            False,
-            id="Tempo correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": None},
-            False,
-            id="Tempo empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
-            False,
-            id="Tempo not ready",
         ),
         pytest.param(
             {**relation_dict, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
@@ -474,8 +435,7 @@ def test_integrations_state_build(
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
-                tracing_requirer=relation_dict["tracing_requirer"],
-                app_name=relation_dict["app_name"],
+                tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
             )
@@ -487,8 +447,7 @@ def test_integrations_state_build(
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
-                tracing_requirer=relation_dict["tracing_requirer"],
-                app_name=relation_dict["app_name"],
+                tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
             ),
