@@ -5,7 +5,8 @@
 
 import pytest
 
-from paas_charm.app import generate_s3_env
+from paas_charm.app import generate_db_env, generate_s3_env
+from paas_charm.databases import DatabaseRelationData
 from paas_charm.s3 import S3RelationData
 
 
@@ -63,3 +64,80 @@ def test_s3_environ_mapper_generate_env(relation_data, expected_env):
     assert: expected environment variables are generated.
     """
     assert generate_s3_env(relation_data) == expected_env
+
+
+@pytest.mark.parametrize(
+    "db_name, relation_data, expected_env",
+    [
+        pytest.param(
+            "postgresql",
+            DatabaseRelationData(
+                uris="postgresql://test-username:test-password@test-postgresql:5432/test-database"
+            ),
+            {
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "test-database",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/test-database",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+            },
+            id="PostgreSQL relation data",
+        ),
+        pytest.param(
+            "mysql",
+            DatabaseRelationData(
+                uris="mysql://test-username:test-password@test-mysql:5432/test-database"
+            ),
+            {
+                "MYSQL_DB_CONNECT_STRING": "mysql://test-username:test-password@test-mysql:5432/test-database",
+                "MYSQL_DB_FRAGMENT": "",
+                "MYSQL_DB_HOSTNAME": "test-mysql",
+                "MYSQL_DB_NAME": "test-database",
+                "MYSQL_DB_NETLOC": "test-username:test-password@test-mysql:5432",
+                "MYSQL_DB_PARAMS": "",
+                "MYSQL_DB_PASSWORD": "test-password",
+                "MYSQL_DB_PATH": "/test-database",
+                "MYSQL_DB_PORT": "5432",
+                "MYSQL_DB_QUERY": "",
+                "MYSQL_DB_SCHEME": "mysql",
+                "MYSQL_DB_USERNAME": "test-username",
+            },
+            id="MySQL relation data",
+        ),
+        pytest.param(
+            "mongo",
+            DatabaseRelationData(
+                uris="mongo://test-username:test-password@test-mongo:5432/test-database"
+            ),
+            {
+                "MONGO_DB_CONNECT_STRING": "mongo://test-username:test-password@test-mongo:5432/test-database",
+                "MONGO_DB_FRAGMENT": "",
+                "MONGO_DB_HOSTNAME": "test-mongo",
+                "MONGO_DB_NAME": "test-database",
+                "MONGO_DB_NETLOC": "test-username:test-password@test-mongo:5432",
+                "MONGO_DB_PARAMS": "",
+                "MONGO_DB_PASSWORD": "test-password",
+                "MONGO_DB_PATH": "/test-database",
+                "MONGO_DB_PORT": "5432",
+                "MONGO_DB_QUERY": "",
+                "MONGO_DB_SCHEME": "mongo",
+                "MONGO_DB_USERNAME": "test-username",
+            },
+            id="Mongo relation data",
+        ),
+    ],
+)
+def test_database_environ_mapper_generate_env(db_name, relation_data, expected_env):
+    """
+    arrange: given database relation data.
+    act: when generate_db_env method is called.
+    assert: expected environment variables are generated.
+    """
+    assert generate_db_env(db_name, relation_data) == expected_env

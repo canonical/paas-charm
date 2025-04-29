@@ -98,7 +98,7 @@ class Charm(GunicornBase):
         # it means that there is no integration for databases or they are optional and no one
         # is set.
         charm_state = self._create_charm_state()
-        if not charm_state.integrations.databases_uris:
+        if not charm_state.integrations.databases_relation_data:
             self.update_app_and_unit_status(
                 ops.BlockedStatus("Django requires a database integration to work")
             )
