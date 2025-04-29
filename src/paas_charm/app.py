@@ -14,6 +14,7 @@ import ops
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,29 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_rabbitmq_env(
+    relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
+) -> dict[str, str]:
+    """Generate environment variable from RabbitMQ requirer data.
+
+    Args:
+        relation_data: The charm RabbitMQ integration relation data.
+        prefix: The environment variable prefix.
+
+    Returns:
+        RabbitMQ environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    prefix = prefix or ""
+    envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
+    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
+    if len(parsed_url.path) > 1:
+        envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+    return envvars
+
+
 def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 requirer data.
 
@@ -80,7 +104,6 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
 
     Returns:
         Default S3 environment mappings if S3Requirer is available, empty
-        dictionary otherwise.
     """
     if not relation_data:
         return {}
@@ -116,9 +139,11 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
+        generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
     """
 
+    generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_s3_env = staticmethod(generate_s3_env)
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -225,6 +250,12 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.generate_rabbitmq_env(
+                relation_data=self._charm_state.integrations.rabbitmq,
+                prefix=self.integrations_prefix,
+            )
+        )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         return env
 
@@ -349,10 +380,6 @@ def map_integrations_to_env(  # noqa: C901
             )
             if v is not None
         )
-
-    if integrations.rabbitmq_uri:
-        rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
-        env.update(rabbitmq_envvars)
 
     if integrations.smtp_parameters:
         smtp = integrations.smtp_parameters
