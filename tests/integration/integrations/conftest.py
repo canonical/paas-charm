@@ -244,7 +244,7 @@ def deploy_tempo_cluster(
     deploy_and_configure_minio(juju)
 
     juju.wait(
-        lambda status: jubilant.all_active(status, tempo_app, worker_app, "s3-integrator"),
+        lambda status: jubilant.all_active(status, [tempo_app, worker_app, "s3-integrator"]),
         timeout=2000,
     )
     return App(tempo_app)

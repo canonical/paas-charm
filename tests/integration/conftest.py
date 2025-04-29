@@ -407,7 +407,7 @@ def expressjs_app_fixture(
 
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"))
+    juju.wait(lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]))
 
     yield App(app_name)
 
