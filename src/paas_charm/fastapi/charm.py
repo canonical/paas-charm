@@ -67,7 +67,6 @@ class Charm(PaasCharm):
         framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
         return WorkloadConfig(
             framework=framework_name,
-            container_name="app",
             port=framework_config.uvicorn_port,
             base_dir=base_dir,
             app_dir=base_dir,

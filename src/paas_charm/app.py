@@ -48,7 +48,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     """
 
     framework: str
-    container_name: str
+    container_name: str = "app"
     port: int
     user: str = "_daemon_"
     group: str = "_daemon_"

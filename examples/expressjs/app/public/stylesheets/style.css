@@ -1,0 +1,13 @@
+/*
+ * Copyright 2025 Canonical Ltd.
+ * See LICENSE file for licensing details.
+ */
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00b7ff;
+}
