@@ -542,7 +542,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         except CharmConfigInvalidError as exc:
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
             return
-        self.unit.open_port("tcp", self._workload_config.port)
+        self._ingress.provide_ingress_requirements(port=self._workload_config.port)
+        self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:
