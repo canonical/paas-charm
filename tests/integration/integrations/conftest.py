@@ -160,12 +160,11 @@ def generate_app_fixture(
 
     # Add required relations
     if use_postgres:
-        juju.wait(
-            lambda status: status.apps[app_name].is_waiting or status.apps[app_name].is_blocked
-        )
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(jubilant.all_active, timeout=30 * 60)
+    juju.wait(
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=30 * 60
+    )
 
     return App(app_name)
 
@@ -375,7 +374,11 @@ def deploy_cos_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
-    juju.wait(jubilant.all_active)
+    juju.wait(
+        lambda status: jubilant.all_active(
+            status, loki_app.name, prometheus_app.name, grafana_app_name
+        )
+    )
     return {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,

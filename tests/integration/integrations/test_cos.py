@@ -39,7 +39,7 @@ def test_prometheus_integration(
     """
     app = request.getfixturevalue(app_fixture)
     juju.integrate(app.name, prometheus_app.name)
-    juju.wait(jubilant.all_active)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, prometheus_app.name))
 
     status = juju.status()
     assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active
@@ -77,7 +77,7 @@ def test_loki_integration(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, loki_app.name)
-    juju.wait(jubilant.all_active)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, loki_app.name))
 
     status = juju.status()
 
@@ -133,7 +133,7 @@ def test_grafana_integration(
         f"{cos_apps['grafana_app'].name}:grafana-source",
     )
     juju.integrate(app.name, cos_apps["grafana_app"].name)
-    juju.wait(jubilant.all_active)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, cos_apps["grafana_app"].name))
 
     status = juju.status()
     task = juju.run(f"{cos_apps['grafana_app'].name}/0", "get-admin-password")

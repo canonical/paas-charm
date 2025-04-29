@@ -395,8 +395,6 @@ def expressjs_app_fixture(
         resources=resources,
     )
 
-    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
-
     # configure postgres
     juju.config(
         "postgresql-k8s",
@@ -409,7 +407,7 @@ def expressjs_app_fixture(
 
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(jubilant.all_active)
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"))
 
     yield App(app_name)
 
