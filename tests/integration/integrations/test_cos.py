@@ -35,8 +35,8 @@ def test_prometheus_integration(
         targets.
     """
 
-    prometheus_integration(
-        request, app_fixture, juju, prometheus_app)
+    prometheus_integration(request, app_fixture, juju, prometheus_app)
+
 
 @pytest.mark.parametrize(
     "app_fixture",
@@ -56,8 +56,8 @@ def test_prometheus_integration_noble(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
-    prometheus_integration(
-        request, app_fixture, juju, prometheus_app)
+    prometheus_integration(request, app_fixture, juju, prometheus_app)
+
 
 def prometheus_integration(
     request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
@@ -74,6 +74,7 @@ def prometheus_integration(
             f"http://{unit.address}:9090/api/v1/targets", timeout=10
         ).json()
         assert len(query_targets["data"]["activeTargets"])
+
 
 @pytest.mark.parametrize(
     "app_fixture, port",
@@ -122,6 +123,7 @@ def test_loki_integration_noble(
     """
     loki_integration(request, app_fixture, port, juju, loki_app)
 
+
 def loki_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -161,6 +163,7 @@ def loki_integration(
     else:
         assert "filename" not in log["stream"]
 
+
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
@@ -181,6 +184,7 @@ def test_grafana_integration(
     assert: grafana 12-Factor dashboard can be found.
     """
     grafana_integration(request, app_fixture, dashboard_name, juju, cos_apps)
+
 
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
@@ -203,6 +207,7 @@ def test_grafana_integration_noble(
     assert: grafana 12-Factor dashboard can be found.
     """
     grafana_integration(request, app_fixture, dashboard_name, juju, cos_apps)
+
 
 def grafana_integration(
     request: pytest.FixtureRequest,

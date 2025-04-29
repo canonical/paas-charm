@@ -34,7 +34,10 @@ def test_openfga_integrations(
     act: Send a read authorization models request from the charm.
     assert: The request succeeds.
     """
-    openfga_integrations(juju, openfga_app_fixture, port, request, openfga_server_app, postgresql_k8s)
+    openfga_integrations(
+        juju, openfga_app_fixture, port, request, openfga_server_app, postgresql_k8s
+    )
+
 
 @pytest.mark.parametrize(
     "openfga_app_fixture, port",
@@ -57,7 +60,9 @@ def test_openfga_integrations_noble(
     act: Send a read authorization models request from the charm.
     assert: The request succeeds.
     """
-    openfga_integrations(juju, openfga_app_fixture, port, request, openfga_server_app, postgresql_k8s)
+    openfga_integrations(
+        juju, openfga_app_fixture, port, request, openfga_server_app, postgresql_k8s
+    )
 
 
 def openfga_integrations(

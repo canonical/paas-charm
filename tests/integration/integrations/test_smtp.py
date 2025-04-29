@@ -36,6 +36,7 @@ def test_smtp_integrations(
     """
     smtp_integrations(juju, paas_app_fixture, port, request, mailcatcher)
 
+
 @pytest.mark.parametrize(
     "paas_app_fixture, port",
     [
@@ -100,4 +101,3 @@ def smtp_integrations(
     juju.remove_relation(paas_app.name, f"{smtp_integrator_app}:smtp", force=True)
     juju.remove_unit(paas_app.name, num_units=1, force=True)
     juju.remove_application(paas_app.name, destroy_storage=True, force=True)
-
