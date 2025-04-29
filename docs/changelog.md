@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Place any unreleased changes here, that are subject to release in coming versions :).
+
 ## v1.5.2 - 2025-04-29
 
 * fix: Properly update ingress integration and opened ports when 
