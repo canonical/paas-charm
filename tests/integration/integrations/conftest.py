@@ -162,7 +162,7 @@ def generate_app_fixture(
     if use_postgres:
         deploy_postgresql(juju)
         juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
+        juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
     juju.wait(lambda status: status.apps[app_name].is_active)
 
     return App(app_name)
@@ -243,8 +243,8 @@ def deploy_tempo_cluster(
     deploy_and_configure_minio(juju)
 
     juju.wait(lambda status: status.apps["s3-integrator"].is_active, timeout=2000)
-    juju.wait(lambda status: status.apps[tempo_app].is_active)
-    juju.wait(lambda status: status.apps[worker_app].is_active)
+    juju.wait(lambda status: status.apps[tempo_app].is_active, timeout=2000)
+    juju.wait(lambda status: status.apps[worker_app].is_active, timeout=2000)
     return App(tempo_app)
 
 

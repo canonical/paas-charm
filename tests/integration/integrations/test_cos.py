@@ -22,12 +22,8 @@ logger = logging.getLogger(__name__)
     [
         ("flask_app"),
         ("django_app"),
-        ("go_app"),
-        ("fastapi_app"),
-        ("expressjs_app"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_prometheus_integration(
     request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
 ):
@@ -37,6 +33,34 @@ def test_prometheus_integration(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
+
+    prometheus_integration(
+        request, app_fixture, juju, prometheus_app)
+
+@pytest.mark.parametrize(
+    "app_fixture",
+    [
+        ("go_app"),
+        ("fastapi_app"),
+        ("expressjs_app"),
+    ],
+)
+@pytest.mark.skip_juju_version("3.4")
+def test_prometheus_integration_noble(
+    request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
+):
+    """
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    """
+    prometheus_integration(
+        request, app_fixture, juju, prometheus_app)
+
+def prometheus_integration(
+    request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
+):
     app = request.getfixturevalue(app_fixture)
     juju.integrate(app.name, prometheus_app.name)
     juju.wait(lambda status: status.apps[app.name].is_active)
@@ -50,18 +74,13 @@ def test_prometheus_integration(
         ).json()
         assert len(query_targets["data"]["activeTargets"])
 
-
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
         ("flask_app", 8000),
         ("django_app", 8000),
-        ("go_app", 8080),
-        ("fastapi_app", 8080),
-        ("expressjs_app", 8080),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_loki_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -75,6 +94,40 @@ def test_loki_integration(
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.
     """
+    loki_integration(request, app_fixture, port, juju, loki_app)
+
+
+@pytest.mark.parametrize(
+    "app_fixture, port",
+    [
+        ("go_app", 8080),
+        ("fastapi_app", 8080),
+        ("expressjs_app", 8080),
+    ],
+)
+@pytest.mark.skip_juju_version("3.4")
+def test_loki_integration_noble(
+    request: pytest.FixtureRequest,
+    app_fixture: str,
+    port: int,
+    juju: jubilant.Juju,
+    loki_app: App,
+):
+    """
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    """
+    loki_integration(request, app_fixture, port, juju, loki_app)
+
+def loki_integration(
+    request: pytest.FixtureRequest,
+    app_fixture: str,
+    port: int,
+    juju: jubilant.Juju,
+    loki_app: App,
+):
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, loki_app.name)
@@ -101,17 +154,13 @@ def test_loki_integration(
     assert app.name in log["stream"]["juju_application"]
     assert "filename" not in log["stream"]
 
-
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
         ("flask_app", "Flask Operator"),
         ("django_app", "Django Operator"),
-        ("go_app", "Go Operator"),
-        ("expressjs_app", "ExpressJS Operator"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_grafana_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -124,6 +173,37 @@ def test_grafana_integration(
     act: establish relations established with grafana charm.
     assert: grafana 12-Factor dashboard can be found.
     """
+    grafana_integration(request, app_fixture, dashboard_name, juju, cos_apps)
+
+@pytest.mark.parametrize(
+    "app_fixture, dashboard_name",
+    [
+        ("go_app", "Go Operator"),
+        ("expressjs_app", "ExpressJS Operator"),
+    ],
+)
+@pytest.mark.skip_juju_version("3.4")
+def test_grafana_integration_noble(
+    request: pytest.FixtureRequest,
+    app_fixture: str,
+    dashboard_name: str,
+    juju: jubilant.Juju,
+    cos_apps: dict[str:App],
+):
+    """
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    """
+    grafana_integration(request, app_fixture, dashboard_name, juju, cos_apps)
+
+def grafana_integration(
+    request: pytest.FixtureRequest,
+    app_fixture: str,
+    dashboard_name: str,
+    juju: jubilant.Juju,
+    cos_apps: dict[str:App],
+):
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(
