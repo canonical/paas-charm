@@ -376,7 +376,7 @@ def deploy_cos_fixture(
         )
     juju.wait(
         lambda status: jubilant.all_active(
-            status, loki_app.name, prometheus_app.name, grafana_app_name
+            status, [loki_app.name, prometheus_app.name, grafana_app_name]
         )
     )
     return {
