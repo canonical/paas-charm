@@ -41,6 +41,12 @@ parts:
     stage-packages:
       # Added manually for the migrations
       - postgresql-client
+services:
+    expressjs:
+        override: merge
+        on-check-failure:
+            # can also be "shutdown", "success-shutdown", or "ignore" (the default)
+            expressjs-check: restart
 checks:
   expressjs-check:
     override: replace
