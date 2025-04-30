@@ -43,7 +43,7 @@ def test_workload_tracing(
 
     juju.integrate(f"{paas_app.name}:tracing", f"{tempo_app}:tracing")
 
-    juju.wait(lambda status: jubilant.all_active(status, paas_app.name, tempo_app))
+    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, tempo_app]))
     juju.wait(lambda status: status.apps[paas_app.name].is_active, timeout=600)
     juju.wait(lambda status: status.apps[tempo_app].is_active)
     status = juju.status()
@@ -57,7 +57,3 @@ def test_workload_tracing(
 
     # verify workload traces are ingested into Tempo
     assert get_traces_patiently(tempo_host, paas_app.name)
-
-    juju.remove_relation(f"{paas_app.name}:tracing", f"{tempo_app}:tracing", force=True)
-    juju.remove_unit(paas_app.name, num_units=1, force=True)
-    juju.remove_application(paas_app.name, destroy_storage=True, force=True)
