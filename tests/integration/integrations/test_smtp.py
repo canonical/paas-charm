@@ -18,11 +18,13 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "paas_app_fixture, port",
     [
-        ("flask_app", 8000),
-        ("django_app", 8000),
+        ("expressjs_app", 8080),
+        ("fastapi_app", 8080),
+        ("go_app", 8080),
     ],
 )
-def test_smtp_integrations(
+@pytest.mark.skip_juju_version("3.4")
+def test_smtp_integrations_noble(
     juju: jubilant.Juju,
     paas_app_fixture: App,
     port,
@@ -40,13 +42,11 @@ def test_smtp_integrations(
 @pytest.mark.parametrize(
     "paas_app_fixture, port",
     [
-        ("expressjs_app", 8080),
-        ("fastapi_app", 8080),
-        ("go_app", 8080),
+        ("flask_app", 8000),
+        ("django_app", 8000),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
-def test_smtp_integrations_noble(
+def test_smtp_integrations(
     juju: jubilant.Juju,
     paas_app_fixture: App,
     port,

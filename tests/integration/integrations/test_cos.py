@@ -21,6 +21,27 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture",
     [
+        ("expressjs_app"),
+        ("go_app"),
+        ("fastapi_app"),
+    ],
+)
+@pytest.mark.skip_juju_version("3.4")
+def test_prometheus_integration_noble(
+    request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
+):
+    """
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    """
+    prometheus_integration(request, app_fixture, juju, prometheus_app)
+
+
+@pytest.mark.parametrize(
+    "app_fixture",
+    [
         ("flask_app"),
         ("django_app"),
     ],
@@ -35,27 +56,6 @@ def test_prometheus_integration(
         targets.
     """
 
-    prometheus_integration(request, app_fixture, juju, prometheus_app)
-
-
-@pytest.mark.parametrize(
-    "app_fixture",
-    [
-        ("go_app"),
-        ("fastapi_app"),
-        ("expressjs_app"),
-    ],
-)
-@pytest.mark.skip_juju_version("3.4")
-def test_prometheus_integration_noble(
-    request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
-):
-    """
-    arrange: after 12-Factor charm has been deployed.
-    act: establish relations established with prometheus charm.
-    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
-        targets.
-    """
     prometheus_integration(request, app_fixture, juju, prometheus_app)
 
 
@@ -79,11 +79,13 @@ def prometheus_integration(
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
-        ("flask_app", 8000),
-        ("django_app", 8000),
+        ("expressjs_app", 8080),
+        ("go_app", 8080),
+        ("fastapi_app", 8080),
     ],
 )
-def test_loki_integration(
+@pytest.mark.skip_juju_version("3.4")
+def test_loki_integration_noble(
     request: pytest.FixtureRequest,
     app_fixture: str,
     port: int,
@@ -102,13 +104,11 @@ def test_loki_integration(
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
-        ("go_app", 8080),
-        ("fastapi_app", 8080),
-        ("expressjs_app", 8080),
+        ("flask_app", 8000),
+        ("django_app", 8000),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
-def test_loki_integration_noble(
+def test_loki_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
     port: int,
@@ -167,11 +167,12 @@ def loki_integration(
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
-        ("flask_app", "Flask Operator"),
-        ("django_app", "Django Operator"),
+        ("expressjs_app", "ExpressJS Operator"),
+        ("go_app", "Go Operator"),
     ],
 )
-def test_grafana_integration(
+@pytest.mark.skip_juju_version("3.4")
+def test_grafana_integration_noble(
     request: pytest.FixtureRequest,
     app_fixture: str,
     dashboard_name: str,
@@ -189,12 +190,11 @@ def test_grafana_integration(
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
-        ("go_app", "Go Operator"),
-        ("expressjs_app", "ExpressJS Operator"),
+        ("flask_app", "Flask Operator"),
+        ("django_app", "Django Operator"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
-def test_grafana_integration_noble(
+def test_grafana_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
     dashboard_name: str,
