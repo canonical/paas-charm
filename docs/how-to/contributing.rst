@@ -239,3 +239,16 @@ You can (and should) run the same checks locally:
    make spelling
    make linkcheck
    make woke
+
+How to refer to the project
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you contribute documentation to the project, refer to the tooling as
+"12-factor app support" or "12-factor framework support". If you contribute
+to the documentation on `Charmcraft <https://github.com/canonical/charmcraft/>`_
+or `Rockcraft <https://github.com/canonical/rockcraft/>`_, specify that the
+tooling is natively supported in Charmcraft or Rockcraft respectively.
+
+Optionally, if you are contributing documentation that's specific to a single
+framework (such as Flask), you can refer to the tooling as
+"Flask app support" or "Flask framework support". 

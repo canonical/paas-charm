@@ -1,4 +1,5 @@
 Analytics
+args
 async
 CHANGELOG
 Changelog
@@ -6,7 +7,9 @@ changelog
 Charmcraft
 config
 entrypoint
+ExpressJS
 FastAPI
+FQDN
 Gunicorn
 init
 Jinja
@@ -30,3 +33,5 @@ smtp
 SMTP
 src
 tox
+OpenFGA
+openfga

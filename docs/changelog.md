@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## v1.5.2 - 2025-04-29
+
+* fix: Properly update ingress integration and opened ports when 
+  configuration changes.
+* fix: Ensure Prometheus scraping information refreshes correctly on 
+  configuration changes.
+* docs: Updated README and contributing guide. Added links to Charmcraft and Rockcraft.
+
+## v1.5.1 - 2025-04-24
+
+* fix: Fix issue with `typehint` leading to errors due to missing import
+
+## v1.5.0 - 2025-04-14
+
+* feat: Added support for OpenFGA integration.
+
+## v1.4.2 - 2025-04-24
+
+* feat: Added peer(s) FQDN(s) as an environment variable
+
+## v1.4.2 - 2025-04-03
+
+* fix: Fixed a bug that occurred when users attempted to use [ args ] in service
+  commands for the Django and Flask frameworks.
+
+* fix: Updated broken doc links.
+
 ## v1.4.1 - 2025-03-26
 
 * feat(docs): Add Google Analytics capabilities to RTD build.

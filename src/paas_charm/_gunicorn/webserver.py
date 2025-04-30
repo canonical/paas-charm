@@ -207,7 +207,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         self._container.push(webserver_config_path, self._config)
         if current_webserver_config == self._config:
             return
-        check_config_command = shlex.split(command.split("-k")[0])
+        check_config_command = [x for x in shlex.split(command) if x not in ["[", "]"]]
         check_config_command.append("--check-config")
         exec_process = self._container.exec(
             check_config_command,
