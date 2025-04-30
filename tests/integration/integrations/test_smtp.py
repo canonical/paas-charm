@@ -21,31 +21,11 @@ logger = logging.getLogger(__name__)
         ("expressjs_app", 8080),
         ("fastapi_app", 8080),
         ("go_app", 8080),
-    ],
-)
-@pytest.mark.skip_juju_version("3.4")
-def test_smtp_integrations_noble(
-    juju: jubilant.Juju,
-    paas_app_fixture: App,
-    port,
-    request: pytest.FixtureRequest,
-    mailcatcher,
-):
-    """
-    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
-    act: Send an email from the charm.
-    assert: The mailcatcher should have received the email.
-    """
-    smtp_integrations(juju, paas_app_fixture, port, request, mailcatcher)
-
-
-@pytest.mark.parametrize(
-    "paas_app_fixture, port",
-    [
         ("flask_app", 8000),
         ("django_app", 8000),
     ],
 )
+@pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
     paas_app_fixture: App,
@@ -58,16 +38,6 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
-    smtp_integrations(juju, paas_app_fixture, port, request, mailcatcher)
-
-
-def smtp_integrations(
-    juju: jubilant.Juju,
-    paas_app_fixture: App,
-    port,
-    request: pytest.FixtureRequest,
-    mailcatcher,
-):
     paas_app = request.getfixturevalue(paas_app_fixture)
     smtp_config = {
         "auth_type": "none",

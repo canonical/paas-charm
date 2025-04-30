@@ -43,6 +43,7 @@ def test_workload_tracing(
 
     juju.integrate(f"{paas_app.name}:tracing", f"{tempo_app}:tracing")
 
+    juju.wait(lambda status: jubilant.all_active(status, paas_app.name, tempo_app))
     juju.wait(lambda status: status.apps[paas_app.name].is_active, timeout=600)
     juju.wait(lambda status: status.apps[tempo_app].is_active)
     status = juju.status()
