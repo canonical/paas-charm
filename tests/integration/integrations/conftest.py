@@ -386,7 +386,7 @@ def deploy_loki_fixture(
     return App(loki_app_name)
 
 
-@pytest.fixture(scope="module", name="cos_apps")
+@pytest.fixture(scope="function", name="cos_apps")
 @pytest.mark.skip_juju_version("3.4")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
@@ -408,11 +408,28 @@ def deploy_cos_fixture(
             status, [loki_app.name, prometheus_app.name, grafana_app_name]
         )
     )
-    return {
+    juju.integrate(
+        f"{prometheus_app.name}:grafana-source",
+        f"{grafana_app_name}:grafana-source",
+    )
+    juju.integrate(
+        f"{loki_app.name}:grafana-source",
+        f"{grafana_app_name}:grafana-source",
+    )
+    yield {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,
         "grafana_app": App(grafana_app_name),
     }
+
+    # cleanup
+    # remove the charm
+    juju.remove_application(loki_app.name, destroy_storage=True, force=True)
+    juju.remove_application(prometheus_app.name, destroy_storage=True, force=True)
+    juju.remove_application(grafana_app_name, destroy_storage=True, force=True)
+    juju.wait(lambda status: status.apps.get(loki_app.name) is None)
+    juju.wait(lambda status: status.apps.get(prometheus_app.name) is None)
+    juju.wait(lambda status: status.apps.get(grafana_app_name) is None)
 
 
 @pytest.fixture(scope="module", name="openfga_server_app")

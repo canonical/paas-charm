@@ -41,14 +41,6 @@ def test_grafana_integration(
     """
     app = request.getfixturevalue(app_fixture)
 
-    juju.integrate(
-        f"{cos_apps['prometheus_app'].name}:grafana-source",
-        f"{cos_apps['grafana_app'].name}:grafana-source",
-    )
-    juju.integrate(
-        f"{cos_apps['loki_app'].name}:grafana-source",
-        f"{cos_apps['grafana_app'].name}:grafana-source",
-    )
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 
     juju.wait(lambda status: jubilant.all_active(status, [app.name, cos_apps["grafana_app"].name]))
