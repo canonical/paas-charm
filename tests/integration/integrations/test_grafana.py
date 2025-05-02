@@ -11,6 +11,7 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.helpers import check_grafana_datasource_types_patiently
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -50,8 +51,7 @@ def test_grafana_integration(
     )
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 
-    juju.wait(lambda status: status.apps[app.name].is_active)
-    juju.wait(lambda status: status.apps[cos_apps["grafana_app"].name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [app.name, cos_apps["grafana_app"].name]))
     status = juju.status()
     task = juju.run(f"{cos_apps['grafana_app'].name}/0", "get-admin-password")
     password = task.results["admin-password"]
@@ -68,10 +68,7 @@ def test_grafana_integration(
             "password": password,
         },
     ).raise_for_status()
-    datasources = sess.get(f"http://{grafana_ip}:3000/api/datasources", timeout=10).json()
-    datasource_types = set(datasource["type"] for datasource in datasources)
-    assert "loki" in datasource_types
-    assert "prometheus" in datasource_types
+    check_grafana_datasource_types_patiently(sess,grafana_ip, ["prometheus", "loki"])
     dashboards = sess.get(
         f"http://{grafana_ip}:3000/api/search",
         timeout=10,

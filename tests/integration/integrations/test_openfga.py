@@ -38,13 +38,10 @@ def test_openfga_integrations_noble(
     assert: The request succeeds.
     """
     openfga_app = request.getfixturevalue(openfga_app_fixture)
-    juju.wait(lambda status: status.apps[openfga_app.name].is_active)
-    juju.wait(lambda status: status.apps[openfga_server_app.name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [openfga_app.name, openfga_server_app.name]))
 
     juju.integrate(openfga_app.name, f"{openfga_server_app.name}:openfga")
-    juju.wait(lambda status: status.apps[openfga_app.name].is_active)
-    juju.wait(lambda status: status.apps[openfga_server_app.name].is_active)
-    juju.wait(lambda status: status.apps[postgresql_k8s.name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [openfga_app.name, openfga_server_app.name, postgresql_k8s.name]))
 
     status = juju.status()
     unit_ip = status.apps[openfga_app.name].units[openfga_app.name + "/0"].address

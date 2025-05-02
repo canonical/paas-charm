@@ -38,8 +38,7 @@ def test_prometheus_integration(
     """
     app = request.getfixturevalue(app_fixture)
     juju.integrate(app.name, prometheus_app.name)
-    juju.wait(lambda status: status.apps[app.name].is_active)
-    juju.wait(lambda status: status.apps[prometheus_app.name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [app.name, prometheus_app.name]))
 
     status = juju.status()
     assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active

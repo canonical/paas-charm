@@ -272,9 +272,7 @@ def deploy_tempo_cluster(
     juju.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
     deploy_and_configure_minio(juju)
 
-    juju.wait(lambda status: status.apps["s3-integrator"].is_active, timeout=2000)
-    juju.wait(lambda status: status.apps[tempo_app].is_active, timeout=2000)
-    juju.wait(lambda status: status.apps[worker_app].is_active, timeout=2000)
+    juju.wait(lambda status: jubilant.all_active(status, ["s3-integrator", tempo_app, worker_app]), timeout=2000)
     return App(tempo_app)
 
 
@@ -402,9 +400,7 @@ def deploy_cos_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
-    juju.wait(lambda status: status.apps[loki_app.name].is_active)
-    juju.wait(lambda status: status.apps[prometheus_app.name].is_active)
-    juju.wait(lambda status: status.apps[grafana_app_name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [loki_app.name, prometheus_app.name, grafana_app_name]))
     return {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,
@@ -423,6 +419,5 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(lambda status: status.apps[openfga_server_app.name].is_active)
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"]))
     return openfga_server_app

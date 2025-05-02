@@ -36,8 +36,7 @@ def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju
     """
     expressjs_app = request.getfixturevalue("expressjs_app")
     juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
-    juju.wait(lambda status: status.apps[expressjs_app.name].is_active)
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [expressjs_app.name, "postgresql-k8s"]))
 
     status = juju.status()
     for unit in status.apps[expressjs_app.name].units.values():

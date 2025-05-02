@@ -46,8 +46,7 @@ def test_loki_integration(
 
     juju.integrate(app.name, loki_app.name)
 
-    juju.wait(lambda status: status.apps[app.name].is_active)
-    juju.wait(lambda status: status.apps[loki_app.name].is_active)
+    juju.wait(lambda status: jubilant.all_active(status, [app.name, loki_app.name]))
     status = juju.status()
 
     app_ip = status.apps[app.name].units[f"{app.name}/0"].address
