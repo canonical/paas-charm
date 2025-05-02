@@ -87,8 +87,11 @@ def get_mails_patiently(mailcatcher_pod_ip: str):
     assert len(mails) > 0
     return mails
 
+
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
-def check_grafana_datasource_types_patiently(grafana_session: requests.session ,grafana_ip: str, expected_datasource_types: list[str]):
+def check_grafana_datasource_types_patiently(
+    grafana_session: requests.session, grafana_ip: str, expected_datasource_types: list[str]
+):
     """Get datasources directly from Grafana REST API, but also try multiple times."""
     url = f"http://{grafana_ip}:3000/api/datasources"
     datasources = grafana_session.get(url, timeout=10).json()

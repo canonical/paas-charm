@@ -68,7 +68,7 @@ def test_grafana_integration(
             "password": password,
         },
     ).raise_for_status()
-    check_grafana_datasource_types_patiently(sess,grafana_ip, ["prometheus", "loki"])
+    check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
     dashboards = sess.get(
         f"http://{grafana_ip}:3000/api/search",
         timeout=10,
