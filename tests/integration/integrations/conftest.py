@@ -403,19 +403,19 @@ def deploy_cos_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
-    juju.wait(
-        lambda status: jubilant.all_active(
-            status, [loki_app.name, prometheus_app.name, grafana_app_name]
+        juju.wait(
+            lambda status: jubilant.all_active(
+                status, [loki_app.name, prometheus_app.name, grafana_app_name]
+            )
         )
-    )
-    juju.integrate(
-        f"{prometheus_app.name}:grafana-source",
-        f"{grafana_app_name}:grafana-source",
-    )
-    juju.integrate(
-        f"{loki_app.name}:grafana-source",
-        f"{grafana_app_name}:grafana-source",
-    )
+        juju.integrate(
+            f"{prometheus_app.name}:grafana-source",
+            f"{grafana_app_name}:grafana-source",
+        )
+        juju.integrate(
+            f"{loki_app.name}:grafana-source",
+            f"{grafana_app_name}:grafana-source",
+        )
     yield {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,
@@ -424,12 +424,12 @@ def deploy_cos_fixture(
 
     # cleanup
     # remove the charm
-    juju.remove_application(loki_app.name, destroy_storage=True, force=True)
-    juju.remove_application(prometheus_app.name, destroy_storage=True, force=True)
-    juju.remove_application(grafana_app_name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(loki_app.name) is None)
-    juju.wait(lambda status: status.apps.get(prometheus_app.name) is None)
-    juju.wait(lambda status: status.apps.get(grafana_app_name) is None)
+    # juju.remove_application(loki_app.name, destroy_storage=True, force=True)
+    # juju.remove_application(prometheus_app.name, destroy_storage=True, force=True)
+    # juju.remove_application(grafana_app_name, destroy_storage=True, force=True)
+    # juju.wait(lambda status: status.apps.get(loki_app.name) is None)
+    # juju.wait(lambda status: status.apps.get(prometheus_app.name) is None)
+    # juju.wait(lambda status: status.apps.get(grafana_app_name) is None)
 
 
 @pytest.fixture(scope="module", name="openfga_server_app")
