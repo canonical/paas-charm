@@ -98,3 +98,16 @@ def check_grafana_datasource_types_patiently(
     datasource_types = set(datasource["type"] for datasource in datasources)
     for datasource in expected_datasource_types:
         assert datasource in datasource_types, f"Datasource type {datasource} not found in Grafana"
+
+
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(15))
+def check_grafana_dashboards_patiently(
+    grafana_session: requests.session, grafana_ip: str, dashboard: str
+):
+    """Get datasources directly from Grafana REST API, but also try multiple times."""
+    dashboards = grafana_session.get(
+        f"http://{grafana_ip}:3000/api/search",
+        timeout=10,
+        params={"query": dashboard},
+    ).json()
+    assert len(dashboards)

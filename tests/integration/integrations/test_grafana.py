@@ -11,7 +11,10 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.helpers import check_grafana_datasource_types_patiently
+from tests.integration.helpers import (
+    check_grafana_dashboards_patiently,
+    check_grafana_datasource_types_patiently,
+)
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -61,9 +64,4 @@ def test_grafana_integration(
         },
     ).raise_for_status()
     check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
-    dashboards = sess.get(
-        f"http://{grafana_ip}:3000/api/search",
-        timeout=10,
-        params={"query": dashboard_name},
-    ).json()
-    assert len(dashboards)
+    check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
