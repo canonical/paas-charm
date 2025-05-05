@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "paas_app_fixture, port",
+    "app_fixture, port",
     [
         ("expressjs_app", 8080),
         ("fastapi_app", 8080),
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
-    paas_app_fixture: App,
+    app_fixture: App,
     port,
     request: pytest.FixtureRequest,
     mailcatcher,
@@ -38,7 +38,7 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
-    paas_app = request.getfixturevalue(paas_app_fixture)
+    app = next(request.getfixturevalue(app_fixture))
     smtp_config = {
         "auth_type": "none",
         "domain": "example.com",
@@ -49,13 +49,13 @@ def test_smtp_integrations(
     if not juju.status().apps.get(smtp_integrator_app):
         juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
 
-    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, smtp_integrator_app]))
+    juju.wait(lambda status: jubilant.all_active(status, [app.name, smtp_integrator_app]))
 
-    juju.integrate(paas_app.name, f"{smtp_integrator_app}:smtp")
-    juju.wait(lambda status: jubilant.all_active(status, [paas_app.name, smtp_integrator_app]))
+    juju.integrate(app.name, f"{smtp_integrator_app}:smtp")
+    juju.wait(lambda status: jubilant.all_active(status, [app.name, smtp_integrator_app]))
 
     status = juju.status()
-    unit_ip = status.apps[paas_app.name].units[paas_app.name + "/0"].address
+    unit_ip = status.apps[app.name].units[app.name + "/0"].address
     response = requests.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
     assert response.status_code == 200
     assert "Sent" in response.text

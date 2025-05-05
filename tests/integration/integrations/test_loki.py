@@ -6,8 +6,6 @@
 import logging
 import time
 
-# caused by pytest fixtures
-# pylint: disable=too-many-arguments
 import jubilant
 import pytest
 import requests
@@ -42,7 +40,7 @@ def test_loki_integration(
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.
     """
-    app = request.getfixturevalue(app_fixture)
+    app = next(request.getfixturevalue(app_fixture))
 
     juju.integrate(app.name, loki_app.name)
 

@@ -5,8 +5,6 @@
 """Integration tests for 12Factor charms Grafana integration."""
 import logging
 
-# caused by pytest fixtures
-# pylint: disable=too-many-arguments
 import jubilant
 import pytest
 import requests
@@ -42,7 +40,7 @@ def test_grafana_integration(
     act: establish relations established with grafana charm.
     assert: grafana 12-Factor dashboard can be found.
     """
-    app = request.getfixturevalue(app_fixture)
+    app = next(request.getfixturevalue(app_fixture))
 
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 

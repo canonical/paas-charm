@@ -104,7 +104,8 @@ def check_grafana_datasource_types_patiently(
 def check_grafana_dashboards_patiently(
     grafana_session: requests.session, grafana_ip: str, dashboard: str
 ):
-    """Get datasources directly from Grafana REST API, but also try multiple times."""
+    """Check if dashboard can be found in Grafana directly from Grafana REST API,
+    but also try multiple times."""
     dashboards = grafana_session.get(
         f"http://{grafana_ip}:3000/api/search",
         timeout=10,

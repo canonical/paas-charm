@@ -55,97 +55,67 @@ def deploy_postgresql(
 @pytest.fixture(scope="function", name="flask_app")
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
         image_name=f"test-{framework}-image",
         use_postgres=False,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 @pytest.fixture(scope="function", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask-minimal"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
         image_name=f"{framework}-app-image",
         use_postgres=False,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 @pytest.fixture(scope="function", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "django"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 @pytest.fixture(scope="function", name="fastapi_app")
 @pytest.mark.skip_juju_version("3.4")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "fastapi"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 @pytest.fixture(scope="function", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "go"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 @pytest.fixture(scope="function", name="expressjs_app")
 @pytest.mark.skip_juju_version("3.4")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "expressjs"
-    app = generate_app_fixture(
+    yield generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
     )
-    yield app
-    # cleanup
-    # remove the charm
-    juju.remove_application(app.name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app.name) is None)
 
 
 def generate_app_fixture(
@@ -163,8 +133,10 @@ def generate_app_fixture(
         image_name = f"{framework}-app-image"
     use_existing = pytestconfig.getoption("--use-existing", default=False)
     if use_existing:
-        return App(app_name)
-
+        yield App(app_name)
+        juju.remove_application(app_name, destroy_storage=True, force=True)
+        juju.wait(lambda status: status.apps.get(app_name) is None)
+        return
     config = {}
     resources = {
         "app-image": pytestconfig.getoption(f"--{image_name}"),
@@ -195,7 +167,11 @@ def generate_app_fixture(
         juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
     juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
 
-    return App(app_name)
+    yield App(app_name)
+    # cleanup
+    # remove the charm
+    juju.remove_application(app_name, destroy_storage=True, force=True)
+    juju.wait(lambda status: status.apps.get(app_name) is None)
 
 
 def deploy_and_configure_minio(
@@ -421,15 +397,6 @@ def deploy_cos_fixture(
         "prometheus_app": prometheus_app,
         "grafana_app": App(grafana_app_name),
     }
-
-    # cleanup
-    # remove the charm
-    # juju.remove_application(loki_app.name, destroy_storage=True, force=True)
-    # juju.remove_application(prometheus_app.name, destroy_storage=True, force=True)
-    # juju.remove_application(grafana_app_name, destroy_storage=True, force=True)
-    # juju.wait(lambda status: status.apps.get(loki_app.name) is None)
-    # juju.wait(lambda status: status.apps.get(prometheus_app.name) is None)
-    # juju.wait(lambda status: status.apps.get(grafana_app_name) is None)
 
 
 @pytest.fixture(scope="module", name="openfga_server_app")

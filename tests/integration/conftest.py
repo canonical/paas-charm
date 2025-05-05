@@ -202,8 +202,6 @@ async def flask_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="django_app")
 async def django_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
@@ -263,8 +261,6 @@ async def django_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="fastapi_app")
 async def fastapi_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
@@ -313,8 +309,6 @@ async def fastapi_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="go_app")
 async def go_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     go_app_image: str,
     postgresql_k8s,

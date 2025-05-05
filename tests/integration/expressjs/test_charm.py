@@ -16,6 +16,11 @@ WORKLOAD_PORT = 8080
 
 @pytest.mark.skip_juju_version("3.4")
 def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
+    """
+    arrange: build and deploy the ExpressJS charm.
+    act: call the endpoint.
+    assert: the charm should respond with 200 OK.
+    """
     """Check that the charm is active."""
     expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
