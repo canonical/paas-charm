@@ -37,7 +37,7 @@ def test_openfga_integrations(
     act: Send a read authorization models request from the charm.
     assert: The request succeeds.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
     juju.wait(lambda status: jubilant.all_active(status, [app.name, openfga_server_app.name]))
 
     juju.integrate(app.name, f"{openfga_server_app.name}:openfga")

@@ -40,7 +40,7 @@ def test_grafana_integration(
     act: establish relations established with grafana charm.
     assert: grafana 12-Factor dashboard can be found.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 

@@ -38,7 +38,7 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
     smtp_config = {
         "auth_type": "none",
         "domain": "example.com",

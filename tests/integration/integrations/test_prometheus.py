@@ -34,7 +34,7 @@ def test_prometheus_integration(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
     juju.integrate(app.name, prometheus_app.name)
     juju.wait(lambda status: jubilant.all_active(status, [app.name, prometheus_app.name]))
 

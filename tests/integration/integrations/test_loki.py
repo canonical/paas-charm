@@ -40,7 +40,7 @@ def test_loki_integration(
     assert: loki joins relation successfully, logs are being output to container and to files for
         loki to scrape.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, loki_app.name)
 

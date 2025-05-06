@@ -36,7 +36,7 @@ def test_workload_tracing(
     act: Send 5 requests to the app.
     assert: Tempo should have tracing info about the app.
     """
-    app = next(request.getfixturevalue(app_fixture))
+    app = request.getfixturevalue(app_fixture)
     tempo_app = "tempo"
     if not juju.status().apps.get(tempo_app):
         request.getfixturevalue("tempo_app")
