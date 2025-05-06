@@ -55,67 +55,79 @@ def deploy_postgresql(
 @pytest.fixture(scope="function", name="flask_app")
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-        image_name=f"test-{framework}-image",
-        use_postgres=False,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+            image_name=f"test-{framework}-image",
+            use_postgres=False,
+        )
+    )
 
 
 @pytest.fixture(scope="function", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "flask-minimal"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-        image_name=f"{framework}-app-image",
-        use_postgres=False,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+            image_name=f"{framework}-app-image",
+            use_postgres=False,
+        )
+    )
 
 
 @pytest.fixture(scope="function", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "django"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+        )
+    )
 
 
 @pytest.fixture(scope="function", name="fastapi_app")
 @pytest.mark.skip_juju_version("3.4")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "fastapi"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+        )
+    )
 
 
 @pytest.fixture(scope="function", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "go"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+        )
+    )
 
 
 @pytest.fixture(scope="function", name="expressjs_app")
 @pytest.mark.skip_juju_version("3.4")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "expressjs"
-    yield next(generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-    ))
+    yield next(
+        generate_app_fixture(
+            juju=juju,
+            pytestconfig=pytestconfig,
+            framework=framework,
+        )
+    )
 
 
 def generate_app_fixture(
