@@ -604,6 +604,45 @@ def update_config(
         lambda status: jubilant.all_active(status, [app.name]),
     )
 
+@pytest.fixture
+def update_secret_config(
+    juju: jubilant.Juju,
+    request: FixtureRequest):
+    """Update the django application configuration.
+
+    This fixture must be parameterized with changing charm configurations.
+    """
+    app_name, new_config = request.param
+    app = request.getfixturevalue(app_name)
+    app_config_dict = juju.config(app.name)
+    orig_config = {k: v for k, v in app_config_dict.items()}
+    request_config = {}
+    for secret_config_option, secret_value in new_config.items():
+        secret_id = juju.add_secret(
+            secret_config_option, [f"{k}={v}" for k, v in secret_value.items()])
+        juju.cli("grant-secret", secret_config_option, app.name) 
+        request_config[secret_config_option] = secret_id
+
+    juju.config(app.name, request_config)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [app.name]),
+    )
+
+    yield request_config
+
+    juju.config(
+        app.name,
+        {k: v for k, v in orig_config.items() if k in request_config and v is not None}
+    )
+    juju.config(
+        app.name,
+    {k: None for k in request_config if orig_config[k] is None})
+    for secret_name in request_config:
+        juju.cli("remove-secret", secret_name) 
+    juju.wait(
+        lambda status: jubilant.all_active(status, [app.name]),
+    )
+
 @pytest.fixture(scope="module")
 def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""

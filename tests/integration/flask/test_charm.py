@@ -128,12 +128,12 @@ async def test_flask_config(
     "update_secret_config, excepted_config",
     [
         pytest.param(
-            {"secret-test": {"bar": "bar", "foo-bar": "foo-bar"}},
+            ["flask_app", {"secret-test": {"bar": "bar", "foo-bar": "foo-bar"}}],
             {"SECRET_TEST_BAR": "bar", "SECRET_TEST_FOO_BAR": "foo-bar"},
             id="user-secret",
         ),
         pytest.param(
-            {"flask-secret-key-id": {"value": "secret-foobar"}},
+            ["flask_app", {"flask-secret-key-id": {"value": "secret-foobar"}}],
             {"SECRET_KEY": "secret-foobar"},
             id="secret_key",
         ),
