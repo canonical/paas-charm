@@ -7,7 +7,7 @@ jobs:
   integration-tests:
     strategy:
       matrix:
-        juju-version: [ 3.3/stable, 3.4/stable, 3.5/stable ]
+        juju-version: [ 3.3/stable, 3.4/stable, 3.5/stable, 3.6/stable ]
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
@@ -16,8 +16,7 @@ jobs:
       # charmcraft-channel: latest/edge
       charmcraft-repository: alithethird/charmcraft
       charmcraft-ref: feat/expressjs-extension
-      modules: '["test_charm.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py", "test_config.py", "test_smtp.py", "test_openfga.py", "test_minimal.py", "test_loki.py", "test_prometheus.py", "test_grafana.py"]'
-
+      modules: '["test_charm.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py", "test_config.py", "test_smtp.py", "test_openfga.py", "test_minimal.py", "test_loki.py", "test_prometheus.py", "test_grafana.py", "test_non_root_db_migration.py", "test_non_root_loki.py"]'
       rockcraft-channel: latest/edge
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
