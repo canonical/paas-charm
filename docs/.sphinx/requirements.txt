@@ -3,4 +3,4 @@ sphinx-autobuild
 sphinxcontrib-mermaid
 sphinxcontrib-svg2pdfconverter[CairoSVG]
 sphinx-last-updated-by-git
-snowballstemmer<3.0.0
+snowballstemmer<3.0.1
