@@ -9,6 +9,7 @@ import unittest
 from types import NoneType
 
 import pytest
+from charms.openfga_k8s.v1.openfga import OpenFGARequires
 from charms.smtp_integrator.v0.smtp import SmtpRequires
 from ops import ActiveStatus, RelationMeta, RelationRole
 
@@ -20,8 +21,9 @@ from paas_charm.app import App, map_integrations_to_env
 from paas_charm.charm_state import (
     CharmState,
     IntegrationsState,
+    OpenfgaParameters,
     RelationParam,
-    S3Parameters,
+    S3RelationData,
     SamlParameters,
     SmtpParameters,
     TempoParameters,
@@ -33,6 +35,7 @@ from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
     FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
+    OPENFGA_RELATION_DATA_EXAMPLE,
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
@@ -176,62 +179,20 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With several databases, one of them None. prefix: {prefix}",
     )
-    small_s3 = pytest.param(
+    openfga_env = pytest.param(
         IntegrationsState(
-            s3_parameters=S3Parameters.model_construct(
-                access_key="access_key",
-                secret_key="secret_key",
-                bucket="bucket",
-            ),
+            openfga_parameters=generate_relation_parameters(
+                OPENFGA_RELATION_DATA_EXAMPLE, OpenfgaParameters
+            )
         ),
         prefix,
         {
-            f"{prefix}S3_ACCESS_KEY": "access_key",
-            f"{prefix}S3_SECRET_KEY": "secret_key",
-            f"{prefix}S3_BUCKET": "bucket",
+            f"{prefix}FGA_STORE_ID": "test-store-id",
+            f"{prefix}FGA_TOKEN": "test-token",
+            f"{prefix}FGA_GRPC_API_URL": "localhost:8081",
+            f"{prefix}FGA_HTTP_API_URL": "localhost:8080",
         },
-        id=f"With minimal variables in S3 Integration. prefix: {prefix}",
-    )
-    full_s3 = pytest.param(
-        IntegrationsState(
-            s3_parameters=S3Parameters.model_construct(
-                access_key="access_key",
-                secret_key="secret_key",
-                region="region",
-                storage_class="GLACIER",
-                bucket="bucket",
-                endpoint="https://s3.example.com",
-                path="/path/subpath/",
-                s3_api_version="s3v4",
-                uri_style="host",
-                tls_ca_chain=(
-                    ca_chain := [
-                        "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                        "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                    ]
-                ),
-                attributes=(
-                    attributes := [
-                        "header1:value1",
-                        "header2:value2",
-                    ]
-                ),
-            ),
-        ),
-        prefix,
-        {
-            f"{prefix}S3_ACCESS_KEY": "access_key",
-            f"{prefix}S3_SECRET_KEY": "secret_key",
-            f"{prefix}S3_API_VERSION": "s3v4",
-            f"{prefix}S3_BUCKET": "bucket",
-            f"{prefix}S3_ENDPOINT": "https://s3.example.com",
-            f"{prefix}S3_PATH": "/path/subpath/",
-            f"{prefix}S3_REGION": "region",
-            f"{prefix}S3_STORAGE_CLASS": "GLACIER",
-            f"{prefix}S3_ATTRIBUTES": json.dumps(attributes),
-            f"{prefix}S3_TLS_CA_CHAIN": json.dumps(ca_chain),
-        },
-        id=f"With all variables in S3 Integration. prefix: {prefix}",
+        id=f"With OpenFGA, prefix: {prefix}",
     )
     return [
         empty_env,
@@ -241,8 +202,7 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         rabbitmq_env,
         smtp_env,
         databases_env,
-        small_s3,
-        full_s3,
+        openfga_env,
     ]
 
 
@@ -293,21 +253,21 @@ def test_map_integrations_to_env(
         ),
         pytest.param(
             INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
-            S3Parameters,
+            S3RelationData,
             False,
-            S3Parameters,
+            S3RelationData,
             False,
             id="S3 correct parameters",
         ),
         pytest.param(
             {"wrong_key": "wrong_value"},
-            S3Parameters,
+            S3RelationData,
             False,
             NoneType,
             True,
             id="S3 wrong parameters",
         ),
-        pytest.param({}, S3Parameters, True, NoneType, True, id="S3 empty parameters"),
+        pytest.param({}, S3RelationData, True, NoneType, True, id="S3 empty parameters"),
         pytest.param(
             {"service_name": "app_name", "endpoint": "localhost:1234"},
             TempoParameters,
@@ -342,6 +302,23 @@ def test_map_integrations_to_env(
             id="Smtp wrong parameters",
         ),
         pytest.param({}, SmtpParameters, True, NoneType, True, id="Smtp empty parameters"),
+        pytest.param(
+            OPENFGA_RELATION_DATA_EXAMPLE,
+            OpenfgaParameters,
+            False,
+            OpenfgaParameters,
+            False,
+            id="Openfga correct parameters",
+        ),
+        pytest.param(
+            {"wrong_key": "wrong_value"},
+            OpenfgaParameters,
+            False,
+            NoneType,
+            True,
+            id="Openfga wrong parameters",
+        ),
+        pytest.param({}, OpenfgaParameters, True, NoneType, True, id="Openfga empty parameters"),
     ],
 )
 def test_generate_relation_parameters(
@@ -372,12 +349,13 @@ def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
         "redis_uri": None,
         "database_requirers": {},
-        "s3_connection_info": None,
+        "s3": None,
         "saml_relation_data": None,
         "rabbitmq_uri": None,
         "tracing_requirer": None,
         "app_name": None,
         "smtp_relation_data": None,
+        "openfga_relation_data": None,
     }
 
     return [
@@ -397,19 +375,9 @@ def _test_integrations_state_build_parameters():
             id="Saml wrong parameters",
         ),
         pytest.param(
-            {**relation_dict, "s3_connection_info": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
+            {**relation_dict, "s3": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "s3_connection_info": {}},
-            False,
-            id="S3 empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "s3_connection_info": {"wrong_key": "wrong_value"}},
-            True,
-            id="S3 wrong parameters",
         ),
         pytest.param(
             {
@@ -468,6 +436,21 @@ def _test_integrations_state_build_parameters():
             False,
             id="RabbitMQ empty parameters",
         ),
+        pytest.param(
+            {**relation_dict, "openfga_relation_data": OPENFGA_RELATION_DATA_EXAMPLE},
+            False,
+            id="OpenFGA correct parameters",
+        ),
+        pytest.param(
+            {**relation_dict, "openfga_relation_data": {}},
+            False,
+            id="OpenFGA empty parameters",
+        ),
+        pytest.param(
+            {**relation_dict, "openfga_relation_data": {"wrong_key": "wrong_value"}},
+            True,
+            id="OpenFGA wrong parameters",
+        ),
     ]
 
 
@@ -489,24 +472,26 @@ def test_integrations_state_build(
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
                 database_requirers=relation_dict["database_requirers"],
-                s3_connection_info=relation_dict["s3_connection_info"],
+                s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
                 tracing_requirer=relation_dict["tracing_requirer"],
                 app_name=relation_dict["app_name"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
+                openfga_relation_data=relation_dict["openfga_relation_data"],
             )
     else:
         assert isinstance(
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
                 database_requirers=relation_dict["database_requirers"],
-                s3_connection_info=relation_dict["s3_connection_info"],
+                s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
                 tracing_requirer=relation_dict["tracing_requirer"],
                 app_name=relation_dict["app_name"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
+                openfga_relation_data=relation_dict["openfga_relation_data"],
             ),
             IntegrationsState,
         )
@@ -608,6 +593,34 @@ def test_init_smtp(requires, expected_type):
     """
     charm = unittest.mock.MagicMock()
     result = paas_charm.charm.PaasCharm._init_smtp(self=charm, requires=requires)
+    assert isinstance(result, expected_type)
+
+
+@pytest.mark.parametrize(
+    "requires, expected_type",
+    [
+        pytest.param({}, NoneType, id="empty"),
+        pytest.param(
+            {
+                "openfga": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="openfga",
+                    raw={"interface": "openfga", "limit": 1},
+                )
+            },
+            OpenFGARequires,
+            id="openfga",
+        ),
+    ],
+)
+def test_init_openfga(requires, expected_type):
+    """
+    arrange: Get the mock requires.
+    act: Run the _init_openfga function.
+    assert: It should return OpenfgaRequires when there is openfga integration, none otherwise.
+    """
+    charm = unittest.mock.MagicMock()
+    result = paas_charm.charm.PaasCharm._init_openfga(self=charm, requires=requires)
     assert isinstance(result, expected_type)
 
 
@@ -870,6 +883,87 @@ def test_smtp_not_activated(
     assert service_env.get("SMTP_PORT") is None
     assert service_env.get("SMTP_SKIP_SSL_VERIFY") is None
     assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+    ],
+)
+def test_openfga_relation(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Integrate the charm with the openfga charm.
+    act: Run all initial hooks.
+    assert: The app service should have the environment variables related to openfga.
+    """
+    harness = request.getfixturevalue(app_harness)
+    harness.add_relation(
+        "openfga",
+        "openfga",
+        app_data=OPENFGA_RELATION_DATA_EXAMPLE,
+    )
+    container = harness.model.unit.get_container(container_name)
+
+    harness.begin_with_initial_hooks()
+
+    assert harness.model.unit.status == ActiveStatus()
+    service_env = container.get_plan().services[framework].environment
+    assert service_env["FGA_STORE_ID"] == OPENFGA_RELATION_DATA_EXAMPLE["store_id"]
+    assert service_env["FGA_TOKEN"] == OPENFGA_RELATION_DATA_EXAMPLE["token"]
+    assert service_env["FGA_GRPC_API_URL"] == OPENFGA_RELATION_DATA_EXAMPLE["grpc_api_url"]
+    assert service_env["FGA_HTTP_API_URL"] == OPENFGA_RELATION_DATA_EXAMPLE["http_api_url"]
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+    ],
+)
+def test_openfga_not_activated(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Deploy the charm without a relation to the openfga charm.
+    act: Run all initial hooks.
+    assert: The app service should not have the environment variables related to openfga.
+    """
+    harness = request.getfixturevalue(app_harness)
+    container = harness.model.unit.get_container(container_name)
+
+    harness.begin_with_initial_hooks()
+
+    assert harness.model.unit.status == ActiveStatus()
+    service_env = container.get_plan().services[framework].environment
+    assert service_env.get("FGA_STORE_ID") is None
+    assert service_env.get("FGA_TOKEN") is None
+    assert service_env.get("FGA_GRPC_API_URL") is None
+    assert service_env.get("FGA_HTTP_API_URL") is None
 
 
 @pytest.mark.parametrize(

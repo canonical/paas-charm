@@ -22,6 +22,7 @@ from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationSt
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
+from paas_charm.openfga import STORE_NAME
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_get_with_secret
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 # if new optional libs are not fetched, as it will not be backwards compatible.
 try:
     # pylint: disable=ungrouped-imports
-    from charms.data_platform_libs.v0.s3 import S3Requirer
+    from paas_charm.s3 import PaaSS3Requirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
@@ -62,6 +63,14 @@ except ImportError:
     logger.warning(
         "Missing charm library, please run "
         "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
+    )
+
+try:
+    # pylint: disable=ungrouped-imports
+    from charms.openfga_k8s.v1.openfga import OpenFGARequires
+except ImportError:
+    logger.warning(
+        "Missing charm library, please run `charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
     )
 
 
@@ -113,6 +122,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._rabbitmq = self._init_rabbitmq(requires)
         self._tracing = self._init_tracing(requires)
         self._smtp = self._init_smtp(requires)
+        self._openfga = self._init_openfga(requires)
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -190,7 +200,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _redis
 
-    def _init_s3(self, requires: dict[str, RelationMeta]) -> "S3Requirer | None":
+    def _init_s3(self, requires: dict[str, RelationMeta]) -> "PaaSS3Requirer | None":
         """Initialize the S3 relation if its required.
 
         Args:
@@ -202,7 +212,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _s3 = None
         if "s3" in requires and requires["s3"].interface_name == "s3":
             try:
-                _s3 = S3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
+                _s3 = PaaSS3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
                 self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
                 self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
             except NameError:
@@ -304,6 +314,29 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                     "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
                 )
         return _smtp
+
+    def _init_openfga(self, requires: dict[str, RelationMeta]) -> "OpenFGARequires | None":
+        """Initialize the OpenFGA relations if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the OpenFGA relation or None
+        """
+        openfga = None
+        if "openfga" in requires and requires["openfga"].interface_name == "openfga":
+            try:
+                openfga = OpenFGARequires(self, STORE_NAME)
+                self.framework.observe(
+                    openfga.on.openfga_store_created, self._on_openfga_store_created
+                )
+            except NameError:
+                logger.exception(
+                    "Missing charm library, please run "
+                    "`charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
+                )
+        return openfga
 
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
@@ -457,9 +490,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["redis"].optional:
                 yield "redis"
 
-        if self._s3 and not charm_state.integrations.s3_parameters:
+        if self._s3 and not charm_state.integrations.s3:
             if not requires["s3"].optional:
                 yield "s3"
+
+        if self._openfga and not charm_state.integrations.openfga_parameters:
+            if not requires["openfga"].optional:
+                yield "openfga"
 
     def _missing_required_other_integrations(
         self, requires: dict[str, RelationMeta], charm_state: CharmState
@@ -512,7 +549,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         except CharmConfigInvalidError as exc:
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
             return
-        self.unit.open_port("tcp", self._workload_config.port)
+        self._ingress.provide_ingress_requirements(port=self._workload_config.port)
+        self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:
@@ -555,6 +593,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 saml=self._saml,
                 tracing=self._tracing,
                 smtp=self._smtp,
+                openfga=self._openfga,
             ),
             app_name=self.app.name,
             base_url=self._base_url,
@@ -685,4 +724,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_smtp_data_available(self, _: ops.HookEvent) -> None:
         """Handle smtp data available event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_openfga_store_created(self, _: ops.HookEvent) -> None:
+        """Handle openfga store created event."""
         self.restart()

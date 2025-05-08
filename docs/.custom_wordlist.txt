@@ -7,8 +7,10 @@ changelog
 Charmcraft
 config
 entrypoint
+ExpressJS
 FastAPI
 filesystem
+FQDN
 Gunicorn
 init
 Jinja
@@ -32,3 +34,5 @@ smtp
 SMTP
 src
 tox
+OpenFGA
+openfga

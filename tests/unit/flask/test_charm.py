@@ -43,6 +43,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     secret_storage.is_initialized = True
     test_key = "0" * 16
     secret_storage.get_secret_key.return_value = test_key
+    secret_storage.get_peer_unit_fdqns.return_value = None
     charm_state = CharmState.from_charm(
         framework_config=Charm.get_framework_config(harness.charm),
         config=harness.charm.config,

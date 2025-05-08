@@ -4,10 +4,14 @@
 import os
 import time
 
+import urllib3
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
+from openfga_sdk import ClientConfiguration
+from openfga_sdk.credentials import CredentialConfiguration, Credentials
+from openfga_sdk.sync import OpenFgaClient
 from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
@@ -45,6 +49,26 @@ def send_mail(request):
         return HttpResponse("Sent")
     except Exception as e:
         return HttpResponse(f"Failed to send information: {e}")
+
+
+def list_authorization_models(request):
+    try:
+        if request.method == "GET":
+            configuration = ClientConfiguration(
+                api_url=settings.FGA_HTTP_API_URL,
+                store_id=settings.FGA_STORE_ID,
+                credentials=Credentials(
+                    method="api_token",
+                    configuration=CredentialConfiguration(api_token=settings.FGA_TOKEN),
+                ),
+            )
+            fga_client = OpenFgaClient(configuration)
+            fga_client.read_authorization_models()
+            return HttpResponse("Listed authorization models")
+    except urllib3.exceptions.HTTPError as e:
+        return HttpResponse(f"Failed reaching OpenFGA server: {e}")
+    except Exception as e:
+        return HttpResponse(f"Failed to list authorization models: {e}")
 
 
 def environ(request):
