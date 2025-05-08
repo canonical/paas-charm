@@ -8,12 +8,14 @@ import json
 import logging
 import typing
 
+import jubilant
 import juju
 import ops
 import pytest
 import requests
 from juju.application import Application
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8000
 
 
-async def test_flask_is_up(
+def test_flask_is_up(
     flask_app: Application,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
@@ -32,7 +34,7 @@ async def test_flask_is_up(
     act: send a request to the flask application managed by the flask charm.
     assert: the flask application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(flask_app.name):
+    for unit_ip in get_unit_ips(flask_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
@@ -41,14 +43,14 @@ async def test_flask_is_up(
 @pytest.mark.parametrize(
     "update_config, timeout",
     [
-        pytest.param({"webserver-timeout": 7}, 7, id="timeout=7"),
-        pytest.param({"webserver-timeout": 5}, 5, id="timeout=5"),
-        pytest.param({"webserver-timeout": 3}, 3, id="timeout=3"),
+        pytest.param(["flask_app",{"webserver-timeout": 7}], 7, id="timeout=7"),
+        pytest.param(["flask_app",{"webserver-timeout": 5}], 5, id="timeout=5"),
+        pytest.param(["flask_app",{"webserver-timeout": 3}], 3, id="timeout=3"),
     ],
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-async def test_flask_webserver_timeout(
+def test_flask_webserver_timeout(
     flask_app: Application,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
     timeout: int,
@@ -59,7 +61,7 @@ async def test_flask_webserver_timeout(
     assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
     """
     safety_timeout = timeout + 3
-    for unit_ip in await get_unit_ips(flask_app.name):
+    for unit_ip in get_unit_ips(flask_app.name):
         assert requests.get(
             f"http://{unit_ip}:{WORKLOAD_PORT}/sleep?duration={timeout - 1}",
             timeout=safety_timeout,
@@ -277,12 +279,10 @@ async def test_port_without_ingress(
     assert env_vars["FLASK_BASE_URL"] == f"http://{service_hostname}:{WORKLOAD_PORT}"
 
 
-async def test_with_ingress(
-    ops_test: OpsTest,
-    model: juju.model.Model,
-    flask_app: Application,
-    traefik_app,  # pylint: disable=unused-argument
-    traefik_app_name: str,
+def test_with_ingress(
+    juju: jubilant.Juju,
+    flask_app: App,
+    traefik_app: App,
     external_hostname: str,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
@@ -292,23 +292,24 @@ async def test_with_ingress(
     assert: requesting the charm through traefik should return a correct response,
          and the BASE_URL config should be correctly set (FLASK_BASE_URL env variable).
     """
-    await model.add_relation(flask_app.name, traefik_app_name)
-    # mypy doesn't see that ActiveStatus has a name
-    await model.wait_for_idle(status=ops.ActiveStatus.name)  # type: ignore
+    juju.integrate(flask_app.name, traefik_app.name)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [flask_app.name, traefik_app.name])
+    )
 
-    traefik_ip = (await get_unit_ips(traefik_app_name))[0]
+    traefik_ip = get_unit_ips(traefik_app.name)[0]
     response = requests.get(
         f"http://{traefik_ip}/config/BASE_URL",
-        headers={"Host": f"{ops_test.model_name}-{flask_app.name}.{external_hostname}"},
+        headers={"Host": f"{juju.model}-{flask_app.name}.{external_hostname}"},
         timeout=5,
     )
     assert response.status_code == 200
-    assert response.json() == f"http://{ops_test.model_name}-{flask_app.name}.{external_hostname}/"
+    assert response.json() == f"http://{juju.model}-{flask_app.name}.{external_hostname}/"
 
 
-async def test_app_peer_address(
-    model: juju.model.Model,
-    flask_app: Application,
+def test_app_peer_address(
+    juju: jubilant.Juju,
+    flask_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -316,29 +317,35 @@ async def test_app_peer_address(
     act: add a unit and request env variables through the unit IP addresses.
     assert: the peer address must be present in the units' env.
     """
-    await flask_app.add_unit()
-    await model.wait_for_idle(status="active", apps=[flask_app.name])
+    juju.add_unit(flask_app.name, num_units=1)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [flask_app.name]),
+    )
 
     actual_result = set()
-    for unit_ip in await get_unit_ips(flask_app.name):
+    for unit_ip in get_unit_ips(flask_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
         assert "FLASK_PEER_FQDNS" in env_vars
         actual_result.add(env_vars["FLASK_PEER_FQDNS"])
 
+            # unit_ips.append(status.apps[application_name].units[unit].address)
+    status = juju.status()
     expected_result = set()
-    for unit in flask_app.units:
+    for unit in status.apps[flask_app.name].units: #flask_app.units:
         # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
         expected_result.add(
-            f"{unit.name.replace('/', '-')}.{flask_app.name}-endpoints.{model.name}.svc.cluster.local"
+            f"{unit.replace('/', '-')}.{flask_app.name}-endpoints.{juju.model}.svc.cluster.local"
         )
     assert actual_result == expected_result
 
-    await flask_app.scale(scale=1)
-    await model.wait_for_idle(status="active", apps=[flask_app.name])
+    juju.remove_unit(flask_app.name, num_units=1)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [flask_app.name]),
+    )
 
-    for unit_ip in await get_unit_ips(flask_app.name):
+    for unit_ip in get_unit_ips(flask_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()

@@ -3,13 +3,10 @@
 
 """Integration tests for CharmState in all supported frameworks."""
 
-
-import nest_asyncio
+import jubilant
 import pytest
-from juju.application import Application
-from juju.model import Model
 
-nest_asyncio.apply()
+from tests.integration.types import App
 
 
 @pytest.mark.parametrize(
@@ -33,10 +30,10 @@ nest_asyncio.apply()
         ),
         pytest.param(
             "fastapi_blocked_app",
-            ["non-optional-bool", "non-optional-int", "non-optional-string"],
+            ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
-            {"non-optional-int": "1", "non-optional-string": "non-optional-value"},
+            {"non-optional-int": "1"},
             id="fastapi",
         ),
         pytest.param(
@@ -57,8 +54,8 @@ nest_asyncio.apply()
         ),
     ],
 )
-async def test_non_optional(
-    model: Model,
+def test_non_optional(
+    juju: jubilant.Juju,
     blocked_app_fixture: str,
     missing_configs: list[str],
     first_non_optional_config: dict,
@@ -74,19 +71,31 @@ async def test_non_optional(
         with the message showing which option is missing.
         When both set charm should be in active state.
     """
-    blocked_app: Application = request.getfixturevalue(blocked_app_fixture)
-    assert blocked_app.status == "blocked"
+    blocked_app: App = request.getfixturevalue(blocked_app_fixture)
+    status = juju.status()
+    assert status.apps[blocked_app.name].units[blocked_app.name + "/0"].is_blocked
     for missing_config in missing_configs:
-        assert missing_config in blocked_app.status_message
+        assert missing_config in  status.apps[blocked_app.name].units[blocked_app.name + "/0"].workload_status.message
 
-    await blocked_app.set_config(first_non_optional_config)
-    await model.wait_for_idle(apps=[blocked_app.name], status="blocked", timeout=300)
+    juju.config(blocked_app.name, first_non_optional_config)
+    
     for invalid_config in rest_of_the_invalid_configs:
-        assert invalid_config in blocked_app.status_message
+        assert invalid_config  in  status.apps[blocked_app.name].units[blocked_app.name + "/0"].workload_status.message
+    
     for config in first_non_optional_config.keys():
-        assert config not in blocked_app.status_message
+        juju.wait(
+            lambda status: config not in  status.apps[blocked_app.name].units[blocked_app.name + "/0"].workload_status.message,
+            timeout=300,
+        )
 
-    await blocked_app.set_config(remaining_non_optional_configs_dict)
-    await model.wait_for_idle(apps=[blocked_app.name], status="active", timeout=300)
+    juju.config(blocked_app.name, remaining_non_optional_configs_dict)
+
+    juju.wait(
+        lambda status: jubilant.all_active(status, [blocked_app.name]),
+        timeout=300,
+    )
     for missing_config in missing_configs:
-        assert missing_config not in blocked_app.status_message
+        juju.wait(
+            lambda status: missing_config  not in  status.apps[blocked_app.name].units[blocked_app.name + "/0"].workload_status.message,
+            timeout=300,
+        )

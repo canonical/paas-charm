@@ -6,17 +6,17 @@
 import logging
 import typing
 
-import pytest
+import jubilant
 import requests
-from juju.application import Application
-from juju.model import Model
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-async def test_go_is_up(
-    go_app: Application,
+def test_go_is_up(
+    go_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -24,15 +24,15 @@ async def test_go_is_up(
     act: send a request to the go application managed by the go charm.
     assert: the go application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(go_app.name):
+    for unit_ip in get_unit_ips(go_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
 
-async def test_user_defined_config(
-    model: Model,
-    go_app: Application,
+def test_user_defined_config(
+    juju: jubilant.Juju,
+    go_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -40,10 +40,12 @@ async def test_user_defined_config(
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
-    await go_app.set_config({"user-defined-config": "newvalue"})
-    await model.wait_for_idle(apps=[go_app.name], status="active")
+    juju.config(go_app.name, {"user-defined-config": "newvalue"})
+    juju.wait(
+        lambda status: jubilant.all_active(status, [go_app.name]),
+    )
 
-    for unit_ip in await get_unit_ips(go_app.name):
+    for unit_ip in get_unit_ips(go_app.name):
         response = requests.get(
             f"http://{unit_ip}:{WORKLOAD_PORT}/env/user-defined-config", timeout=5
         )
@@ -51,8 +53,8 @@ async def test_user_defined_config(
         assert "newvalue" in response.text
 
 
-async def test_migration(
-    go_app: Application,
+def test_migration(
+    go_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -60,7 +62,7 @@ async def test_migration(
     act: send a request to an endpoint that uses the table created by the migration script.
     assert: the go application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(go_app.name):
+    for unit_ip in get_unit_ips(go_app.name):
         response = requests.get(
             f"http://{unit_ip}:{WORKLOAD_PORT}/postgresql/migratestatus", timeout=5
         )
@@ -68,10 +70,10 @@ async def test_migration(
         assert "SUCCESS" in response.text
 
 
-async def test_prometheus_integration(
-    model: Model,
-    go_app: Application,
-    prometheus_app,
+def test_prometheus_integration(
+    juju: jubilant.Juju,
+    go_app: App,
+    prometheus_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -80,22 +82,27 @@ async def test_prometheus_integration(
     assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
         targets.
     """
-    await model.add_relation(prometheus_app.name, go_app.name)
-    await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
+    juju.integrate(go_app.name, prometheus_app.name)
+    juju.wait(
+        lambda status: jubilant.all_active(status, [go_app.name, prometheus_app.name]),
+    )
 
-    config = await go_app.get_config()
-    await go_app.set_config({"metrics-port": str(config["metrics-port"]["value"] + 1)})
-    await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
-    config = await go_app.get_config()
+    config = juju.config(go_app.name)
+    juju.config(go_app.name, {"metrics-path": str(config["metrics-port"] + 1)})
 
-    for unit_ip in await get_unit_ips(prometheus_app.name):
+    juju.wait(
+        lambda status: jubilant.all_active(status, [go_app.name, prometheus_app.name]),
+    )
+    config = juju.config(go_app.name)
+
+    for unit_ip in get_unit_ips(prometheus_app.name):
         query_targets = requests.get(f"http://{unit_ip}:9090/api/v1/targets", timeout=10).json()
         active_targets = query_targets["data"]["activeTargets"]
         assert len(active_targets)
         for active_target in active_targets:
             scrape_url = active_target["scrapeUrl"]
-            metrics_path = config["metrics-path"]["value"]
-            metrics_port = str(config["metrics-port"]["value"])
+            metrics_path = config["metrics-path"]
+            metrics_port = str(config["metrics-port"])
             if metrics_path in scrape_url and metrics_port in scrape_url:
                 break
         else:

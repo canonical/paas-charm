@@ -5,38 +5,37 @@
 """Integration tests for Django charm."""
 import asyncio
 import logging
-import time
 import typing
 from datetime import datetime
 
 import aiohttp
+import jubilant
 import pytest
-import requests
-from juju.application import Application
-from juju.model import Model
-from juju.utils import block_until
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.usefixtures("django_async_app")
 async def test_async_workers(
-    ops_test: OpsTest,
-    model: Model,
-    django_async_app: Application,
-    get_unit_ips,
+    juju: jubilant.Juju,
+    django_async_app: App,
+    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
     arrange: Django is deployed with async enabled rock. Change gunicorn worker class.
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    await django_async_app.set_config({"webserver-worker-class": "gevent"})
-    await model.wait_for_idle(apps=[django_async_app.name], status="active", timeout=60)
+    juju.config(django_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.wait(
+        lambda status: jubilant.all_active(status, [django_async_app.name]),
+        timeout=60,
+    )
 
     # the django unit is not important. Take the first one
-    django_unit_ip = (await get_unit_ips(django_async_app.name))[0]
+    django_unit_ip = get_unit_ips(django_async_app.name)[0]
 
     async def _fetch_page(session):
         params = {"duration": 2}

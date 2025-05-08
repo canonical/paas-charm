@@ -6,17 +6,17 @@
 import logging
 import typing
 
-import pytest
+import jubilant
 import requests
-from juju.application import Application
-from juju.model import Model
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-async def test_fastapi_is_up(
-    fastapi_app: Application,
+def test_fastapi_is_up(
+    fastapi_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -24,15 +24,15 @@ async def test_fastapi_is_up(
     act: send a request to the fastapi application managed by the fastapi charm.
     assert: the fastapi application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(fastapi_app.name):
+    for unit_ip in get_unit_ips(fastapi_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
 
-async def test_user_defined_config(
-    model: Model,
-    fastapi_app: Application,
+def test_user_defined_config(
+    juju: jubilant.Juju,
+    fastapi_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -40,10 +40,12 @@ async def test_user_defined_config(
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
-    await fastapi_app.set_config({"user-defined-config": "newvalue"})
-    await model.wait_for_idle(apps=[fastapi_app.name], status="active")
+    juju.config(fastapi_app.name, {"user-defined-config": "newvalue"})
+    juju.wait(
+        lambda status: jubilant.all_active(status, [fastapi_app.name]),
+    )
 
-    for unit_ip in await get_unit_ips(fastapi_app.name):
+    for unit_ip in get_unit_ips(fastapi_app.name):
         response = requests.get(
             f"http://{unit_ip}:{WORKLOAD_PORT}/env/user-defined-config", timeout=5
         )
@@ -51,8 +53,8 @@ async def test_user_defined_config(
         assert "newvalue" in response.text
 
 
-async def test_migration(
-    fastapi_app: Application,
+def test_migration(
+    fastapi_app: App,
     get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
@@ -60,7 +62,7 @@ async def test_migration(
     act: send a request to an endpoint that checks the table created by the micration script.
     assert: the fastapi application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(fastapi_app.name):
+    for unit_ip in get_unit_ips(fastapi_app.name):
         response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/table/users", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" in response.text
