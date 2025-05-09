@@ -8,7 +8,6 @@ import asyncio
 import logging
 import typing
 
-import juju.client.client
 import juju.model
 import pytest
 import requests
@@ -17,7 +16,9 @@ from juju.application import Application
 logger = logging.getLogger(__name__)
 
 import nest_asyncio
+
 nest_asyncio.apply()
+
 
 @pytest.mark.parametrize(
     "non_root_app_fixture, port",
@@ -29,7 +30,6 @@ nest_asyncio.apply()
         pytest.param("expressjs_non_root_app", 8080, id="ExpressJS non-root"),
     ],
 )
-@pytest.mark.skip_juju_version("3.6")  # Only Juju>=3.6 supports non-root users
 async def test_non_root_loki_integration(
     model: juju.model.Model,
     loki_app_name: str,
@@ -67,7 +67,4 @@ async def test_non_root_loki_integration(
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
     assert log["values"]  # any("python-requests" in line[1] for line in log["values"])
-    if model.info.agent_version < juju.client.client.Number.from_json("3.4.0"):
-        assert "filename" in log["stream"]
-    else:
-        assert "filename" not in log["stream"]
+    assert "filename" not in log["stream"]

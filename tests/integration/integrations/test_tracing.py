@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
         ("go_app", 8080),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")  # Tempo only supports Juju>=3.4
 def test_workload_tracing(
     juju: jubilant.Juju,
     app_fixture: str,

@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-@pytest.mark.skip_juju_version("3.4")
 def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm.
@@ -32,7 +31,6 @@ def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
         assert "Hello, World!" in response.text
 
 
-@pytest.mark.skip_juju_version("3.4")
 def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm. Set the config user-defined-config to a new value.
@@ -53,7 +51,6 @@ def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju
         assert "newvalue" in response.text
 
 
-@pytest.mark.skip_juju_version("3.4")
 def test_migration(request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm with postgresql integration.

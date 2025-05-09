@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
         ("go_app", 8080),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_openfga_integrations(
     juju: jubilant.Juju,
     app_fixture: App,

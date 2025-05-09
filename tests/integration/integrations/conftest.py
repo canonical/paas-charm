@@ -93,7 +93,6 @@ def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="function", name="fastapi_app")
-@pytest.mark.skip_juju_version("3.4")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "fastapi"
     yield next(
@@ -118,7 +117,6 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="function", name="expressjs_app")
-@pytest.mark.skip_juju_version("3.4")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
     framework = "expressjs"
     yield next(
@@ -337,7 +335,6 @@ def mailcatcher(load_kube_config, juju):
 
 
 @pytest.fixture(scope="module", name="prometheus_app")
-@pytest.mark.skip_juju_version("3.4")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
     prometheus_app_name: str,
@@ -359,7 +356,6 @@ def deploy_prometheus_fixture(
 
 
 @pytest.fixture(scope="module", name="loki_app")
-@pytest.mark.skip_juju_version("3.4")
 def deploy_loki_fixture(
     juju: jubilant.Juju,
     loki_app_name: str,
@@ -375,7 +371,6 @@ def deploy_loki_fixture(
 
 
 @pytest.fixture(scope="function", name="cos_apps")
-@pytest.mark.skip_juju_version("3.4")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
     loki_app,

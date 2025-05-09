@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
         ("django_app", "Django Operator"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_grafana_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,

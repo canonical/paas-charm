@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
         ("django_app", 8000),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_smtp_integrations(
     juju: jubilant.Juju,
     app_fixture: App,

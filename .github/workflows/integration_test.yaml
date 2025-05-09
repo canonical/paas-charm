@@ -7,7 +7,7 @@ jobs:
   integration-tests:
     strategy:
       matrix:
-        juju-version: [ 3.3/stable, 3.4/stable, 3.5/stable, 3.6/stable ]
+        juju-version: [ 3.6/stable ]
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:

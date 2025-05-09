@@ -9,7 +9,6 @@ import time
 import jubilant
 import pytest
 import requests
-from ops import JujuVersion
 
 from tests.integration.types import App
 
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
         ("django_app", 8000),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_loki_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -64,9 +62,4 @@ def test_loki_integration(
     logging.info("retrieve sample application log: %s", log)
     assert app.name in log["stream"]["juju_application"]
     status = juju.status()
-    current_version = JujuVersion(status.model.version)
-    min_version = JujuVersion("3.4.0")
-    if current_version < min_version:
-        assert "filename" in log["stream"]
-    else:
-        assert "filename" not in log["stream"]
+    assert "filename" not in log["stream"]

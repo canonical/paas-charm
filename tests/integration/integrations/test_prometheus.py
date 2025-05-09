@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
         ("django_app"),
     ],
 )
-@pytest.mark.skip_juju_version("3.4")
 def test_prometheus_integration(
     request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
 ):

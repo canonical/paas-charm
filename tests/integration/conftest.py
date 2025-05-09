@@ -3,19 +3,16 @@
 import json
 import logging
 import pathlib
-import yaml
 import subprocess
-from collections.abc import Generator
-from typing import cast
 
 import jubilant
 import pytest
 import pytest_asyncio
+import yaml
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
-from ops import JujuVersion
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
@@ -105,6 +102,7 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
     if not image:
         raise ValueError("the following arguments are required: --flask-minimal-app-image")
     return image
+
 
 @pytest.mark.usefixtures("tmp_path_factory")
 def build_charm_file(
@@ -464,7 +462,6 @@ async def go_non_root_app_fixture(
     return app
 
 
-@pytest.mark.skip_juju_version("3.4")
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
@@ -758,53 +755,3 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
-
-
-@pytest.fixture(scope="module")
-def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
-    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
-
-    def show_debug_log(juju: jubilant.Juju):
-        if request.session.testsfailed:
-            log = juju.debug_log(limit=1000)
-            print(log, end="")
-
-    use_existing = request.config.getoption("--use-existing", default=False)
-    if use_existing:
-        juju = jubilant.Juju()
-        yield juju
-        show_debug_log(juju)
-        return
-
-    model = request.config.getoption("--model")
-    if model:
-        juju = jubilant.Juju(model=model)
-        yield juju
-        show_debug_log(juju)
-        return
-
-    keep_models = cast(bool, request.config.getoption("--keep-models"))
-    with jubilant.temp_model(keep=keep_models) as juju:
-        juju.wait_timeout = 10 * 60
-        yield juju
-        show_debug_log(juju)
-        return
-
-
-@pytest.fixture(autouse=True)
-def skip_by_juju_version(request, juju: jubilant.Juju):
-    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
-    if request.node.get_closest_marker("skip_juju_version"):
-        status = juju.status()
-        current_version = JujuVersion(status.model.version)
-        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
-        if current_version < min_version:
-            pytest.skip("Juju version is too old")
-
-
-def pytest_configure(config):
-    """Add new marker."""
-    config.addinivalue_line(
-        "markers",
-        "skip_juju_version(version): skip test if Juju version is lower than version",
-    )

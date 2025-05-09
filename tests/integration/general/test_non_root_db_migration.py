@@ -7,11 +7,11 @@
 import logging
 
 import juju.model
+import nest_asyncio
 import pytest
 import requests
 from juju.application import Application
 
-import nest_asyncio
 nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,6 @@ logger = logging.getLogger(__name__)
         ),
     ],
 )
-@pytest.mark.skip_juju_version("3.6")  # Only Juju>=3.6 supports non-root users
 async def test_non_root_db_migration(
     non_root_app_fixture: str,
     app_name: str,
