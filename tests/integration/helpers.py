@@ -62,7 +62,7 @@ def get_traces(tempo_host: str, service_name: str):
 
 
 @retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
-async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
+def get_traces_patiently(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API, but also try multiple times.
 
     Useful for cases when Tempo might not return the traces immediately (its API is known for returning data in
@@ -74,7 +74,7 @@ async def get_traces_patiently(tempo_host, service_name="tracegen-otlp_http"):
 
 
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
-async def get_mails_patiently(mailcatcher_pod_ip):
+def get_mails_patiently(mailcatcher_pod_ip: str):
     """Get mails directly from Mailcatcher REST API, but also try multiple times."""
     url = f"http://{mailcatcher_pod_ip}:1080/messages"
     req = requests.get(
@@ -86,3 +86,29 @@ async def get_mails_patiently(mailcatcher_pod_ip):
     mails = req.json()
     assert len(mails) > 0
     return mails
+
+
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
+def check_grafana_datasource_types_patiently(
+    grafana_session: requests.session, grafana_ip: str, expected_datasource_types: list[str]
+):
+    """Get datasources directly from Grafana REST API, but also try multiple times."""
+    url = f"http://{grafana_ip}:3000/api/datasources"
+    datasources = grafana_session.get(url, timeout=10).json()
+    datasource_types = set(datasource["type"] for datasource in datasources)
+    for datasource in expected_datasource_types:
+        assert datasource in datasource_types, f"Datasource type {datasource} not found in Grafana"
+
+
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(15))
+def check_grafana_dashboards_patiently(
+    grafana_session: requests.session, grafana_ip: str, dashboard: str
+):
+    """Check if dashboard can be found in Grafana directly from Grafana REST API,
+    but also try multiple times."""
+    dashboards = grafana_session.get(
+        f"http://{grafana_ip}:3000/api/search",
+        timeout=10,
+        params={"query": dashboard},
+    ).json()
+    assert len(dashboards)

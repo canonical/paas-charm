@@ -26,7 +26,7 @@ from tests.unit.go.constants import GO_CONTAINER_NAME
 
 @pytest.mark.parametrize(
     "blocked_harness_fixture",
-    ["flask_harness", "go_harness", "fastapi_harness", "django_harness"],
+    ["flask_harness", "go_harness", "fastapi_harness", "django_harness", "expressjs_harness"],
 )
 @pytest.mark.parametrize(
     "required_configs, expected_status_message_substrs, unexpected_status_message_substrs, expected_log_message_substrs",
@@ -210,6 +210,7 @@ def test_non_optional_config(
     [
         ["flask_harness", "flask"],
         ["go_harness", "app"],
+        ["expressjs_harness", "app"],
         ["fastapi_harness", "app"],
         ["django_harness", "django"],
     ],
@@ -243,6 +244,13 @@ def test_get_framework_config_with_prefix(
             ["invalid", "config", "flask-secret-key"],
             ["valid string"],
             ["invalid", "config", "flask-secret-key", "valid string"],
+        ),
+        pytest.param(
+            "expressjs_harness",
+            "app-secret-key",
+            ["invalid", "config", "app-secret-key"],
+            ["valid string"],
+            ["invalid", "config", "app-secret-key", "valid string"],
         ),
         pytest.param(
             "go_harness",
@@ -393,7 +401,7 @@ def _test_app_config_class_factory_parameters():
 
 
 @pytest.mark.parametrize("mock_yaml, expected_output", _test_app_config_class_factory_parameters())
-@pytest.mark.parametrize("framework", ["flask", "go", "fastapi", "django"])
+@pytest.mark.parametrize("framework", ["flask", "go", "fastapi", "django", "expressjs"])
 def test_app_config_class_factory(
     mock_yaml: dict, expected_output: dict, framework: str, monkeypatch
 ):
