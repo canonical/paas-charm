@@ -57,17 +57,16 @@ class Charm(PaasCharm):
     @property
     def _workload_config(self) -> WorkloadConfig:
         """Return an WorkloadConfig instance."""
-        framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(ExpressJSConfig, self.get_framework_config())
         return WorkloadConfig(
-            framework=framework_name,
+            framework=self._framework_name,
             port=framework_config.port,
             base_dir=base_dir,
             app_dir=base_dir,
             state_dir=base_dir / "state",
             log_files=[],
-            service_name=framework_name,
+            service_name=self._framework_name,
             metrics_target=f"*:{framework_config.metrics_port}",
             metrics_path=framework_config.metrics_path,
             unit_name=self.unit.name,

@@ -40,8 +40,8 @@ config:
       default: /metrics
     app-secret-key:
       type: string
-      description: Long secret you can use for sessions, csrf or any other thing where
-         you need a random secret shared by all units
+      description: Long secret to use for sessions, CSRF or any other occurrences
+        for random secrets erquired by application. This value is shared across all units.
     app-secret-key-id:
       type: secret
       description: >-

@@ -27,11 +27,16 @@ from paas_charm.expressjs.charm import ExpressJSConfig
                 "APP_OTHERCONFIG": "othervalue",
                 "APP_BASE_URL": "https://paas.example.com",
             },
+            id="minimal environment",
         ),
         pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
             {"extra-config", "extravalue"},
-            {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
+            {
+                "metrics-port": "9000",
+                "metrics-path": "/m",
+                "app-secret-key": "notfoobar",
+            },
             IntegrationsState(
                 redis_uri="redis://10.1.88.132:6379",
                 rabbitmq_uri="amqp://expressjs-app:test-password@rabbitmq.example.com/%2f",
@@ -67,6 +72,7 @@ from paas_charm.expressjs.charm import ExpressJSConfig
                 "RABBITMQ_QUERY": "",
                 "RABBITMQ_SCHEME": "amqp",
             },
+            id="all configurable values set",
         ),
     ],
 )

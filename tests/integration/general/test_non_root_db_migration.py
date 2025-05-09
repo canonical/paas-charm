@@ -6,12 +6,10 @@
 
 import logging
 
-import juju.client.client
 import juju.model
 import pytest
 import requests
 from juju.application import Application
-from juju.errors import JujuError
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +17,13 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "non_root_app_fixture, app_name, endpoint, port",
     [
+        pytest.param(
+            "expressjs_non_root_app",
+            "expressjs-k8s",
+            "table/users",
+            8080,
+            id="ExpressJS non-root",
+        ),
         pytest.param(
             "flask_non_root_db_app",
             "flask-k8s",
