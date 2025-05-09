@@ -4,3 +4,7 @@ aiohttp == 3.11.7
 tenacity == 9.0.0
 nest_asyncio == 1.6.0
 minio == 7.2.14
+cosl
+boto3
+juju==3.5.2.1
+git+https://github.com/canonical/saml-test-idp.git

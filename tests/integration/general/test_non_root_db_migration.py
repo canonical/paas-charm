@@ -6,12 +6,10 @@
 
 import logging
 
-import juju.client.client
 import juju.model
 import pytest
 import requests
 from juju.application import Application
-from juju.errors import JujuError
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +41,6 @@ logger = logging.getLogger(__name__)
         ),
     ],
 )
-@pytest.mark.skip_juju_version("3.6")  # Only Juju>=3.6 supports non-root users
 async def test_non_root_db_migration(
     non_root_app_fixture: str,
     app_name: str,

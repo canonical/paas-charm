@@ -1,0 +1,3 @@
+cosl
+pytest
+coverage[toml]

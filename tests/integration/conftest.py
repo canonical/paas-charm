@@ -717,23 +717,3 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
-
-
-@pytest.fixture(autouse=True)
-def skip_by_juju_version(request, model):
-    """Skip the test if juju version is lower then the `skip_juju_version` marker value."""
-    if request.node.get_closest_marker("skip_juju_version"):
-        current_version = JujuVersion(
-            f"{model.info.agent_version.major}.{model.info.agent_version.minor}.{model.info.agent_version.patch}"
-        )
-        min_version = JujuVersion(request.node.get_closest_marker("skip_juju_version").args[0])
-        if current_version < min_version:
-            pytest.skip("Juju version is too old")
-
-
-def pytest_configure(config):
-    """Add new marker."""
-    config.addinivalue_line(
-        "markers",
-        "skip_juju_version(version): skip test if Juju version is lower than version",
-    )
