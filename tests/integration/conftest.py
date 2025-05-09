@@ -3,6 +3,7 @@
 import json
 import logging
 import pathlib
+import yaml
 import subprocess
 from collections.abc import Generator
 from typing import cast
@@ -18,7 +19,7 @@ from ops import JujuVersion
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.helpers import inject_venv
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -105,11 +106,12 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
         raise ValueError("the following arguments are required: --flask-minimal-app-image")
     return image
 
-
+@pytest.mark.usefixtures("tmp_path_factory")
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
-    config_options: dict = {},
+    tmp_path_factory,
+    charm_dict: dict = {},
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -121,6 +123,12 @@ def build_charm_file(
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
+        if charm_dict:
+            temp_location = tmp_path_factory.mktemp(framework)
+            charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
+            charmcraft_yaml.update(charm_dict)
+            (temp_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
+            charm_location = temp_location
         try:
             subprocess.run(
                 [
@@ -147,8 +155,6 @@ def build_charm_file(
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    if config_options:
-        charm_file = inject_charm_config(charm_file, config_options, charm_file)
     return pathlib.Path(charm_file).absolute()
 
 

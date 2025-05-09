@@ -1,6 +1,11 @@
+aiohttp == 3.11.7
+boto3
+cosl
+git+https://github.com/canonical/saml-test-idp.git
+jubilant==0.4.0
+juju==3.5.2.1
+minio == 7.2.14
+nest_asyncio == 1.6.0
 ops >= 1.5.0
 pytest-operator >= 0.32.0
-aiohttp == 3.11.7
 tenacity == 9.0.0
-nest_asyncio == 1.6.0
-minio == 7.2.14

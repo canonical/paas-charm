@@ -11,6 +11,8 @@ import pytest
 import requests
 from juju.application import Application
 
+import nest_asyncio
+nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
 
