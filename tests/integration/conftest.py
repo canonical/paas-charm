@@ -10,7 +10,6 @@ from typing import cast
 import jubilant
 import pytest
 import pytest_asyncio
-import yaml
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
@@ -18,7 +17,7 @@ from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_venv, merge_dicts
+from tests.integration.helpers import inject_charm_config, inject_venv
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -121,11 +120,11 @@ def build_charm_file(
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
-        if charm_dict:
-            charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
-            (charm_location / "charmcraft.yaml").replace(charm_location / "charmcraft.yaml.bak")
-            charmcraft_yaml = merge_dicts(charmcraft_yaml, charm_dict)
-            (charm_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
+        # if charm_dict:
+        #     charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
+        #     (charm_location / "charmcraft.yaml").replace(charm_location / "charmcraft.yaml.bak")
+        #     charmcraft_yaml = merge_dicts(charmcraft_yaml, charm_dict)
+        #     (charm_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
         try:
             subprocess.run(
                 [
@@ -147,15 +146,19 @@ def build_charm_file(
             charm_file = str(charms[0])
         except subprocess.CalledProcessError as exc:
             raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
-        finally:
-            if (charm_location / "charmcraft.yaml.bak").exists():
-                (charm_location / "charmcraft.yaml.bak").replace(
-                    charm_location / "charmcraft.yaml"
-                )
+        # finally:
+        #     if (charm_location / "charmcraft.yaml.bak").exists():
+        #         (charm_location / "charmcraft.yaml.bak").replace(
+        #             charm_location / "charmcraft.yaml"
+        #         )
 
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+    (PROJECT_ROOT / "examples" / framework / "blocked").mkdir()
+    charm_file = inject_charm_config(
+        charm_file, charm_dict, PROJECT_ROOT / "examples" / framework / "blocked"
+    )
     return pathlib.Path(charm_file).absolute()
 
 
