@@ -148,8 +148,10 @@ def build_charm_file(
         except subprocess.CalledProcessError as exc:
             raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
         finally:
-            if(charm_location / "charmcraft.yaml.bak").exists():
-                (charm_location / "charmcraft.yaml.bak").replace(charm_location / "charmcraft.yaml")
+            if (charm_location / "charmcraft.yaml.bak").exists():
+                (charm_location / "charmcraft.yaml.bak").replace(
+                    charm_location / "charmcraft.yaml"
+                )
 
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
@@ -204,9 +206,7 @@ async def flask_non_root_db_app_fixture(
     resources = {
         "flask-app-image": test_db_flask_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", {"charm-user": "non-root"}
-    )
+    charm_file = build_charm_file(pytestconfig, "flask", {"charm-user": "non-root"})
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -227,9 +227,7 @@ async def flask_non_root_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", {"charm-user": "non-root"}
-    )
+    charm_file = build_charm_file(pytestconfig, "flask", {"charm-user": "non-root"})
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -325,9 +323,7 @@ async def django_non_root_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "django", {"charm-user": "non-root"}
-    )
+    charm_file = build_charm_file(pytestconfig, "django", {"charm-user": "non-root"})
 
     app = await model.deploy(
         charm_file,
@@ -396,9 +392,7 @@ async def fastapi_non_root_app_fixture(
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = build_charm_file(
-        pytestconfig, "fastapi", {"charm-user": "non-root"}
-    )
+    charm_file = build_charm_file(pytestconfig, "fastapi", {"charm-user": "non-root"})
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -537,9 +531,7 @@ async def expressjs_blocked_app_fixture(
     resources = {
         "app-image": expressjs_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "expressjs", NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "expressjs", NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -555,14 +547,12 @@ async def expressjs_non_root_app_fixture(
     postgresql_k8s,
 ):
     """Build and deploy the non-root Go charm with go-app image."""
-    app_name = "go-k8s"
+    app_name = "expressjs-k8s"
 
     resources = {
         "app-image": expressjs_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "expressjs", {"charm-user": "non-root"}
-    )
+    charm_file = build_charm_file(pytestconfig, "expressjs", {"charm-user": "non-root"})
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
