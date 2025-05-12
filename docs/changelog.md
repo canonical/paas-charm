@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## v1.5.3 - 2025-05-08
+
+* feat: Added support for 
+[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027#rootless-charms-on-k8s-3).
+
 ## v1.5.2 - 2025-04-29
 
 * fix: Properly update ingress integration and opened ports when 

@@ -7,7 +7,6 @@ import asyncio
 import logging
 import typing
 
-import juju.client.client
 import juju.model
 import requests
 from juju.application import Application
@@ -71,10 +70,7 @@ async def test_loki_integration(
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
     assert any("python-requests" in line[1] for line in log["values"])
-    if model.info.agent_version < juju.client.client.Number.from_json("3.4.0"):
-        assert "filename" in log["stream"]
-    else:
-        assert "filename" not in log["stream"]
+    assert "filename" not in log["stream"]
 
 
 async def test_grafana_integration(

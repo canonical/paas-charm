@@ -93,6 +93,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _create_app(self) -> App:
         """Create an App instance."""
 
+    @property
+    def _state_dir(self) -> pathlib.Path:
+        """Directory used for storing application related state. Ex: db migration state."""
+        # It is  fine to use the tmp directory here as it is only used for storing the state
+        # of the application. State only supposed to live within the lifecycle of the container.
+        return pathlib.Path(f"/tmp/{self._framework_name}/state")  # nosec: B108
+
     on = RedisRelationCharmEvents()
 
     def __init__(self, framework: ops.Framework, framework_name: str) -> None:
@@ -119,7 +126,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
-            state_dir=self._workload_config.state_dir,
+            state_dir=self._state_dir,
         )
 
         self._ingress = IngressPerAppRequirer(

@@ -204,7 +204,12 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             current_webserver_config = self._container.pull(webserver_config_path)
         except PathError:
             current_webserver_config = None
-        self._container.push(webserver_config_path, self._config)
+        self._container.push(
+            webserver_config_path,
+            self._config,
+            user=self._workload_config.user,
+            group=self._workload_config.group,
+        )
         if current_webserver_config == self._config:
             return
         check_config_command = [x for x in shlex.split(command) if x not in ["[", "]"]]

@@ -4,6 +4,7 @@
 """Integrations unit tests."""
 import itertools
 import json
+import pathlib
 import unittest
 from types import NoneType
 
@@ -536,7 +537,11 @@ def test_integrations_env(
         is_secret_storage_ready=True,
         integrations=integrations,
     )
-    workload_config = create_workload_config(framework_name=framework, unit_name=f"{framework}/0")
+    workload_config = create_workload_config(
+        framework_name=framework,
+        unit_name=f"{framework}/0",
+        state_dir=pathlib.Path(f"/tmp/{framework}/state"),
+    )
     if framework == ("flask" or "django"):
         webserver = GunicornWebserver(
             webserver_config=WebserverConfig(),

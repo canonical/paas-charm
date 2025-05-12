@@ -35,15 +35,6 @@ def fixture_test_async_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-@pytest.fixture(scope="module", name="test_db_flask_image")
-def fixture_test_db_flask_image(pytestconfig: Config):
-    """Return the --test-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-db-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-db-flask-image")
-    return test_flask_image
-
-
 @pytest_asyncio.fixture(scope="module", name="charm_file")
 async def charm_file_fixture(pytestconfig: pytest.Config, ops_test: OpsTest) -> pathlib.Path:
     """Get the existing charm file."""
