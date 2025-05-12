@@ -399,7 +399,7 @@ def deploy_cos_fixture(
             f"{loki_app.name}:grafana-source",
             f"{grafana_app_name}:grafana-source",
         )
-    yield {
+    return {
         "loki_app": loki_app,
         "prometheus_app": prometheus_app,
         "grafana_app": App(grafana_app_name),
