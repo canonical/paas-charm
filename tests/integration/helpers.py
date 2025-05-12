@@ -25,6 +25,16 @@ def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
             rel_path = file.relative_to(src.parent)
             zip_file.write(file, os.path.join("venv/", rel_path))
 
+def merge_dicts(base: dict, updates: dict) -> dict:
+    """Recursively merge two dictionaries."""
+    for key, value in updates.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            # If both values are dictionaries, merge them recursively
+            merge_dicts(base[key], value)
+        else:
+            # Otherwise, override or add the value
+            base[key] = value
+    return base
 
 def inject_charm_config(charm: pathlib.Path | str, config: dict, tmp_dir: pathlib.Path) -> str:
     """Inject some charm configurations into the config.yaml in a packed charm file."""
