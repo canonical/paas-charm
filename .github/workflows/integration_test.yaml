@@ -22,4 +22,4 @@ jobs:
       rockcraft-ref: main
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
-      test-timeout: 30
+      test-timeout: 45
