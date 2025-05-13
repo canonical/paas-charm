@@ -38,18 +38,33 @@ def merge_dicts(base: dict, updates: dict) -> dict:
     return base
 
 
-def inject_charm_config(charm: pathlib.Path | str, config: dict, tmp_dir: pathlib.Path) -> str:
-    """Inject some charm configurations into the config.yaml in a packed charm file."""
+def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pathlib.Path) -> str:
+    """Inject some charm configurations into the correct yaml file in a packed charm file."""
+    config_dict = charm_dict.get("config", {})
+    action_dict = charm_dict.get("actions", {})
+    metadata_dict = {k: v for k, v in charm_dict.items() if k not in ["config", "actions"]}
     charm_zip = zipfile.ZipFile(charm, "r")
     with charm_zip.open("config.yaml") as file:
         charm_config = yaml.safe_load(file)
-    charm_config["options"].update(config)
+    with charm_zip.open("metadata.yaml") as file:
+        charm_metadata = yaml.safe_load(file)
+    with charm_zip.open("actions.yaml") as file:
+        charm_actions = yaml.safe_load(file)
+    charm_config.setdefault("options", {}).update(config_dict.get("options", {}))
+    charm_metadata.update(metadata_dict)
+    charm_actions.update(action_dict)
     modified_config = yaml.safe_dump(charm_config)
+    modified_metadata = yaml.safe_dump(charm_metadata)
+    modified_actions = yaml.safe_dump(charm_actions)
     new_charm = io.BytesIO()
     with zipfile.ZipFile(new_charm, "w") as new_charm_zip:
         for item in charm_zip.infolist():
             if item.filename == "config.yaml":
                 new_charm_zip.writestr(item, modified_config)
+            elif item.filename == "metadata.yaml":
+                new_charm_zip.writestr(item, modified_metadata)
+            elif item.filename == "actions.yaml":
+                new_charm_zip.writestr(item, modified_actions)
             else:
                 with charm_zip.open(item) as file:
                     data = file.read()
@@ -102,7 +117,9 @@ def get_mails_patiently(mailcatcher_pod_ip: str):
 
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(5))
 def check_grafana_datasource_types_patiently(
-    grafana_session: requests.session, grafana_ip: str, expected_datasource_types: list[str]
+    grafana_session: requests.session,
+    grafana_ip: str,
+    expected_datasource_types: list[str],
 ):
     """Get datasources directly from Grafana REST API, but also try multiple times."""
     url = f"http://{grafana_ip}:3000/api/datasources"
