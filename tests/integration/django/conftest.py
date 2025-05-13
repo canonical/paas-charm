@@ -58,8 +58,8 @@ async def charm_file_fixture(
         {
             "config": {
                 "options": {
-                        "allowed-hosts": {"type": "string"},
-                        "webserver-worker-class": {"type": "string"},
+                    "allowed-hosts": {"type": "string"},
+                    "webserver-worker-class": {"type": "string"},
                 }
             }
         },
