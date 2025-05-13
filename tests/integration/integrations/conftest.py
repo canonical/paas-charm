@@ -53,13 +53,14 @@ def deploy_postgresql(
 
 
 @pytest.fixture(scope="function", name="flask_app")
-def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
             image_name=f"test-{framework}-image",
             use_postgres=False,
         )
@@ -67,13 +68,14 @@ def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="function", name="flask_minimal_app")
-def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask-minimal"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
             image_name=f"{framework}-app-image",
             use_postgres=False,
         )
@@ -81,49 +83,53 @@ def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
 
 
 @pytest.fixture(scope="function", name="django_app")
-def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "django"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
         )
     )
 
 
 @pytest.fixture(scope="function", name="fastapi_app")
-def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "fastapi"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
         )
     )
 
 
 @pytest.fixture(scope="function", name="go_app")
-def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "go"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
         )
     )
 
 
 @pytest.fixture(scope="function", name="expressjs_app")
-def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config):
+def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"
     yield next(
         generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
+            tmp_path_factory=tmp_path_factory,
         )
     )
 
@@ -132,6 +138,7 @@ def generate_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
     framework: str,
+    tmp_path_factory,
     image_name: str = "",
     use_postgres: bool = True,
 ):
@@ -163,7 +170,7 @@ def generate_app_fixture(
         config = {"django-allowed-hosts": "*"}
     if framework == "fastapi":
         config = {"non-optional-string": "string"}
-    charm_file = build_charm_file(pytestconfig, framework)
+    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
     juju.deploy(
         charm=charm_file,
         resources=resources,
