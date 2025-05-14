@@ -61,11 +61,15 @@ async def build_charm_fixture(charm_file: str, tmp_path_factory) -> str:
     return inject_charm_config(
         charm_file,
         {
-            "foo-str": {"type": "string"},
-            "foo-int": {"type": "int"},
-            "foo-bool": {"type": "boolean"},
-            "foo-dict": {"type": "string"},
-            "application-root": {"type": "string"},
+            "config": {
+                "options": {
+                    "foo-str": {"type": "string"},
+                    "foo-int": {"type": "int"},
+                    "foo-bool": {"type": "boolean"},
+                    "foo-dict": {"type": "string"},
+                    "application-root": {"type": "string"},
+                }
+            }
         },
         tmp_path_factory.mktemp("flask"),
     )
