@@ -388,7 +388,7 @@ def deploy_cos_fixture(
     if not juju.status().apps.get(grafana_app_name):
         juju.deploy(
             grafana_app_name,
-            channel="1.0/stable",
+            channel="1/stable",
             revision=82,
             base="ubuntu@20.04",
             trust=True,
