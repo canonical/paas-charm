@@ -722,7 +722,7 @@ async def deploy_prometheus_fixture(
     app = await model.deploy(
         "prometheus-k8s",
         application_name=prometheus_app_name,
-        channel="1.0/stable",
+        channel="1/stable",
         revision=129,
         series="focal",
         trust=True,
