@@ -112,7 +112,7 @@ def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
     tmp_path_factory,
-    charm_dict: dict = {},
+    charm_dict: dict = dict(),
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(

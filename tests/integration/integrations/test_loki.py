@@ -61,5 +61,4 @@ def test_loki_integration(
     log = result[-1]
     logging.info("retrieve sample application log: %s", log)
     assert app.name in log["stream"]["juju_application"]
-    status = juju.status()
     assert "filename" not in log["stream"]

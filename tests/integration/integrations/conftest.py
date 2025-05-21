@@ -261,8 +261,8 @@ def deploy_tempo_cluster(
         "s3-integrator",
         channel="edge",
     )
-    juju.integrate(tempo_app + ":s3", "s3-integrator" + ":s3-credentials")
-    juju.integrate(tempo_app + ":tempo-cluster", worker_app + ":tempo-cluster")
+    juju.integrate(f"{tempo_app}:s3", "s3-integrator:s3-credentials")
+    juju.integrate(f"{tempo_app}:tempo-cluster", f"{worker_app}:tempo-cluster")
     deploy_and_configure_minio(juju)
 
     juju.wait(

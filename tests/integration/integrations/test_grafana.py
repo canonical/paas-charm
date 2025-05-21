@@ -52,13 +52,13 @@ def test_grafana_integration(
         .units[f"{cos_apps['grafana_app'].name}/0"]
         .address
     )
-    sess = requests.session()
-    sess.post(
-        f"http://{grafana_ip}:3000/login",
-        json={
-            "user": "admin",
-            "password": password,
-        },
-    ).raise_for_status()
-    check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
-    check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
+    with requests.session() as sess:
+        sess.post(
+            f"http://{grafana_ip}:3000/login",
+            json={
+                "user": "admin",
+                "password": password,
+            },
+        ).raise_for_status()
+        check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
+        check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
