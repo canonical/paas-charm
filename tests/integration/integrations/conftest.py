@@ -350,7 +350,7 @@ def deploy_prometheus_fixture(
     if not juju.status().apps.get(prometheus_app_name):
         juju.deploy(
             prometheus_app_name,
-            channel="1.0/stable",
+            channel="1/stable",
             revision=129,
             base="ubuntu@20.04",
             trust=True,

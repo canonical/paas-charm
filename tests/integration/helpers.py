@@ -26,8 +26,6 @@ def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
             zip_file.write(file, os.path.join("venv/", rel_path))
 
 
-
-
 def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pathlib.Path) -> str:
     """Inject some charm configurations into the correct yaml file in a packed charm file."""
     config_dict = charm_dict.get("config", {})

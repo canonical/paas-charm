@@ -8,6 +8,7 @@ import logging
 import jubilant
 import pytest
 import requests
+
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-def test_expressjs_is_up(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_expressjs_is_up(expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm.
     act: call the endpoint.
@@ -31,7 +32,9 @@ def test_expressjs_is_up(expressjs_app:App, request: pytest.FixtureRequest, juju
         assert "Hello, World!" in response.text
 
 
-def test_user_defined_config(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_user_defined_config(
+    expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju
+):
     """
     arrange: build and deploy the ExpressJS charm. Set the config user-defined-config to a new value.
     act: call the endpoint to get the value of the env variable related to the config.
@@ -50,7 +53,7 @@ def test_user_defined_config(expressjs_app:App, request: pytest.FixtureRequest, 
         assert "newvalue" in response.text
 
 
-def test_migration(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_migration(expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the migration script.
