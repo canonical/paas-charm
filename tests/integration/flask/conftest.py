@@ -164,7 +164,7 @@ async def deploy_cos_fixture(
     cos_apps = await model.deploy(
         "grafana-k8s",
         application_name=grafana_app_name,
-        channel="1.0/stable",
+        channel="1/stable",
         revision=82,
         series="focal",
         trust=True,
