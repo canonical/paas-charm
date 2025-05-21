@@ -62,6 +62,15 @@ def fixture_go_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="spring_boot_app_image")
+def fixture_spring_boot_app_image(pytestconfig: Config):
+    """Return the --spring-boot-app-image test parameter."""
+    image = pytestconfig.getoption("--spring-boot-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --spring-boot-app-image")
+    return image
+
+
 @pytest.fixture(scope="module", name="test_db_flask_image")
 def fixture_test_db_flask_image(pytestconfig: Config):
     """Return the --test-flask-image test parameter."""
@@ -496,6 +505,28 @@ async def go_non_root_app_fixture(
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="spring_boot_app")
+async def spring_boot_app_fixture(
+    pytestconfig: pytest.Config,
+    ops_test: OpsTest,
+    tmp_path_factory,
+    model: Model,
+    spring_boot_app_image: str,
+    postgresql_k8s,
+):
+    """Build and deploy the Spring Boot charm with spring-boot-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "spring-boot")
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
