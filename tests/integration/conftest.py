@@ -12,7 +12,6 @@ from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
-from ops import JujuVersion
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
@@ -640,7 +639,7 @@ async def deploy_prometheus_fixture(
     app = await model.deploy(
         "prometheus-k8s",
         application_name=prometheus_app_name,
-        channel="1.0/stable",
+        channel="1/stable",
         revision=129,
         series="focal",
         trust=True,
