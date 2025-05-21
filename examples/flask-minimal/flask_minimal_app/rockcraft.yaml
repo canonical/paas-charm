@@ -1,0 +1,15 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: flask-minimal-app
+summary: A flask test app
+description: OCI image for the test flask app
+version: "0.1"
+base: bare
+build-base: ubuntu@22.04
+license: Apache-2.0
+platforms:
+  amd64:
+
+extensions:
+  - flask-framework
+

@@ -101,5 +101,6 @@ Thinking about using this solution in your next project? Get in touch!
 
    Tutorial <tutorial/index>
    How to <how-to/index>
+   Reference <reference/index>
    Explanation <explanation/index>
    Changelog <changelog.md>
