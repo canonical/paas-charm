@@ -235,7 +235,7 @@ async def flask_non_root_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = build_charm_file(pytestconfig, "flask", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "flask", tmp_path_factory, {"charm-user": "non-root"})
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -335,7 +335,7 @@ async def django_non_root_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory, {"charm-user": "non-root"})
 
     app = await model.deploy(
         charm_file,
@@ -407,7 +407,7 @@ async def fastapi_non_root_app_fixture(
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory, {"charm-user": "non-root"})
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -476,7 +476,7 @@ async def go_non_root_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory, {"charm-user": "non-root"})
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
@@ -504,11 +504,10 @@ def expressjs_app_fixture(
         base="ubuntu@22.04",
         revision=300,
         trust=True,
-        config={"profile": "testing"},
-    )
-    juju.wait(
-        lambda status: status.apps["postgresql-k8s"].is_active,
-        timeout=20 * 60,
+        config={"profile": "testing",
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+                },
     )
 
     resources = {
@@ -519,16 +518,6 @@ def expressjs_app_fixture(
         charm=charm_file,
         resources=resources,
     )
-
-    # configure postgres
-    juju.config(
-        "postgresql-k8s",
-        {
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
 
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
@@ -575,7 +564,7 @@ async def expressjs_non_root_app_fixture(
     resources = {
         "app-image": expressjs_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory, {"charm-user": "non-root"})
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)

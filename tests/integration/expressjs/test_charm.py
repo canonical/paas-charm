@@ -8,20 +8,20 @@ import logging
 import jubilant
 import pytest
 import requests
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8080
 
 
-def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_expressjs_is_up(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm.
     act: call the endpoint.
     assert: the charm should respond with 200 OK.
     """
     """Check that the charm is active."""
-    expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
     assert status.apps[expressjs_app.name].units[expressjs_app.name + "/0"].is_active
     for unit in status.apps[expressjs_app.name].units.values():
@@ -31,13 +31,12 @@ def test_expressjs_is_up(request: pytest.FixtureRequest, juju: jubilant.Juju):
         assert "Hello, World!" in response.text
 
 
-def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_user_defined_config(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm. Set the config user-defined-config to a new value.
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
-    expressjs_app = request.getfixturevalue("expressjs_app")
     juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
     juju.wait(lambda status: jubilant.all_active(status, [expressjs_app.name, "postgresql-k8s"]))
 
@@ -51,14 +50,13 @@ def test_user_defined_config(request: pytest.FixtureRequest, juju: jubilant.Juju
         assert "newvalue" in response.text
 
 
-def test_migration(request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_migration(expressjs_app:App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the migration script.
         Then try to add same user twice.
     assert: the ExpressJS application should add the user only once.
     """
-    expressjs_app = request.getfixturevalue("expressjs_app")
     status = juju.status()
     for unit in status.apps[expressjs_app.name].units.values():
         response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
