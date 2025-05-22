@@ -62,7 +62,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<User> getUserByLogin(String login) {
-        return userRepository.findOneByLogin(login);
+    public Optional<User> getUserByName(String name) {
+        return userRepository.findOneByName(name);
     }
 }

@@ -47,10 +47,10 @@ public class SQLController {
                 .body(newUser);
     }
 
-    @GetMapping("/{login}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
-        log.debug("REST request to get User : {}", login);
-        return this.wrapOrNotFound(userService.getUserByLogin(login).map(UserDTO::new));
+    @GetMapping("/{name}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable String name) {
+        log.debug("REST request to get User : {}", name);
+        return this.wrapOrNotFound(userService.getUserByName(name).map(UserDTO::new));
     }
 
     public <X> ResponseEntity<X> wrapOrNotFound(Optional<X> maybeResponse) {
