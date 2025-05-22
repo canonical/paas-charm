@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from paas_charm.databases import DatabaseRelationData
+    from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import S3RelationData
 
 WORKER_SUFFIX = "-worker"
@@ -129,6 +130,21 @@ def generate_db_env(
     return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
 
 
+def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> dict[str, str]:
+    """Generate environment variable from Redis relation data.
+
+    Args:
+        relation_data: The charm Redis integration relation data.
+
+    Returns:
+        Redis environment mappings if Redis relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -137,10 +153,12 @@ class App:  # pylint: disable=too-many-instance-attributes
     Attributes:
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_db_env: Maps database connection information to environment variables.
+        generate_redis_env: Maps Redis connection information to environment variables.
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
     generate_db_env = staticmethod(generate_db_env)
+    generate_redis_env = staticmethod(generate_redis_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -254,6 +272,11 @@ class App:  # pylint: disable=too-many-instance-attributes
             db_relation_data,
         ) in self._charm_state.integrations.databases_relation_data.items():
             env.update(self.generate_db_env(database_name, db_relation_data))
+        env.update(
+            self.generate_redis_env(
+                relation_data=self._charm_state.integrations.redis_relation_data
+            )
+        )
         return env
 
     @property
@@ -354,9 +377,6 @@ def map_integrations_to_env(  # noqa: C901
        A dictionary representing the environment variables for the IntegrationState.
     """
     env = {}
-    if integrations.redis_uri:
-        redis_envvars = _db_url_to_env_variables("REDIS", integrations.redis_uri)
-        env.update(redis_envvars)
     if integrations.tempo_parameters:
         if service_name := integrations.tempo_parameters.service_name:
             env.update({"OTEL_SERVICE_NAME": service_name})
