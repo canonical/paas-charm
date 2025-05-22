@@ -7,10 +7,9 @@ import logging
 
 import jubilant
 import pytest
-import requests
 
 from tests.integration.types import App
-
+from tests.integration.helpers import check_openfga_auth_models_patiently
 logger = logging.getLogger(__name__)
 
 
@@ -48,8 +47,4 @@ def test_openfga_integrations(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = requests.get(
-        f"http://{unit_ip}:{port}/openfga/list-authorization-models", timeout=5
-    )
-    assert "Listed authorization models" in response.text
-    assert response.status_code == 200
+    check_openfga_auth_models_patiently(unit_ip, port)

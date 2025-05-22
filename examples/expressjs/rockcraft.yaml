@@ -41,6 +41,10 @@ parts:
     stage-packages:
       # Added manually for the migrations
       - postgresql-client
+  tmp-dir:
+    plugin: nil
+    stage-packages:
+      - base-files
 services:
     expressjs:
         override: merge
