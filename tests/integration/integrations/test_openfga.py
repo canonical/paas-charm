@@ -8,8 +8,9 @@ import logging
 import jubilant
 import pytest
 
-from tests.integration.types import App
 from tests.integration.helpers import check_openfga_auth_models_patiently
+from tests.integration.types import App
+
 logger = logging.getLogger(__name__)
 
 

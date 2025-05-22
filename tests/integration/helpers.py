@@ -130,10 +130,9 @@ def check_grafana_dashboards_patiently(
     ).json()
     assert len(dashboards)
 
+
 @retry(stop=stop_after_attempt(5), wait=wait_fixed(15))
-def check_openfga_auth_models_patiently(
-    unit_ip: str, port: int
-):
+def check_openfga_auth_models_patiently(unit_ip: str, port: int):
     """Check if authorization models can be listed in OpenFGA directly from OpenFGA REST API,
     but also try multiple times."""
     response = requests.get(
