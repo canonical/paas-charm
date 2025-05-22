@@ -467,8 +467,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         for name in self._database_requirers.keys():
             if (
-                name not in charm_state.integrations.databases_uris
-                or charm_state.integrations.databases_uris[name] is None
+                name not in charm_state.integrations.databases_relation_data
+                or charm_state.integrations.databases_relation_data[name] is None
             ):
                 if not requires[name].optional:
                     yield name

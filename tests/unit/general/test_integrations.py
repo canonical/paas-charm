@@ -3,7 +3,6 @@
 
 """Integrations unit tests."""
 import itertools
-import json
 import pathlib
 import unittest
 from types import NoneType
@@ -132,53 +131,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With SMTP, prefix: {prefix}",
     )
-    databases_env = pytest.param(
-        IntegrationsState(
-            databases_uris={
-                "postgresql": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-                "mysql": "mysql://test-username:test-password@test-mysql:3306/test-app",
-                "mongodb": None,
-                "futuredb": "futuredb://foobar/",
-            },
-        ),
-        prefix,
-        {
-            f"{prefix}POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-            f"{prefix}POSTGRESQL_DB_FRAGMENT": "",
-            f"{prefix}POSTGRESQL_DB_HOSTNAME": "test-postgresql",
-            f"{prefix}POSTGRESQL_DB_NAME": "test-database",
-            f"{prefix}POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
-            f"{prefix}POSTGRESQL_DB_PARAMS": "",
-            f"{prefix}POSTGRESQL_DB_PASSWORD": "test-password",
-            f"{prefix}POSTGRESQL_DB_PATH": "/test-database",
-            f"{prefix}POSTGRESQL_DB_PORT": "5432",
-            f"{prefix}POSTGRESQL_DB_QUERY": "connect_timeout=10",
-            f"{prefix}POSTGRESQL_DB_SCHEME": "postgresql",
-            f"{prefix}POSTGRESQL_DB_USERNAME": "test-username",
-            f"{prefix}MYSQL_DB_CONNECT_STRING": "mysql://test-username:test-password@test-mysql:3306/test-app",
-            f"{prefix}MYSQL_DB_FRAGMENT": "",
-            f"{prefix}MYSQL_DB_HOSTNAME": "test-mysql",
-            f"{prefix}MYSQL_DB_NAME": "test-app",
-            f"{prefix}MYSQL_DB_NETLOC": "test-username:test-password@test-mysql:3306",
-            f"{prefix}MYSQL_DB_PARAMS": "",
-            f"{prefix}MYSQL_DB_PASSWORD": "test-password",
-            f"{prefix}MYSQL_DB_PATH": "/test-app",
-            f"{prefix}MYSQL_DB_PORT": "3306",
-            f"{prefix}MYSQL_DB_QUERY": "",
-            f"{prefix}MYSQL_DB_SCHEME": "mysql",
-            f"{prefix}MYSQL_DB_USERNAME": "test-username",
-            f"{prefix}FUTUREDB_DB_CONNECT_STRING": "futuredb://foobar/",
-            f"{prefix}FUTUREDB_DB_FRAGMENT": "",
-            f"{prefix}FUTUREDB_DB_HOSTNAME": "foobar",
-            f"{prefix}FUTUREDB_DB_NAME": "",
-            f"{prefix}FUTUREDB_DB_NETLOC": "foobar",
-            f"{prefix}FUTUREDB_DB_PARAMS": "",
-            f"{prefix}FUTUREDB_DB_PATH": "/",
-            f"{prefix}FUTUREDB_DB_QUERY": "",
-            f"{prefix}FUTUREDB_DB_SCHEME": "futuredb",
-        },
-        id=f"With several databases, one of them None. prefix: {prefix}",
-    )
     openfga_env = pytest.param(
         IntegrationsState(
             openfga_parameters=generate_relation_parameters(
@@ -201,7 +153,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         tempo_env,
         rabbitmq_env,
         smtp_env,
-        databases_env,
         openfga_env,
     ]
 
@@ -348,7 +299,7 @@ def test_generate_relation_parameters(
 def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
         "redis_uri": None,
-        "database_requirers": {},
+        "database": {},
         "s3": None,
         "saml_relation_data": None,
         "rabbitmq_uri": None,
@@ -471,7 +422,7 @@ def test_integrations_state_build(
         with pytest.raises(CharmConfigInvalidError):
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
-                database_requirers=relation_dict["database_requirers"],
+                database_relation_data=relation_dict["database"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],
@@ -484,7 +435,7 @@ def test_integrations_state_build(
         assert isinstance(
             IntegrationsState.build(
                 redis_uri=relation_dict["redis_uri"],
-                database_requirers=relation_dict["database_requirers"],
+                database_relation_data=relation_dict["database"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_uri=relation_dict["rabbitmq_uri"],

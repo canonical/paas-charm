@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Type, TypeVar
 
-from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
 from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import (
     BaseModel,
@@ -22,7 +21,7 @@ from pydantic import (
     field_validator,
 )
 
-from paas_charm.databases import get_uri
+from paas_charm.databases import DatabaseRelationData, PaaSDatabaseRequires
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
@@ -176,7 +175,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 redis_uri=(
                     integration_requirers.redis.url if integration_requirers.redis else None
                 ),
-                database_requirers=integration_requirers.databases,
+                database_relation_data={
+                    db: db_integration_data
+                    for db, db_requirer in integration_requirers.databases.items()
+                    if (db_integration_data := db_requirer.to_relation_data())
+                },
                 s3_relation_data=(
                     integration_requirers.s3.to_relation_data()
                     if integration_requirers.s3
@@ -302,7 +305,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     """Collection of integration requirers.
 
     Attrs:
-        databases: DatabaseRequires collection.
+        databases: PaaSDatabaseRequires collection.
         redis: Redis requirer object.
         rabbitmq: RabbitMQ requirer object.
         s3: S3 requirer object.
@@ -312,7 +315,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         openfga: OpenFGA requirer object.
     """
 
-    databases: dict[str, DatabaseRequires]
+    databases: dict[str, PaaSDatabaseRequires]
     redis: RedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
     s3: "PaaSS3Requirer | None" = None
@@ -330,7 +333,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
 
     Attrs:
         redis_uri: The redis uri provided by the redis charm.
-        databases_uris: Map from interface_name to the database uri.
+        databases_relation_data: Map from interface_name to the database relation data.
         s3: S3 connection information from relation data.
         saml_parameters: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
@@ -340,7 +343,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     """
 
     redis_uri: str | None = None
-    databases_uris: dict[str, str] = field(default_factory=dict)
+    databases_relation_data: dict[str, DatabaseRelationData] = field(default_factory=dict)
     s3: "S3RelationData | None" = None
     saml_parameters: "SamlParameters | None" = None
     rabbitmq_uri: str | None = None
@@ -354,7 +357,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         cls,
         *,
         redis_uri: str | None,
-        database_requirers: dict[str, DatabaseRequires],
+        database_relation_data: dict[str, DatabaseRelationData],
         s3_relation_data: "S3RelationData | None" = None,
         saml_relation_data: typing.MutableMapping[str, str] | None = None,
         rabbitmq_uri: str | None = None,
@@ -368,7 +371,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         Args:
             app_name: Name of the application.
             redis_uri: The redis uri provided by the redis charm.
-            database_requirers: All database requirers object declared by the charm.
+            database_relation_data: All database relation data from charm integration.
             s3_relation_data: S3 relation data from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
             rabbitmq_uri: RabbitMQ uri.
@@ -397,11 +400,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
 
         return cls(
             redis_uri=redis_uri,
-            databases_uris={
-                interface_name: uri
-                for interface_name, requirers in database_requirers.items()
-                if (uri := get_uri(requirers)) is not None
-            },
+            databases_relation_data=database_relation_data,
             s3=s3_relation_data,
             saml_parameters=saml_parameters,
             rabbitmq_uri=rabbitmq_uri,
