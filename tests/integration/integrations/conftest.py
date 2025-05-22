@@ -56,79 +56,79 @@ def deploy_postgresql(
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-            use_postgres=False,
-        resources = {
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
             "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
-        }
-        )
+        },
+    )
 
 
 @pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask-minimal"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-            use_postgres=False,
-        resources = {
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
             "flask-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
-        }
-        )
+        },
+    )
 
 
 @pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "django"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-        config = {"django-allowed-hosts": "*"},
-        resources = {
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"django-allowed-hosts": "*"},
+        resources={
             "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
-        }
-        )
+        },
+    )
 
 
 @pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "fastapi"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-        config = {"non-optional-string": "string"}
-        )
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"non-optional-string": "string"},
+    )
 
 
 @pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "go"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-        )
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+    )
 
 
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"
     return generate_app_fixture(
-            juju=juju,
-            pytestconfig=pytestconfig,
-            framework=framework,
-            tmp_path_factory=tmp_path_factory,
-        )
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+    )
 
 
 def generate_app_fixture(
@@ -171,7 +171,7 @@ def generate_app_fixture(
     return App(app_name)
 
 
-def deploy_and_configure_minio( 
+def deploy_and_configure_minio(
     juju: jubilant.Juju,
 ) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
