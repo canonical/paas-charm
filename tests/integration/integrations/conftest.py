@@ -52,86 +52,83 @@ def deploy_postgresql(
     juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
 
 
-@pytest.fixture(scope="function", name="flask_app")
+@pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
-            image_name=f"test-{framework}-image",
             use_postgres=False,
+        resources = {
+            "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
+        }
         )
-    )
 
 
-@pytest.fixture(scope="function", name="flask_minimal_app")
+@pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask-minimal"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
-            image_name=f"{framework}-app-image",
             use_postgres=False,
+        resources = {
+            "flask-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+        }
         )
-    )
 
 
-@pytest.fixture(scope="function", name="django_app")
+@pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "django"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
+        config = {"django-allowed-hosts": "*"},
+        resources = {
+            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+        }
         )
-    )
 
 
-@pytest.fixture(scope="function", name="fastapi_app")
+@pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "fastapi"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
+        config = {"non-optional-string": "string"}
         )
-    )
 
 
-@pytest.fixture(scope="function", name="go_app")
+@pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "go"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
         )
-    )
 
 
-@pytest.fixture(scope="function", name="expressjs_app")
+@pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"
-    yield next(
-        generate_app_fixture(
+    return generate_app_fixture(
             juju=juju,
             pytestconfig=pytestconfig,
             framework=framework,
             tmp_path_factory=tmp_path_factory,
         )
-    )
 
 
 def generate_app_fixture(
@@ -141,6 +138,8 @@ def generate_app_fixture(
     tmp_path_factory,
     image_name: str = "",
     use_postgres: bool = True,
+    config: dict[str, str] | None = None,
+    resources: dict[str, str] | None = None,
 ):
     """Discourse charm used for integration testing.
     Builds the charm and deploys it and the relations it depends on.
@@ -150,26 +149,11 @@ def generate_app_fixture(
         image_name = f"{framework}-app-image"
     use_existing = pytestconfig.getoption("--use-existing", default=False)
     if use_existing:
-        yield App(app_name)
-        juju.remove_application(app_name, destroy_storage=True, force=True)
-        juju.wait(lambda status: status.apps.get(app_name) is None)
-        return
-    config = {}
-    resources = {
-        "app-image": pytestconfig.getoption(f"--{image_name}"),
-    }
-    # covers both flask and flask-minimal
-    if framework.startswith("flask"):
+        return App(app_name)
+    if resources is None:
         resources = {
-            "flask-app-image": pytestconfig.getoption(f"--{image_name}"),
+            "app-image": pytestconfig.getoption(f"--{image_name}"),
         }
-    if framework == "django":
-        resources = {
-            "django-app-image": pytestconfig.getoption(f"--{image_name}"),
-        }
-        config = {"django-allowed-hosts": "*"}
-    if framework == "fastapi":
-        config = {"non-optional-string": "string"}
     charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
     juju.deploy(
         charm=charm_file,
@@ -184,14 +168,10 @@ def generate_app_fixture(
         juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
     juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
 
-    yield App(app_name)
-    # cleanup
-    # remove the charm
-    juju.remove_application(app_name, destroy_storage=True, force=True)
-    juju.wait(lambda status: status.apps.get(app_name) is None)
+    return App(app_name)
 
 
-def deploy_and_configure_minio(
+def deploy_and_configure_minio( 
     juju: jubilant.Juju,
 ) -> None:
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
@@ -377,7 +357,7 @@ def deploy_loki_fixture(
     return App(loki_app_name)
 
 
-@pytest.fixture(scope="function", name="cos_apps")
+@pytest.fixture(scope="module", name="cos_apps")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
     loki_app,

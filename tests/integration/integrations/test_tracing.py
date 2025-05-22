@@ -51,3 +51,5 @@ def test_workload_tracing(
 
     # verify workload traces are ingested into Tempo
     assert get_traces_patiently(tempo_host, app.name)
+
+    juju.remove_application(app.name, destroy_storage=True, force=True)
