@@ -13,9 +13,13 @@ jobs:
     with:
       extra-arguments: -x --localstack-address 172.17.0.1
       pre-run-script: localstack-installation.sh
-      charmcraft-channel: latest/edge
-      modules: '["test_charm.py", "test_cos.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py", "test_config.py", "test_smtp.py", "test_openfga.py", "test_minimal.py", "test_non_root_db_migration.py", "test_non_root_loki.py"]'
-      rockcraft-channel: latest/edge
+      # charmcraft-channel: latest/edge
+      charmcraft-repository: alithethird/charmcraft
+      charmcraft-ref: feat/expressjs-extension
+      modules: '["test_charm.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py", "test_config.py", "test_smtp.py", "test_openfga.py", "test_minimal.py", "test_loki.py", "test_prometheus.py", "test_grafana.py", "test_non_root_db_migration.py", "test_non_root_loki.py"]'
+      # rockcraft-channel: latest/edge
+      rockcraft-repository: canonical/rockcraft
+      rockcraft-ref: main
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
-      test-timeout: 30
+      test-timeout: 45

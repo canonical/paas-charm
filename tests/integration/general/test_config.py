@@ -47,6 +47,14 @@ nest_asyncio.apply()
             {"non-optional-int": "1"},
             id="go",
         ),
+        pytest.param(
+            "expressjs_blocked_app",
+            ["non-optional-bool", "non-optional-int"],
+            {"non-optional-bool": "True"},
+            ["non-optional-int"],
+            {"non-optional-int": "1"},
+            id="expressjs",
+        ),
     ],
 )
 async def test_non_optional(

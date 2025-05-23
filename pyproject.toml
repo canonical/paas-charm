@@ -39,6 +39,16 @@ show_missing = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 log_cli_level = "INFO"
+pythonpath = [
+  "examples/flask/lib",
+  "examples/django/charm/lib",
+  "examples/fastapi/charm/lib",
+  "examples/go/charm/lib",
+  "examples/expressjs/charm/lib",
+  "examples/flask-minimal/charm/lib",
+  "lib",
+  "src"
+]
 
 # Formatting tools configuration
 [tool.black]
@@ -51,12 +61,20 @@ extend-exclude = '''
   |   examples/django/charm/lib/.*
   |   examples/fastapi/charm/lib/.*
   |   examples/go/charm/lib/.*
+  |   examples/expressjs/charm/lib/.*
 )
 '''
 
 [tool.isort]
 line_length = 99
 profile = "black"
+skip = [
+  "examples/flask/lib",
+  "examples/django/charm/lib",
+  "examples/fastapi/charm/lib",
+  "examples/go/charm/lib",
+  "examples/expressjs/charm/lib",
+]
 
 # Linting tools configuration
 [tool.flake8]

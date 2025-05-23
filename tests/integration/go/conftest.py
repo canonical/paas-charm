@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for go charm integration tests."""
+
 import os
 import pathlib
 
@@ -65,7 +66,6 @@ async def go_app_fixture(charm_file: str, model: Model, go_app_image: str, postg
 @pytest_asyncio.fixture(scope="module", name="traefik_app")
 async def deploy_traefik_fixture(
     model: Model,
-    flask_app,  # pylint: disable=unused-argument
     traefik_app_name: str,
     external_hostname: str,
 ):

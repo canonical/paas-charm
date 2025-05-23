@@ -1,0 +1,47 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: expressjs-app
+# see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
+# for more information about bases and using 'bare' bases for chiselled rocks
+base: bare
+build-base: ubuntu@24.04 
+version: '0.1' # just for humans. Semantic versioning is recommended
+summary: A summary of your ExpresssJS application # 79 char long summary
+description: |
+    This is expressjs's description. You have a paragraph or two to tell the
+    most important story about it. Keep it under 100 words though,
+    we live in tweetspace and your description wants to look good in the
+    container registries out there.
+# the platforms this rock should be built on and run on.
+# you can check your architecture with `dpkg --print-architecture`
+platforms:
+    amd64:
+    # arm64:
+    # ppc64el:
+    # s390x:
+
+# to ensure the expressjs-framework extension works properly, your ExpressJS
+# application should be inside the app directory and the "start" script defined
+# in the package.json's scripts section.
+extensions:
+    - expressjs-framework
+
+# uncomment the sections you need and adjust according to your requirements.
+# parts:  # you need to uncomment this line to add or update any part.
+#  expressjs-framework/install-app:
+#    # to specify the version of node to be installed, uncomment the following
+#    # line and set the version to the desired one.
+#    # see https://documentation.ubuntu.com/rockcraft/en/latest/common/craft-parts/reference/plugins/npm_plugin/
+#    npm-include-node: true
+#    npm-node-version: node
+parts:
+  runtime-debs:
+    plugin: nil
+    stage-packages:
+      # Added manually for the migrations
+      - postgresql-client
+  tmp-dir:
+    plugin: nil
+    stage-packages:
+      - base-files
