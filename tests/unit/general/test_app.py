@@ -5,8 +5,9 @@
 
 import pytest
 
-from paas_charm.app import generate_s3_env
+from paas_charm.app import generate_s3_env, generate_tempo_env
 from paas_charm.s3 import S3RelationData
+from paas_charm.tempo import TempoRelationData
 
 
 @pytest.mark.parametrize(
@@ -63,3 +64,29 @@ def test_s3_environ_mapper_generate_env(relation_data, expected_env):
     assert: expected environment variables are generated.
     """
     assert generate_s3_env(relation_data) == expected_env
+
+
+@pytest.mark.parametrize(
+    "relation_data, expected_env",
+    [
+        pytest.param(None, {}, id="No relation data"),
+        pytest.param(
+            TempoRelationData.model_construct(
+                endpoint="http://tempo-endpoint.test",
+                service_name="app-name",
+            ),
+            {
+                "OTEL_SERVICE_NAME": "app-name",
+                "OTEL_EXPORTER_OTLP_ENDPOINT": "http://tempo-endpoint.test",
+            },
+            id="Relation data",
+        ),
+    ],
+)
+def test_tempo_environ_mapper_generate_env(relation_data, expected_env):
+    """
+    arrange: given Tempo relation data.
+    act: when generate_tempo_env method is called.
+    assert: expected environment variables are generated.
+    """
+    assert generate_tempo_env(relation_data) == expected_env

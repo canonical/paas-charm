@@ -34,7 +34,7 @@ def test_tracing_relation(harness: Harness):
 
     assert harness.model.unit.status == ops.ActiveStatus()
     service_env = container.get_plan().services["flask"].environment
-    assert service_env["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://test-ip:4318"
+    assert service_env["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://test-ip:4318/"
     assert service_env["OTEL_SERVICE_NAME"] == "flask-k8s"
 
 
