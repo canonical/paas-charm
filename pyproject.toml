@@ -62,7 +62,6 @@ extend-exclude = '''
   |   examples/fastapi/charm/lib/.*
   |   examples/go/charm/lib/.*
   |   examples/expressjs/charm/lib/.*
-  |   examples/flask-minimal/charm/lib/.*
 )
 '''
 
@@ -75,7 +74,6 @@ skip = [
   "examples/fastapi/charm/lib",
   "examples/go/charm/lib",
   "examples/expressjs/charm/lib",
-  "examples/flask-minimal/charm/lib",
 ]
 
 # Linting tools configuration

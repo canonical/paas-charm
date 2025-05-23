@@ -36,20 +36,16 @@ def deploy_postgresql(
         base="ubuntu@22.04",
         revision=300,
         trust=True,
-        config={"profile": "testing"},
+        config={
+            "profile": "testing",
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+        },
     )
     juju.wait(
         lambda status: status.apps["postgresql-k8s"].is_active,
         timeout=20 * 60,
     )
-    juju.config(
-        "postgresql-k8s",
-        {
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active)
 
 
 @pytest.fixture(scope="module", name="flask_app")
@@ -141,9 +137,7 @@ def generate_app_fixture(
     config: dict[str, str] | None = None,
     resources: dict[str, str] | None = None,
 ):
-    """Discourse charm used for integration testing.
-    Builds the charm and deploys it and the relations it depends on.
-    """
+    """Generates the charm, configures and deploys it and the relations it depends on."""
     app_name = f"{framework}-k8s"
     if image_name == "":
         image_name = f"{framework}-app-image"

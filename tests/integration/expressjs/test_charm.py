@@ -22,7 +22,6 @@ def test_expressjs_is_up(expressjs_app: App, request: pytest.FixtureRequest, juj
     act: call the endpoint.
     assert: the charm should respond with 200 OK.
     """
-    """Check that the charm is active."""
     status = juju.status()
     assert status.apps[expressjs_app.name].units[expressjs_app.name + "/0"].is_active
     for unit in status.apps[expressjs_app.name].units.values():

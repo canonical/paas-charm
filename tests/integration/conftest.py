@@ -141,7 +141,7 @@ def build_charm_file(
             assert charms, f"{app_name} .charm file not found"
             assert (
                 len(charms) == 1
-            ), f"{app_name} has more than one .charm file, unsure which to use"
+            ), f"{app_name} has more than one .charm file, please remove any undesired .charm files"
             charm_file = str(charms[0])
         except subprocess.CalledProcessError as exc:
             raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
@@ -528,7 +528,9 @@ def expressjs_app_fixture(
 
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]))
+    juju.wait(
+        lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]), timeout=300
+    )
 
     return App(app_name)
 
