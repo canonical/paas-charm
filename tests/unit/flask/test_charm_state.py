@@ -12,8 +12,6 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers, S3RelationD
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm
 
-from .constants import SAML_APP_RELATION_DATA_EXAMPLE
-
 # this is a unit test file
 # pylint: disable=protected-access
 
@@ -156,107 +154,12 @@ def test_s3_addressing_style(s3_uri_style, addressing_style) -> None:
     assert s3_parameters.addressing_style == addressing_style
 
 
-def test_saml_integration():
-    """
-    arrange: Prepare charm and charm config.
-    act: Create the CharmState with saml information.
-    assert: Check the SamlParameters generated are the expected ones.
-    """
-    saml_app_relation_data = dict(SAML_APP_RELATION_DATA_EXAMPLE)
-    config = copy.copy(DEFAULT_CHARM_CONFIG)
-    config.update(config)
-    charm = unittest.mock.MagicMock(config=config)
-    charm_state = CharmState.from_charm(
-        config=config,
-        framework_config=Charm.get_framework_config(charm),
-        framework="flask",
-        secret_storage=SECRET_STORAGE_MOCK,
-        integration_requirers=IntegrationRequirers(
-            databases={}, saml=_saml_requirer_mock(saml_app_relation_data)
-        ),
-    )
-    assert charm_state.integrations
-    assert charm_state.integrations.saml_parameters
-    saml_parameters = charm_state.integrations.saml_parameters
-    assert saml_parameters.entity_id == saml_app_relation_data["entity_id"]
-    assert saml_parameters.metadata_url == saml_app_relation_data["metadata_url"]
-    assert (
-        saml_parameters.single_sign_on_redirect_url
-        == saml_app_relation_data["single_sign_on_service_redirect_url"]
-    )
-    assert saml_parameters.signing_certificate == saml_app_relation_data["x509certs"].split(",")[0]
-
-
-def _test_saml_integration_invalid_parameters():
-    params = []
-    params.append(
-        pytest.param(
-            {},
-            ["Invalid Saml"],
-            id="Empty relation data",
-        )
-    )
-    saml_app_relation_data = dict(SAML_APP_RELATION_DATA_EXAMPLE)
-    del saml_app_relation_data["single_sign_on_service_redirect_url"]
-    params.append(
-        pytest.param(
-            saml_app_relation_data,
-            ["Invalid Saml", "single_sign_on_service_redirect_url"],
-            id="Missing single_sign_on_service_redirect_url",
-        )
-    )
-    saml_app_relation_data = dict(SAML_APP_RELATION_DATA_EXAMPLE)
-    del saml_app_relation_data["x509certs"]
-    params.append(
-        pytest.param(
-            saml_app_relation_data,
-            ["Invalid Saml", "x509certs"],
-            id="Missing x509certs",
-        )
-    )
-    saml_app_relation_data = dict(SAML_APP_RELATION_DATA_EXAMPLE)
-    saml_app_relation_data["x509certs"] = ""
-    params.append(
-        pytest.param(
-            saml_app_relation_data,
-            ["Invalid Saml", "x509certs"],
-            id="Empty x509certs",
-        )
-    )
-    return params
-
-
-@pytest.mark.parametrize(
-    "saml_app_relation_data, error_messages", _test_saml_integration_invalid_parameters()
-)
-def test_saml_integration_invalid(saml_app_relation_data, error_messages):
-    """
-    arrange: Prepare a saml relation data that is invalid.
-    act: Try to build CharmState.
-    assert: It should raise CharmConfigInvalidError with a specific error message.
-    """
-    config = copy.copy(DEFAULT_CHARM_CONFIG)
-    config.update(config)
-    charm = unittest.mock.MagicMock(config=config)
-    with pytest.raises(CharmConfigInvalidError) as exc:
-        charm_state = CharmState.from_charm(
-            config=config,
-            framework_config=Charm.get_framework_config(charm),
-            framework="flask",
-            secret_storage=SECRET_STORAGE_MOCK,
-            integration_requirers=IntegrationRequirers(
-                databases={}, saml=_saml_requirer_mock(saml_app_relation_data)
-            ),
-        )
-    for message in error_messages:
-        assert message in str(exc)
-
-
 def test_secret_configuration():
     """
     arrange: prepare a juju secret configuration.
     act: set secret-test charm configurations.
-    assert: user_defined_config in the charm state should contain the value of the secret configuration.
+    assert: user_defined_config in the charm state should contain the value of the secret \
+        configuration.
     """
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config["secret-test"] = {"foo": "foo", "bar": "bar", "foo-bar": "foobar"}
@@ -291,7 +194,7 @@ def test_flask_secret_key_id_no_value():
         config=config,
         framework_config_class=Charm.framework_config_class,
     )
-    with pytest.raises(CharmConfigInvalidError) as exc:
+    with pytest.raises(CharmConfigInvalidError):
         CharmState.from_charm(
             framework="flask",
             framework_config=Charm.get_framework_config(charm),
@@ -314,7 +217,7 @@ def test_flask_secret_key_id_duplication():
         config=config,
         framework_config_class=Charm.framework_config_class,
     )
-    with pytest.raises(CharmConfigInvalidError) as exc:
+    with pytest.raises(CharmConfigInvalidError):
         CharmState.from_charm(
             framework="flask",
             framework_config=Charm.get_framework_config(charm),
@@ -336,5 +239,5 @@ def _s3_requirer_mock(relation_data: dict[str:str] | None) -> unittest.mock.Magi
 def _saml_requirer_mock(relation_data: dict[str:str]) -> unittest.mock.MagicMock:
     """Saml requirer mock."""
     saml = unittest.mock.MagicMock()
-    saml.get_relation_data.return_value.to_relation_data.return_value = relation_data
+    saml.get_relation_data.return_value = relation_data
     return saml

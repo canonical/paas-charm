@@ -41,7 +41,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.saml_integrator.v0.saml import SamlRequires
+    from paas_charm.saml import PaaSSAMLRequirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
@@ -67,7 +67,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.openfga_k8s.v1.openfga import OpenFGARequires, OpenFGAStoreCreateEvent
+    from charms.openfga_k8s.v1.openfga import OpenFGARequires
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
@@ -92,6 +92,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @abc.abstractmethod
     def _create_app(self) -> App:
         """Create an App instance."""
+
+    @property
+    def _state_dir(self) -> pathlib.Path:
+        """Directory used for storing application related state. Ex: db migration state."""
+        # It is  fine to use the tmp directory here as it is only used for storing the state
+        # of the application. State only supposed to live within the lifecycle of the container.
+        return pathlib.Path(f"/tmp/{self._framework_name}/state")  # nosec: B108
 
     on = RedisRelationCharmEvents()
 
@@ -119,7 +126,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
-            state_dir=self._workload_config.state_dir,
+            state_dir=self._state_dir,
         )
 
         self._ingress = IngressPerAppRequirer(
@@ -215,7 +222,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
         return _s3
 
-    def _init_saml(self, requires: dict[str, RelationMeta]) -> "SamlRequires | None":
+    def _init_saml(self, requires: dict[str, RelationMeta]) -> "PaaSSAMLRequirer | None":
         """Initialize the SAML relation if its required.
 
         Args:
@@ -227,7 +234,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _saml = None
         if "saml" in requires and requires["saml"].interface_name == "saml":
             try:
-                _saml = SamlRequires(self)
+                _saml = PaaSSAMLRequirer(self)
                 self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
             except NameError:
                 logger.exception(
@@ -500,7 +507,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._saml and not charm_state.integrations.saml_parameters:
+        if self._saml and not charm_state.integrations.saml:
             if not requires["saml"].optional:
                 yield "saml"
 
@@ -542,7 +549,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         except CharmConfigInvalidError as exc:
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
             return
-        self.unit.open_port("tcp", self._workload_config.port)
+        self._ingress.provide_ingress_requirements(port=self._workload_config.port)
+        self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:
@@ -719,6 +727,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.restart()
 
     @block_if_invalid_config
-    def _on_openfga_store_created(self, _: OpenFGAStoreCreateEvent) -> None:
+    def _on_openfga_store_created(self, _: ops.HookEvent) -> None:
         """Handle openfga store created event."""
         self.restart()

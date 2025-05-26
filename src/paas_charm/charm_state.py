@@ -43,7 +43,11 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.saml_integrator.v0.saml import SamlRequires
+    from paas_charm.saml import (
+        InvalidSAMLRelationDataError,
+        PaaSSAMLRelationData,
+        PaaSSAMLRequirer,
+    )
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -96,6 +100,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
+        peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
     ):
@@ -107,6 +112,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
             secret_key: The secret storage manager associated with the charm.
+            peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
         """
@@ -115,6 +121,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self._user_defined_config = user_defined_config if user_defined_config is not None else {}
         self._is_secret_storage_ready = is_secret_storage_ready
         self._secret_key = secret_key
+        self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
 
@@ -180,11 +187,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     else None
                 ),
                 saml_relation_data=(
-                    saml_data.to_relation_data()
-                    if (
-                        integration_requirers.saml
-                        and (saml_data := integration_requirers.saml.get_relation_data())
-                    )
+                    integration_requirers.saml.to_relation_data()
+                    if integration_requirers.saml
                     else None
                 ),
                 rabbitmq_relation_data=(
@@ -210,8 +214,15 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     else None
                 ),
             )
+            peer_fqdns = None
+            if secret_storage.is_initialized and (
+                peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
+            ):
+                peer_fqdns = ",".join(peer_unit_fqdns)
         except InvalidS3RelationDataError as exc:
             raise CharmConfigInvalidError("Invalid S3 relation data") from exc
+        except InvalidSAMLRelationDataError as exc:
+            raise CharmConfigInvalidError("Invalid SAML relation data") from exc
 
         return cls(
             framework=framework,
@@ -223,6 +234,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 secret_storage.get_secret_key() if secret_storage.is_initialized else None
             ),
             is_secret_storage_ready=secret_storage.is_initialized,
+            peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
         )
@@ -307,7 +319,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     redis: RedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
     s3: "PaaSS3Requirer | None" = None
-    saml: "SamlRequires | None" = None
+    saml: "PaaSSAMLRequirer | None" = None
     tracing: "TracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
     openfga: "OpenFGARequires | None" = None
@@ -323,7 +335,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         redis_uri: The redis uri provided by the redis charm.
         databases_uris: Map from interface_name to the database uri.
         s3: S3 connection information from relation data.
-        saml_parameters: SAML parameters.
+        saml: SAML parameters.
         rabbitmq: RabbitMQ relation data.
         tempo_parameters: Tracing parameters.
         smtp_parameters: Smtp parameters.
@@ -333,8 +345,8 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     redis_uri: str | None = None
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3: "S3RelationData | None" = None
-    saml_parameters: "SamlParameters | None" = None
-    rabbitmq: RabbitMQRelationData | None = None
+    saml: "PaaSSAMLRelationData | None" = None
+    rabbitmq: "RabbitMQRelationData" | None = None
     tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
@@ -347,8 +359,8 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         redis_uri: str | None,
         database_requirers: dict[str, DatabaseRequires],
         s3_relation_data: "S3RelationData | None" = None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        rabbitmq_relation_data: RabbitMQRelationData | None = None,
+        saml_relation_data: "PaaSSAMLRelationData| None" = None,
+        rabbitmq_relation_data: "RabbitMQRelationData" | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
         smtp_relation_data: dict | None = None,
@@ -370,7 +382,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         Return:
             The IntegrationsState instance created.
         """
-        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
         tempo_data = {}
         if tracing_requirer and tracing_requirer.is_ready():
             tempo_data = {
@@ -394,7 +405,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
                 if (uri := get_uri(requirers)) is not None
             },
             s3=s3_relation_data,
-            saml_parameters=saml_parameters,
+            saml=saml_relation_data,
             rabbitmq=rabbitmq_relation_data,
             tempo_parameters=tempo_parameters,
             smtp_parameters=smtp_parameters,
@@ -606,7 +617,7 @@ class OpenfgaParameters(BaseModel, extra="allow"):
     http_api_url: str = Field(...)
 
 
-def store_info_to_relation_data(store_info: OpenfgaProviderAppData) -> Dict[str, str]:
+def store_info_to_relation_data(store_info: "OpenfgaProviderAppData") -> Dict[str, str]:
     """Convert store info to relation data.
 
     Args:

@@ -64,6 +64,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage = unittest.mock.MagicMock()
     secret_storage.is_secret_storage_ready = True
     secret_storage.get_secret_key.return_value = "test"
+    secret_storage.get_peer_unit_fdqns.return_value = None
     harness.update_config(config)
     charm_state = CharmState.from_charm(
         config=harness.charm.config,
@@ -73,7 +74,9 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(framework_name="django", unit_name="django/0")
+    workload_config = create_workload_config(
+        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,
@@ -168,6 +171,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage = unittest.mock.MagicMock()
     secret_storage.is_secret_storage_ready = True
     secret_storage.get_secret_key.return_value = "test"
+    secret_storage.get_peer_unit_fdqns.return_value = None
     config["webserver-worker-class"] = "gevent"
     harness.update_config(config)
     charm_state = CharmState.from_charm(
@@ -178,7 +182,9 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(framework_name="django", unit_name="django/0")
+    workload_config = create_workload_config(
+        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,

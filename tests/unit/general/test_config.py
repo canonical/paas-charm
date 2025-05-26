@@ -18,6 +18,10 @@ import paas_charm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
+from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
+from tests.unit.flask.constants import FLASK_CONTAINER_NAME
+from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
 @pytest.mark.parametrize(
@@ -408,3 +412,47 @@ def test_app_config_class_factory(
         paas_charm.charm_state.app_config_class_factory(framework).__annotations__
         == expected_output
     )
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name, app_prefix",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, "FLASK", id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, "DJANGO", id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            "APP",
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, "APP", id="go"),
+    ],
+)
+def test_secret_storage_config(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    app_prefix: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Run initial hooks.
+    act: Add two units to the secret-storage relation.
+    assert: The app service must have the right peer configuration.
+    """
+    harness = request.getfixturevalue(app_harness)
+    harness.set_model_name("test-model")
+    harness.begin_with_initial_hooks()
+
+    peer_relation_name = "secret-storage"
+    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="foobar")
+    rel_id = harness.model.get_relation(peer_relation_name).id
+    harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
+    harness.add_relation_unit(rel_id, f"{harness._meta.name}/2")
+
+    harness.update_config()
+    container = harness.model.unit.get_container(container_name)
+    service_env = container.get_plan().services[framework].environment
+    expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.test-model.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.test-model.svc.cluster.local"
+    assert service_env[f"{app_prefix}_PEER_FQDNS"] == expected_output

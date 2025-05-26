@@ -58,7 +58,6 @@ class Charm(PaasCharm):
         """Return an WorkloadConfig instance."""
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
-        state_dir = base_dir / "state"
         framework_config = typing.cast(GoConfig, self.get_framework_config())
         return WorkloadConfig(
             framework=framework_name,
@@ -66,7 +65,7 @@ class Charm(PaasCharm):
             port=framework_config.port,
             base_dir=base_dir,
             app_dir=base_dir,
-            state_dir=state_dir,
+            state_dir=self._state_dir,
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,

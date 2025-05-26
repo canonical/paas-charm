@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from paas_charm.s3 import S3RelationData
+    from paas_charm.saml import PaaSSAMLRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -133,6 +134,38 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
     }
 
 
+def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from SAML relation data.
+
+    Args:
+        relation_data: The charm SAML integration relation data.
+
+    Returns:
+        SAML environment mappings if SAML relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return dict(
+        (
+            (k, v)
+            for (k, v) in (
+                ("SAML_ENTITY_ID", relation_data.entity_id),
+                (
+                    "SAML_METADATA_URL",
+                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
+                ),
+                (
+                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                    relation_data.single_sign_on_redirect_url,
+                ),
+                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
+            )
+            if v is not None
+        )
+    )
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -141,10 +174,12 @@ class App:  # pylint: disable=too-many-instance-attributes
     Attributes:
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
+        generate_saml_env: Maps SAML connection information to environment variables.
     """
 
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_s3_env = staticmethod(generate_s3_env)
+    generate_saml_env = staticmethod(generate_saml_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -160,7 +195,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Construct the App instance.
 
         Args:
-            container: phe application container.
+            container: the application container.
             charm_state: the state of the charm.
             workload_config: the state of the workload that the App belongs to.
             database_migration: the database migration manager object.
@@ -241,6 +276,9 @@ class App:  # pylint: disable=too-many-instance-attributes
                 env[proxy_variable] = str(proxy_value)
                 env[proxy_variable.upper()] = str(proxy_value)
 
+        if self._charm_state.peer_fqdns is not None:
+            env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
+
         if self._charm_state.integrations:
             env.update(
                 map_integrations_to_env(
@@ -254,6 +292,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             )
         )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
+        env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         return env
 
     @property
@@ -364,19 +403,6 @@ def map_integrations_to_env(  # noqa: C901
             env.update({"OTEL_SERVICE_NAME": service_name})
         if endpoint := integrations.tempo_parameters.endpoint:
             env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    if integrations.saml_parameters:
-        saml = integrations.saml_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("SAML_ENTITY_ID", saml.entity_id),
-                ("SAML_METADATA_URL", saml.metadata_url),
-                ("SAML_SINGLE_SIGN_ON_REDIRECT_URL", saml.single_sign_on_redirect_url),
-                ("SAML_SIGNING_CERTIFICATE", saml.signing_certificate),
-            )
-            if v is not None
-        )
 
     if integrations.smtp_parameters:
         smtp = integrations.smtp_parameters
