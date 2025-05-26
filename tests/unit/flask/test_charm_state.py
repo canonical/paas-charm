@@ -8,11 +8,9 @@ from secrets import token_hex
 
 import pytest
 
-from paas_charm.charm_state import CharmState, IntegrationRequirers, PaaSSAMLRequirer, S3Parameters
+from paas_charm.charm_state import CharmState, IntegrationRequirers, S3RelationData
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm
-
-from .constants import SAML_APP_RELATION_DATA_EXAMPLE
 
 # this is a unit test file
 # pylint: disable=protected-access
@@ -108,7 +106,7 @@ def test_charm_state_invalid_flask_config(charm_config: dict) -> None:
                     "bucket": "bucket",
                 }
             ),
-            S3Parameters(**relation_data),
+            S3RelationData(**relation_data),
             id="with data",
         ),
     ],
@@ -132,29 +130,7 @@ def test_s3_integration(s3_connection_info, expected_s3_parameters):
         ),
     )
     assert charm_state.integrations
-    assert charm_state.integrations.s3_parameters == expected_s3_parameters
-
-
-def test_s3_integration_raises():
-    """
-    arrange: Prepare charm and charm config.
-    act: Create the CharmState with s3 information that is invalid.
-    assert: Check that CharmConfigInvalidError is raised.
-    """
-    config = copy.copy(DEFAULT_CHARM_CONFIG)
-    config.update(config)
-    charm = unittest.mock.MagicMock(config=config)
-    with pytest.raises(CharmConfigInvalidError) as exc:
-        charm_state = CharmState.from_charm(
-            config=config,
-            framework_config=Charm.get_framework_config(charm),
-            framework="flask",
-            secret_storage=SECRET_STORAGE_MOCK,
-            integration_requirers=IntegrationRequirers(
-                databases={}, s3=_s3_requirer_mock({"bucket": "bucket"})
-            ),
-        )
-    assert "S3" in str(exc)
+    assert charm_state.integrations.s3 == expected_s3_parameters
 
 
 @pytest.mark.parametrize(
@@ -174,7 +150,7 @@ def test_s3_addressing_style(s3_uri_style, addressing_style) -> None:
         "region": "us-west-2",
         "s3-uri-style": s3_uri_style,
     }
-    s3_parameters = S3Parameters(**s3_relation_data)
+    s3_parameters = S3RelationData(**s3_relation_data)
     assert s3_parameters.addressing_style == addressing_style
 
 
@@ -182,7 +158,8 @@ def test_secret_configuration():
     """
     arrange: prepare a juju secret configuration.
     act: set secret-test charm configurations.
-    assert: user_defined_config in the charm state should contain the value of the secret configuration.
+    assert: user_defined_config in the charm state should contain the value of the secret \
+        configuration.
     """
     config = copy.copy(DEFAULT_CHARM_CONFIG)
     config["secret-test"] = {"foo": "foo", "bar": "bar", "foo-bar": "foobar"}
@@ -217,7 +194,7 @@ def test_flask_secret_key_id_no_value():
         config=config,
         framework_config_class=Charm.framework_config_class,
     )
-    with pytest.raises(CharmConfigInvalidError) as exc:
+    with pytest.raises(CharmConfigInvalidError):
         CharmState.from_charm(
             framework="flask",
             framework_config=Charm.get_framework_config(charm),
@@ -240,7 +217,7 @@ def test_flask_secret_key_id_duplication():
         config=config,
         framework_config_class=Charm.framework_config_class,
     )
-    with pytest.raises(CharmConfigInvalidError) as exc:
+    with pytest.raises(CharmConfigInvalidError):
         CharmState.from_charm(
             framework="flask",
             framework_config=Charm.get_framework_config(charm),
@@ -255,7 +232,7 @@ def _s3_requirer_mock(relation_data: dict[str:str] | None) -> unittest.mock.Magi
     if not relation_data:
         return None
     s3 = unittest.mock.MagicMock()
-    s3.get_s3_connection_info.return_value = relation_data
+    s3.to_relation_data.return_value = S3RelationData(**relation_data)
     return s3
 
 

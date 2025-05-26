@@ -18,8 +18,8 @@ from paas_charm.database_migration import DatabaseMigration
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from paas_charm.s3 import S3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
-
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -73,6 +73,44 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from S3 requirer data.
+
+    Args:
+        relation_data: The charm S3 integration relation data.
+
+    Returns:
+        Default S3 environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("S3_ACCESS_KEY", relation_data.access_key),
+            ("S3_SECRET_KEY", relation_data.secret_key),
+            ("S3_REGION", relation_data.region),
+            ("S3_STORAGE_CLASS", relation_data.storage_class),
+            ("S3_BUCKET", relation_data.bucket),
+            ("S3_ENDPOINT", relation_data.endpoint),
+            ("S3_PATH", relation_data.path),
+            ("S3_API_VERSION", relation_data.s3_api_version),
+            ("S3_URI_STYLE", relation_data.s3_uri_style),
+            ("S3_ADDRESSING_STYLE", relation_data.addressing_style),
+            (
+                "S3_ATTRIBUTES",
+                json.dumps(relation_data.attributes) if relation_data.attributes else None,
+            ),
+            (
+                "S3_TLS_CA_CHAIN",
+                json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
+            ),
+        )
+        if v is not None
+    }
+
+
 def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from SAML relation data.
 
@@ -111,9 +149,11 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
+        generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
     """
 
+    generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -130,7 +170,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Construct the App instance.
 
         Args:
-            container: phe application container.
+            container: the application container.
             charm_state: the state of the charm.
             workload_config: the state of the workload that the App belongs to.
             database_migration: the database migration manager object.
@@ -211,12 +251,16 @@ class App:  # pylint: disable=too-many-instance-attributes
                 env[proxy_variable] = str(proxy_value)
                 env[proxy_variable.upper()] = str(proxy_value)
 
+        if self._charm_state.peer_fqdns is not None:
+            env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
+
         if self._charm_state.integrations:
             env.update(
                 map_integrations_to_env(
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         return env
 
@@ -328,27 +372,6 @@ def map_integrations_to_env(  # noqa: C901
             env.update({"OTEL_SERVICE_NAME": service_name})
         if endpoint := integrations.tempo_parameters.endpoint:
             env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    if integrations.s3_parameters:
-        s3 = integrations.s3_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("S3_ACCESS_KEY", s3.access_key),
-                ("S3_SECRET_KEY", s3.secret_key),
-                ("S3_REGION", s3.region),
-                ("S3_STORAGE_CLASS", s3.storage_class),
-                ("S3_BUCKET", s3.bucket),
-                ("S3_ENDPOINT", s3.endpoint),
-                ("S3_PATH", s3.path),
-                ("S3_API_VERSION", s3.s3_api_version),
-                ("S3_URI_STYLE", s3.s3_uri_style),
-                ("S3_ADDRESSING_STYLE", s3.addressing_style),
-                ("S3_ATTRIBUTES", json.dumps(s3.attributes) if s3.attributes else None),
-                ("S3_TLS_CA_CHAIN", json.dumps(s3.tls_ca_chain) if s3.attributes else None),
-            )
-            if v is not None
-        )
 
     if integrations.rabbitmq_uri:
         rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
