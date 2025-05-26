@@ -41,7 +41,11 @@ from paas_charm.redis import InvalidRedisRelationDataError
 def test_paas_redis_requirer_to_relation_data(
     flask_harness, unit_relation_data, app_relation_data, expected_relation_data
 ):
-    """Test PaaSRedisRequires to relation data conversion."""
+    """
+    arrange: given redis relation.
+    act: when to_relation_data is called.
+    assert: expected relation data is returned.
+    """
     flask_harness.begin()
     # Define some relations.
     rel_id = flask_harness.add_relation("redis", "redis")
@@ -61,10 +65,10 @@ def test_paas_redis_requirer_to_relation_data(
 
 
 def test_paas_redis_url():
-    """Test PaaSSAMLRelationData properties.
-
-    This test checks that the default path is not added to the URL, i.e. the /0
-    is omitted from redis://user:password@redis.url:6379/0
+    """
+    arrange: given redis relation data.
+    act: when url is stringified.
+    assert: expected URL string is returned.
     """
     relation_data = PaaSRedisRelationData(url="redis://user:password@redis.url")
 
@@ -96,7 +100,11 @@ def test_paas_redis_url():
     ],
 )
 def test_redis_url_invalid(flask_harness, unit_relation_data, app_relation_data):
-    """Test invalid relation data error."""
+    """
+    arrange: given invalid redis relation data.
+    act: when to_relation_data is called.
+    assert: InvalidRedisRelationDataError is raised.
+    """
     # Define some relations.
     rel_id = flask_harness.add_relation("redis", "redis")
     flask_harness.add_relation_unit(rel_id, "redis/0")
