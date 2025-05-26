@@ -36,7 +36,9 @@ def test_database_migration(harness: Harness):
         is_secret_storage_ready=True,
         secret_key="",
     )
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    )
     webserver_config = WebserverConfig()
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
@@ -110,7 +112,9 @@ def test_database_migrate_command(harness: Harness, file: str, command: list[str
         secret_key="",
     )
     webserver_config = WebserverConfig()
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,

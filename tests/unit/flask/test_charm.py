@@ -52,7 +52,9 @@ def test_flask_pebble_layer(harness: Harness) -> None:
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(framework_name="flask", unit_name="flask/0")
+    workload_config = create_workload_config(
+        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,

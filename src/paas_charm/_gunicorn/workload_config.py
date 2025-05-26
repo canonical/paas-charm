@@ -13,13 +13,14 @@ APPLICATION_ERROR_LOG_FILE_FMT = "/var/log/{framework}/error.log"
 
 
 def create_workload_config(
-    framework_name: str, unit_name: str, tracing_enabled: bool = False
+    framework_name: str, unit_name: str, state_dir: pathlib.Path, tracing_enabled: bool = False
 ) -> WorkloadConfig:
     """Create an WorkloadConfig for Gunicorn.
 
     Args:
         framework_name: framework name.
         unit_name: name of the app unit.
+        state_dir: state folder directory.
         tracing_enabled: if True, tracing is enabled.
 
     Returns:
@@ -32,7 +33,7 @@ def create_workload_config(
         port=8000,
         base_dir=base_dir,
         app_dir=base_dir / "app",
-        state_dir=base_dir / "state",
+        state_dir=state_dir,
         service_name=framework_name,
         log_files=[
             pathlib.Path(str.format(APPLICATION_LOG_FILE_FMT, framework=framework_name)),

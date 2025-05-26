@@ -64,6 +64,27 @@ Additional resources:
 * [Rockcraft`flask-framework`
    reference](https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/)
 
+## Documentation
+
+The 12-Factor framework support documentation provides guidance and learning material about
+the tooling, getting started, customization, and usage.
+The documentation is hosted on Read the Docs.
+
+Build the 12-Factor app support documentation located in this repository:
+
+```bash
+cd docs
+make run
+```
+
+Additional resources:
+
+* [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/en/latest/)
+* [Rockcraft](https://documentation.ubuntu.com/rockcraft/en/latest/):
+  Documentation related to the OCI image containers
+* [Charmcraft](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/):
+  Documentation related to the software operators (charms)
+
 ## Contributing
 
 Is there something missing from the 12-Factor app support framework? We

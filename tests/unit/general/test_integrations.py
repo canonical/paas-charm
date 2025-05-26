@@ -3,7 +3,7 @@
 
 """Integrations unit tests."""
 import itertools
-import json
+import pathlib
 import unittest
 from types import NoneType
 
@@ -47,56 +47,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         prefix,
         {},
         id="no new env vars",
-    )
-    redis_env = pytest.param(
-        IntegrationsState(redis_uri="http://redisuri"),
-        prefix,
-        {
-            f"{prefix}REDIS_DB_CONNECT_STRING": "http://redisuri",
-            f"{prefix}REDIS_DB_FRAGMENT": "",
-            f"{prefix}REDIS_DB_HOSTNAME": "redisuri",
-            f"{prefix}REDIS_DB_NETLOC": "redisuri",
-            f"{prefix}REDIS_DB_PARAMS": "",
-            f"{prefix}REDIS_DB_PATH": "",
-            f"{prefix}REDIS_DB_QUERY": "",
-            f"{prefix}REDIS_DB_SCHEME": "http",
-        },
-        id=f"With Redis uri, prefix: {prefix}",
-    )
-    saml_env = pytest.param(
-        IntegrationsState(
-            saml_parameters=generate_relation_parameters(
-                SAML_APP_RELATION_DATA_EXAMPLE, SamlParameters, True
-            )
-        ),
-        prefix,
-        {
-            f"{prefix}SAML_ENTITY_ID": "https://login.staging.ubuntu.com",
-            f"{prefix}SAML_METADATA_URL": "https://login.staging.ubuntu.com/saml/metadata",
-            f"{prefix}SAML_SIGNING_CERTIFICATE": "MIIDuzCCAqOgAwIBAgIJALRwYFkmH3k9MA0GCSqGSIb3DQEBCwUAMHQxCzAJBgNVBAYTAkdCMRMwEQYDVQQIDApTb21lLVN0YXRlMSswKQYDVQQKDCJTU08gU3RhZ2luZyBrZXkgZm9yIEV4cGVuc2lmeSBTQU1MMSMwIQYDVQQDDBpTU08gU3RhZ2luZyBFeHBlbnNpZnkgU0FNTDAeFw0xNTA5MjUxMDUzNTZaFw0xNjA5MjQxMDUzNTZaMHQxCzAJBgNVBAYTAkdCMRMwEQYDVQQIDApTb21lLVN0YXRlMSswKQYDVQQKDCJTU08gU3RhZ2luZyBrZXkgZm9yIEV4cGVuc2lmeSBTQU1MMSMwIQYDVQQDDBpTU08gU3RhZ2luZyBFeHBlbnNpZnkgU0FNTDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANyt2LqrD3DSmJMtNUA5xjJpbUNuiaHFdO0AduOegfM7YnKIp0Y001S07ffEcv/zNo7Gg6wAZwLtW2/+eUkRj8PLEyYDyU2NiwD7stAzhz50AjTbLojRyZdrEo6xu+f43xFNqf78Ix8mEKFr0ZRVVkkNRifa4niXPDdzIUiv5UZUGjW0ybFKdM3zm6xjEwMwo8ixu/IbAn74PqC7nypllCvLjKLFeYmYN24oYaVKWIRhQuGL3m98eQWFiVUL40palHtgcy5tffg8UOyAOqg5OF2kGVeyPZNmjq/jVHYyBUtBaMvrTLUlOKRRC3I+aW9tXs7aqclQytOiFQxq+aEapB8CAwEAAaNQME4wHQYDVR0OBBYEFA9Ub7RIfw21Qgbnf4IA3n4jUpAlMB8GA1UdIwQYMBaAFA9Ub7RIfw21Qgbnf4IA3n4jUpAlMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAGBHECvs8V3xBKGRvNfBaTbY2FpbwLheSm3MUM4/hswvje24oknoHMF3dFNVnosOLXYdaRf8s0rsJfYuoUTap9tKzv0osGoA3mMw18LYW3a+mUHurx+kJZP+VN3emk84TXiX44CCendMVMxHxDQwg40YxALNc4uew2hlLReB8nC+55OlsIInIqPcIvtqUZgeNp2iecKnCgZPDaElez52GY5GRFszJd04sAQIrpg2+xfZvLMtvWwb9rpdto5oIdat2gIoMLdrmJUAYWP2+BLiKVpe9RtzfvqtQrk1lDoTj3adJYutNIPbTGOfI/Vux0HCw9KCrNTspdsfGTIQFJJi01E=",
-            f"{prefix}SAML_SINGLE_SIGN_ON_REDIRECT_URL": "https://login.staging.ubuntu.com/saml/",
-        },
-        id=f"With Saml, prefix: {prefix}",
-    )
-    rabbitmq_env = pytest.param(
-        IntegrationsState(
-            rabbitmq_uri="amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/"
-        ),
-        prefix,
-        {
-            f"{prefix}RABBITMQ_CONNECT_STRING": "amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/",
-            f"{prefix}RABBITMQ_FRAGMENT": "",
-            f"{prefix}RABBITMQ_HOSTNAME": "rabbitmq-k8s-endpoints.testing.svc.cluster.local",
-            f"{prefix}RABBITMQ_NETLOC": "test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672",
-            f"{prefix}RABBITMQ_PARAMS": "",
-            f"{prefix}RABBITMQ_PASSWORD": "3m036hhyiDHs",
-            f"{prefix}RABBITMQ_PATH": "/",
-            f"{prefix}RABBITMQ_PORT": "5672",
-            f"{prefix}RABBITMQ_QUERY": "",
-            f"{prefix}RABBITMQ_SCHEME": "amqp",
-            f"{prefix}RABBITMQ_USERNAME": "test-app",
-        },
-        id=f"With RabbitMQ, prefix: {prefix}",
     )
     smtp_env = pytest.param(
         IntegrationsState(
@@ -177,9 +127,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
     )
     return [
         empty_env,
-        redis_env,
-        saml_env,
-        rabbitmq_env,
         smtp_env,
         databases_env,
         openfga_env,
@@ -327,32 +274,17 @@ def test_generate_relation_parameters(
 
 def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
-        "redis_uri": None,
+        "redis": None,
         "database_requirers": {},
         "s3": None,
         "saml_relation_data": None,
-        "rabbitmq_uri": None,
+        "rabbitmq": None,
         "tempo_relation_data": None,
         "smtp_relation_data": None,
         "openfga_relation_data": None,
     }
 
     return [
-        pytest.param(
-            {**relation_dict, "saml_relation_data": SAML_APP_RELATION_DATA_EXAMPLE},
-            False,
-            id="Saml correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "saml_relation_data": {}},
-            True,
-            id="Saml empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "saml_relation_data": {"wrong_key": "wrong_value"}},
-            True,
-            id="Saml wrong parameters",
-        ),
         pytest.param(
             {**relation_dict, "s3": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
@@ -372,16 +304,6 @@ def _test_integrations_state_build_parameters():
             {**relation_dict, "smtp_relation_data": {"wrong_key": "wrong_value"}},
             True,
             id="Smtp wrong parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "redis_uri": "http://redisuri"},
-            False,
-            id="Redis correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "redis_uri": ""},
-            False,
-            id="Redis empty parameters",
         ),
         pytest.param(
             {
@@ -430,11 +352,11 @@ def test_integrations_state_build(
     if should_fail:
         with pytest.raises(CharmConfigInvalidError):
             IntegrationsState.build(
-                redis_uri=relation_dict["redis_uri"],
+                redis_relation_data=relation_dict["redis"],
                 database_requirers=relation_dict["database_requirers"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
-                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                rabbitmq_relation_data=relation_dict["rabbitmq"],
                 tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
@@ -442,11 +364,11 @@ def test_integrations_state_build(
     else:
         assert isinstance(
             IntegrationsState.build(
-                redis_uri=relation_dict["redis_uri"],
+                redis_relation_data=relation_dict["redis"],
                 database_requirers=relation_dict["database_requirers"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
-                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                rabbitmq_relation_data=relation_dict["rabbitmq"],
                 tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
@@ -495,7 +417,11 @@ def test_integrations_env(
         is_secret_storage_ready=True,
         integrations=integrations,
     )
-    workload_config = create_workload_config(framework_name=framework, unit_name=f"{framework}/0")
+    workload_config = create_workload_config(
+        framework_name=framework,
+        unit_name=f"{framework}/0",
+        state_dir=pathlib.Path(f"/tmp/{framework}/state"),
+    )
     if framework == ("flask" or "django"):
         webserver = GunicornWebserver(
             webserver_config=WebserverConfig(),
