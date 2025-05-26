@@ -7,7 +7,10 @@ changelog
 Charmcraft
 config
 entrypoint
+ExpressJS
 FastAPI
+filesystem
+FQDN
 Gunicorn
 init
 Jinja
