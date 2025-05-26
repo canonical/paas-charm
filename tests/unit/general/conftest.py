@@ -11,12 +11,15 @@ import pytest
 from ops.testing import Harness
 
 from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
 from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from src.paas_charm.charm import PaasCharm
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
+from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
@@ -25,6 +28,26 @@ from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+
+@pytest.fixture(name="expressjs_harness")
+def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
+    """Express JS harness fixture."""
+    os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
+    harness = _build_harness(
+        ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app"
+    )
+
+    postgresql_relation_data = {
+        "database": "test-database",
+        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
+    yield harness
+
+    harness.cleanup()
 
 
 @pytest.fixture(name="go_harness")
@@ -52,7 +75,7 @@ def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 @pytest.fixture(name="fastapi_harness")
 def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """FastAPI harness fixture."""
+    """Fast API harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
 
@@ -96,7 +119,6 @@ def _build_harness(charm: PaasCharm, container_name: str, layer: dict, folder: s
     Returns:
         The harness built for the charm.
     """
-
     harness = Harness(charm)
     harness.set_leader()
     root = harness.get_filesystem_root(container_name)
@@ -142,3 +164,23 @@ def _set_check_config_handler(
         check_config_command,
         handler=check_config_handler,
     )
+
+
+class FakeTracingEndpointRequirer:
+    """Fake tracing endpoint requirer."""
+
+    def __init__(self, is_ready: bool, endpoint: str):
+        """Fake tracing endpoint requirer.
+
+        Args:
+            is_ready: Whether the endpoint is ready.
+            endpoint: The endpoint to be mocked.
+        """
+        self._is_ready = is_ready
+        self._endpoint = endpoint
+
+    def is_ready(self) -> bool:
+        return self._is_ready
+
+    def get_endpoint(self, protocol="") -> str:
+        return self._endpoint

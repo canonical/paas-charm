@@ -56,8 +56,12 @@ async def charm_file_fixture(
     return inject_charm_config(
         charm_file,
         {
-            "allowed-hosts": {"type": "string"},
-            "webserver-worker-class": {"type": "string"},
+            "config": {
+                "options": {
+                    "allowed-hosts": {"type": "string"},
+                    "webserver-worker-class": {"type": "string"},
+                }
+            }
         },
         tmp_path_factory.mktemp("django"),
     )

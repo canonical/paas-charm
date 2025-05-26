@@ -1,0 +1,9 @@
+// Copyright 2025 Canonical Ltd.
+// See LICENSE file for licensing details.
+
+extends layout
+
+block content
+  h1= message
+  h2= error.status
+  pre #{error.stack}
