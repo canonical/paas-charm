@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from paas_charm.databases import DatabaseRelationData
+    from paas_charm.rabbitmq import RabbitMQRelationData
+    from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import S3RelationData
+    from paas_charm.saml import PaaSSAMLRelationData
+    from paas_charm.tempo import TempoRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -73,6 +77,62 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_db_env(
+    database_name: str, relation_data: "DatabaseRelationData | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from Database relation data.
+
+    Args:
+        database_name: The name of the database, i.e. POSTGRESQL.
+        relation_data: The charm database integration relation data.
+
+    Returns:
+        Default database environment mappings if DatabaseRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
+
+
+def generate_rabbitmq_env(
+    relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
+) -> dict[str, str]:
+    """Generate environment variable from RabbitMQ requirer data.
+
+    Args:
+        relation_data: The charm RabbitMQ integration relation data.
+        prefix: The environment variable prefix.
+
+    Returns:
+        RabbitMQ environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    prefix = prefix or ""
+    envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
+    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
+    if len(parsed_url.path) > 1:
+        envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+    return envvars
+
+
+def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> dict[str, str]:
+    """Generate environment variable from Redis relation data.
+
+    Args:
+        relation_data: The charm Redis integration relation data.
+
+    Returns:
+        Redis environment mappings if Redis relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
 def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 relation data.
 
@@ -111,22 +171,58 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
     }
 
 
-def generate_db_env(
-    database_name: str, relation_data: "DatabaseRelationData | None" = None
-) -> dict[str, str]:
-    """Generate environment variable from Database relation data.
+def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from SAML relation data.
 
     Args:
-        database_name: The name of the database, i.e. POSTGRESQL.
-        relation_data: The charm database integration relation data.
+        relation_data: The charm SAML integration relation data.
 
     Returns:
-        Default database environment mappings if DatabaseRelationData is available, empty
+        SAML environment mappings if SAML relation data is available, empty
         dictionary otherwise.
     """
     if not relation_data:
         return {}
-    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
+    return dict(
+        (
+            (k, v)
+            for (k, v) in (
+                ("SAML_ENTITY_ID", relation_data.entity_id),
+                (
+                    "SAML_METADATA_URL",
+                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
+                ),
+                (
+                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                    relation_data.single_sign_on_redirect_url,
+                ),
+                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
+            )
+            if v is not None
+        )
+    )
+
+
+def generate_tempo_env(relation_data: "TempoRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from TempoRelationData.
+
+    Args:
+        relation_data: The charm Tempo integration relation data.
+
+    Returns:
+        Default Tempo tracing environment mappings if TempoRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("OTEL_SERVICE_NAME", relation_data.service_name),
+            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
+        )
+        if v is not None
+    }
 
 
 # too-many-instance-attributes is disabled because this class
@@ -135,12 +231,20 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
-        generate_s3_env: Maps S3 connection information to environment variables.
         generate_db_env: Maps database connection information to environment variables.
+        generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
+        generate_redis_env: Maps Redis connection information to environment variables.
+        generate_s3_env: Maps S3 connection information to environment variables.
+        generate_saml_env: Maps SAML connection information to environment variables.
+        generate_tempo_env: Maps tempo tracing connection information to environment variables.
     """
 
-    generate_s3_env = staticmethod(generate_s3_env)
     generate_db_env = staticmethod(generate_db_env)
+    generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
+    generate_redis_env = staticmethod(generate_redis_env)
+    generate_s3_env = staticmethod(generate_s3_env)
+    generate_saml_env = staticmethod(generate_saml_env)
+    generate_tempo_env = staticmethod(generate_tempo_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -248,12 +352,25 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.generate_rabbitmq_env(
+                relation_data=self._charm_state.integrations.rabbitmq,
+                prefix=self.integrations_prefix,
+            )
+        )
+        env.update(
+            self.generate_redis_env(
+                relation_data=self._charm_state.integrations.redis_relation_data
+            )
+        )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
             db_relation_data,
         ) in self._charm_state.integrations.databases_relation_data.items():
             env.update(self.generate_db_env(database_name, db_relation_data))
+        env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
+        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tempo))
         return env
 
     @property
@@ -354,31 +471,6 @@ def map_integrations_to_env(  # noqa: C901
        A dictionary representing the environment variables for the IntegrationState.
     """
     env = {}
-    if integrations.redis_uri:
-        redis_envvars = _db_url_to_env_variables("REDIS", integrations.redis_uri)
-        env.update(redis_envvars)
-    if integrations.tempo_parameters:
-        if service_name := integrations.tempo_parameters.service_name:
-            env.update({"OTEL_SERVICE_NAME": service_name})
-        if endpoint := integrations.tempo_parameters.endpoint:
-            env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    if integrations.saml_parameters:
-        saml = integrations.saml_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("SAML_ENTITY_ID", saml.entity_id),
-                ("SAML_METADATA_URL", saml.metadata_url),
-                ("SAML_SINGLE_SIGN_ON_REDIRECT_URL", saml.single_sign_on_redirect_url),
-                ("SAML_SIGNING_CERTIFICATE", saml.signing_certificate),
-            )
-            if v is not None
-        )
-
-    if integrations.rabbitmq_uri:
-        rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
-        env.update(rabbitmq_envvars)
 
     if integrations.smtp_parameters:
         smtp = integrations.smtp_parameters

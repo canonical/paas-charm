@@ -5,13 +5,11 @@
 import logging
 import os
 import pathlib
-import re
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Type, TypeVar
 
-from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import (
     BaseModel,
     Field,
@@ -23,7 +21,8 @@ from pydantic import (
 
 from paas_charm.databases import DatabaseRelationData, PaaSDatabaseRequires
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.rabbitmq import RabbitMQRelationData, RabbitMQRequires
+from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -42,7 +41,11 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.saml_integrator.v0.saml import SamlRequires
+    from paas_charm.saml import (
+        InvalidSAMLRelationDataError,
+        PaaSSAMLRelationData,
+        PaaSSAMLRequirer,
+    )
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -51,7 +54,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+    from paas_charm.tempo import PaaSTracingEndpointRequirer, TempoRelationData
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -129,7 +132,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config: BaseModel,
         secret_storage: KeySecretStorage,
         integration_requirers: "IntegrationRequirers",
-        app_name: str | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -140,7 +142,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             framework_config: The framework specific configurations.
             secret_storage: The secret storage manager associated with the charm.
             integration_requirers: The collection of integration requirers.
-            app_name: Name of the application.
             base_url: Base URL for the service.
 
         Return:
@@ -171,9 +172,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         # IntegrationState, without the build function. See integration_requirers.s3.
         try:
             integrations = IntegrationsState.build(
-                app_name=app_name,
-                redis_uri=(
-                    integration_requirers.redis.url if integration_requirers.redis else None
+                redis_relation_data=(
+                    integration_requirers.redis.to_relation_data()
+                    if integration_requirers.redis
+                    else None
                 ),
                 database_relation_data={
                     db: db_integration_data
@@ -186,19 +188,20 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     else None
                 ),
                 saml_relation_data=(
-                    saml_data.to_relation_data()
-                    if (
-                        integration_requirers.saml
-                        and (saml_data := integration_requirers.saml.get_relation_data())
-                    )
+                    integration_requirers.saml.to_relation_data()
+                    if integration_requirers.saml
                     else None
                 ),
-                rabbitmq_uri=(
-                    integration_requirers.rabbitmq.rabbitmq_uri()
+                rabbitmq_relation_data=(
+                    integration_requirers.rabbitmq.get_relation_data()
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                tracing_requirer=integration_requirers.tracing,
+                tempo_relation_data=(
+                    integration_requirers.tracing.to_relation_data()
+                    if integration_requirers.tracing
+                    else None
+                ),
                 smtp_relation_data=(
                     smtp_data.to_relation_data()
                     if (
@@ -223,6 +226,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 peer_fqdns = ",".join(peer_unit_fqdns)
         except InvalidS3RelationDataError as exc:
             raise CharmConfigInvalidError("Invalid S3 relation data") from exc
+        except InvalidSAMLRelationDataError as exc:
+            raise CharmConfigInvalidError("Invalid SAML relation data") from exc
 
         return cls(
             framework=framework,
@@ -306,8 +311,8 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
 
     Attrs:
         databases: PaaSDatabaseRequires collection.
-        redis: Redis requirer object.
         rabbitmq: RabbitMQ requirer object.
+        redis: Redis requirer object.
         s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
@@ -316,11 +321,11 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     """
 
     databases: dict[str, PaaSDatabaseRequires]
-    redis: RedisRequires | None = None
     rabbitmq: RabbitMQRequires | None = None
+    redis: PaaSRedisRequires | None = None
     s3: "PaaSS3Requirer | None" = None
-    saml: "SamlRequires | None" = None
-    tracing: "TracingEndpointRequirer | None" = None
+    saml: "PaaSSAMLRequirer | None" = None
+    tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
     openfga: "OpenFGARequires | None" = None
 
@@ -332,22 +337,22 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     This state is related to all the relations that can be optional, like databases, redis...
 
     Attrs:
-        redis_uri: The redis uri provided by the redis charm.
+        redis_relation_data: The Redis connection info from redis lib.
         databases_relation_data: Map from interface_name to the database relation data.
         s3: S3 connection information from relation data.
-        saml_parameters: SAML parameters.
-        rabbitmq_uri: RabbitMQ uri.
-        tempo_parameters: Tracing parameters.
+        saml: SAML parameters.
+        rabbitmq: RabbitMQ relation data.
+        tempo: Tracing relation data.
         smtp_parameters: Smtp parameters.
         openfga_parameters: OpenFGA parameters.
     """
 
-    redis_uri: str | None = None
+    redis_relation_data: PaaSRedisRelationData | None = None
     databases_relation_data: dict[str, DatabaseRelationData] = field(default_factory=dict)
     s3: "S3RelationData | None" = None
-    saml_parameters: "SamlParameters | None" = None
-    rabbitmq_uri: str | None = None
-    tempo_parameters: "TempoParameters | None" = None
+    saml: "PaaSSAMLRelationData | None" = None
+    rabbitmq: "RabbitMQRelationData" | None = None
+    tempo: "TempoRelationData | None" = None
     smtp_parameters: "SmtpParameters | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
 
@@ -356,63 +361,46 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     def build(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
-        redis_uri: str | None,
+        redis_relation_data: PaaSRedisRelationData | None,
         database_relation_data: dict[str, DatabaseRelationData],
         s3_relation_data: "S3RelationData | None" = None,
-        saml_relation_data: typing.MutableMapping[str, str] | None = None,
-        rabbitmq_uri: str | None = None,
-        tracing_requirer: "TracingEndpointRequirer | None" = None,
-        app_name: str | None = None,
+        saml_relation_data: "PaaSSAMLRelationData| None" = None,
+        rabbitmq_relation_data: "RabbitMQRelationData" | None = None,
+        tempo_relation_data: "TempoRelationData | None" = None,
         smtp_relation_data: dict | None = None,
         openfga_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
         Args:
-            app_name: Name of the application.
-            redis_uri: The redis uri provided by the redis charm.
+            redis_relation_data: The Redis connection info from redis lib.
             database_relation_data: All database relation data from charm integration.
             s3_relation_data: S3 relation data from S3 lib.
             saml_relation_data: Saml relation data from saml lib.
-            rabbitmq_uri: RabbitMQ uri.
-            tracing_requirer: The tracing relation data provided by the Tempo charm.
+            rabbitmq_relation_data: RabbitMQ relation data.
+            tempo_relation_data: The tracing relation data provided by the Tempo charm.
             smtp_relation_data: Smtp relation data from smtp lib.
             openfga_relation_data: OpenFGA relation data from openfga lib.
 
         Return:
             The IntegrationsState instance created.
         """
-        saml_parameters = generate_relation_parameters(saml_relation_data, SamlParameters, True)
-        tempo_data = {}
-        if tracing_requirer and tracing_requirer.is_ready():
-            tempo_data = {
-                "service_name": app_name,
-                "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
-            }
-        tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
         smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
         openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
-        # Workaround as the Redis library temporarily sends the port
-        # as None while the integration is being created.
-        if redis_uri is not None and re.fullmatch(r"redis://[^:/]+:None", redis_uri):
-            redis_uri = None
-
         return cls(
-            redis_uri=redis_uri,
+            redis_relation_data=redis_relation_data,
             databases_relation_data=database_relation_data,
             s3=s3_relation_data,
-            saml_parameters=saml_parameters,
-            rabbitmq_uri=rabbitmq_uri,
-            tempo_parameters=tempo_parameters,
+            saml=saml_relation_data,
+            rabbitmq=rabbitmq_relation_data,
+            tempo=tempo_relation_data,
             smtp_parameters=smtp_parameters,
             openfga_parameters=openfga_parameters,
         )
 
 
-RelationParam = TypeVar(
-    "RelationParam", "SamlParameters", "TempoParameters", "SmtpParameters", "OpenfgaParameters"
-)
+RelationParam = TypeVar("RelationParam", "SamlParameters", "SmtpParameters", "OpenfgaParameters")
 
 
 def generate_relation_parameters(

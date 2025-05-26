@@ -74,7 +74,9 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(framework_name="django", unit_name="django/0")
+    workload_config = create_workload_config(
+        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,
@@ -180,7 +182,9 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(framework_name="django", unit_name="django/0")
+    workload_config = create_workload_config(
+        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+    )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
         workload_config=workload_config,
