@@ -9,7 +9,7 @@ import unittest
 from types import NoneType
 
 import pytest
-from charms.openfga_k8s.v1.openfga import OpenFGARequires
+from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
 from charms.smtp_integrator.v0.smtp import (
     AuthType,
     SmtpRelationData,
@@ -135,27 +135,11 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With several databases, one of them None. prefix: {prefix}",
     )
-    openfga_env = pytest.param(
-        IntegrationsState(
-            openfga_parameters=generate_relation_parameters(
-                OPENFGA_RELATION_DATA_EXAMPLE, OpenfgaParameters
-            )
-        ),
-        prefix,
-        {
-            f"{prefix}FGA_STORE_ID": "test-store-id",
-            f"{prefix}FGA_TOKEN": "test-token",
-            f"{prefix}FGA_GRPC_API_URL": "localhost:8081",
-            f"{prefix}FGA_HTTP_API_URL": "localhost:8080",
-        },
-        id=f"With OpenFGA, prefix: {prefix}",
-    )
     return [
         empty_env,
         redis_env,
         tempo_env,
         databases_env,
-        openfga_env,
     ]
 
 
@@ -255,23 +239,6 @@ def test_map_integrations_to_env(
             id="Smtp wrong parameters",
         ),
         pytest.param({}, SmtpParameters, True, NoneType, True, id="Smtp empty parameters"),
-        pytest.param(
-            OPENFGA_RELATION_DATA_EXAMPLE,
-            OpenfgaParameters,
-            False,
-            OpenfgaParameters,
-            False,
-            id="Openfga correct parameters",
-        ),
-        pytest.param(
-            {"wrong_key": "wrong_value"},
-            OpenfgaParameters,
-            False,
-            NoneType,
-            True,
-            id="Openfga wrong parameters",
-        ),
-        pytest.param({}, OpenfgaParameters, True, NoneType, True, id="Openfga empty parameters"),
     ],
 )
 def test_generate_relation_parameters(
@@ -383,11 +350,6 @@ def _test_integrations_state_build_parameters():
             {**relation_dict, "openfga_relation_data": {}},
             False,
             id="OpenFGA empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "openfga_relation_data": {"wrong_key": "wrong_value"}},
-            True,
-            id="OpenFGA wrong parameters",
         ),
     ]
 

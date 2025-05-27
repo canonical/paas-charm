@@ -19,6 +19,7 @@ from paas_charm.rabbitmq import RabbitMQRelationData
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.s3 import S3RelationData
@@ -74,6 +75,30 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         """
         unit_id = self.unit_name.split("/")[1]
         return unit_id == "0"
+
+
+def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) -> dict[str, str]:
+    """Generate environment variable from OpenFGA relation data.
+
+    Args:
+        relation_data: The charm OpenFGA integration relation data.
+
+    Returns:
+        OpenFGA environment mappings if OpenFGA requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("FGA_STORE_ID", relation_data.store_id),
+            ("FGA_TOKEN", relation_data.token),
+            ("FGA_GRPC_API_URL", relation_data.grpc_api_url),
+            ("FGA_HTTP_API_URL", relation_data.http_api_url),
+        )
+        if v is not None
+    }
 
 
 def generate_rabbitmq_env(relation_data: RabbitMQRelationData | None = None) -> dict[str, str]:
@@ -197,12 +222,14 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
+        generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
     """
 
+    generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
@@ -312,6 +339,8 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+
+        env.update(self.generate_openfga_env(relation_data=self._charm_state.integrations.openfga))
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
@@ -428,19 +457,6 @@ def map_integrations_to_env(  # noqa: C901
             env.update({"OTEL_SERVICE_NAME": service_name})
         if endpoint := integrations.tempo_parameters.endpoint:
             env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    if integrations.openfga_parameters:
-        fga = integrations.openfga_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("FGA_STORE_ID", fga.store_id),
-                ("FGA_TOKEN", fga.token),
-                ("FGA_GRPC_API_URL", fga.grpc_api_url),
-                ("FGA_HTTP_API_URL", fga.http_api_url),
-            )
-            if v is not None
-        )
 
     return {prefix + k: v for k, v in env.items()}
 

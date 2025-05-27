@@ -209,7 +209,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     else None
                 ),
                 openfga_relation_data=(
-                    store_info_to_relation_data(store_info)
+                    store_info
                     if (
                         integration_requirers.openfga
                         and (store_info := integration_requirers.openfga.get_store_info())
@@ -342,7 +342,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         rabbitmq: RabbitMQ relation data.
         tempo_parameters: Tracing parameters.
         smtp: Smtp parameters.
-        openfga_parameters: OpenFGA parameters.
+        openfga: OpenFGA connection information from relation data.
     """
 
     redis_uri: str | None = None
@@ -352,7 +352,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     rabbitmq: "RabbitMQRelationData | None" = None
     tempo_parameters: "TempoParameters | None" = None
     smtp: "SmtpRelationData | None" = None
-    openfga_parameters: "OpenfgaParameters | None" = None
+    openfga: "OpenfgaProviderAppData | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
@@ -367,7 +367,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
         smtp_relation_data: SmtpRelationData | None = None,
-        openfga_relation_data: dict | None = None,
+        openfga_relation_data: "OpenfgaProviderAppData | None" = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
 
@@ -392,7 +392,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
                 "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
             }
         tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
-        openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
         # Workaround as the Redis library temporarily sends the port
         # as None while the integration is being created.
@@ -411,7 +410,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
             rabbitmq=rabbitmq_relation_data,
             tempo_parameters=tempo_parameters,
             smtp=smtp_relation_data,
-            openfga_parameters=openfga_parameters,
+            openfga=openfga_relation_data,
         )
 
 

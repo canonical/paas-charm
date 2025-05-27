@@ -4,12 +4,64 @@
 """App unit tests."""
 
 import pytest
+from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
 from charms.saml_integrator.v0.saml import SamlEndpoint
 
-from paas_charm.app import generate_rabbitmq_env, generate_s3_env, generate_saml_env
+from paas_charm.app import (
+    generate_openfga_env,
+    generate_rabbitmq_env,
+    generate_s3_env,
+    generate_saml_env,
+)
 from paas_charm.rabbitmq import RabbitMQRelationData
 from paas_charm.s3 import S3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
+
+
+@pytest.mark.parametrize(
+    "relation_data, expected_env",
+    [
+        pytest.param(None, {}, id="No relation data"),
+        pytest.param(
+            OpenfgaProviderAppData.model_construct(
+                store_id="test-store-id",
+                token="test-token",
+                grpc_api_url="localhost:8081",
+                http_api_url="localhost:8080",
+            ),
+            {
+                "FGA_STORE_ID": "test-store-id",
+                "FGA_TOKEN": "test-token",
+                "FGA_GRPC_API_URL": "localhost:8081",
+                "FGA_HTTP_API_URL": "localhost:8080",
+            },
+            id="Minimum data",
+        ),
+        pytest.param(
+            OpenfgaProviderAppData.model_construct(
+                store_id="test-store-id",
+                token="test-token",
+                grpc_api_url="localhost:8081",
+                http_api_url="localhost:8080",
+                token_secret_id="secret:test-token-secret-id",
+            ),
+            {
+                "FGA_STORE_ID": "test-store-id",
+                "FGA_TOKEN": "test-token",
+                "FGA_GRPC_API_URL": "localhost:8081",
+                "FGA_HTTP_API_URL": "localhost:8080",
+            },
+            id="All OpenFGA data",
+        ),
+    ],
+)
+def test_openfga_environ_mapper_generate_env(relation_data, expected_env):
+    """
+    arrange: given OpenFGA relation data.
+    act: when generate_env method is called.
+    assert: expected environment variables are generated.
+    """
+    assert generate_openfga_env(relation_data) == expected_env
 
 
 @pytest.mark.parametrize(

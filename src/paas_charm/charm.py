@@ -494,7 +494,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["s3"].optional:
                 yield "s3"
 
-        if self._openfga and not charm_state.integrations.openfga_parameters:
+        if self._openfga and not charm_state.integrations.openfga:
             if not requires["openfga"].optional:
                 yield "openfga"
 
