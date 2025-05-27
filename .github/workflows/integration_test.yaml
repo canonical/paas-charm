@@ -23,5 +23,3 @@ jobs:
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
       test-timeout: 45
-      tmate-debug: true
-      tmate-timeout: 60
