@@ -11,6 +11,7 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.expressjs.charm import ExpressJSConfig
 from paas_charm.rabbitmq import RabbitMQRelationData
+from paas_charm.redis import PaaSRedisRelationData
 
 
 @pytest.mark.parametrize(
@@ -39,7 +40,7 @@ from paas_charm.rabbitmq import RabbitMQRelationData
                 "app-secret-key": "notfoobar",
             },
             IntegrationsState(
-                redis_uri="redis://10.1.88.132:6379",
+                redis_relation_data=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
                 rabbitmq=RabbitMQRelationData(
                     port=5672,
                     hostname="rabbitmq.example.com",
