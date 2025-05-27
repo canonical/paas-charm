@@ -3,6 +3,7 @@
 
 """Provide a wrapper around SAML integration lib."""
 import logging
+import re
 
 from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import AnyUrl, BaseModel, Field, UrlConstraints, ValidationError
@@ -62,7 +63,9 @@ class PaaSRedisRequires(RedisRequires):
             Data required to integrate with SAML.
         """
         try:
-            if not self.url:
+            # Workaround as the Redis library temporarily sends the port
+            # as None while the integration is being created.
+            if not self.url or re.fullmatch(r"redis://[^:/]+:None", self.url):
                 return None
             return PaaSRedisRelationData(url=self.url)
         except ValidationError as exc:
