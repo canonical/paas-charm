@@ -3,36 +3,14 @@
 
 """Provide a wrapper around SAML integration lib."""
 import logging
+import re
 
 from charms.redis_k8s.v0.redis import RedisRequires
-from pydantic import AnyUrl, BaseModel, Field, UrlConstraints, ValidationError
+from pydantic import AnyUrl, BaseModel, ValidationError
 
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
-
-
-# Pydantic provided RedisDsn because it defaults the path to /0 database which
-# is not desired.
-class PaaSRedisDsn(AnyUrl):
-    """A type that will accept any Redis DSN.
-
-    Attributes:
-        host: The Redis host.
-    """
-
-    _constraints = UrlConstraints(
-        allowed_schemes=["redis", "rediss"],
-        default_host=None,
-        default_port=6379,
-        default_path="",
-        host_required=True,
-    )
-
-    @property
-    def host(self) -> str | None:
-        """The required URL host."""
-        return self._url.host  # pyright: ignore[reportReturnType]
 
 
 class PaaSRedisRelationData(BaseModel):
@@ -42,7 +20,9 @@ class PaaSRedisRelationData(BaseModel):
         url: The connection URL to Redis instance.
     """
 
-    url: PaaSRedisDsn = Field()
+    # We don't use Pydantic provided RedisDsn because it defaults the path to /0 database which
+    # is not desired. Overriding the settings otherwise require custom Pydantic data schemas.
+    url: AnyUrl
 
 
 class InvalidRedisRelationDataError(Exception):
@@ -62,7 +42,9 @@ class PaaSRedisRequires(RedisRequires):
             Data required to integrate with SAML.
         """
         try:
-            if not self.url:
+            # Workaround as the Redis library temporarily sends the port
+            # as None while the integration is being created.
+            if not self.url or re.fullmatch(r"redis://[^:/]+:None", self.url):
                 return None
             return PaaSRedisRelationData(url=self.url)
         except ValidationError as exc:

@@ -72,7 +72,7 @@ def test_paas_redis_url():
     """
     relation_data = PaaSRedisRelationData(url="redis://user:password@redis.url")
 
-    assert str(relation_data.url) == "redis://user:password@redis.url:6379"
+    assert str(relation_data.url) == "redis://user:password@redis.url"
 
 
 @pytest.mark.parametrize(
