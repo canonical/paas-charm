@@ -163,14 +163,14 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     }
 
 
-def generate_stmp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from SAML relation data.
+def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from SMTP relation data.
 
     Args:
-        relation_data: The charm SAML integration relation data.
+        relation_data: The charm SMTP integration relation data.
 
     Returns:
-        SAML environment mappings if SAML relation data is available, empty
+        SMTP environment mappings if SMTP relation data is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -200,13 +200,13 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
-        generate_stmp_env: Maps STMP connection information to environment variables.
+        generate_smtp_env: Maps STMP connection information to environment variables.
     """
 
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
-    generate_stmp_env = staticmethod(generate_stmp_env)
+    generate_smtp_env = staticmethod(generate_smtp_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -317,7 +317,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
-        env.update(self.generate_stmp_env(relation_data=self._charm_state.integrations.smtp))
+        env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
         return env
 
     @property
