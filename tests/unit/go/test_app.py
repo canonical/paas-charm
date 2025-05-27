@@ -9,8 +9,9 @@ import unittest
 import pytest
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, IntegrationsState, RabbitMQRelationData
+from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.go.charm import GoConfig
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 
 @pytest.mark.parametrize(
