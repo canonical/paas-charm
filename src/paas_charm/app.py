@@ -75,7 +75,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
-def generate_rabbitmq_env(relation_data: RabbitMQRelationData | None = None) -> dict[str, str]:
+def generate_rabbitmq_env(relation_data: "RabbitMQRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from RabbitMQ requirer data.
 
     Args:
