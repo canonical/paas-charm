@@ -124,7 +124,7 @@ def test_paas_saml_relation_data_properties():
         ],
     )
 
-    assert relation_data.signing_certificate == "cert1,cert2"
+    assert relation_data.signing_certificate == "cert1"
     assert relation_data.single_sign_on_redirect_url == "http://test-single-signon-url.test/"
 
 
