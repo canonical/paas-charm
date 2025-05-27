@@ -220,7 +220,7 @@ def test_s3_environ_mapper_generate_env(relation_data, expected_env):
                 "SAML_ENTITY_ID": "https://login.staging.ubuntu.com",
                 "SAML_METADATA_URL": "https://login.staging.ubuntu.com/saml/metadata",
                 "SAML_SINGLE_SIGN_ON_REDIRECT_URL": "http://testing-redirect-url.test/",
-                "SAML_SIGNING_CERTIFICATE": "https://login.staging.ubuntu.com/saml/,test-certificate-2",
+                "SAML_SIGNING_CERTIFICATE": "https://login.staging.ubuntu.com/saml/",
             },
             id="All relation data",
         ),
