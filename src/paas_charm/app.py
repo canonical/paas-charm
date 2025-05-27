@@ -95,14 +95,11 @@ def generate_db_env(
     return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
 
 
-def generate_rabbitmq_env(
-    relation_data: "RabbitMQRelationData | None" = None, prefix: str | None = None
-) -> dict[str, str]:
+def generate_rabbitmq_env(relation_data: "RabbitMQRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from RabbitMQ requirer data.
 
     Args:
         relation_data: The charm RabbitMQ integration relation data.
-        prefix: The environment variable prefix.
 
     Returns:
         RabbitMQ environment mappings if RabbitMQ requirer is available, empty
@@ -110,11 +107,10 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    prefix = prefix or ""
-    envvars = _url_env_vars(prefix=f"{prefix}RABBITMQ", url=relation_data.amqp_uri)
+    envvars = _url_env_vars(prefix="RABBITMQ", url=relation_data.amqp_uri)
     parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
     if len(parsed_url.path) > 1:
-        envvars[f"{prefix}RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+        envvars["RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
     return envvars
 
 
@@ -351,10 +347,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 )
             )
         env.update(
-            self.generate_rabbitmq_env(
-                relation_data=self._charm_state.integrations.rabbitmq,
-                prefix=self.integrations_prefix,
-            )
+            self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
         env.update(
             self.generate_redis_env(
@@ -468,7 +461,7 @@ def map_integrations_to_env(  # noqa: C901
     Returns:
        A dictionary representing the environment variables for the IntegrationState.
     """
-    env = {}
+    env: dict[str, str] = {}
 
     if integrations.smtp_parameters:
         smtp = integrations.smtp_parameters
@@ -523,25 +516,6 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
     db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
     if db_name is not None:
         envvars[f"{prefix}_NAME"] = db_name
-    return envvars
-
-
-def _rabbitmq_uri_to_env_variables(prefix: str, url: str) -> dict[str, str]:
-    """Convert a rabbitmq uri to environment variables.
-
-    Args:
-      prefix: prefix for the environment variables
-      url: url of rabbitmq
-
-    Return:
-      All environment variables, that is, the connection string,
-      all components as returned from urllib.parse and the
-      rabbitmq vhost extracted from the path
-    """
-    envvars = _url_env_vars(prefix, url)
-    parsed_url = urllib.parse.urlparse(url)
-    if len(parsed_url.path) > 1:
-        envvars[f"{prefix}_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
     return envvars
 
 

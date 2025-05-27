@@ -25,7 +25,9 @@ class PaaSSAMLRelationData(SamlRelationData):
 
     @field_validator("certificates")
     @classmethod
-    def validate_signing_certificate_exists(cls, certs: tuple[str, ...], _: ValidationInfo) -> str:
+    def validate_signing_certificate_exists(
+        cls, certs: tuple[str, ...], _: ValidationInfo
+    ) -> tuple[str, ...]:
         """Validate that at least a certificate exists in the list of certificates.
 
         It is a prerequisite that the fist certificate is the signing certificate,
