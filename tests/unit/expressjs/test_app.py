@@ -10,6 +10,8 @@ import pytest
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.expressjs.charm import ExpressJSConfig
+from paas_charm.rabbitmq import RabbitMQRelationData
+from paas_charm.redis import PaaSRedisRelationData
 
 
 @pytest.mark.parametrize(
@@ -38,8 +40,14 @@ from paas_charm.expressjs.charm import ExpressJSConfig
                 "app-secret-key": "notfoobar",
             },
             IntegrationsState(
-                redis_uri="redis://10.1.88.132:6379",
-                rabbitmq_uri="amqp://expressjs-app:test-password@rabbitmq.example.com/%2f",
+                redis_relation_data=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
+                rabbitmq=RabbitMQRelationData(
+                    port=5672,
+                    hostname="rabbitmq.example.com",
+                    username="expressjs-app",
+                    password="test-password",
+                    vhost="test-vhost",
+                ),
             ),
             {
                 "PORT": "8080",
@@ -63,12 +71,13 @@ from paas_charm.expressjs.charm import ExpressJSConfig
                 "RABBITMQ_HOSTNAME": "rabbitmq.example.com",
                 "RABBITMQ_PASSWORD": "test-password",
                 "RABBITMQ_USERNAME": "expressjs-app",
-                "RABBITMQ_VHOST": "/",
-                "RABBITMQ_CONNECT_STRING": "amqp://expressjs-app:test-password@rabbitmq.example.com/%2f",
+                "RABBITMQ_CONNECT_STRING": "amqp://expressjs-app:test-password@rabbitmq.example.com:5672/test-vhost",
                 "RABBITMQ_FRAGMENT": "",
-                "RABBITMQ_NETLOC": "expressjs-app:test-password@rabbitmq.example.com",
+                "RABBITMQ_NETLOC": "expressjs-app:test-password@rabbitmq.example.com:5672",
                 "RABBITMQ_PARAMS": "",
-                "RABBITMQ_PATH": "/%2f",
+                "RABBITMQ_PATH": "/test-vhost",
+                "RABBITMQ_VHOST": "test-vhost",
+                "RABBITMQ_PORT": "5672",
                 "RABBITMQ_QUERY": "",
                 "RABBITMQ_SCHEME": "amqp",
             },

@@ -96,7 +96,7 @@ def generate_db_env(
 
 
 def generate_rabbitmq_env(
-    relation_data: RabbitMQRelationData | None = None, prefix: str | None = None
+    relation_data: "RabbitMQRelationData | None" = None, prefix: str | None = None
 ) -> dict[str, str]:
     """Generate environment variable from RabbitMQ requirer data.
 
@@ -105,7 +105,7 @@ def generate_rabbitmq_env(
         prefix: The environment variable prefix.
 
     Returns:
-        RabbitMQ environment mappings if S3Requirer is available, empty
+        RabbitMQ environment mappings if RabbitMQ requirer is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -118,7 +118,7 @@ def generate_rabbitmq_env(
     return envvars
 
 
-def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> dict[str, str]:
+def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from Redis relation data.
 
     Args:
@@ -183,24 +183,22 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     """
     if not relation_data:
         return {}
-    return dict(
-        (
-            (k, v)
-            for (k, v) in (
-                ("SAML_ENTITY_ID", relation_data.entity_id),
-                (
-                    "SAML_METADATA_URL",
-                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
-                ),
-                (
-                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
-                    relation_data.single_sign_on_redirect_url,
-                ),
-                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
-            )
-            if v is not None
+    return {
+        k: v
+        for (k, v) in (
+            ("SAML_ENTITY_ID", relation_data.entity_id),
+            (
+                "SAML_METADATA_URL",
+                str(relation_data.metadata_url) if relation_data.metadata_url else None,
+            ),
+            (
+                "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                relation_data.single_sign_on_redirect_url,
+            ),
+            ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
         )
-    )
+        if v is not None
+    }
 
 
 def generate_tempo_env(relation_data: "TempoRelationData | None" = None) -> dict[str, str]:

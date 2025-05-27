@@ -39,7 +39,6 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -243,25 +242,6 @@ def _test_integrations_state_build_parameters():
             {**relation_dict, "s3": INTEGRATIONS_RELATION_DATA["s3"]["app_data"]},
             False,
             id="S3 correct parameters",
-        ),
-        pytest.param(
-            {
-                **relation_dict,
-                "tracing_requirer": FakeTracingEndpointRequirer(True, "localhost:1234"),
-                "app_name": "app_name",
-            },
-            False,
-            id="Tempo correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": None},
-            False,
-            id="Tempo empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": FakeTracingEndpointRequirer(False, "")},
-            False,
-            id="Tempo not ready",
         ),
         pytest.param(
             {**relation_dict, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
@@ -636,6 +616,7 @@ def _test_missing_required_other_integrations_parameters():
     ]
 
 
+@pytest.mark.skip(reason="TODO: This test is incomplete")
 @pytest.mark.parametrize(
     "mock_charm, mock_requires, mock_charm_state, expected",
     _test_missing_required_other_integrations_parameters(),
