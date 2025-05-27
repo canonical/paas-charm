@@ -32,7 +32,11 @@ class PaaSSAMLRelationData(SamlRelationData):
     def single_sign_on_redirect_url(self) -> str | None:
         """Sign on redirect URL for the SP."""
         for endpoint in self.endpoints:
-            if endpoint.name == "single_sign_on_service_redirect_url" and endpoint.url:
+            if (
+                endpoint.name == "SingleSignOnService"
+                and endpoint.url
+                and "redirect" in endpoint.binding.lower()
+            ):
                 return str(endpoint.url)
         return None
 

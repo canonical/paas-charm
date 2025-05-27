@@ -15,6 +15,10 @@ from juju.application import Application
 
 logger = logging.getLogger(__name__)
 
+import nest_asyncio
+
+nest_asyncio.apply()
+
 
 @pytest.mark.parametrize(
     "non_root_app_fixture, port",
@@ -23,6 +27,7 @@ logger = logging.getLogger(__name__)
         pytest.param("django_non_root_app", 8000, id="Django non-root"),
         pytest.param("fastapi_non_root_app", 8080, id="FastAPI non-root"),
         pytest.param("go_non_root_app", 8080, id="Go non-root"),
+        pytest.param("expressjs_non_root_app", 8080, id="ExpressJS non-root"),
     ],
 )
 async def test_non_root_loki_integration(
