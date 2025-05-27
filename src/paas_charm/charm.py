@@ -538,11 +538,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Args:
             rerun_migrations: whether it is necessary to run the migrations again.
         """
+        if not self.is_ready():
+            return
+
         if rerun_migrations:
             self._database_migration.set_status_to_pending()
 
-        if not self.is_ready():
-            return
         try:
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
