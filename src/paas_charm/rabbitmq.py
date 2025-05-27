@@ -31,6 +31,7 @@ See https://github.com/openstack-charmers/charm-rabbitmq-k8s/blob/main/lib/charm
 
 import logging
 import urllib.parse
+from typing import NamedTuple
 
 from ops import CharmBase, HookEvent
 from ops.framework import EventBase, EventSource, Object, ObjectEvents
@@ -97,6 +98,18 @@ class RabbitMQRelationData(BaseModel):
         # vhost component of a uri should be url encoded
         vhost = urllib.parse.quote(self.vhost, safe="")
         return f"amqp://{self.username}:{self.password}@{self.hostname}:{self.port}/{vhost}"
+
+
+class Credentials(NamedTuple):
+    """Credentials wrapper.
+
+    Attributes:
+        hostname: The connection hostname.
+        password: The connection password.
+    """
+
+    hostname: str
+    password: str
 
 
 class RabbitMQRequires(Object):
@@ -166,8 +179,8 @@ class RabbitMQRequires(Object):
         return self.framework.model.get_relation(self.relation_name)
 
     @property
-    def _rabbitmq_server_connection_params(self) -> tuple[str, str] | None:
-        """The RabbitMQ password."""
+    def _rabbitmq_server_connection_params(self) -> Credentials | None:
+        """The RabbitMQ hostname, password."""
         if not self._rabbitmq_rel:
             return None
         for unit in self._rabbitmq_rel.units:
@@ -177,17 +190,18 @@ class RabbitMQRequires(Object):
             hostname = unit_data.get("hostname", None)
             password = unit_data.get("password", None)
             if hostname and password:
-                return (hostname, password)
+                return Credentials(hostname, password)
         return None
 
     @property
-    def _rabbitmq_k8s_connection_params(self) -> tuple[str, str] | None:
+    def _rabbitmq_k8s_connection_params(self) -> Credentials | None:
+        """The RabbitMQ hostname, password."""
         if not self._rabbitmq_rel:
             return None
         hostname = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("hostname", None)
         password = self._rabbitmq_rel.data[self._rabbitmq_rel.app].get("password", None)
         if hostname and password:
-            return (hostname, password)
+            return Credentials(hostname, password)
         return None
 
     def request_access(self, username: str, vhost: str) -> None:
@@ -216,11 +230,11 @@ class RabbitMQRequires(Object):
         password = None
         hostname = None
         if self._rabbitmq_k8s_connection_params:
-            hostname = self._rabbitmq_k8s_connection_params[0]
-            password = self._rabbitmq_k8s_connection_params[1]
+            hostname = self._rabbitmq_k8s_connection_params.hostname
+            password = self._rabbitmq_k8s_connection_params.password
         elif self._rabbitmq_server_connection_params:
-            hostname = self._rabbitmq_server_connection_params[0]
-            password = self._rabbitmq_server_connection_params[1]
+            hostname = self._rabbitmq_server_connection_params.hostname
+            password = self._rabbitmq_server_connection_params.password
 
         if not password or not hostname:
             return None

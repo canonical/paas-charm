@@ -3,3 +3,5 @@ ignore_files:
   - examples/fastapi/charm/lib/charms/redis_k8s/v0/redis.py
   - examples/flask/lib/charms/redis_k8s/v0/redis.py
   - examples/go/charm/lib/charms/redis_k8s/v0/redis.py
+  - examples/expressjs/charm/lib/charms/redis_k8s/v0/redis.py
+  - examples/flask-minimal/charm/lib/charms/redis_k8s/v0/redis.py

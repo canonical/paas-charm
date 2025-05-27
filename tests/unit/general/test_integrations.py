@@ -30,6 +30,7 @@ from paas_charm.charm_state import (
 )
 from paas_charm.exceptions import CharmConfigInvalidError
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
 from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
     FLASK_CONTAINER_NAME,
@@ -394,6 +395,7 @@ def _test_integrations_env_parameters():
         pytest.param("flask", "flask_container_mock", id="flask"),
         pytest.param("django", "django_container_mock", id="django"),
         pytest.param("go", "go_container_mock", id="go"),
+        pytest.param("expressjs", "expressjs_container_mock", id="expressjs"),
         pytest.param("fastapi", "fastapi_container_mock", id="fastapi"),
     ],
 )
@@ -692,6 +694,7 @@ def test_missing_required_other_integrations(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_smtp_relation(
@@ -737,6 +740,7 @@ def test_smtp_relation(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_smtp_not_activated(
@@ -777,6 +781,7 @@ def test_smtp_not_activated(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_openfga_relation(
@@ -820,6 +825,7 @@ def test_openfga_relation(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_openfga_not_activated(
@@ -847,7 +853,8 @@ def test_openfga_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness", ["flask_harness", "django_harness", "fastapi_harness", "go_harness"]
+    "app_harness",
+    ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
 )
 def test_secret_storage_relation_departed_hook(
     app_harness: str,

@@ -1,13 +1,15 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 import json
 import logging
 import pathlib
+import subprocess
+from collections.abc import Generator
+from typing import cast
 
+import jubilant
 import pytest
 import pytest_asyncio
-import yaml
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
@@ -15,14 +17,22 @@ from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.helpers import (
+    inject_charm_config,
+    inject_venv,
+)
+from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
 
 NON_OPTIONAL_CONFIGS = {
-    "non-optional-bool": {"type": "boolean", "optional": False},
-    "non-optional-int": {"type": "int", "optional": False},
+    "config": {
+        "options": {
+            "non-optional-bool": {"type": "boolean", "optional": False},
+            "non-optional-int": {"type": "int", "optional": False},
+        }
+    }
 }
 
 
@@ -71,91 +81,89 @@ def fixture_test_db_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-async def build_charm_file_with_dict(
+@pytest.fixture(scope="module", name="test_db_flask_image")
+def fixture_test_db_flask_image(pytestconfig: Config):
+    """Return the --test-flask-image test parameter."""
+    test_flask_image = pytestconfig.getoption("--test-db-flask-image")
+    if not test_flask_image:
+        raise ValueError("the following arguments are required: --test-db-flask-image")
+    return test_flask_image
+
+
+@pytest.fixture(scope="module", name="expressjs_app_image")
+def fixture_expressjs_app_image(pytestconfig: Config):
+    """Return the --expressjs-app-image test parameter."""
+    image = pytestconfig.getoption("--expressjs-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --expressjs-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="flask_minimal_app_image")
+def fixture_flask_minimal_app_image(pytestconfig: Config):
+    """Return the --expressjs-app-image test parameter."""
+    image = pytestconfig.getoption("--flask-minimal-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --flask-minimal-app-image")
+    return image
+
+
+def build_charm_file(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
+    framework: str,
     tmp_path_factory,
-    framework,
-    charm_dict: dict,
+    charm_dict: dict = None,
 ) -> str:
-    """Get the existing charm file if it exists. If not, build a new one and append
-    the supplied dictionary to the charmcraft.yaml file."""
+    """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
         (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f),
         None,
     )
 
     if not charm_file:
-        tmp_charm_location = tmp_path_factory.mktemp(framework)
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         if framework == "flask":
             charm_location = PROJECT_ROOT / f"examples/{framework}"
+        try:
+            subprocess.run(
+                [
+                    "charmcraft",
+                    "pack",
+                ],
+                cwd=charm_location,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            app_name = f"{framework}-k8s"
+            charm_path = pathlib.Path(charm_location)
+            charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
+            assert charms, f"{app_name} .charm file not found"
+            assert (
+                len(charms) == 1
+            ), f"{app_name} has more than one .charm file, please remove any undesired .charm files"
+            charm_file = str(charms[0])
+        except subprocess.CalledProcessError as exc:
+            raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
 
-        charmcraft_yaml = yaml.safe_load((charm_location / "charmcraft.yaml").read_text())
-        charmcraft_yaml.update(charm_dict)
-        (tmp_charm_location / "charmcraft.yaml").write_text(yaml.dump(charmcraft_yaml))
-        charm_file = await ops_test.build_charm(charm_location)
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    return pathlib.Path(charm_file).absolute()
-
-
-async def build_charm_file(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory, framework
-) -> str:
-    """Get the existing charm file if exists, build a new one if not."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
-    )
-
-    if not charm_file:
-        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
-        charm_file = await ops_test.build_charm(charm_location)
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    return pathlib.Path(charm_file).absolute()
-
-
-async def build_charm_file_with_config_options(
-    pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
-    framework: str,
-    config_options: dict,
-) -> str:
-    """Get the existing charm file if exists, build a new one if not."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f), None
-    )
-
-    if not charm_file:
-        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
-        charm_file = await ops_test.build_charm(charm_location)
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-
-    charm_file = inject_charm_config(
-        charm_file,
-        config_options,
-        tmp_path_factory.mktemp(framework),
-    )
+    if charm_dict:
+        charm_file = inject_charm_config(
+            charm_file,
+            charm_dict,
+            tmp_path_factory.mktemp(framework),
+        )
     return pathlib.Path(charm_file).absolute()
 
 
 @pytest_asyncio.fixture(scope="module", name="flask_app")
 async def flask_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     test_flask_image: str,
+    tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-flask image."""
     app_name = "flask-k8s"
@@ -163,7 +171,11 @@ async def flask_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "flask")
+    charm_file = build_charm_file(
+        pytestconfig,
+        "flask",
+        tmp_path_factory,
+    )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -188,11 +200,10 @@ async def deploy_loki_fixture(
 @pytest_asyncio.fixture(scope="module", name="flask_non_root_db_app")
 async def flask_non_root_db_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     postgresql_k8s,
     model: Model,
     test_db_flask_image: str,
+    tmp_path_factory,
 ):
     """Build and deploy the non-root flask charm with test-db-flask image."""
     app_name = "flask-k8s"
@@ -200,8 +211,8 @@ async def flask_non_root_db_app_fixture(
     resources = {
         "flask-app-image": test_db_flask_image,
     }
-    charm_file = await build_charm_file_with_dict(
-        pytestconfig, ops_test, tmp_path_factory, "flask", {"charm-user": "non-root"}
+    charm_file = build_charm_file(
+        pytestconfig, "flask", tmp_path_factory, {"charm-user": "non-root"}
     )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
@@ -214,10 +225,9 @@ async def flask_non_root_db_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="flask_non_root_app")
 async def flask_non_root_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     test_flask_image: str,
+    tmp_path_factory,
 ):
     """Build and deploy the non-root flask charm with test-flask image and non-root charm user."""
     app_name = "flask-k8s"
@@ -225,8 +235,8 @@ async def flask_non_root_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file_with_dict(
-        pytestconfig, ops_test, tmp_path_factory, "flask", {"charm-user": "non-root"}
+    charm_file = build_charm_file(
+        pytestconfig, "flask", tmp_path_factory, {"charm-user": "non-root"}
     )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
@@ -238,10 +248,9 @@ async def flask_non_root_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="flask_blocked_app")
 async def flask_blocked_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     test_flask_image: str,
+    tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-flask image."""
     app_name = "flask-k8s"
@@ -249,9 +258,7 @@ async def flask_blocked_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = await build_charm_file_with_config_options(
-        pytestconfig, ops_test, tmp_path_factory, "flask", NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "flask", tmp_path_factory, NON_OPTIONAL_CONFIGS)
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -262,11 +269,10 @@ async def flask_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="django_app")
 async def django_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the Django charm with django-app image."""
     app_name = "django-k8s"
@@ -274,7 +280,7 @@ async def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "django")
+    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
 
     app = await model.deploy(
         charm_file,
@@ -291,11 +297,10 @@ async def django_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="django_blocked_app")
 async def django_blocked_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the Django charm with django-app image."""
     app_name = "django-k8s"
@@ -303,9 +308,7 @@ async def django_blocked_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file_with_config_options(
-        pytestconfig, ops_test, tmp_path_factory, "django", NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory, NON_OPTIONAL_CONFIGS)
 
     app = await model.deploy(
         charm_file,
@@ -323,11 +326,10 @@ async def django_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="django_non_root_app")
 async def django_non_root_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the non-root Django charm with django-app image."""
     app_name = "django-k8s"
@@ -335,8 +337,8 @@ async def django_non_root_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = await build_charm_file_with_dict(
-        pytestconfig, ops_test, tmp_path_factory, "django", {"charm-user": "non-root"}
+    charm_file = build_charm_file(
+        pytestconfig, "django", tmp_path_factory, {"charm-user": "non-root"}
     )
 
     app = await model.deploy(
@@ -354,11 +356,10 @@ async def django_non_root_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="fastapi_app")
 async def fastapi_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
@@ -366,7 +367,7 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "fastapi")
+    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -381,19 +382,16 @@ async def fastapi_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="fastapi_blocked_app")
 async def fastapi_blocked_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = await build_charm_file_with_config_options(
-        pytestconfig, ops_test, tmp_path_factory, "fastapi", NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory, NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -404,18 +402,17 @@ async def fastapi_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="fastapi_non_root_app")
 async def fastapi_non_root_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
+    tmp_path_factory,
 ):
     """Build and deploy the non-root FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = await build_charm_file_with_dict(
-        pytestconfig, ops_test, tmp_path_factory, "fastapi", {"charm-user": "non-root"}
+    charm_file = build_charm_file(
+        pytestconfig, "fastapi", tmp_path_factory, {"charm-user": "non-root"}
     )
     app = await model.deploy(
         charm_file,
@@ -431,11 +428,10 @@ async def fastapi_non_root_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="go_app")
 async def go_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     go_app_image: str,
     postgresql_k8s,
+    tmp_path_factory,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "go-k8s"
@@ -443,7 +439,7 @@ async def go_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_charm_file(pytestconfig, ops_test, tmp_path_factory, "go")
+    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
@@ -453,11 +449,10 @@ async def go_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="go_blocked_app")
 async def go_blocked_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     go_app_image: str,
     postgresql_k8s,
+    tmp_path_factory,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "go-k8s"
@@ -465,9 +460,7 @@ async def go_blocked_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_charm_file_with_config_options(
-        pytestconfig, ops_test, tmp_path_factory, "go", NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory, NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -478,11 +471,10 @@ async def go_blocked_app_fixture(
 @pytest_asyncio.fixture(scope="module", name="go_non_root_app")
 async def go_non_root_app_fixture(
     pytestconfig: pytest.Config,
-    ops_test: OpsTest,
-    tmp_path_factory,
     model: Model,
     go_app_image: str,
     postgresql_k8s,
+    tmp_path_factory,
 ):
     """Build and deploy the non-root Go charm with go-app image."""
     app_name = "go-k8s"
@@ -490,8 +482,99 @@ async def go_non_root_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = await build_charm_file_with_dict(
-        pytestconfig, ops_test, tmp_path_factory, "go", {"charm-user": "non-root"}
+    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory, {"charm-user": "non-root"})
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    return app
+
+
+@pytest.fixture(scope="module", name="expressjs_app")
+def expressjs_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+):
+    """ExpressJS charm used for integration testing.
+    Builds the charm and deploys it and the relations it depends on.
+    """
+    app_name = "expressjs-k8s"
+
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        return App(app_name)
+
+    juju.deploy(
+        "postgresql-k8s",
+        channel="14/stable",
+        base="ubuntu@22.04",
+        revision=300,
+        trust=True,
+        config={
+            "profile": "testing",
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+        },
+    )
+
+    resources = {
+        "app-image": pytestconfig.getoption("--expressjs-app-image"),
+    }
+    charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
+    juju.deploy(
+        charm=charm_file,
+        resources=resources,
+    )
+
+    # Add required relations
+    juju.integrate(app_name, "postgresql-k8s:database")
+    juju.wait(
+        lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]), timeout=300
+    )
+
+    return App(app_name)
+
+
+@pytest_asyncio.fixture(scope="module", name="expressjs_blocked_app")
+async def expressjs_blocked_app_fixture(
+    pytestconfig: pytest.Config,
+    model: Model,
+    expressjs_app_image: str,
+    postgresql_k8s,
+    tmp_path_factory,
+):
+    """Build and deploy the ExpressJS charm with expressjs-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = build_charm_file(
+        pytestconfig, "expressjs", tmp_path_factory, NON_OPTIONAL_CONFIGS
+    )
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="expressjs_non_root_app")
+async def expressjs_non_root_app_fixture(
+    pytestconfig: pytest.Config,
+    model: Model,
+    expressjs_app_image: str,
+    postgresql_k8s,
+    tmp_path_factory,
+):
+    """Build and deploy the non-root Go charm with go-app image."""
+    app_name = "expressjs-k8s"
+
+    resources = {
+        "app-image": expressjs_app_image,
+    }
+    charm_file = build_charm_file(
+        pytestconfig, "expressjs", tmp_path_factory, {"charm-user": "non-root"}
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
@@ -543,7 +626,7 @@ async def deploy_rabbitmq_server_fixture(
 
     await lxd_model.wait_for_idle(raise_on_blocked=True)
     await lxd_model.create_offer("rabbitmq-server:amqp")
-    yield app
+    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="rabbitmq_k8s_app")  # autouse=True)
@@ -569,7 +652,7 @@ async def deploy_rabbitmq_k8s_fixture(
         )
 
     await model.wait_for_idle(raise_on_blocked=True)
-    yield app
+    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="get_unit_ips")
@@ -669,24 +752,6 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
             raise e
 
 
-@pytest_asyncio.fixture(scope="module", name="openfga_server_app")
-async def deploy_openfga_server_fixture(model: Model, postgresql_k8s: Application):
-    """Deploy openfga k8s charm."""
-    try:
-        openfga_server_app = await model.deploy("openfga-k8s", channel="latest/stable")
-        await model.integrate(openfga_server_app.name, postgresql_k8s.name)
-        await model.wait_for_idle(
-            apps=[openfga_server_app.name, postgresql_k8s.name], status="active"
-        )
-        return openfga_server_app
-    except JujuError as e:
-        if "application already exists" in str(e):
-            logger.info(f"openfga-k8s is already deployed {e}")
-            return model.applications["openfga-k8s"]
-        else:
-            raise e
-
-
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
 async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
     """Deploy Redis k8s charm."""
@@ -716,3 +781,34 @@ def run_action(ops_test: OpsTest):
         return action.results
 
     return _run_action
+
+
+@pytest.fixture(scope="module")
+def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
+    """Pytest fixture that wraps :meth:`jubilant.with_model`."""
+
+    def show_debug_log(juju: jubilant.Juju):
+        if request.session.testsfailed:
+            log = juju.debug_log(limit=1000)
+            print(log, end="")
+
+    use_existing = request.config.getoption("--use-existing", default=False)
+    if use_existing:
+        juju = jubilant.Juju()
+        yield juju
+        show_debug_log(juju)
+        return
+
+    model = request.config.getoption("--model")
+    if model:
+        juju = jubilant.Juju(model=model)
+        yield juju
+        show_debug_log(juju)
+        return
+
+    keep_models = cast(bool, request.config.getoption("--keep-models"))
+    with jubilant.temp_model(keep=keep_models) as juju:
+        juju.wait_timeout = 10 * 60
+        yield juju
+        show_debug_log(juju)
+        return

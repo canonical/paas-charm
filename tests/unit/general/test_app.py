@@ -205,9 +205,9 @@ def test_s3_environ_mapper_generate_env(relation_data, expected_env):
                 certificates=("https://login.staging.ubuntu.com/saml/", "test-certificate-2"),
                 endpoints=(
                     SamlEndpoint(
-                        name="single_sign_on_service_redirect_url",
+                        name="SingleSignOnService",
                         url="http://testing-redirect-url.test",
-                        binding="test-binding",
+                        binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
                         response_url="http://response-url.test",
                     ),
                     SamlEndpoint(

@@ -22,10 +22,13 @@ from pydantic import (
 
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRelationData, RabbitMQRequires
+from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
+
+if typing.TYPE_CHECKING:
+    from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -348,21 +351,21 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3: "S3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
-    rabbitmq: "RabbitMQRelationData" | None = None
+    rabbitmq: "RabbitMQRelationData | None" = None
     tempo: "TempoRelationData | None" = None
     smtp_parameters: "SmtpParameters | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
     @classmethod
-    def build(  # pylint: disable=too-many-arguments,too-many-locals
+    def build(  # pylint: disable=too-many-arguments
         cls,
         *,
         redis_relation_data: PaaSRedisRelationData | None,
         database_requirers: dict[str, DatabaseRequires],
         s3_relation_data: "S3RelationData | None" = None,
         saml_relation_data: "PaaSSAMLRelationData| None" = None,
-        rabbitmq_relation_data: "RabbitMQRelationData" | None = None,
+        rabbitmq_relation_data: "RabbitMQRelationData | None" = None,
         tempo_relation_data: "TempoRelationData | None" = None,
         smtp_relation_data: dict | None = None,
         openfga_relation_data: dict | None = None,
