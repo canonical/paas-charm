@@ -116,9 +116,9 @@ def test_paas_saml_relation_data_properties():
                 response_url="http://test-response-url.test",
             ),
             SamlEndpoint(
-                name="single_sign_on_service_redirect_url",
+                name="SingleSignOnService",
                 url="http://test-single-signon-url.test",
-                binding="test-binding-2",
+                binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
                 response_url="http://test-response-url.test",
             ),
         ],

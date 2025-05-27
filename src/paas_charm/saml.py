@@ -31,15 +31,12 @@ class PaaSSAMLRelationData(SamlRelationData):
     @property
     def single_sign_on_redirect_url(self) -> str | None:
         """Sign on redirect URL for the SP."""
-        logger.info(
-            "[DEBUG]ENDPOINTS: %s",
-            list(
-                (endpoint.name, endpoint.url, endpoint.response_url, endpoint.binding)
-                for endpoint in self.endpoints
-            ),
-        )
         for endpoint in self.endpoints:
-            if endpoint.name == "single_sign_on_service_redirect_url" and endpoint.url:
+            if (
+                endpoint.name == "SingleSignOnService"
+                and endpoint.url
+                and "redirect" in endpoint.binding.lower()
+            ):
                 return str(endpoint.url)
         return None
 
