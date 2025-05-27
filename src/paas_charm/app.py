@@ -18,6 +18,8 @@ from paas_charm.database_migration import DatabaseMigration
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from charms.smtp_integrator.v0.smtp import SmtpRelationData
+
     from paas_charm.s3 import S3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
 
@@ -143,6 +145,34 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     )
 
 
+def generate_stmp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from SAML relation data.
+
+    Args:
+        relation_data: The charm SAML integration relation data.
+
+    Returns:
+        SAML environment mappings if SAML relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("SMTP_HOST", relation_data.host),
+            ("SMTP_PORT", str(relation_data.port)),
+            ("SMTP_USER", relation_data.user),
+            ("SMTP_PASSWORD", relation_data.password),
+            ("SMTP_AUTH_TYPE", relation_data.auth_type.value),
+            ("SMTP_TRANSPORT_SECURITY", relation_data.transport_security.value),
+            ("SMTP_DOMAIN", relation_data.domain),
+            ("SMTP_SKIP_SSL_VERIFY", str(relation_data.skip_ssl_verify)),
+        )
+        if v is not None and v not in ("none")
+    }
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -151,10 +181,12 @@ class App:  # pylint: disable=too-many-instance-attributes
     Attributes:
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
+        generate_stmp_env: Maps STMP connection information to environment variables.
     """
 
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
+    generate_stmp_env = staticmethod(generate_stmp_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -262,6 +294,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
+        env.update(self.generate_stmp_env(relation_data=self._charm_state.integrations.smtp))
         return env
 
     @property
@@ -376,23 +409,6 @@ def map_integrations_to_env(  # noqa: C901
     if integrations.rabbitmq_uri:
         rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
         env.update(rabbitmq_envvars)
-
-    if integrations.smtp_parameters:
-        smtp = integrations.smtp_parameters
-        env.update(
-            (k, v)
-            for k, v in (
-                ("SMTP_HOST", smtp.host),
-                ("SMTP_PORT", str(smtp.port)),
-                ("SMTP_USER", smtp.user),
-                ("SMTP_PASSWORD", smtp.password),
-                ("SMTP_AUTH_TYPE", smtp.auth_type),
-                ("SMTP_TRANSPORT_SECURITY", smtp.transport_security),
-                ("SMTP_DOMAIN", smtp.domain),
-                ("SMTP_SKIP_SSL_VERIFY", smtp.skip_ssl_verify),
-            )
-            if v is not None
-        )
 
     if integrations.openfga_parameters:
         fga = integrations.openfga_parameters

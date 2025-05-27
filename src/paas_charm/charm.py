@@ -515,7 +515,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["tracing"].optional:
                 yield "tracing"
 
-        if self._smtp and not charm_state.integrations.smtp_parameters:
+        if self._smtp and not charm_state.integrations.smtp:
             if not requires["smtp"].optional:
                 yield "smtp"
 

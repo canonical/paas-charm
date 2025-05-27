@@ -65,7 +65,7 @@ try:
     # the import is used for type hinting
     # pylint: disable=ungrouped-imports
     # pylint: disable=unused-import
-    from charms.smtp_integrator.v0.smtp import SmtpRequires
+    from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
 except ImportError:
     # we already logged it in charm.py
     pass
@@ -198,7 +198,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 ),
                 tracing_requirer=integration_requirers.tracing,
                 smtp_relation_data=(
-                    smtp_data.to_relation_data()
+                    smtp_data
                     if (
                         integration_requirers.smtp
                         and (smtp_data := integration_requirers.smtp.get_relation_data())
@@ -338,7 +338,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         saml: SAML parameters.
         rabbitmq_uri: RabbitMQ uri.
         tempo_parameters: Tracing parameters.
-        smtp_parameters: Smtp parameters.
+        smtp: Smtp parameters.
         openfga_parameters: OpenFGA parameters.
     """
 
@@ -348,7 +348,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     saml: "PaaSSAMLRelationData | None" = None
     rabbitmq_uri: str | None = None
     tempo_parameters: "TempoParameters | None" = None
-    smtp_parameters: "SmtpParameters | None" = None
+    smtp: "SmtpRelationData | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
 
     # This dataclass combines all the integrations, so it is reasonable that they stay together.
@@ -363,7 +363,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         rabbitmq_uri: str | None = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
-        smtp_relation_data: dict | None = None,
+        smtp_relation_data: SmtpRelationData | None = None,
         openfga_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
@@ -389,7 +389,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
                 "endpoint": tracing_requirer.get_endpoint(protocol="otlp_http"),
             }
         tempo_parameters = generate_relation_parameters(tempo_data, TempoParameters)
-        smtp_parameters = generate_relation_parameters(smtp_relation_data, SmtpParameters)
         openfga_parameters = generate_relation_parameters(openfga_relation_data, OpenfgaParameters)
 
         # Workaround as the Redis library temporarily sends the port
@@ -408,7 +407,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
             saml=saml_relation_data,
             rabbitmq_uri=rabbitmq_uri,
             tempo_parameters=tempo_parameters,
-            smtp_parameters=smtp_parameters,
+            smtp=smtp_relation_data,
             openfga_parameters=openfga_parameters,
         )
 

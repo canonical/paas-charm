@@ -10,7 +10,12 @@ from types import NoneType
 
 import pytest
 from charms.openfga_k8s.v1.openfga import OpenFGARequires
-from charms.smtp_integrator.v0.smtp import SmtpRequires
+from charms.smtp_integrator.v0.smtp import (
+    AuthType,
+    SmtpRelationData,
+    SmtpRequires,
+    TransportSecurity,
+)
 from ops import ActiveStatus, RelationMeta, RelationRole
 
 import paas_charm
@@ -103,21 +108,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With RabbitMQ, prefix: {prefix}",
     )
-    smtp_env = pytest.param(
-        IntegrationsState(
-            smtp_parameters=generate_relation_parameters(
-                SMTP_RELATION_DATA_EXAMPLE, SmtpParameters
-            )
-        ),
-        prefix,
-        {
-            f"{prefix}SMTP_DOMAIN": "example.com",
-            f"{prefix}SMTP_HOST": "test-ip",
-            f"{prefix}SMTP_PORT": "1025",
-            f"{prefix}SMTP_SKIP_SSL_VERIFY": "False",
-        },
-        id=f"With SMTP, prefix: {prefix}",
-    )
     databases_env = pytest.param(
         IntegrationsState(
             databases_uris={
@@ -185,7 +175,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         redis_env,
         tempo_env,
         rabbitmq_env,
-        smtp_env,
         databases_env,
         openfga_env,
     ]
@@ -369,19 +358,19 @@ def _test_integrations_state_build_parameters():
             id="Tempo not ready",
         ),
         pytest.param(
-            {**relation_dict, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
+            {
+                **relation_dict,
+                "smtp_relation_data": SmtpRelationData(
+                    auth_type=AuthType.NONE,
+                    domain="example.com",
+                    host="test-ip",
+                    port=1025,
+                    skip_ssl_verify=False,
+                    transport_security=TransportSecurity.NONE,
+                ),
+            },
             False,
             id="Smtp correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "smtp_relation_data": {}},
-            False,
-            id="Smtp empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "smtp_relation_data": {"wrong_key": "wrong_value"}},
-            True,
-            id="Smtp wrong parameters",
         ),
         pytest.param(
             {**relation_dict, "redis_uri": "http://redisuri"},
