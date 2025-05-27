@@ -11,6 +11,7 @@ import pytest
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.go.charm import GoConfig
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 
 @pytest.mark.parametrize(
@@ -34,7 +35,14 @@ from paas_charm.go.charm import GoConfig
             {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
             IntegrationsState(
                 redis_uri="redis://10.1.88.132:6379",
-                rabbitmq_uri="amqp://go-app:test-password@rabbitmq.example.com/%2f",
+                rabbitmq=RabbitMQRelationData(
+                    vhost="/",
+                    port=5672,
+                    hostname="rabbitmq.example.com",
+                    username="go-app",
+                    password="test-password",
+                    amqp_uri="amqp://go-app:test-password@rabbitmq.example.com/%2f",
+                ),
             ),
             {
                 "APP_PORT": "8080",
@@ -58,11 +66,12 @@ from paas_charm.go.charm import GoConfig
                 "RABBITMQ_PASSWORD": "test-password",
                 "RABBITMQ_USERNAME": "go-app",
                 "RABBITMQ_VHOST": "/",
-                "RABBITMQ_CONNECT_STRING": "amqp://go-app:test-password@rabbitmq.example.com/%2f",
+                "RABBITMQ_CONNECT_STRING": "amqp://go-app:test-password@rabbitmq.example.com:5672/%2F",
                 "RABBITMQ_FRAGMENT": "",
-                "RABBITMQ_NETLOC": "go-app:test-password@rabbitmq.example.com",
+                "RABBITMQ_NETLOC": "go-app:test-password@rabbitmq.example.com:5672",
                 "RABBITMQ_PARAMS": "",
-                "RABBITMQ_PATH": "/%2f",
+                "RABBITMQ_PATH": "/%2F",
+                "RABBITMQ_PORT": "5672",
                 "RABBITMQ_QUERY": "",
                 "RABBITMQ_SCHEME": "amqp",
             },

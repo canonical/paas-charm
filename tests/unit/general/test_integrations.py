@@ -88,26 +88,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         },
         id=f"With Tempo, prefix: {prefix}",
     )
-    rabbitmq_env = pytest.param(
-        IntegrationsState(
-            rabbitmq_uri="amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/"
-        ),
-        prefix,
-        {
-            f"{prefix}RABBITMQ_CONNECT_STRING": "amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/",
-            f"{prefix}RABBITMQ_FRAGMENT": "",
-            f"{prefix}RABBITMQ_HOSTNAME": "rabbitmq-k8s-endpoints.testing.svc.cluster.local",
-            f"{prefix}RABBITMQ_NETLOC": "test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672",
-            f"{prefix}RABBITMQ_PARAMS": "",
-            f"{prefix}RABBITMQ_PASSWORD": "3m036hhyiDHs",
-            f"{prefix}RABBITMQ_PATH": "/",
-            f"{prefix}RABBITMQ_PORT": "5672",
-            f"{prefix}RABBITMQ_QUERY": "",
-            f"{prefix}RABBITMQ_SCHEME": "amqp",
-            f"{prefix}RABBITMQ_USERNAME": "test-app",
-        },
-        id=f"With RabbitMQ, prefix: {prefix}",
-    )
     databases_env = pytest.param(
         IntegrationsState(
             databases_uris={
@@ -174,7 +154,6 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         empty_env,
         redis_env,
         tempo_env,
-        rabbitmq_env,
         databases_env,
         openfga_env,
     ]
@@ -325,7 +304,7 @@ def _test_integrations_state_build_parameters():
         "database_requirers": {},
         "s3": None,
         "saml_relation_data": None,
-        "rabbitmq_uri": None,
+        "rabbitmq": None,
         "tracing_requirer": None,
         "app_name": None,
         "smtp_relation_data": None,
@@ -433,7 +412,7 @@ def test_integrations_state_build(
                 database_requirers=relation_dict["database_requirers"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
-                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                rabbitmq_relation_data=relation_dict["rabbitmq"],
                 tracing_requirer=relation_dict["tracing_requirer"],
                 app_name=relation_dict["app_name"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
@@ -446,7 +425,7 @@ def test_integrations_state_build(
                 database_requirers=relation_dict["database_requirers"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
-                rabbitmq_uri=relation_dict["rabbitmq_uri"],
+                rabbitmq_relation_data=relation_dict["rabbitmq"],
                 tracing_requirer=relation_dict["tracing_requirer"],
                 app_name=relation_dict["app_name"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],

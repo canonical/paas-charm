@@ -14,6 +14,7 @@ import ops
 
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,25 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_rabbitmq_env(relation_data: RabbitMQRelationData | None = None) -> dict[str, str]:
+    """Generate environment variable from RabbitMQ requirer data.
+
+    Args:
+        relation_data: The charm RabbitMQ integration relation data.
+
+    Returns:
+        RabbitMQ environment mappings if RabbitMQ requirer is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    envvars = _url_env_vars(prefix="RABBITMQ", url=relation_data.amqp_uri)
+    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
+    if len(parsed_url.path) > 1:
+        envvars["RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+    return envvars
+
+
 def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 requirer data.
 
@@ -125,24 +145,22 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     """
     if not relation_data:
         return {}
-    return dict(
-        (
-            (k, v)
-            for (k, v) in (
-                ("SAML_ENTITY_ID", relation_data.entity_id),
-                (
-                    "SAML_METADATA_URL",
-                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
-                ),
-                (
-                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
-                    relation_data.single_sign_on_redirect_url,
-                ),
-                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
-            )
-            if v is not None
+    return {
+        k: v
+        for (k, v) in (
+            ("SAML_ENTITY_ID", relation_data.entity_id),
+            (
+                "SAML_METADATA_URL",
+                str(relation_data.metadata_url) if relation_data.metadata_url else None,
+            ),
+            (
+                "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                relation_data.single_sign_on_redirect_url,
+            ),
+            ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
         )
-    )
+        if v is not None
+    }
 
 
 def generate_stmp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
@@ -179,11 +197,13 @@ class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
+        generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_stmp_env: Maps STMP connection information to environment variables.
     """
 
+    generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_stmp_env = staticmethod(generate_stmp_env)
@@ -292,6 +312,9 @@ class App:  # pylint: disable=too-many-instance-attributes
                     self._charm_state.integrations, prefix=self.integrations_prefix
                 )
             )
+        env.update(
+            self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
+        )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_stmp_env(relation_data=self._charm_state.integrations.smtp))
@@ -406,10 +429,6 @@ def map_integrations_to_env(  # noqa: C901
         if endpoint := integrations.tempo_parameters.endpoint:
             env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
 
-    if integrations.rabbitmq_uri:
-        rabbitmq_envvars = _rabbitmq_uri_to_env_variables("RABBITMQ", integrations.rabbitmq_uri)
-        env.update(rabbitmq_envvars)
-
     if integrations.openfga_parameters:
         fga = integrations.openfga_parameters
         env.update(
@@ -446,25 +465,6 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
     db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
     if db_name is not None:
         envvars[f"{prefix}_NAME"] = db_name
-    return envvars
-
-
-def _rabbitmq_uri_to_env_variables(prefix: str, url: str) -> dict[str, str]:
-    """Convert a rabbitmq uri to environment variables.
-
-    Args:
-      prefix: prefix for the environment variables
-      url: url of rabbitmq
-
-    Return:
-      All environment variables, that is, the connection string,
-      all components as returned from urllib.parse and the
-      rabbitmq vhost extracted from the path
-    """
-    envvars = _url_env_vars(prefix, url)
-    parsed_url = urllib.parse.urlparse(url)
-    if len(parsed_url.path) > 1:
-        envvars[f"{prefix}_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
     return envvars
 
 

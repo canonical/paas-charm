@@ -473,7 +473,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 if not requires[name].optional:
                     yield name
 
-        if self._rabbitmq and not charm_state.integrations.rabbitmq_uri:
+        if self._rabbitmq and not charm_state.integrations.rabbitmq:
             if not requires["rabbitmq"].optional:
                 yield "rabbitmq"
 
