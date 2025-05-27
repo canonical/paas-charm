@@ -24,9 +24,12 @@ from pydantic import (
 
 from paas_charm.databases import get_uri
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRelationData, RabbitMQRequires
+from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
+
+if typing.TYPE_CHECKING:
+    from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 

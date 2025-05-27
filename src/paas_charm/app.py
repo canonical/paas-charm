@@ -84,7 +84,7 @@ def generate_rabbitmq_env(
         prefix: The environment variable prefix.
 
     Returns:
-        RabbitMQ environment mappings if S3Requirer is available, empty
+        RabbitMQ environment mappings if RabbitMQ requirer is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -105,6 +105,7 @@ def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, 
 
     Returns:
         Default S3 environment mappings if S3Requirer is available, empty
+        dictionary otherwise.
     """
     if not relation_data:
         return {}
@@ -146,24 +147,22 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     """
     if not relation_data:
         return {}
-    return dict(
-        (
-            (k, v)
-            for (k, v) in (
-                ("SAML_ENTITY_ID", relation_data.entity_id),
-                (
-                    "SAML_METADATA_URL",
-                    str(relation_data.metadata_url) if relation_data.metadata_url else None,
-                ),
-                (
-                    "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
-                    relation_data.single_sign_on_redirect_url,
-                ),
-                ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
-            )
-            if v is not None
+    return {
+        k: v
+        for (k, v) in (
+            ("SAML_ENTITY_ID", relation_data.entity_id),
+            (
+                "SAML_METADATA_URL",
+                str(relation_data.metadata_url) if relation_data.metadata_url else None,
+            ),
+            (
+                "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
+                relation_data.single_sign_on_redirect_url,
+            ),
+            ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
         )
-    )
+        if v is not None
+    }
 
 
 # too-many-instance-attributes is disabled because this class
