@@ -31,6 +31,7 @@ from paas_charm.charm_state import (
 )
 from paas_charm.exceptions import CharmConfigInvalidError
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
+from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
 from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
     FLASK_CONTAINER_NAME,
@@ -39,7 +40,7 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.general.conftest import MockTracingEndpointRequirer
+from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -330,7 +331,7 @@ def _test_integrations_state_build_parameters():
         pytest.param(
             {
                 **relation_dict,
-                "tracing_requirer": MockTracingEndpointRequirer(True, "localhost:1234"),
+                "tracing_requirer": FakeTracingEndpointRequirer(True, "localhost:1234"),
                 "app_name": "app_name",
             },
             False,
@@ -342,7 +343,7 @@ def _test_integrations_state_build_parameters():
             id="Tempo empty parameters",
         ),
         pytest.param(
-            {**relation_dict, "tracing_requirer": MockTracingEndpointRequirer(False, "")},
+            {**relation_dict, "tracing_requirer": FakeTracingEndpointRequirer(False, "")},
             False,
             id="Tempo not ready",
         ),
@@ -462,6 +463,7 @@ def _test_integrations_env_parameters():
         pytest.param("flask", "flask_container_mock", id="flask"),
         pytest.param("django", "django_container_mock", id="django"),
         pytest.param("go", "go_container_mock", id="go"),
+        pytest.param("expressjs", "expressjs_container_mock", id="expressjs"),
         pytest.param("fastapi", "fastapi_container_mock", id="fastapi"),
     ],
 )
@@ -760,6 +762,7 @@ def test_missing_required_other_integrations(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_smtp_relation(
@@ -805,6 +808,7 @@ def test_smtp_relation(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_smtp_not_activated(
@@ -845,6 +849,7 @@ def test_smtp_not_activated(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_openfga_relation(
@@ -888,6 +893,7 @@ def test_openfga_relation(
             id="fastapi",
         ),
         pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
     ],
 )
 def test_openfga_not_activated(
@@ -915,7 +921,8 @@ def test_openfga_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness", ["flask_harness", "django_harness", "fastapi_harness", "go_harness"]
+    "app_harness",
+    ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
 )
 def test_secret_storage_relation_departed_hook(
     app_harness: str,
