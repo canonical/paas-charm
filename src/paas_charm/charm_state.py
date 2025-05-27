@@ -346,7 +346,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_uris: dict[str, str] = field(default_factory=dict)
     s3: "S3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
-    rabbitmq: "RabbitMQRelationData" | None = None
+    rabbitmq: "RabbitMQRelationData | None" = None
     tempo_parameters: "TempoParameters | None" = None
     smtp_parameters: "SmtpParameters | None" = None
     openfga_parameters: "OpenfgaParameters | None" = None
@@ -360,7 +360,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         database_requirers: dict[str, DatabaseRequires],
         s3_relation_data: "S3RelationData | None" = None,
         saml_relation_data: "PaaSSAMLRelationData| None" = None,
-        rabbitmq_relation_data: "RabbitMQRelationData" | None = None,
+        rabbitmq_relation_data: "RabbitMQRelationData | None" = None,
         tracing_requirer: "TracingEndpointRequirer | None" = None,
         app_name: str | None = None,
         smtp_relation_data: dict | None = None,
