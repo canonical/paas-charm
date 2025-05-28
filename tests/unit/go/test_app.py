@@ -9,9 +9,10 @@ import unittest
 import pytest
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, IntegrationsState, PaaSRedisRelationData
+from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.go.charm import GoConfig
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
+from paas_charm.redis import PaaSRedisRelationData
 
 
 @pytest.mark.parametrize(
@@ -34,7 +35,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
             {"extra-config", "extravalue"},
             {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
             IntegrationsState(
-                redis_relation_data=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
+                redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
                 rabbitmq=PaaSRabbitMQRelationData(
                     vhost="/",
                     port=5672,

@@ -40,7 +40,7 @@ from paas_charm.redis import PaaSRedisRelationData
                 "app-secret-key": "notfoobar",
             },
             IntegrationsState(
-                redis_relation_data=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
+                redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
                 rabbitmq=PaaSRabbitMQRelationData(
                     port=5672,
                     hostname="rabbitmq.example.com",

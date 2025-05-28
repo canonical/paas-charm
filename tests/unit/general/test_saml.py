@@ -8,11 +8,7 @@ import pytest
 from charms.saml_integrator.v0.saml import SamlEndpoint, SamlRelationData
 from pydantic import ValidationError
 
-from paas_charm.charm_state import (
-    InvalidSAMLRelationDataError,
-    PaaSSAMLRelationData,
-    PaaSSAMLRequirer,
-)
+from paas_charm.saml import InvalidSAMLRelationDataError, PaaSSAMLRelationData, PaaSSAMLRequirer
 
 
 @pytest.mark.parametrize(

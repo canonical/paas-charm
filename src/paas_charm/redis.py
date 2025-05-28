@@ -8,6 +8,7 @@ import re
 from charms.redis_k8s.v0.redis import RedisRequires
 from pydantic import AnyUrl, BaseModel, ValidationError
 
+from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -25,8 +26,14 @@ class PaaSRedisRelationData(BaseModel):
     url: AnyUrl
 
 
-class InvalidRedisRelationDataError(Exception):
-    """Represents an error with invalid Redis relation data."""
+class InvalidRedisRelationDataError(InvalidRelationDataError):
+    """Represents an error with invalid Redis relation data.
+
+    Attributes:
+        relation: The redis relation name.
+    """
+
+    relation = "redis"
 
 
 class PaaSRedisRequires(RedisRequires):

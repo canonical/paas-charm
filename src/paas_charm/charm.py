@@ -50,7 +50,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from paas_charm.tempo import PaaSTracingEndpointRequirer
+    from paas_charm.tracing import PaaSTracingEndpointRequirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run "
@@ -489,7 +489,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._redis and not charm_state.integrations.redis_relation_data:
+        if self._redis and not charm_state.integrations.redis:
             if not requires["redis"].optional:
                 yield "redis"
 
@@ -514,7 +514,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["saml"].optional:
                 yield "saml"
 
-        if self._tracing and not charm_state.integrations.tempo:
+        if self._tracing and not charm_state.integrations.tracing:
             if not requires["tracing"].optional:
                 yield "tracing"
 

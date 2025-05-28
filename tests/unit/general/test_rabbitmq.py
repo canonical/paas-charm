@@ -48,9 +48,16 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
         ),
         pytest.param(
             {},
-            {"password": "testingvalue", "hostname": "testinghostname"},
             {},
-            None,
+            {"password": "testingvalue", "hostname": "testinghostname"},
+            PaaSRabbitMQRelationData(
+                vhost="/",
+                port=5672,
+                hostname="testinghostname",
+                username="flask-k8s",
+                password="testingvalue",
+                amqp_uri="amqp://flask-k8s:testingvalue@testinghostname:5672/",
+            ),
             id="app relation data",
         ),
     ],

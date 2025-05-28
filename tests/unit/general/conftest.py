@@ -26,8 +26,30 @@ from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.flask.constants import FLASK_CONTAINER_NAME
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.go.constants import GO_CONTAINER_NAME
+from tests.unit.test_charm.src.charm import TestCharm
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+TEST_CONTAINER_NAME = "app"
+TEST_DEFAULT_LAYER = {
+    "services": {
+        "app": {
+            "override": "replace",
+            "startup": "enabled",
+            "command": "test-command",
+            "user": "_daemon_",
+        }
+    }
+}
+
+
+@pytest.fixture(name="generic_harness")
+def generic_harness_fixture():
+    """Generic charm harness for testing."""
+    os.chdir(PROJECT_ROOT / "tests/unit/test_charm")
+    harness = _build_harness(TestCharm, TEST_CONTAINER_NAME, TEST_DEFAULT_LAYER, "app")
+    harness.begin()
+    return harness
 
 
 @pytest.fixture(name="expressjs_harness")

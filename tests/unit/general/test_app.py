@@ -21,7 +21,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
-from paas_charm.tempo import PaaSTempoRelationData
+from paas_charm.tracing import PaaSTracingRelationData
 
 
 @pytest.mark.parametrize(
@@ -369,7 +369,7 @@ def test_saml_environ_mapper_generate_env(relation_data, expected_env):
     [
         pytest.param(None, {}, id="No relation data"),
         pytest.param(
-            PaaSTempoRelationData.model_construct(
+            PaaSTracingRelationData.model_construct(
                 endpoint="http://tempo-endpoint.test",
                 service_name="app-name",
             ),
