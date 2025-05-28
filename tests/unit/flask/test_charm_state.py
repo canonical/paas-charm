@@ -8,7 +8,7 @@ from secrets import token_hex
 
 import pytest
 
-from paas_charm.charm_state import CharmState, IntegrationRequirers, S3RelationData
+from paas_charm.charm_state import CharmState, IntegrationRequirers, PaaSS3RelationData
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm
 
@@ -106,7 +106,7 @@ def test_charm_state_invalid_flask_config(charm_config: dict) -> None:
                     "bucket": "bucket",
                 }
             ),
-            S3RelationData(**relation_data),
+            PaaSS3RelationData(**relation_data),
             id="with data",
         ),
     ],
@@ -150,7 +150,7 @@ def test_s3_addressing_style(s3_uri_style, addressing_style) -> None:
         "region": "us-west-2",
         "s3-uri-style": s3_uri_style,
     }
-    s3_parameters = S3RelationData(**s3_relation_data)
+    s3_parameters = PaaSS3RelationData(**s3_relation_data)
     assert s3_parameters.addressing_style == addressing_style
 
 
@@ -200,7 +200,6 @@ def test_flask_secret_key_id_no_value():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
-            database_requirers={},
         )
 
 
@@ -223,7 +222,6 @@ def test_flask_secret_key_id_duplication():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
-            database_requirers={},
         )
 
 
@@ -232,7 +230,7 @@ def _s3_requirer_mock(relation_data: dict[str:str] | None) -> unittest.mock.Magi
     if not relation_data:
         return None
     s3 = unittest.mock.MagicMock()
-    s3.to_relation_data.return_value = S3RelationData(**relation_data)
+    s3.to_relation_data.return_value = PaaSS3RelationData(**relation_data)
     return s3
 
 

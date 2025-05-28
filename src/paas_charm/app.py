@@ -12,9 +12,8 @@ from typing import TYPE_CHECKING, List
 
 import ops
 
-from paas_charm.charm_state import CharmState, IntegrationsState
+from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
-from paas_charm.rabbitmq import RabbitMQRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +21,12 @@ if TYPE_CHECKING:
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
-    from paas_charm.s3 import S3RelationData
+    from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.rabbitmq import PaaSRabbitMQRelationData
+    from paas_charm.redis import PaaSRedisRelationData
+    from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
+    from paas_charm.tempo import PaaSTempoRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -101,7 +104,27 @@ def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) 
     }
 
 
-def generate_rabbitmq_env(relation_data: RabbitMQRelationData | None = None) -> dict[str, str]:
+def generate_db_env(
+    database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from Database relation data.
+
+    Args:
+        database_name: The name of the database, i.e. POSTGRESQL.
+        relation_data: The charm database integration relation data.
+
+    Returns:
+        Default database environment mappings if DatabaseRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
+
+
+def generate_rabbitmq_env(
+    relation_data: "PaaSRabbitMQRelationData | None" = None,
+) -> dict[str, str]:
     """Generate environment variable from RabbitMQ requirer data.
 
     Args:
@@ -120,14 +143,29 @@ def generate_rabbitmq_env(relation_data: RabbitMQRelationData | None = None) -> 
     return envvars
 
 
-def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from S3 requirer data.
+def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from Redis relation data.
+
+    Args:
+        relation_data: The charm Redis integration relation data.
+
+    Returns:
+        Redis environment mappings if Redis relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
+def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from S3 relation data.
 
     Args:
         relation_data: The charm S3 integration relation data.
 
     Returns:
-        Default S3 environment mappings if S3Requirer is available, empty
+        Default S3 environment mappings if S3RelationData is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -216,24 +254,52 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
+def generate_tempo_env(relation_data: "PaaSTempoRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from TempoRelationData.
+
+    Args:
+        relation_data: The charm Tempo integration relation data.
+
+    Returns:
+        Default Tempo tracing environment mappings if TempoRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("OTEL_SERVICE_NAME", relation_data.service_name),
+            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
+        )
+        if v is not None
+    }
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
     """Base class for the application manager.
 
     Attributes:
+        generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
+        generate_redis_env: Maps Redis connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
+        generate_tempo_env: Maps tempo tracing connection information to environment variables.
     """
 
+    generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
+    generate_redis_env = staticmethod(generate_redis_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
+    generate_tempo_env = staticmethod(generate_tempo_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -283,7 +349,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         self._run_migrations()
         self._container.replan()
 
-    def gen_environment(self) -> dict[str, str]:
+    # 2024/04/25 - we're refactoring this method which will get rid of map_integrations_to_env
+    # wrapper function. Ignore too-complex error from flake8 for now.
+    def gen_environment(self) -> dict[str, str]:  # noqa: too-complex
         """Generate a environment dictionary from the charm configurations.
 
         The environment generation follows these rules:
@@ -333,20 +401,24 @@ class App:  # pylint: disable=too-many-instance-attributes
         if self._charm_state.peer_fqdns is not None:
             env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
 
-        if self._charm_state.integrations:
-            env.update(
-                map_integrations_to_env(
-                    self._charm_state.integrations, prefix=self.integrations_prefix
-                )
-            )
-
         env.update(self.generate_openfga_env(relation_data=self._charm_state.integrations.openfga))
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
+        env.update(
+            self.generate_redis_env(
+                relation_data=self._charm_state.integrations.redis_relation_data
+            )
+        )
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
+        for (
+            database_name,
+            db_relation_data,
+        ) in self._charm_state.integrations.databases_relation_data.items():
+            env.update(self.generate_db_env(database_name, db_relation_data))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
+        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tempo))
         return env
 
     @property
@@ -431,34 +503,6 @@ def encode_env(value: str | int | float | bool | list | dict) -> str:
         The original string if the input is a string, or JSON encoded value.
     """
     return value if isinstance(value, str) else json.dumps(value)
-
-
-def map_integrations_to_env(  # noqa: C901
-    integrations: IntegrationsState, prefix: str = ""
-) -> dict[str, str]:
-    """Generate environment variables for the IntegrationState.
-
-    Args:
-       integrations: the IntegrationsState information.
-       prefix: prefix to append to the env variables.
-
-    Returns:
-       A dictionary representing the environment variables for the IntegrationState.
-    """
-    env = {}
-    if integrations.redis_uri:
-        redis_envvars = _db_url_to_env_variables("REDIS", integrations.redis_uri)
-        env.update(redis_envvars)
-    for interface_name, uri in integrations.databases_uris.items():
-        interface_envvars = _db_url_to_env_variables(interface_name.upper(), uri)
-        env.update(interface_envvars)
-    if integrations.tempo_parameters:
-        if service_name := integrations.tempo_parameters.service_name:
-            env.update({"OTEL_SERVICE_NAME": service_name})
-        if endpoint := integrations.tempo_parameters.endpoint:
-            env.update({"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint})
-
-    return {prefix + k: v for k, v in env.items()}
 
 
 def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:

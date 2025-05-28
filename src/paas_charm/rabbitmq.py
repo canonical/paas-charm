@@ -73,7 +73,7 @@ class InvalidRabbitMQRelationDataError(Exception):
     """Represents an error with invalid RabbitMQ relation data."""
 
 
-class RabbitMQRelationData(BaseModel):
+class PaaSRabbitMQRelationData(BaseModel):
     """Rabbit MQ relation data.
 
     Attributes:
@@ -218,7 +218,7 @@ class RabbitMQRequires(Object):
             self._rabbitmq_rel.data[self.charm.app]["username"] = username
             self._rabbitmq_rel.data[self.charm.app]["vhost"] = vhost
 
-    def get_relation_data(self) -> RabbitMQRelationData | None:
+    def get_relation_data(self) -> PaaSRabbitMQRelationData | None:
         """Return RabbitMQ relation data.
 
         Raises:
@@ -239,7 +239,7 @@ class RabbitMQRequires(Object):
         if not password or not hostname:
             return None
         try:
-            return RabbitMQRelationData(
+            return PaaSRabbitMQRelationData(
                 username=self.username,
                 password=password,
                 hostname=hostname,
@@ -250,5 +250,5 @@ class RabbitMQRequires(Object):
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidRabbitMQRelationDataError(
-                f"Invalid {RabbitMQRelationData.__name__}: {error_messages.short}"
+                f"Invalid {PaaSRabbitMQRelationData.__name__}: {error_messages.short}"
             ) from exc

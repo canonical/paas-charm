@@ -9,7 +9,7 @@ import typing
 
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
-from charms.redis_k8s.v0.redis import RedisRelationCharmEvents, RedisRequires
+from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -24,6 +24,7 @@ from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.redis import PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_get_with_secret
 
@@ -49,7 +50,7 @@ except ImportError:
 
 try:
     # pylint: disable=ungrouped-imports
-    from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
+    from paas_charm.tempo import PaaSTracingEndpointRequirer
 except ImportError:
     logger.warning(
         "Missing charm library, please run "
@@ -176,7 +177,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._on_pebble_ready,
         )
 
-    def _init_redis(self, requires: dict[str, RelationMeta]) -> "RedisRequires | None":
+    def _init_redis(self, requires: dict[str, RelationMeta]) -> "PaaSRedisRequires | None":
         """Initialize the Redis relation if its required.
 
         Args:
@@ -188,7 +189,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _redis = None
         if "redis" in requires and requires["redis"].interface_name == "redis":
             try:
-                _redis = RedisRequires(charm=self, relation_name="redis")
+                _redis = PaaSRedisRequires(charm=self, relation_name="redis")
                 self.framework.observe(
                     self.on.redis_relation_updated, self._on_redis_relation_updated
                 )
@@ -266,7 +267,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _rabbitmq
 
-    def _init_tracing(self, requires: dict[str, RelationMeta]) -> "TracingEndpointRequirer | None":
+    def _init_tracing(
+        self, requires: dict[str, RelationMeta]
+    ) -> "PaaSTracingEndpointRequirer | None":
         """Initialize the Tracing relation if its required.
 
         Args:
@@ -278,7 +281,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _tracing = None
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
             try:
-                _tracing = TracingEndpointRequirer(
+                _tracing = PaaSTracingEndpointRequirer(
                     self, relation_name="tracing", protocols=["otlp_http"]
                 )
                 self.framework.observe(
@@ -467,8 +470,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         for name in self._database_requirers.keys():
             if (
-                name not in charm_state.integrations.databases_uris
-                or charm_state.integrations.databases_uris[name] is None
+                name not in charm_state.integrations.databases_relation_data
+                or charm_state.integrations.databases_relation_data[name] is None
             ):
                 if not requires[name].optional:
                     yield name
@@ -486,7 +489,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._redis and not charm_state.integrations.redis_uri:
+        if self._redis and not charm_state.integrations.redis_relation_data:
             if not requires["redis"].optional:
                 yield "redis"
 
@@ -511,7 +514,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires["saml"].optional:
                 yield "saml"
 
-        if self._tracing and not charm_state.integrations.tempo_parameters:
+        if self._tracing and not charm_state.integrations.tempo:
             if not requires["tracing"].optional:
                 yield "tracing"
 
@@ -596,7 +599,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 smtp=self._smtp,
                 openfga=self._openfga,
             ),
-            app_name=self.app.name,
             base_url=self._base_url,
         )
 

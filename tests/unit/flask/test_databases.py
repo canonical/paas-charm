@@ -3,11 +3,12 @@
 
 """Flask charm database relations unit tests."""
 
-import unittest.mock
+from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.databases import get_uri
+from paas_charm.charm import PaasCharm
+from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
 
 DATABASE_GET_URI_TEST_PARAMS = [
     (
@@ -43,22 +44,136 @@ DATABASE_GET_URI_TEST_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize("relation, expected_output", DATABASE_GET_URI_TEST_PARAMS)
-def test_database_get_uri_mocked(
-    relation: tuple,
-    expected_output: dict,
-) -> None:
+@pytest.mark.parametrize(
+    "database, relation_data, expected",
+    [
+        pytest.param("postgresql", {}, None, id="No relation data"),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "password": "test-password",
+                    "endpoints": "test-endpoint",
+                }
+            },
+            None,
+            id="Missing username data",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "endpoints": "test-endpoint",
+                }
+            },
+            None,
+            id="Missing password data",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                }
+            },
+            None,
+            id="Missing endpoint data",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": "test-uri",
+                }
+            },
+            PaaSDatabaseRelationData(uris="test-uri"),
+            id="Relation data with uris",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="postgresql://test-user:test-password@test-endpoint/test-database"
+            ),
+            id="Relation data with non-uri fields",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "endpoints": "test-endpoint",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="postgresql://test-user:test-password@test-endpoint/flask-k8s"
+            ),
+            id="Relation data with non-uri fields with default database name",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "endpoints": "test-endpoint-0,test-endpoint-1",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="postgresql://test-user:test-password@test-endpoint-0/flask-k8s"
+            ),
+            id="Relation data with non-uri fields with multiple endpoints",
+        ),
+        pytest.param(
+            "mysql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "endpoints": "test-endpoint-0,test-endpoint-1",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="mysql://test-user:test-password@test-endpoint-0/flask-k8s"
+            ),
+            id="mysql",
+        ),
+        pytest.param(
+            "mongodb",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "endpoints": "test-endpoint-0,test-endpoint-1",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="mongodb://test-user:test-password@test-endpoint-0/flask-k8s"
+            ),
+            id="mongodb",
+        ),
+    ],
+)
+def test_paas_database_requires_to_relation_data(
+    monkeypatch, harness, database, relation_data, expected
+):
     """
-    arrange: mock relation database
-    act: run get_uri over the mocked database requires
-    assert: get_uri() should return the correct database uri
+    arrange: given relation data.
+    act: when PaaSDatabaseRequires.to_relation_data() is called.
+    assert: expected DatabaseRelationData is returned.
     """
-    # Create the databases mock with the relation data
-    interface = relation["interface"]
-    database_require = unittest.mock.MagicMock()
-    database_require.relation_name = interface
-    database_require.fetch_relation_data = unittest.mock.MagicMock(
-        return_value={"data": relation["data"]}
-    )
-    database_require.database = relation["data"].get("database", "flask-app")
-    assert get_uri(database_require) == expected_output
+    harness.begin()
+    charm: PaasCharm = harness.charm
+    db_requires: PaaSDatabaseRequires = charm._database_requirers[database]
+    monkeypatch.setattr(db_requires, "fetch_relation_data", MagicMock(return_value=relation_data))
+    assert db_requires.to_relation_data() == expected

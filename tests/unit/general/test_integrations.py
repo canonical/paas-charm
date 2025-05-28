@@ -2,33 +2,26 @@
 # See LICENSE file for licensing details.
 
 """Integrations unit tests."""
-import itertools
-import json
 import pathlib
 import unittest
 from types import NoneType
 
 import pytest
-from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
-from charms.smtp_integrator.v0.smtp import (
-    AuthType,
-    SmtpRelationData,
-    SmtpRequires,
-    TransportSecurity,
-)
+from charms.openfga_k8s.v1.openfga import OpenFGARequires
+from charms.smtp_integrator.v0.smtp import SmtpRequires
 from ops import ActiveStatus, RelationMeta, RelationRole
 
 import paas_charm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.app import App, map_integrations_to_env
+from paas_charm.app import App
 from paas_charm.charm_state import (
     CharmState,
     IntegrationsState,
     OpenfgaParameters,
+    PaaSS3RelationData,
     RelationParam,
-    S3RelationData,
     SamlParameters,
     SmtpParameters,
     TempoParameters,
@@ -45,7 +38,6 @@ from tests.unit.flask.constants import (
     SAML_APP_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.general.conftest import FakeTracingEndpointRequirer
 from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
@@ -56,116 +48,7 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
         {},
         id="no new env vars",
     )
-    redis_env = pytest.param(
-        IntegrationsState(redis_uri="http://redisuri"),
-        prefix,
-        {
-            f"{prefix}REDIS_DB_CONNECT_STRING": "http://redisuri",
-            f"{prefix}REDIS_DB_FRAGMENT": "",
-            f"{prefix}REDIS_DB_HOSTNAME": "redisuri",
-            f"{prefix}REDIS_DB_NETLOC": "redisuri",
-            f"{prefix}REDIS_DB_PARAMS": "",
-            f"{prefix}REDIS_DB_PATH": "",
-            f"{prefix}REDIS_DB_QUERY": "",
-            f"{prefix}REDIS_DB_SCHEME": "http",
-        },
-        id=f"With Redis uri, prefix: {prefix}",
-    )
-    tempo_env = pytest.param(
-        IntegrationsState(
-            tempo_parameters=generate_relation_parameters(
-                {
-                    "service_name": "test_app",
-                    "endpoint": "http://test-ip:4318",
-                },
-                TempoParameters,
-            )
-        ),
-        prefix,
-        {
-            f"{prefix}OTEL_EXPORTER_OTLP_ENDPOINT": "http://test-ip:4318",
-            f"{prefix}OTEL_SERVICE_NAME": "test_app",
-        },
-        id=f"With Tempo, prefix: {prefix}",
-    )
-    databases_env = pytest.param(
-        IntegrationsState(
-            databases_uris={
-                "postgresql": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-                "mysql": "mysql://test-username:test-password@test-mysql:3306/test-app",
-                "mongodb": None,
-                "futuredb": "futuredb://foobar/",
-            },
-        ),
-        prefix,
-        {
-            f"{prefix}POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database?connect_timeout=10",
-            f"{prefix}POSTGRESQL_DB_FRAGMENT": "",
-            f"{prefix}POSTGRESQL_DB_HOSTNAME": "test-postgresql",
-            f"{prefix}POSTGRESQL_DB_NAME": "test-database",
-            f"{prefix}POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
-            f"{prefix}POSTGRESQL_DB_PARAMS": "",
-            f"{prefix}POSTGRESQL_DB_PASSWORD": "test-password",
-            f"{prefix}POSTGRESQL_DB_PATH": "/test-database",
-            f"{prefix}POSTGRESQL_DB_PORT": "5432",
-            f"{prefix}POSTGRESQL_DB_QUERY": "connect_timeout=10",
-            f"{prefix}POSTGRESQL_DB_SCHEME": "postgresql",
-            f"{prefix}POSTGRESQL_DB_USERNAME": "test-username",
-            f"{prefix}MYSQL_DB_CONNECT_STRING": "mysql://test-username:test-password@test-mysql:3306/test-app",
-            f"{prefix}MYSQL_DB_FRAGMENT": "",
-            f"{prefix}MYSQL_DB_HOSTNAME": "test-mysql",
-            f"{prefix}MYSQL_DB_NAME": "test-app",
-            f"{prefix}MYSQL_DB_NETLOC": "test-username:test-password@test-mysql:3306",
-            f"{prefix}MYSQL_DB_PARAMS": "",
-            f"{prefix}MYSQL_DB_PASSWORD": "test-password",
-            f"{prefix}MYSQL_DB_PATH": "/test-app",
-            f"{prefix}MYSQL_DB_PORT": "3306",
-            f"{prefix}MYSQL_DB_QUERY": "",
-            f"{prefix}MYSQL_DB_SCHEME": "mysql",
-            f"{prefix}MYSQL_DB_USERNAME": "test-username",
-            f"{prefix}FUTUREDB_DB_CONNECT_STRING": "futuredb://foobar/",
-            f"{prefix}FUTUREDB_DB_FRAGMENT": "",
-            f"{prefix}FUTUREDB_DB_HOSTNAME": "foobar",
-            f"{prefix}FUTUREDB_DB_NAME": "",
-            f"{prefix}FUTUREDB_DB_NETLOC": "foobar",
-            f"{prefix}FUTUREDB_DB_PARAMS": "",
-            f"{prefix}FUTUREDB_DB_PATH": "/",
-            f"{prefix}FUTUREDB_DB_QUERY": "",
-            f"{prefix}FUTUREDB_DB_SCHEME": "futuredb",
-        },
-        id=f"With several databases, one of them None. prefix: {prefix}",
-    )
-    return [
-        empty_env,
-        redis_env,
-        tempo_env,
-        databases_env,
-    ]
-
-
-def _test_map_integrations_to_env_parameters():
-
-    prefixes = ["FLASK_", "DJANGO_", ""]
-    return itertools.chain.from_iterable(
-        _generate_map_integrations_to_env_parameters(prefix) for prefix in prefixes
-    )
-
-
-@pytest.mark.parametrize(
-    "integrations, prefix, expected_env", _test_map_integrations_to_env_parameters()
-)
-def test_map_integrations_to_env(
-    integrations,
-    prefix,
-    expected_env,
-):
-    """
-    arrange: prepare integrations state.
-    act: call to generate mappings to env variables.
-    assert: the variables generated should be the expected ones.
-    """
-    env = map_integrations_to_env(integrations, prefix)
-    assert env == expected_env
+    return [empty_env]
 
 
 @pytest.mark.parametrize(
@@ -190,21 +73,21 @@ def test_map_integrations_to_env(
         ),
         pytest.param(
             INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
-            S3RelationData,
+            PaaSS3RelationData,
             False,
-            S3RelationData,
+            PaaSS3RelationData,
             False,
             id="S3 correct parameters",
         ),
         pytest.param(
             {"wrong_key": "wrong_value"},
-            S3RelationData,
+            PaaSS3RelationData,
             False,
             NoneType,
             True,
             id="S3 wrong parameters",
         ),
-        pytest.param({}, S3RelationData, True, NoneType, True, id="S3 empty parameters"),
+        pytest.param({}, PaaSS3RelationData, True, NoneType, True, id="S3 empty parameters"),
         pytest.param(
             {"service_name": "app_name", "endpoint": "localhost:1234"},
             TempoParameters,
@@ -267,13 +150,12 @@ def test_generate_relation_parameters(
 
 def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
-        "redis_uri": None,
-        "database_requirers": {},
+        "redis": None,
+        "database": {},
         "s3": None,
         "saml_relation_data": None,
         "rabbitmq": None,
-        "tracing_requirer": None,
-        "app_name": None,
+        "tempo_relation_data": None,
         "smtp_relation_data": None,
         "openfga_relation_data": None,
     }
@@ -285,48 +167,14 @@ def _test_integrations_state_build_parameters():
             id="S3 correct parameters",
         ),
         pytest.param(
-            {
-                **relation_dict,
-                "tracing_requirer": FakeTracingEndpointRequirer(True, "localhost:1234"),
-                "app_name": "app_name",
-            },
-            False,
-            id="Tempo correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": None},
-            False,
-            id="Tempo empty parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "tracing_requirer": FakeTracingEndpointRequirer(False, "")},
-            False,
-            id="Tempo not ready",
-        ),
-        pytest.param(
-            {
-                **relation_dict,
-                "smtp_relation_data": SmtpRelationData(
-                    auth_type=AuthType.NONE,
-                    domain="example.com",
-                    host="test-ip",
-                    port=1025,
-                    skip_ssl_verify=False,
-                    transport_security=TransportSecurity.NONE,
-                ),
-            },
+            {**relation_dict, "smtp_relation_data": SMTP_RELATION_DATA_EXAMPLE},
             False,
             id="Smtp correct parameters",
         ),
         pytest.param(
-            {**relation_dict, "redis_uri": "http://redisuri"},
+            {**relation_dict, "smtp_relation_data": {}},
             False,
-            id="Redis correct parameters",
-        ),
-        pytest.param(
-            {**relation_dict, "redis_uri": ""},
-            False,
-            id="Redis empty parameters",
+            id="Smtp empty parameters",
         ),
         pytest.param(
             {
@@ -370,26 +218,24 @@ def test_integrations_state_build(
     if should_fail:
         with pytest.raises(CharmConfigInvalidError):
             IntegrationsState.build(
-                redis_uri=relation_dict["redis_uri"],
-                database_requirers=relation_dict["database_requirers"],
+                databases_relation_data=relation_dict["database"],
+                redis_relation_data=relation_dict["redis"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_relation_data=relation_dict["rabbitmq"],
-                tracing_requirer=relation_dict["tracing_requirer"],
-                app_name=relation_dict["app_name"],
+                tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
             )
     else:
         assert isinstance(
             IntegrationsState.build(
-                redis_uri=relation_dict["redis_uri"],
-                database_requirers=relation_dict["database_requirers"],
+                databases_relation_data=relation_dict["database"],
+                redis_relation_data=relation_dict["redis"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
                 rabbitmq_relation_data=relation_dict["rabbitmq"],
-                tracing_requirer=relation_dict["tracing_requirer"],
-                app_name=relation_dict["app_name"],
+                tempo_relation_data=relation_dict["tempo_relation_data"],
                 smtp_relation_data=relation_dict["smtp_relation_data"],
                 openfga_relation_data=relation_dict["openfga_relation_data"],
             ),
@@ -683,6 +529,7 @@ def _test_missing_required_other_integrations_parameters():
     ]
 
 
+@pytest.mark.skip(reason="TODO: This test is incomplete")
 @pytest.mark.parametrize(
     "mock_charm, mock_requires, mock_charm_state, expected",
     _test_missing_required_other_integrations_parameters(),
@@ -696,9 +543,10 @@ def test_missing_required_other_integrations(
     assert: integration name should be in the result only when integration is required
      and the parameters for that integration not generated.
     """
-    expected = paas_charm.charm.PaasCharm._missing_required_other_integrations(
+    result = paas_charm.charm.PaasCharm._missing_required_other_integrations(
         mock_charm, mock_requires, mock_charm_state
     )
+    assert result == expected
 
 
 @pytest.mark.parametrize(

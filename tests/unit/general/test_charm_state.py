@@ -42,6 +42,5 @@ def test_charm_state_integration_state_build_error(error):
                 s3=MagicMock(),
                 saml=saml_mock,
             ),
-            app_name="test-app",
             base_url="http://test-base-url",
         )
