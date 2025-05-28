@@ -64,7 +64,7 @@ def go_harness_fixture() -> typing.Generator[Harness, None, None]:
 @pytest.fixture(name="flask_harness")
 def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
     """Flask harness fixture."""
-    os.chdir(PROJECT_ROOT / "examples/flask")
+    os.chdir(PROJECT_ROOT / "examples/flask/charm")
     harness = _build_harness(FlaskCharm, FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER, "flask/app")
     _set_check_config_handler(harness, "flask", FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER)
 

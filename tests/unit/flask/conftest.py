@@ -21,7 +21,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 @pytest.fixture(autouse=True, scope="package")
 def cwd():
-    return os.chdir(PROJECT_ROOT / "examples/flask")
+    return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
 @pytest.fixture(name="harness")
