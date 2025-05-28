@@ -122,8 +122,6 @@ def build_charm_file(
 
     if not charm_file:
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
         try:
             subprocess.run(
                 [
