@@ -10,7 +10,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from examples.flask.src.charm import FlaskCharm
+from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 
