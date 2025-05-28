@@ -26,7 +26,7 @@ class Application(typing.Protocol):  # pylint: disable=too-few-public-methods
         """Restart the application."""
 
 
-class DatabaseRelationData(BaseModel):
+class PaaSDatabaseRelationData(BaseModel):
     """Data model for database relation data.
 
     Attributes:
@@ -39,7 +39,7 @@ class DatabaseRelationData(BaseModel):
 class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancestors
     """Class to handle database relations."""
 
-    def to_relation_data(self) -> DatabaseRelationData | None:
+    def to_relation_data(self) -> PaaSDatabaseRelationData | None:
         """Convert the current state to relation data.
 
         Returns:
@@ -59,7 +59,7 @@ class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancest
         data = relation_data[0]
 
         if "uris" in data:
-            return DatabaseRelationData(uris=data["uris"])
+            return PaaSDatabaseRelationData(uris=data["uris"])
 
         # Check that the relation data is well formed according to the following json_schema:
         # https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/mysql_client/v0/schemas/provider.json
@@ -69,7 +69,7 @@ class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancest
 
         database_name = data.get("database", self.database)
         endpoint = data["endpoints"].split(",")[0]
-        return DatabaseRelationData(
+        return PaaSDatabaseRelationData(
             uris=f"{self.relation_name}://"
             f"{data['username']}:{data['password']}"
             f"@{endpoint}/{database_name}"

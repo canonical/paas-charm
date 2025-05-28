@@ -14,12 +14,12 @@ from paas_charm.app import (
     generate_saml_env,
     generate_tempo_env,
 )
-from paas_charm.databases import DatabaseRelationData
-from paas_charm.rabbitmq import RabbitMQRelationData
+from paas_charm.databases import PaaSDatabaseRelationData
+from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
-from paas_charm.s3 import S3RelationData
+from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
-from paas_charm.tempo import TempoRelationData
+from paas_charm.tempo import PaaSTempoRelationData
 
 
 @pytest.mark.parametrize(
@@ -27,7 +27,7 @@ from paas_charm.tempo import TempoRelationData
     [
         pytest.param(
             "postgresql",
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="postgresql://test-username:test-password@test-postgresql:5432/test-database"
             ),
             {
@@ -48,7 +48,7 @@ from paas_charm.tempo import TempoRelationData
         ),
         pytest.param(
             "mysql",
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="mysql://test-username:test-password@test-mysql:5432/test-database"
             ),
             {
@@ -69,7 +69,7 @@ from paas_charm.tempo import TempoRelationData
         ),
         pytest.param(
             "mongo",
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="mongo://test-username:test-password@test-mongo:5432/test-database"
             ),
             {
@@ -104,7 +104,7 @@ def test_database_environ_mapper_generate_env(db_name, relation_data, expected_e
     [
         pytest.param(None, {}, id="No relation data"),
         pytest.param(
-            RabbitMQRelationData.model_construct(
+            PaaSRabbitMQRelationData.model_construct(
                 port=5672,
                 hostname="test-url.com",
                 username="testusername",
@@ -202,7 +202,7 @@ def test_redis_environ_mapper_generate_env(relation_data, expected_env):
     [
         pytest.param(None, {}, id="No relation data"),
         pytest.param(
-            S3RelationData.model_construct(
+            PaaSS3RelationData.model_construct(
                 access_key="access_key", secret_key="secret_key", bucket="bucket"
             ),
             {
@@ -213,7 +213,7 @@ def test_redis_environ_mapper_generate_env(relation_data, expected_env):
             id="Minimum relation data",
         ),
         pytest.param(
-            S3RelationData.model_construct(
+            PaaSS3RelationData.model_construct(
                 access_key="access_key",
                 secret_key="secret_key",
                 region="region",
@@ -321,7 +321,7 @@ def test_saml_environ_mapper_generate_env(relation_data, expected_env):
     [
         pytest.param(None, {}, id="No relation data"),
         pytest.param(
-            TempoRelationData.model_construct(
+            PaaSTempoRelationData.model_construct(
                 endpoint="http://tempo-endpoint.test",
                 service_name="app-name",
             ),

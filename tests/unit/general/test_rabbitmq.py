@@ -5,7 +5,7 @@
 import pytest
 from ops.testing import Harness
 
-from paas_charm.rabbitmq import RabbitMQRelationData
+from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ from paas_charm.rabbitmq import RabbitMQRelationData
             {"password": "testingvalue", "hostname": "testinghostname"},
             {},
             {},
-            RabbitMQRelationData(
+            PaaSRabbitMQRelationData(
                 vhost="/",
                 port=5672,
                 hostname="testinghostname",
@@ -60,7 +60,7 @@ def test_rabbitmq_get_relation_data(
     unit_data: dict | None,
     rabbitmq_app_data: dict | None,
     paas_app_data: dict | None,
-    expected_relation_data: RabbitMQRelationData | None,
+    expected_relation_data: PaaSRabbitMQRelationData | None,
 ):
     """
     arrange: given RabbitMQ relation data.

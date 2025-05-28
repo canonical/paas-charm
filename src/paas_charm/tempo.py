@@ -12,7 +12,7 @@ from paas_charm.utils import build_validation_error_message
 logger = logging.getLogger(__name__)
 
 
-class TempoRelationData(BaseModel):
+class PaaSTempoRelationData(BaseModel):
     """Relation data required to connect to Tempo tracing service.
 
     Attributes:
@@ -31,7 +31,7 @@ class InvalidTempoRelationDataError(Exception):
 class PaaSTracingEndpointRequirer(TracingEndpointRequirer):
     """Wrapper around TracingEndpointRequirer to provide relation data Pydantic object."""
 
-    def to_relation_data(self) -> TempoRelationData | None:
+    def to_relation_data(self) -> PaaSTempoRelationData | None:
         """Get Tempo relation data object.
 
         Raises:
@@ -46,10 +46,10 @@ class PaaSTracingEndpointRequirer(TracingEndpointRequirer):
         if not endpoint:
             return None
         try:
-            return TempoRelationData(endpoint=endpoint, service_name=self._charm.app.name)
+            return PaaSTempoRelationData(endpoint=endpoint, service_name=self._charm.app.name)
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidTempoRelationDataError(
-                f"Invalid {TempoRelationData.__name__}: {error_messages.short}"
+                f"Invalid {PaaSTempoRelationData.__name__}: {error_messages.short}"
             ) from exc

@@ -16,7 +16,7 @@ from paas_charm.utils import build_validation_error_message
 logger = logging.getLogger(__name__)
 
 
-class S3RelationData(BaseModel):
+class PaaSS3RelationData(BaseModel):
     """Configuration for accessing S3 bucket.
 
     Attributes:
@@ -62,7 +62,7 @@ class InvalidS3RelationDataError(Exception):
 class PaaSS3Requirer(S3Requirer):
     """Wrapper around S3Requirer."""
 
-    def to_relation_data(self) -> S3RelationData | None:
+    def to_relation_data(self) -> PaaSS3RelationData | None:
         """Get S3 relation data object.
 
         Raises:
@@ -75,10 +75,10 @@ class PaaSS3Requirer(S3Requirer):
         if not connection_info:
             return None
         try:
-            return S3RelationData.model_validate(connection_info)
+            return PaaSS3RelationData.model_validate(connection_info)
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidS3RelationDataError(
-                f"Invalid {S3RelationData.__name__}: {error_messages.short}"
+                f"Invalid {PaaSS3RelationData.__name__}: {error_messages.short}"
             ) from exc

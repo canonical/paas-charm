@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from paas_charm.charm import PaasCharm
-from paas_charm.tempo import InvalidTempoRelationDataError, TempoRelationData
+from paas_charm.tempo import InvalidTempoRelationDataError, PaaSTempoRelationData
 
 
 @pytest.mark.parametrize(
@@ -19,7 +19,7 @@ from paas_charm.tempo import InvalidTempoRelationDataError, TempoRelationData
         pytest.param(
             True,
             "http://test-endpoint.test",
-            TempoRelationData(endpoint="http://test-endpoint.test", service_name="flask-k8s"),
+            PaaSTempoRelationData(endpoint="http://test-endpoint.test", service_name="flask-k8s"),
             id="No endpoint data",
         ),
     ],

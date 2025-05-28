@@ -18,12 +18,12 @@ from paas_charm.database_migration import DatabaseMigration
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from paas_charm.databases import DatabaseRelationData
-    from paas_charm.rabbitmq import RabbitMQRelationData
+    from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.redis import PaaSRedisRelationData
-    from paas_charm.s3 import S3RelationData
+    from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
-    from paas_charm.tempo import TempoRelationData
+    from paas_charm.tempo import PaaSTempoRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -78,7 +78,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
 
 
 def generate_db_env(
-    database_name: str, relation_data: "DatabaseRelationData | None" = None
+    database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
 ) -> dict[str, str]:
     """Generate environment variable from Database relation data.
 
@@ -95,7 +95,9 @@ def generate_db_env(
     return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
 
 
-def generate_rabbitmq_env(relation_data: "RabbitMQRelationData | None" = None) -> dict[str, str]:
+def generate_rabbitmq_env(
+    relation_data: "PaaSRabbitMQRelationData | None" = None,
+) -> dict[str, str]:
     """Generate environment variable from RabbitMQ requirer data.
 
     Args:
@@ -129,7 +131,7 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> 
     return _db_url_to_env_variables("REDIS", str(relation_data.url))
 
 
-def generate_s3_env(relation_data: "S3RelationData | None" = None) -> dict[str, str]:
+def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 relation data.
 
     Args:
@@ -197,7 +199,7 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     }
 
 
-def generate_tempo_env(relation_data: "TempoRelationData | None" = None) -> dict[str, str]:
+def generate_tempo_env(relation_data: "PaaSTempoRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
     Args:

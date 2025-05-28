@@ -21,8 +21,8 @@ from paas_charm.charm_state import (
     CharmState,
     IntegrationsState,
     OpenfgaParameters,
+    PaaSS3RelationData,
     RelationParam,
-    S3RelationData,
     SamlParameters,
     SmtpParameters,
     TempoParameters,
@@ -133,21 +133,21 @@ def test_map_integrations_to_env(
         ),
         pytest.param(
             INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
-            S3RelationData,
+            PaaSS3RelationData,
             False,
-            S3RelationData,
+            PaaSS3RelationData,
             False,
             id="S3 correct parameters",
         ),
         pytest.param(
             {"wrong_key": "wrong_value"},
-            S3RelationData,
+            PaaSS3RelationData,
             False,
             NoneType,
             True,
             id="S3 wrong parameters",
         ),
-        pytest.param({}, S3RelationData, True, NoneType, True, id="S3 empty parameters"),
+        pytest.param({}, PaaSS3RelationData, True, NoneType, True, id="S3 empty parameters"),
         pytest.param(
             {"service_name": "app_name", "endpoint": "localhost:1234"},
             TempoParameters,
@@ -305,7 +305,7 @@ def test_integrations_state_build(
     if should_fail:
         with pytest.raises(CharmConfigInvalidError):
             IntegrationsState.build(
-                database_relation_data=relation_dict["database"],
+                databases_relation_data=relation_dict["database"],
                 redis_relation_data=relation_dict["redis"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],
@@ -317,7 +317,7 @@ def test_integrations_state_build(
     else:
         assert isinstance(
             IntegrationsState.build(
-                database_relation_data=relation_dict["database"],
+                databases_relation_data=relation_dict["database"],
                 redis_relation_data=relation_dict["redis"],
                 s3_relation_data=relation_dict["s3"],
                 saml_relation_data=relation_dict["saml_relation_data"],

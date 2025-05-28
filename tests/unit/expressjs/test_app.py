@@ -10,7 +10,7 @@ import pytest
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.expressjs.charm import ExpressJSConfig
-from paas_charm.rabbitmq import RabbitMQRelationData
+from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
 
 
@@ -41,7 +41,7 @@ from paas_charm.redis import PaaSRedisRelationData
             },
             IntegrationsState(
                 redis_relation_data=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
-                rabbitmq=RabbitMQRelationData(
+                rabbitmq=PaaSRabbitMQRelationData(
                     port=5672,
                     hostname="rabbitmq.example.com",
                     username="expressjs-app",

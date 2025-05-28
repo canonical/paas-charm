@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from paas_charm.charm import PaasCharm
-from paas_charm.databases import DatabaseRelationData, PaaSDatabaseRequires
+from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
 
 DATABASE_GET_URI_TEST_PARAMS = [
     (
@@ -88,7 +88,7 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "uris": "test-uri",
                 }
             },
-            DatabaseRelationData(uris="test-uri"),
+            PaaSDatabaseRelationData(uris="test-uri"),
             id="Relation data with uris",
         ),
         pytest.param(
@@ -101,7 +101,7 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "endpoints": "test-endpoint",
                 }
             },
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="postgresql://test-user:test-password@test-endpoint/test-database"
             ),
             id="Relation data with non-uri fields",
@@ -115,7 +115,7 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "endpoints": "test-endpoint",
                 }
             },
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="postgresql://test-user:test-password@test-endpoint/flask-k8s"
             ),
             id="Relation data with non-uri fields with default database name",
@@ -129,7 +129,7 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "endpoints": "test-endpoint-0,test-endpoint-1",
                 }
             },
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="postgresql://test-user:test-password@test-endpoint-0/flask-k8s"
             ),
             id="Relation data with non-uri fields with multiple endpoints",
@@ -143,7 +143,9 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "endpoints": "test-endpoint-0,test-endpoint-1",
                 }
             },
-            DatabaseRelationData(uris="mysql://test-user:test-password@test-endpoint-0/flask-k8s"),
+            PaaSDatabaseRelationData(
+                uris="mysql://test-user:test-password@test-endpoint-0/flask-k8s"
+            ),
             id="mysql",
         ),
         pytest.param(
@@ -155,7 +157,7 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "endpoints": "test-endpoint-0,test-endpoint-1",
                 }
             },
-            DatabaseRelationData(
+            PaaSDatabaseRelationData(
                 uris="mongodb://test-user:test-password@test-endpoint-0/flask-k8s"
             ),
             id="mongodb",
