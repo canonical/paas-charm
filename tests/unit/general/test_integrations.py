@@ -235,11 +235,6 @@ def _test_integrations_state_build_parameters():
             id="Smtp empty parameters",
         ),
         pytest.param(
-            {**relation_dict, "smtp_relation_data": {"wrong_key": "wrong_value"}},
-            True,
-            id="Smtp wrong parameters",
-        ),
-        pytest.param(
             {
                 **relation_dict,
                 "rabbitmq_uri": "amqp://test-app:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/",

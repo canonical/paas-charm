@@ -216,10 +216,16 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     return {
         k: v
         for k, v in (
-            ("OTEL_SERVICE_NAME", relation_data.service_name),
-            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
+            ("SMTP_HOST", relation_data.host),
+            ("SMTP_PORT", str(relation_data.port)),
+            ("SMTP_USER", relation_data.user),
+            ("SMTP_PASSWORD", relation_data.password),
+            ("SMTP_AUTH_TYPE", relation_data.auth_type.value),
+            ("SMTP_TRANSPORT_SECURITY", relation_data.transport_security.value),
+            ("SMTP_DOMAIN", relation_data.domain),
+            ("SMTP_SKIP_SSL_VERIFY", str(relation_data.skip_ssl_verify)),
         )
-        if v is not None
+        if v is not None and v not in ("none")
     }
 
 
@@ -238,16 +244,10 @@ def generate_tempo_env(relation_data: "PaaSTempoRelationData | None" = None) -> 
     return {
         k: v
         for k, v in (
-            ("SMTP_HOST", relation_data.host),
-            ("SMTP_PORT", str(relation_data.port)),
-            ("SMTP_USER", relation_data.user),
-            ("SMTP_PASSWORD", relation_data.password),
-            ("SMTP_AUTH_TYPE", relation_data.auth_type.value),
-            ("SMTP_TRANSPORT_SECURITY", relation_data.transport_security.value),
-            ("SMTP_DOMAIN", relation_data.domain),
-            ("SMTP_SKIP_SSL_VERIFY", str(relation_data.skip_ssl_verify)),
+            ("OTEL_SERVICE_NAME", relation_data.service_name),
+            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
         )
-        if v is not None and v not in ("none")
+        if v is not None
     }
 
 
