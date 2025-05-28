@@ -32,7 +32,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 @pytest.fixture(name="expressjs_harness")
 def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """ExpressJS harness fixture."""
+    """Express JS harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
     harness = _build_harness(
         ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app"
@@ -75,7 +75,7 @@ def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 @pytest.fixture(name="fastapi_harness")
 def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
-    """FastAPI harness fixture."""
+    """Fast API harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
 
@@ -119,7 +119,6 @@ def _build_harness(charm: PaasCharm, container_name: str, layer: dict, folder: s
     Returns:
         The harness built for the charm.
     """
-
     harness = Harness(charm)
     harness.set_leader()
     root = harness.get_filesystem_root(container_name)
@@ -165,23 +164,3 @@ def _set_check_config_handler(
         check_config_command,
         handler=check_config_handler,
     )
-
-
-class FakeTracingEndpointRequirer:
-    """Fake tracing endpoint requirer."""
-
-    def __init__(self, is_ready: bool, endpoint: str):
-        """Fake tracing endpoint requirer.
-
-        Args:
-            is_ready: Whether the endpoint is ready.
-            endpoint: The endpoint to be mocked.
-        """
-        self._is_ready = is_ready
-        self._endpoint = endpoint
-
-    def is_ready(self) -> bool:
-        return self._is_ready
-
-    def get_endpoint(self, protocol="") -> str:
-        return self._endpoint
