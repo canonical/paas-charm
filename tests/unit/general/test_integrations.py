@@ -19,7 +19,6 @@ from paas_charm.app import App
 from paas_charm.charm_state import (
     CharmState,
     IntegrationsState,
-    OpenfgaParameters,
     PaaSS3RelationData,
     RelationParam,
     SamlParameters,
