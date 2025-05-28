@@ -370,7 +370,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         saml_relation_data: "PaaSSAMLRelationData| None" = None,
         rabbitmq_relation_data: "PaaSRabbitMQRelationData | None" = None,
         tempo_relation_data: "PaaSTempoRelationData | None" = None,
-        smtp_relation_data: SmtpRelationData | None = None,
+        smtp_relation_data: "SmtpRelationData | None" = None,
         openfga_relation_data: dict | None = None,
     ) -> "IntegrationsState":
         """Initialize a new instance of the IntegrationsState class.
