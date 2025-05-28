@@ -13,7 +13,6 @@ import pytest
 from ops.testing import Harness
 
 from examples.django.charm.src.charm import DjangoCharm
-from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 

@@ -2,16 +2,30 @@
 # See LICENSE file for licensing details.
 
 """Global fixtures and utilities for integration and unit tests."""
+import enum
 import unittest
 
 import pytest
 
-from paas_charm.database_migration import DatabaseMigrationStatus
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
+
+
+class DatabaseMigrationStatus(str, enum.Enum):
+    """Database migration status.
+
+    Attrs:
+        COMPLETED: A status denoting a successful database migration.
+        FAILED: A status denoting an unsuccessful database migration.
+        PENDING: A status denoting a pending database migration.
+    """
+
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    PENDING = "PENDING"
 
 
 def pytest_addoption(parser):
