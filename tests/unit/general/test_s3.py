@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3RelationData
+from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3RelationData, PaaSS3Requirer
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3Relation
                 "secret-key": "secret_key",
                 "bucket": "bucket",
             },
-            S3RelationData.model_construct(
+            PaaSS3RelationData.model_construct(
                 access_key="access_key",
                 secret_key="secret_key",
                 bucket="bucket",
@@ -48,7 +48,7 @@ from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3Requirer, S3Relation
                     "header2:value2",
                 ],
             },
-            S3RelationData.model_construct(
+            PaaSS3RelationData.model_construct(
                 access_key="access_key",
                 secret_key="secret_key",
                 region="region",
