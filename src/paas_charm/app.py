@@ -254,7 +254,7 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
-def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
+def generate_tracing_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
     Args:
@@ -299,7 +299,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
-    generate_tempo_env = staticmethod(generate_tempo_env)
+    generate_tracing_env = staticmethod(generate_tracing_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -424,7 +424,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             env.update(self.generate_db_env(database_name, db_relation_data))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
-        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
+        env.update(self.generate_tracing_env(relation_data=self._charm_state.integrations.tracing))
         return {prefix + k: v for (k, v) in env.items()}
 
     @property
