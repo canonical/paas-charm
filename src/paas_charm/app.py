@@ -80,6 +80,24 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         return unit_id == "0"
 
 
+def generate_db_env(
+    database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from Database relation data.
+
+    Args:
+        database_name: The name of the database, i.e. POSTGRESQL.
+        relation_data: The charm database integration relation data.
+
+    Returns:
+        Default database environment mappings if DatabaseRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
+
+
 def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) -> dict[str, str]:
     """Generate environment variable from OpenFGA relation data.
 
@@ -102,24 +120,6 @@ def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) 
         )
         if v is not None
     }
-
-
-def generate_db_env(
-    database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
-) -> dict[str, str]:
-    """Generate environment variable from Database relation data.
-
-    Args:
-        database_name: The name of the database, i.e. POSTGRESQL.
-        relation_data: The charm database integration relation data.
-
-    Returns:
-        Default database environment mappings if DatabaseRelationData is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return _db_url_to_env_variables(database_name.upper(), relation_data.uris)
 
 
 def generate_rabbitmq_env(
