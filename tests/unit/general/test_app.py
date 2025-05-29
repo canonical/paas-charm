@@ -14,7 +14,7 @@ from paas_charm.app import (
     generate_redis_env,
     generate_s3_env,
     generate_saml_env,
-    generate_tempo_env,
+    generate_tracing_env,
 )
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
@@ -387,4 +387,4 @@ def test_tempo_environ_mapper_generate_env(relation_data, expected_env):
     act: when generate_tempo_env method is called.
     assert: expected environment variables are generated.
     """
-    assert generate_tempo_env(relation_data) == expected_env
+    assert generate_tracing_env(relation_data) == expected_env
