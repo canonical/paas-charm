@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         juju-version: [ 3.6/stable ]
-    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@fix-quote
+    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
       extra-arguments: -x --localstack-address 172.17.0.1
@@ -16,7 +16,7 @@ jobs:
       # charmcraft-channel: latest/edge
       charmcraft-repository: alithethird/charmcraft
       charmcraft-ref: feat/expressjs-extension
-      modules: '["test_charm.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py and [go_app or expressjs_app] and not django_app", "test_tracing.py and (flask_app or fastapi_app or django_app)", "test_smtp.py and (go_app or expressjs_app) and not django_app", "test_smtp.py and (flask_app or fastapi_app or django_app)", "test_openfga.py and go_app and not django_app", "test_openfga.py and (flask_app or fastapi_app or django_app)", "test_minimal.py", "test_loki.py and (go_app or expressjs_app) and not django_app", "test_loki.py and (flask_app or fastapi_app or django_app)", "test_prometheus.py and (go_app or expressjs_app) and not django_app", "test_prometheus.py and (flask_app or django_app)", "test_grafana.py and (go_app or expressjs_app) and not django_app", "test_grafana.py and (flask_app or django_app)", "test_non_root_db_migration.py and (go_non_root_app or expressjs_non_root_app) and not django_non_root_app", "test_non_root_db_migration.py and (flask_non_root_db_app or fastapi_non_root_app)", "test_non_root_loki.py and (go_non_root_app or expressjs_non_root_app) and not django_non_root_app", "test_non_root_loki.py and (flask_non_root_db_app or django_non_root_app or fastapi_non_root_app)"]'
+      modules: '["test_charm.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_integrations.py", "test_proxy.py", "test_workers.py", "test_tracing.py", "test_config.py", "test_smtp.py", "test_openfga.py", "test_minimal.py", "test_loki.py", "test_prometheus.py", "test_grafana.py", "test_non_root_db_migration.py", "test_non_root_loki.py"]'
       # rockcraft-channel: latest/edge
       rockcraft-repository: canonical/rockcraft
       rockcraft-ref: main
