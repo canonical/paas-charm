@@ -3,8 +3,6 @@
 
 """Unit tests for worker services."""
 
-import copy
-
 import ops
 import pytest
 from ops.testing import ExecResult, Harness
@@ -20,7 +18,6 @@ def test_worker(harness: Harness):
             the unit is 0.
     """
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    flask_layer = copy.deepcopy(LAYER_WITH_WORKER)
     container.add_layer("a_layer", LAYER_WITH_WORKER)
 
     harness.begin_with_initial_hooks()

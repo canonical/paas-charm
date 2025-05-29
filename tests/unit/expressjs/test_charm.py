@@ -3,6 +3,9 @@
 
 """ExpressJS charm unit tests."""
 
+# Very similar cases to other frameworks. Disable duplicated checks.
+# pylint: disable=R0801
+
 import unittest
 
 import ops
@@ -102,6 +105,7 @@ def test_metrics_config(harness: Harness):
     act: Start the charm with all initial hooks
     assert: The correct port and path for scraping should be in the relation data.
     """
+
     container = harness.model.unit.get_container(EXPRESSJS_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.add_relation("metrics-endpoint", "prometheus-k8s")

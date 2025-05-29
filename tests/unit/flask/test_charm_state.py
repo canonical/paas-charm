@@ -86,6 +86,7 @@ def test_charm_state_invalid_flask_config(charm_config: dict) -> None:
     with pytest.raises(CharmConfigInvalidError) as exc:
         CharmState.from_charm(
             framework_config=Charm.get_framework_config(charm),
+            framework="flask",
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
             integration_requirers=IntegrationRequirers(databases={}),
@@ -96,6 +97,8 @@ def test_charm_state_invalid_flask_config(charm_config: dict) -> None:
 
 @pytest.mark.parametrize(
     "s3_connection_info, expected_s3_parameters",
+    # Pylint does not understand the walrus operator
+    # pylint: disable=unused-variable,undefined-variable
     [
         pytest.param(None, None, id="empty"),
         pytest.param(
@@ -200,6 +203,7 @@ def test_flask_secret_key_id_no_value():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
+            integration_requirers=IntegrationRequirers(databases={}),
         )
 
 
@@ -222,6 +226,7 @@ def test_flask_secret_key_id_duplication():
             framework_config=Charm.get_framework_config(charm),
             secret_storage=SECRET_STORAGE_MOCK,
             config=config,
+            integration_requirers=IntegrationRequirers(databases={}),
         )
 
 

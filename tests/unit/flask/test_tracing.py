@@ -3,10 +3,7 @@
 
 """Flask charm tracing relation unit tests."""
 
-import unittest.mock
-
 import ops
-import pytest
 from ops.testing import Harness
 
 from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME

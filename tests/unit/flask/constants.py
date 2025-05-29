@@ -3,6 +3,8 @@
 
 from secrets import token_hex
 
+# pylint: disable=R0801
+
 DEFAULT_LAYER = {
     "services": {
         "flask": {

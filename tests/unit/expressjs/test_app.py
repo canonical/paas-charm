@@ -3,6 +3,9 @@
 
 """ExpressJS charm unit tests for the generic app module."""
 
+# Very similar cases to other frameworks. Disable duplicated checks.
+# pylint: disable=R0801
+
 import pathlib
 
 import pytest
@@ -19,7 +22,7 @@ from paas_charm.redis import PaaSRedisRelationData
     [
         pytest.param(
             {},
-            {},
+            {"otherconfig": "othervalue"},
             {},
             None,
             {
@@ -33,7 +36,7 @@ from paas_charm.redis import PaaSRedisRelationData
         ),
         pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
-            {"extra-config", "extravalue"},
+            {"extra-config": "extravalue"},
             {
                 "metrics-port": "9000",
                 "metrics-path": "/m",
@@ -55,7 +58,7 @@ from paas_charm.redis import PaaSRedisRelationData
                 "METRICS_PATH": "/m",
                 "METRICS_PORT": "9000",
                 "APP_SECRET_KEY": "notfoobar",
-                "APP_OTHERCONFIG": "othervalue",
+                "APP_EXTRA-CONFIG": "extravalue",
                 "APP_BASE_URL": "https://paas.example.com",
                 "HTTP_PROXY": "http://proxy.test",
                 "http_proxy": "http://proxy.test",
@@ -126,7 +129,7 @@ def test_expressjs_environment_vars(
         is_secret_storage_ready=True,
         framework_config=framework_config.dict(exclude_none=True),
         base_url="https://paas.example.com",
-        user_defined_config={"otherconfig": "othervalue"},
+        user_defined_config=user_defined_config,
         integrations=integrations,
     )
 
