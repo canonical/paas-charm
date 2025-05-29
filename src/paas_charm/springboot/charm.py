@@ -16,12 +16,15 @@ from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
 if typing.TYPE_CHECKING:
-    from charms.saml_integrator.v0.saml import SamlRelationData
+    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
-    from paas_charm.databases import DatabaseRelationData
+    from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.redis import PaaSRedisRelationData
-    from paas_charm.s3 import S3RelationData
+    from paas_charm.s3 import PaaSS3RelationData
+    from paas_charm.saml import PaaSSAMLRelationData
+    from paas_charm.tracing import PaaSTracingRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ class SpringBootConfig(FrameworkConfig):
 
 
 def generate_db_env(
-    database_name: str, relation_data: "DatabaseRelationData | None" = None
+    database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
 ) -> dict[str, str]:
     """Generate environment variable from Database relation data.
 
@@ -81,7 +84,22 @@ def generate_db_env(
     return {}
 
 
-def generate_rabbitmq_env(relation_data: "PaaSRedisRelationData" | None = None) -> dict[str, str]:
+def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) -> dict[str, str]:
+    """Generate environment variable from OpenFGA relation data.
+
+    Args:
+        relation_data: The charm OpenFGA integration relation data.
+
+    Returns:
+        OpenFGA environment mappings if OpenFGA requirer is available, empty
+        dictionary otherwise.
+    """
+    pass
+
+
+def generate_rabbitmq_env(
+    relation_data: "PaaSRabbitMQRelationData | None" = None,
+) -> dict[str, str]:
     """Generate environment variable from RabbitMQ relation data.
 
     Args:
@@ -115,7 +133,7 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> 
     }
 
 
-def generate_s3_env(relation_data: "S3RelationData" | None = None) -> dict[str, str]:
+def generate_s3_env(relation_data: "PaaSS3RelationData" | None = None) -> dict[str, str]:
     """Generate environment variable from S3 relation data.
 
     Args:
@@ -137,7 +155,7 @@ def generate_s3_env(relation_data: "S3RelationData" | None = None) -> dict[str, 
     }
 
 
-def generate_saml_env(relation_data: "SamlRelationData" | None = None) -> dict[str, str]:
+def generate_saml_env(relation_data: "PaaSSAMLRelationData" | None = None) -> dict[str, str]:
     """Generate environment variable from SAML relation data.
 
     Args:
@@ -169,20 +187,44 @@ def generate_smtp_env(relation_data: "SmtpRelationData" | None = None) -> dict[s
     return {}
 
 
-def generate_tracing_env(relation_data: "SmtpRelationData" | None = None) -> dict[str, str]:
-    """Generate environment variable from SMTP relation data.
+def generate_tracing_env(relation_data: "PaaSTracingRelationData" | None = None) -> dict[str, str]:
+    """Generate environment variable from tracing relation data.
 
     Args:
-        relation_data: The charm SMTP integration relation data.
+        relation_data: The charm tracing integration relation data.
 
     Returns:
-        SMTP environment mappings if SMTP relation data is available, empty
+        OTLP Tracing environment mappings if tracing relation data is available, empty
         dictionary otherwise.
     """
     if not relation_data:
         return {}
     # TODO
     return {}
+
+
+class SpringBootApp(App):
+    """Spring Boot application with custom environment variable mappers.
+
+    Attributes:
+        generate_db_env: Maps database connection information to environment variables.
+        generate_openfga_env: Maps OpenFGA connection information to environment variables.
+        generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
+        generate_redis_env: Maps Redis connection information to environment variables.
+        generate_s3_env: Maps S3 connection information to environment variables.
+        generate_saml_env: Maps SAML connection information to environment variables.
+        generate_smtp_env: Maps STMP connection information to environment variables.
+        generate_tempo_env: Maps tempo tracing connection information to environment variables.
+    """
+
+    generate_db_env = staticmethod(generate_db_env)
+    generate_openfga_env = staticmethod(generate_openfga_env)
+    generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
+    generate_redis_env = staticmethod(generate_redis_env)
+    generate_s3_env = staticmethod(generate_s3_env)
+    generate_saml_env = staticmethod(generate_saml_env)
+    generate_smtp_env = staticmethod(generate_smtp_env)
+    generate_tracing_env = staticmethod(generate_tracing_env)
 
 
 class Charm(PaasCharm):
@@ -230,7 +272,7 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        return App(
+        return SpringBootApp(
             container=self._container,
             charm_state=charm_state,
             workload_config=self._workload_config,
