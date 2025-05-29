@@ -3,6 +3,7 @@
 
 """Global fixtures and utilities for integration and unit tests."""
 
+
 def pytest_addoption(parser):
     """Define some command line options for integration and unit tests."""
     parser.addoption("--charm-file", action="extend", nargs="+", default=[])
