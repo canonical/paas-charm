@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
-    from paas_charm.tempo import PaaSTempoRelationData
+    from paas_charm.tracing import PaaSTracingRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -254,7 +254,7 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
-def generate_tempo_env(relation_data: "PaaSTempoRelationData | None" = None) -> dict[str, str]:
+def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
     Args:
@@ -401,15 +401,21 @@ class App:  # pylint: disable=too-many-instance-attributes
         if self._charm_state.peer_fqdns is not None:
             env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
 
+        env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
+        return env
+
+    def _generate_integration_environments(self, prefix: str = "") -> dict[str, str]:
+        """Generate environment variables from integration data.
+
+        Returns:
+            Environment variable mappings for each relation data.
+        """
+        env: dict[str, str] = {}
         env.update(self.generate_openfga_env(relation_data=self._charm_state.integrations.openfga))
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
-        env.update(
-            self.generate_redis_env(
-                relation_data=self._charm_state.integrations.redis_relation_data
-            )
-        )
+        env.update(self.generate_redis_env(relation_data=self._charm_state.integrations.redis))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
@@ -418,8 +424,8 @@ class App:  # pylint: disable=too-many-instance-attributes
             env.update(self.generate_db_env(database_name, db_relation_data))
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
-        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tempo))
-        return env
+        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
+        return {prefix + k: v for (k, v) in env.items()}
 
     @property
     def _alternate_service_command(self) -> str | None:

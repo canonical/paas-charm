@@ -26,3 +26,13 @@ class PebbleNotReadyError(Exception):
 
 class MissingCharmLibraryError(Exception):
     """Raised when a required charm library is missing."""
+
+
+class InvalidRelationDataError(Exception):
+    """Represents an invalid relation data.
+
+    Attributes:
+        relation: The name of the relation with invalid data.
+    """
+
+    relation: str

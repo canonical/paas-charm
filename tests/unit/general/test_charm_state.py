@@ -7,17 +7,28 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.charm_state import (
-    CharmConfigInvalidError,
-    CharmState,
-    IntegrationRequirers,
-    InvalidSAMLRelationDataError,
-)
+from paas_charm.charm_state import CharmConfigInvalidError, CharmState, IntegrationRequirers
+from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
+from paas_charm.redis import InvalidRedisRelationDataError
+from paas_charm.s3 import InvalidS3RelationDataError
+from paas_charm.saml import InvalidSAMLRelationDataError
 
 
 @pytest.mark.parametrize(
     "error",
     [
+        pytest.param(
+            InvalidRabbitMQRelationDataError("Invalid RabbitMQ relation data"),
+            id="Invalid RabbitMQ relation data",
+        ),
+        pytest.param(
+            InvalidRedisRelationDataError("Invalid Redis relation data"),
+            id="Invalid Redis relation data",
+        ),
+        pytest.param(
+            InvalidS3RelationDataError("Invalid S3 relation data"),
+            id="Invalid S3 relation data",
+        ),
         pytest.param(
             InvalidSAMLRelationDataError("Invalid SAML relation data"),
             id="Invalid SAML relation data",

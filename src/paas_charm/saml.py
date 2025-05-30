@@ -10,6 +10,7 @@ import logging
 from charms.saml_integrator.v0.saml import SamlRelationData, SamlRequires
 from pydantic import ValidationError, ValidationInfo, field_validator
 
+from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -64,8 +65,14 @@ class PaaSSAMLRelationData(SamlRelationData):
         return None
 
 
-class InvalidSAMLRelationDataError(Exception):
-    """Represents an error with invalid SAML relation data."""
+class InvalidSAMLRelationDataError(InvalidRelationDataError):
+    """Represents an error with invalid SAML relation data.
+
+    Attributes:
+        relation: The SAML relation name.
+    """
+
+    relation = "saml"
 
 
 class PaaSSAMLRequirer(SamlRequires):

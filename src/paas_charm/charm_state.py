@@ -7,78 +7,26 @@ import os
 import pathlib
 import typing
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, Type, TypeVar
 
-from pydantic import (
-    BaseModel,
-    Field,
-    ValidationError,
-    ValidationInfo,
-    create_model,
-    field_validator,
-)
+from pydantic import BaseModel, Field, ValidationError, create_model
 
-from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
-from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.rabbitmq import RabbitMQRequires
-from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
+from paas_charm.exceptions import CharmConfigInvalidError, InvalidRelationDataError
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
-if typing.TYPE_CHECKING:
-    from paas_charm.rabbitmq import PaaSRabbitMQRelationData
+# This is just for type checking, no need to cover this code.
+if typing.TYPE_CHECKING:  # pragma: nocover
+    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
+    from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
+
+    from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
+    from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
+    from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
+    from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
+    from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
+    from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
 
 logger = logging.getLogger(__name__)
-
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3RelationData, PaaSS3Requirer
-except ImportError:
-    # we already logged it in charm.py
-    pass
-
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from paas_charm.saml import (
-        InvalidSAMLRelationDataError,
-        PaaSSAMLRelationData,
-        PaaSSAMLRequirer,
-    )
-except ImportError:
-    # we already logged it in charm.py
-    pass
-
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from paas_charm.tempo import PaaSTempoRelationData, PaaSTracingEndpointRequirer
-except ImportError:
-    # we already logged it in charm.py
-    pass
-
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
-except ImportError:
-    # we already logged it in charm.py
-    pass
-
-try:
-    # the import is used for type hinting
-    # pylint: disable=ungrouped-imports
-    # pylint: disable=unused-import
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
-except ImportError:
-    # we already logged it in charm.py
-    pass
 
 
 # too-many-instance-attributes is okay since we use a factory function to construct the CharmState
@@ -170,50 +118,20 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-        # 2025/04/15 When done ejecting IntegrationParameters, we should remove the build function
-        # and just wrap the PydanticObjects from IntegrationRequirer libs into the
-        # IntegrationState, without the build function. See integration_requirers.s3.
+        # 20250528 - OpenFGA library silently fails on Invalid relation data - if such
+        # behavior is observed, raise an issue on their library to be more defensive about
+        # relation data translation.
+        # 20250528 - We need to dynamically handle the import of the errors these relation data
+        # accessors can raise. The issue is with dynamically importing the libraries which might
+        # be missing but is imported from, raising a NameError.
         try:
-            integrations = IntegrationsState.build(
-                redis_relation_data=(
-                    integration_requirers.redis.to_relation_data()
-                    if integration_requirers.redis
-                    else None
-                ),
+            integrations = IntegrationsState(
                 databases_relation_data={
                     db: db_integration_data
                     for db, db_requirer in integration_requirers.databases.items()
                     if (db_integration_data := db_requirer.to_relation_data())
                 },
-                s3_relation_data=(
-                    integration_requirers.s3.to_relation_data()
-                    if integration_requirers.s3
-                    else None
-                ),
-                saml_relation_data=(
-                    integration_requirers.saml.to_relation_data()
-                    if integration_requirers.saml
-                    else None
-                ),
-                rabbitmq_relation_data=(
-                    integration_requirers.rabbitmq.get_relation_data()
-                    if integration_requirers.rabbitmq
-                    else None
-                ),
-                tempo_relation_data=(
-                    integration_requirers.tracing.to_relation_data()
-                    if integration_requirers.tracing
-                    else None
-                ),
-                smtp_relation_data=(
-                    smtp_data
-                    if (
-                        integration_requirers.smtp
-                        and (smtp_data := integration_requirers.smtp.get_relation_data())
-                    )
-                    else None
-                ),
-                openfga_relation_data=(
+                openfga=(
                     store_info
                     if (
                         integration_requirers.openfga
@@ -221,16 +139,47 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     )
                     else None
                 ),
+                rabbitmq=(
+                    integration_requirers.rabbitmq.get_relation_data()
+                    if integration_requirers.rabbitmq
+                    else None
+                ),
+                redis=(
+                    integration_requirers.redis.to_relation_data()
+                    if integration_requirers.redis
+                    else None
+                ),
+                s3=(
+                    integration_requirers.s3.to_relation_data()
+                    if integration_requirers.s3
+                    else None
+                ),
+                saml=(
+                    integration_requirers.saml.to_relation_data()
+                    if integration_requirers.saml
+                    else None
+                ),
+                smtp=(
+                    smtp_data
+                    if (
+                        integration_requirers.smtp
+                        and (smtp_data := integration_requirers.smtp.get_relation_data())
+                    )
+                    else None
+                ),
+                tracing=(
+                    integration_requirers.tracing.to_relation_data()
+                    if integration_requirers.tracing
+                    else None
+                ),
             )
-            peer_fqdns = None
-            if secret_storage.is_initialized and (
-                peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
-            ):
-                peer_fqdns = ",".join(peer_unit_fqdns)
-        except InvalidS3RelationDataError as exc:
-            raise CharmConfigInvalidError("Invalid S3 relation data") from exc
-        except InvalidSAMLRelationDataError as exc:
-            raise CharmConfigInvalidError("Invalid SAML relation data") from exc
+        except InvalidRelationDataError as exc:
+            raise CharmConfigInvalidError(f"Invalid {exc.relation} relation data.") from exc
+        peer_fqdns = None
+        if secret_storage.is_initialized and (
+            peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
+        ):
+            peer_fqdns = ",".join(peer_unit_fqdns)
 
         return cls(
             framework=framework,
@@ -323,14 +272,14 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         openfga: OpenFGA requirer object.
     """
 
-    databases: dict[str, PaaSDatabaseRequires]
-    rabbitmq: RabbitMQRequires | None = None
-    redis: PaaSRedisRequires | None = None
+    databases: dict[str, "PaaSDatabaseRequires"]
+    openfga: "OpenFGARequires | None" = None
+    rabbitmq: "RabbitMQRequires | None" = None
+    redis: "PaaSRedisRequires | None" = None
     s3: "PaaSS3Requirer | None" = None
     saml: "PaaSSAMLRequirer | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
-    openfga: "OpenFGARequires | None" = None
 
 
 @dataclass
@@ -343,97 +292,21 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        redis_relation_data: The Redis connection info from redis lib.
+        redis: The Redis connection info from redis lib.
         s3: S3 connection information from relation data.
         saml: SAML parameters.
-        smtp: Smtp parameters.
-        tempo: Tracing relation data.
+        smtp: SMTP parameters.
+        tracing: Tracing relation data.
     """
 
-    databases_relation_data: dict[str, PaaSDatabaseRelationData] = field(default_factory=dict)
+    databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    redis_relation_data: PaaSRedisRelationData | None = None
+    redis: "PaaSRedisRelationData | None" = None
     s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None
-    tempo: "PaaSTempoRelationData | None" = None
-
-    # This dataclass combines all the integrations, so it is reasonable that they stay together.
-    @classmethod
-    def build(  # pylint: disable=too-many-arguments
-        cls,
-        *,
-        databases_relation_data: dict[str, PaaSDatabaseRelationData],
-        openfga_relation_data: "OpenfgaProviderAppData | None" = None,
-        rabbitmq_relation_data: "PaaSRabbitMQRelationData | None" = None,
-        redis_relation_data: PaaSRedisRelationData | None,
-        s3_relation_data: "PaaSS3RelationData | None" = None,
-        saml_relation_data: "PaaSSAMLRelationData| None" = None,
-        smtp_relation_data: "SmtpRelationData | None" = None,
-        tempo_relation_data: "PaaSTempoRelationData | None" = None,
-    ) -> "IntegrationsState":
-        """Initialize a new instance of the IntegrationsState class.
-
-        Args:
-            databases_relation_data: All database relation data from charm integration.
-            openfga_relation_data: OpenFGA relation data from openfga lib.
-            rabbitmq_relation_data: RabbitMQ relation data.
-            redis_relation_data: The Redis connection info from redis lib.
-            s3_relation_data: S3 relation data from S3 lib.
-            saml_relation_data: Saml relation data from saml lib.
-            smtp_relation_data: Smtp relation data from smtp lib.
-            tempo_relation_data: The tracing relation data provided by the Tempo charm.
-
-        Return:
-            The IntegrationsState instance created.
-        """
-        return cls(
-            databases_relation_data=databases_relation_data,
-            openfga=openfga_relation_data,
-            rabbitmq=rabbitmq_relation_data,
-            redis_relation_data=redis_relation_data,
-            s3=s3_relation_data,
-            saml=saml_relation_data,
-            smtp=smtp_relation_data,
-            tempo=tempo_relation_data,
-        )
-
-
-RelationParam = TypeVar("RelationParam", "SamlParameters", "SmtpParameters", "OpenfgaParameters")
-
-
-def generate_relation_parameters(
-    relation_data: dict[str, str] | typing.MutableMapping[str, str] | None,
-    parameter_type: Type[RelationParam],
-    support_empty: bool = False,
-) -> RelationParam | None:
-    """Generate relation parameter class from relation data.
-
-    Args:
-        relation_data: Relation data.
-        parameter_type: Parameter type to use.
-        support_empty: Support empty relation data.
-
-    Return:
-        Parameter instance created.
-
-    Raises:
-        CharmConfigInvalidError: If some parameter in invalid.
-    """
-    if not support_empty and not relation_data:
-        return None
-    if relation_data is None:
-        return None
-
-    try:
-        return parameter_type.model_validate(relation_data)
-    except ValidationError as exc:
-        error_messages = build_validation_error_message(exc)
-        logger.error(error_messages.long)
-        raise CharmConfigInvalidError(
-            f"Invalid {parameter_type.__name__}: {error_messages.short}"
-        ) from exc
+    tracing: "PaaSTracingRelationData | None" = None
 
 
 class ProxyConfig(BaseModel):
@@ -448,178 +321,6 @@ class ProxyConfig(BaseModel):
     http_proxy: str | None = Field(default=None, pattern="https?://.+")
     https_proxy: str | None = Field(default=None, pattern="https?://.+")
     no_proxy: typing.Optional[str] = None
-
-
-class TempoParameters(BaseModel):
-    """Configuration for accessing Tempo service.
-
-    Attributes:
-        endpoint: Tempo endpoint URL to send the traces.
-        service_name: Tempo service name for the workload.
-    """
-
-    endpoint: str = Field(alias="endpoint")
-    service_name: str = Field(alias="service_name")
-
-
-class SamlParameters(BaseModel, extra="allow"):
-    """Configuration for accessing SAML.
-
-    Attributes:
-        entity_id: Entity Id of the SP.
-        metadata_url: URL for the metadata for the SP.
-        signing_certificate: Signing certificate for the SP.
-        single_sign_on_redirect_url: Sign on redirect URL for the SP.
-    """
-
-    entity_id: str
-    metadata_url: str
-    signing_certificate: str = Field(alias="x509certs")
-    single_sign_on_redirect_url: str = Field(alias="single_sign_on_service_redirect_url")
-
-    @field_validator("signing_certificate")
-    @classmethod
-    def validate_signing_certificate_exists(cls, certs: str, _: ValidationInfo) -> str:
-        """Validate that at least a certificate exists in the list of certificates.
-
-        It is a prerequisite that the fist certificate is the signing certificate,
-        otherwise this method would return a wrong certificate.
-
-        Args:
-            certs: Original x509certs field
-
-        Returns:
-            The validated signing certificate
-
-        Raises:
-            ValueError: If there is no certificate.
-        """
-        certificate = certs.split(",")[0]
-        if not certificate:
-            raise ValueError("Missing x509certs. There should be at least one certificate.")
-        return certificate
-
-
-class TransportSecurity(str, Enum):
-    """Represent the transport security values.
-
-    Attributes:
-        NONE: none
-        STARTTLS: starttls
-        TLS: tls
-    """
-
-    NONE = "none"
-    STARTTLS = "starttls"
-    TLS = "tls"
-
-
-class AuthType(str, Enum):
-    """Represent the auth type values.
-
-    Attributes:
-        NONE: none
-        NOT_PROVIDED: not_provided
-        PLAIN: plain
-    """
-
-    NONE = "none"
-    NOT_PROVIDED = "not_provided"
-    PLAIN = "plain"
-
-
-class SmtpParameters(BaseModel, extra="allow"):
-    """Represent the SMTP relation data.
-
-    Attributes:
-        host: The hostname or IP address of the outgoing SMTP relay.
-        port: The port of the outgoing SMTP relay.
-        user: The SMTP AUTH user to use for the outgoing SMTP relay.
-        password: The SMTP AUTH password to use for the outgoing SMTP relay.
-        password_id: The secret ID where the SMTP AUTH password for the SMTP relay is stored.
-        auth_type: The type used to authenticate with the SMTP relay.
-        transport_security: The security protocol to use for the outgoing SMTP relay.
-        domain: The domain used by the emails sent from SMTP relay.
-        skip_ssl_verify: Specifies if certificate trust verification is skipped in the SMTP relay.
-    """
-
-    host: str = Field(..., min_length=1)
-    port: int = Field(..., ge=1, le=65536)
-    user: str | None = None
-    password: str | None = None
-    password_id: str | None = None
-    auth_type: AuthType | None = None
-    transport_security: TransportSecurity | None = None
-    domain: str | None = None
-    skip_ssl_verify: str | None = None
-
-    @field_validator("auth_type")
-    @classmethod
-    def validate_auth_type(cls, auth_type: AuthType, _: ValidationInfo) -> AuthType | None:
-        """Turn auth_type type into None if its "none".
-
-        Args:
-            auth_type: Authentication type.
-
-        Returns:
-            The validated Authentication type.
-        """
-        if auth_type == AuthType.NONE:
-            return None
-        return auth_type
-
-    @field_validator("transport_security")
-    @classmethod
-    def validate_transport_security(
-        cls, transport_security: TransportSecurity, _: ValidationInfo
-    ) -> TransportSecurity | None:
-        """Turn transport_security into None if its "none".
-
-        Args:
-            transport_security: security protocol.
-
-        Returns:
-            The validated security protocol.
-        """
-        if transport_security == TransportSecurity.NONE:
-            return None
-        return transport_security
-
-
-class OpenfgaParameters(BaseModel, extra="allow"):
-    """Represent the OpenFGA relation data.
-
-    Attributes:
-        store_id: The store id to use on the OpenFGA server.
-        token: The token to use for api authentication.
-        grpc_api_url: The gRPC api url of the OpenFGA server.
-        http_api_url: The HTTP api url of the OpenFGA server.
-    """
-
-    store_id: str | None = None
-    token: str | None = None
-    grpc_api_url: str = Field(...)
-    http_api_url: str = Field(...)
-
-
-def store_info_to_relation_data(store_info: "OpenfgaProviderAppData") -> Dict[str, str]:
-    """Convert store info to relation data.
-
-    Args:
-        store_info: Store info as returned from openfga lib.
-
-    Returns:
-        A dict containing relation info.
-    """
-    result = {
-        "grpc_api_url": str(store_info.grpc_api_url),
-        "http_api_url": str(store_info.http_api_url),
-    }
-    if store_info.store_id is not None:
-        result["store_id"] = str(store_info.store_id)
-    if store_info.token is not None:
-        result["token"] = str(store_info.token)
-    return result
 
 
 def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple]:

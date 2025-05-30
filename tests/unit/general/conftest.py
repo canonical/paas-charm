@@ -13,7 +13,7 @@ from ops.testing import Harness
 from examples.django.charm.src.charm import DjangoCharm
 from examples.expressjs.charm.src.charm import ExpressJSCharm
 from examples.fastapi.charm.src.charm import FastAPICharm
-from examples.flask.src.charm import FlaskCharm
+from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from src.paas_charm.charm import PaasCharm
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
@@ -26,8 +26,30 @@ from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.flask.constants import FLASK_CONTAINER_NAME
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.go.constants import GO_CONTAINER_NAME
+from tests.unit.test_charm.src.charm import TestCharm
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+TEST_CONTAINER_NAME = "app"
+TEST_DEFAULT_LAYER = {
+    "services": {
+        "app": {
+            "override": "replace",
+            "startup": "enabled",
+            "command": "test-command",
+            "user": "_daemon_",
+        }
+    }
+}
+
+
+@pytest.fixture(name="generic_harness")
+def generic_harness_fixture():
+    """Generic charm harness for testing."""
+    os.chdir(PROJECT_ROOT / "tests/unit/test_charm")
+    harness = _build_harness(TestCharm, TEST_CONTAINER_NAME, TEST_DEFAULT_LAYER, "app")
+    harness.begin()
+    return harness
 
 
 @pytest.fixture(name="expressjs_harness")
@@ -64,7 +86,7 @@ def go_harness_fixture() -> typing.Generator[Harness, None, None]:
 @pytest.fixture(name="flask_harness")
 def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
     """Flask harness fixture."""
-    os.chdir(PROJECT_ROOT / "examples/flask")
+    os.chdir(PROJECT_ROOT / "examples/flask/charm")
     harness = _build_harness(FlaskCharm, FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER, "flask/app")
     _set_check_config_handler(harness, "flask", FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER)
 

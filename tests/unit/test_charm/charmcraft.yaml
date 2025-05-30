@@ -1,42 +1,19 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: expressjs-k8s
+name: paas-test-k8s
 
-base: ubuntu@24.04
+bases:
+  - build-on:
+      - name: ubuntu
+        channel: "22.04"
+    run-on:
+      - name: ubuntu
+        channel: "22.04"
 
-platforms:
-  amd64:
+summary: An testing PaaS charm application.
 
-summary: An example ExpressJS application.
-
-description: An example ExpressJS application.
-
-charm-libs:
-- lib: traefik-k8s.ingress
-  version: '2'
-- lib: observability-libs.juju_topology
-  version: '0'
-- lib: grafana-k8s.grafana_dashboard
-  version: '0.35'
-- lib: loki-k8s.loki_push_api
-  version: '1'
-- lib: data-platform-libs.data_interfaces
-  version: '0'
-- lib: prometheus-k8s.prometheus_scrape
-  version: '0'
-- lib: redis-k8s.redis
-  version: '0'
-- lib: data-platform-libs.s3
-  version: '0'
-- lib: saml-integrator.saml
-  version: '0'
-- lib: openfga-k8s.openfga
-  version: '1'
-- lib: smtp-integrator.smtp
-  version: '0'
-- lib: tempo-coordinator-k8s.tracing
-  version: '0'
+description: An testing PaaS charm application.
 
 actions:
   rotate-secret-key:
@@ -48,22 +25,10 @@ assumes:
 
 config:
   options:
-    node-env:
-      type: string
-      description: Path where the prometheus metrics will be scraped.
-      default: production
     port:
       type: int
       description: Default port where the application will listen
       default: 8080
-    metrics-port:
-      type: int
-      description: Port where the prometheus metrics will be scraped.
-      default: 8080
-    metrics-path:
-      type: string
-      description: Path where the prometheus metrics will be scraped.
-      default: /metrics
     app-secret-key:
       type: string
       description: Long secret to use for sessions, CSRF or any other occurrences
@@ -76,12 +41,10 @@ config:
         To create the secret, run the following command:
         `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key expressjs-k8s`,
         and use the outputted secret ID to configure this option.
-    user-defined-config:
-      type: string
-      description: Example of a user defined configuration.
+
 containers:
   app:
-    resource: app-image
+    resource: test-app-image
 peers:
   secret-storage:
     interface: secret-storage
@@ -96,25 +59,29 @@ requires:
     limit: 1
   logging:
     interface: loki_push_api
+  openfga:
+    interface: openfga
+    optional: True
+    limit: 1
   postgresql:
     interface: postgresql_client
     optional: False
     limit: 1
-  tracing:
-    interface: tracing
+  rabbitmq:
+    interface: rabbitmq
     optional: True
     limit: 1
   smtp:
     interface: smtp
     optional: True
     limit: 1
-  openfga:
-    interface: openfga
+  tracing:
+    interface: tracing
     optional: True
     limit: 1
 resources:
-  app-image:
-    description: ExpressJS application image.
+  test-app-image:
+    description: testomg application image.
     type: oci-image
 type: charm
 

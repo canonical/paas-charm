@@ -23,7 +23,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 @pytest.fixture(autouse=True)
 def cwd():
-    return os.chdir(PROJECT_ROOT / "examples/flask")
+    return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
 @pytest.fixture(scope="module", name="test_async_flask_image")
@@ -42,7 +42,7 @@ async def charm_file_fixture(pytestconfig: pytest.Config, ops_test: OpsTest) -> 
         (f for f in pytestconfig.getoption("--charm-file") if "flask-k8s" in f), None
     )
     if not charm_file:
-        charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/flask")
+        charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/flask/charm")
     elif charm_file[0] != "/":
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
