@@ -6,7 +6,6 @@ import unittest
 
 import pytest
 
-from paas_charm.database_migration import DatabaseMigrationStatus
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
@@ -28,15 +27,6 @@ def pytest_addoption(parser):
     parser.addoption("--expressjs-app-image", action="store")
     parser.addoption("--localstack-address", action="store")
     parser.addoption("--kube-config", action="store")
-
-
-@pytest.fixture
-def database_migration_mock():
-    """Create a mock instance for the DatabaseMigration class."""
-    mock = unittest.mock.MagicMock()
-    mock.status = DatabaseMigrationStatus.PENDING
-    mock.script = None
-    return mock
 
 
 @pytest.fixture
