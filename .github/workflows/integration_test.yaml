@@ -11,7 +11,7 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      extra-arguments: -x --localstack-address 172.17.0.1
+      extra-arguments: -x --localstack-address 172.17.0.1 --log-format="%(asctime)s %(levelname)s %(message)s"'
       pre-run-script: localstack-installation.sh
       # charmcraft-channel: latest/edge
       charmcraft-repository: alithethird/charmcraft

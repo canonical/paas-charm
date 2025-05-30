@@ -3,6 +3,9 @@
 
 """FastAPI charm unit tests."""
 
+# this is a unit test file
+# pylint: disable=protected-access
+
 import unittest
 
 import ops
@@ -56,6 +59,7 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
                 "METRICS_PATH": "/othermetrics",
                 "APP_SECRET_KEY": "foobar",
                 "APP_USER_DEFINED_CONFIG": "userdefined",
+                # pylint: disable=line-too-long
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
