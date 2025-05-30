@@ -38,6 +38,7 @@ from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
 from pydantic import BaseModel, ValidationError
 
+from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -69,8 +70,14 @@ class RabbitMQServerEvents(ObjectEvents):
     departed = EventSource(RabbitMQDepartedEvent)
 
 
-class InvalidRabbitMQRelationDataError(Exception):
-    """Represents an error with invalid RabbitMQ relation data."""
+class InvalidRabbitMQRelationDataError(InvalidRelationDataError):
+    """Represents an error with invalid RabbitMQ relation data.
+
+    Attributes:
+        relation: The RabbitMQ relation name.
+    """
+
+    relation = "rabbitmq"
 
 
 class PaaSRabbitMQRelationData(BaseModel):
@@ -235,7 +242,6 @@ class RabbitMQRequires(Object):
         elif self._rabbitmq_server_connection_params:
             hostname = self._rabbitmq_server_connection_params.hostname
             password = self._rabbitmq_server_connection_params.password
-
         if not password or not hostname:
             return None
         try:
@@ -246,7 +252,9 @@ class RabbitMQRequires(Object):
                 port=self.port,
                 vhost=self.vhost,
             )
-        except ValidationError as exc:
+        # Validation error cannot happen unless there's an issue in code as only hostname and
+        # password values come from the relation data.
+        except ValidationError as exc:  # pragma: nocover
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidRabbitMQRelationDataError(

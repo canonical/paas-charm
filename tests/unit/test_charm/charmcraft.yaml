@@ -1,0 +1,96 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: paas-test-k8s
+
+bases:
+  - build-on:
+      - name: ubuntu
+        channel: "22.04"
+    run-on:
+      - name: ubuntu
+        channel: "22.04"
+
+summary: An testing PaaS charm application.
+
+description: An testing PaaS charm application.
+
+actions:
+  rotate-secret-key:
+    description: Rotate the secret key. Users will be forced to log in again.
+      This might be useful if a security breach occurs.
+
+assumes:
+  - k8s-api
+
+config:
+  options:
+    port:
+      type: int
+      description: Default port where the application will listen
+      default: 8080
+    app-secret-key:
+      type: string
+      description: Long secret to use for sessions, CSRF or any other occurrences
+        for random secrets erquired by application. This value is shared across all units.
+    app-secret-key-id:
+      type: secret
+      description: >-
+        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
+        The secret should contain a single key, "value", which maps to the actual secret key.
+        To create the secret, run the following command:
+        `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key expressjs-k8s`,
+        and use the outputted secret ID to configure this option.
+
+containers:
+  app:
+    resource: test-app-image
+peers:
+  secret-storage:
+    interface: secret-storage
+provides:
+  grafana-dashboard:
+    interface: grafana_dashboard
+  metrics-endpoint:
+    interface: prometheus_scrape
+requires:
+  ingress:
+    interface: ingress
+    limit: 1
+  logging:
+    interface: loki_push_api
+  openfga:
+    interface: openfga
+    optional: True
+    limit: 1
+  postgresql:
+    interface: postgresql_client
+    optional: False
+    limit: 1
+  rabbitmq:
+    interface: rabbitmq
+    optional: True
+    limit: 1
+  smtp:
+    interface: smtp
+    optional: True
+    limit: 1
+  tracing:
+    interface: tracing
+    optional: True
+    limit: 1
+resources:
+  test-app-image:
+    description: testomg application image.
+    type: oci-image
+type: charm
+
+parts:
+  charm:
+    charm-strict-dependencies: false
+    plugin: charm
+    build-snaps:
+    - rustup
+    override-build: |-
+      rustup default stable
+      craftctl default

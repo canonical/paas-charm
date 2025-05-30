@@ -11,6 +11,7 @@ from typing import Optional
 from charms.data_platform_libs.v0.s3 import S3Requirer
 from pydantic import BaseModel, Field, ValidationError
 
+from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -55,8 +56,14 @@ class PaaSS3RelationData(BaseModel):
         return self.s3_uri_style
 
 
-class InvalidS3RelationDataError(Exception):
-    """Represents an error with invalid S3 relation data."""
+class InvalidS3RelationDataError(InvalidRelationDataError):
+    """Represents an error with invalid S3 relation data.
+
+    Attributes:
+        relation: The S3 relation name.
+    """
+
+    relation = "s3"
 
 
 class PaaSS3Requirer(S3Requirer):

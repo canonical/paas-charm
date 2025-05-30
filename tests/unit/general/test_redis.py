@@ -5,8 +5,7 @@
 
 import pytest
 
-from paas_charm.charm_state import PaaSRedisRelationData
-from paas_charm.redis import InvalidRedisRelationDataError
+from paas_charm.redis import InvalidRedisRelationDataError, PaaSRedisRelationData
 
 
 @pytest.mark.parametrize(

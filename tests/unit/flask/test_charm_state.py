@@ -8,9 +8,10 @@ from secrets import token_hex
 
 import pytest
 
-from paas_charm.charm_state import CharmState, IntegrationRequirers, PaaSS3RelationData
+from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.flask.charm import Charm
+from paas_charm.s3 import PaaSS3RelationData
 
 # this is a unit test file
 # pylint: disable=protected-access
