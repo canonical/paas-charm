@@ -44,4 +44,4 @@ def test_prometheus_integration(
         ).json()
         assert len(query_targets["data"]["activeTargets"])
 
-    juju.remove_application(app.name, destroy_storage=True, force=True)
+    # juju.remove_application(app.name, destroy_storage=True, force=True)

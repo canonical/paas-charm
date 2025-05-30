@@ -79,7 +79,7 @@ async def test_s3_integration(
         config=s3_configuration,
     )
     await model.wait_for_idle(apps=[s3_integrator_app.name], idle_period=5, status="blocked")
-    action_sync_s3_credentials: Action = await s3_integrator_app.units[0].run_action(
+    action_sync_s3_credentials = await s3_integrator_app.units[0].run_action(
         "sync-s3-credentials",
         **s3_credentials,
     )

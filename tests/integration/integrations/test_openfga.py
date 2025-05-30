@@ -50,4 +50,4 @@ def test_openfga_integrations(
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
     check_openfga_auth_models_patiently(unit_ip, port)
 
-    juju.remove_application(app.name, destroy_storage=True, force=True)
+    # juju.remove_application(app.name, destroy_storage=True, force=True)
