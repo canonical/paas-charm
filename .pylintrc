@@ -1,2 +1,5 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 [FILE_PATTERN: tests/*]
 disable=C0114,C0116,C0301,R0913,R0914,R0917,W0212
