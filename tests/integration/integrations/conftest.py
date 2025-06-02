@@ -43,10 +43,6 @@ def deploy_postgresql(
             "plugin_pg_trgm_enable": "true",
         },
     )
-    juju.wait(
-        lambda status: status.apps["postgresql-k8s"].is_active,
-        timeout=20 * 60,
-    )
 
 
 @pytest.fixture(scope="module", name="flask_app")
