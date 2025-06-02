@@ -7,7 +7,6 @@ import logging
 import jubilant
 import pytest
 import requests
-from requests.adapters import HTTPAdapter, Retry
 
 from tests.integration.helpers import get_traces_patiently
 
@@ -47,13 +46,8 @@ def test_workload_tracing(
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
     tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
 
-    session = requests.Session()
-    retries = Retry(total=5, backoff_factor=0.5)
-    session.mount("http://", HTTPAdapter(max_retries=retries))
     for _ in range(5):
-        url = f"http://{unit_ip}:{port}"
-        logger.info("Making a request to %s", url)
-        session.get(f"http://{unit_ip}:{port}", timeout=5)
+        requests.get(f"http://{unit_ip}:{port}", timeout=5)
 
     # verify workload traces are ingested into Tempo
     assert get_traces_patiently(tempo_host, app.name)

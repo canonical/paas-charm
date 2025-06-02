@@ -8,7 +8,6 @@ import logging
 import jubilant
 import pytest
 import requests
-from requests.adapters import HTTPAdapter, Retry
 
 from tests.integration.types import App
 
@@ -40,15 +39,13 @@ def test_s3_integration(
     juju.integrate(f"{app.name}:s3", f"{s3_integrator_app.name}:s3-credentials")
 
     juju.wait(
-        lambda status: jubilant.all_active(status, [app.name, s3_integrator_app.name]), timeout=600
+        lambda status: jubilant.all_active(status, [app.name, s3_integrator_app.name]),
+        timeout=600, delay=3
     )
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    session = requests.Session()
-    retries = Retry(backoff_factor=0.5, status=3, status_forcelist=[413, 429, 500, 503])
-    session.mount("http://", HTTPAdapter(max_retries=retries))
-    response = session.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    response = requests.get(f"http://{unit_ip}:{port}/env", timeout=5)
     assert response.status_code == 200
     env = response.json()
 
@@ -62,6 +59,6 @@ def test_s3_integration(
 
     # Check that it list_objects in the bucket. If the connection
     # is unsuccessful of the bucket does not exist, the code raises.
-    response = session.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
+    response = requests.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" == response.text
