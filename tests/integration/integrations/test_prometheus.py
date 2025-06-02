@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for 12Factor charms Prometheus integration."""
+
 import logging
 
 import jubilant
@@ -24,7 +25,10 @@ logger = logging.getLogger(__name__)
     ],
 )
 def test_prometheus_integration(
-    request: pytest.FixtureRequest, app_fixture: str, juju: jubilant.Juju, prometheus_app: App
+    request: pytest.FixtureRequest,
+    app_fixture: str,
+    juju: jubilant.Juju,
+    prometheus_app: App,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -34,7 +38,7 @@ def test_prometheus_integration(
     """
     app = request.getfixturevalue(app_fixture)
     juju.integrate(app.name, prometheus_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, prometheus_app.name]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, prometheus_app.name))
 
     status = juju.status()
     assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active

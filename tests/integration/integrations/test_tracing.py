@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Tracing Integration."""
+
 import logging
 
 import jubilant
@@ -41,7 +42,7 @@ def test_workload_tracing(
 
     juju.integrate(f"{app.name}:tracing", f"{tempo_app}:tracing")
 
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, tempo_app]), timeout=600)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, tempo_app), timeout=600)
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
     tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
