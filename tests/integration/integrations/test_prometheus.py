@@ -43,5 +43,3 @@ def test_prometheus_integration(
             f"http://{unit.address}:9090/api/v1/targets", timeout=10
         ).json()
         assert len(query_targets["data"]["activeTargets"])
-
-    juju.remove_application(app.name, destroy_storage=True, force=True)

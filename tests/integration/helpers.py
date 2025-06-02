@@ -3,6 +3,7 @@
 
 import io
 import json
+import logging
 import os
 import pathlib
 import uuid
@@ -11,6 +12,8 @@ import zipfile
 import requests
 import yaml
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
+
+logger = logging.getLogger(__name__)
 
 
 def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
@@ -67,6 +70,7 @@ def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pa
 def get_traces(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API."""
     url = f"http://{tempo_host}:3200/api/search?tags=service.name={service_name}"
+    logger.info("url to get traces from: %s", url)
     req = requests.get(
         url,
         verify=False,
@@ -76,7 +80,7 @@ def get_traces(tempo_host: str, service_name: str):
     return traces
 
 
-@retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1, min=4, max=10))
+@retry(stop=stop_after_attempt(15), wait=wait_exponential(multiplier=1.5, min=4, max=10))
 def get_traces_patiently(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API, but also try multiple times.
 

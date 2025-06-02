@@ -62,4 +62,3 @@ def test_loki_integration(
     logging.info("retrieve sample application log: %s", log)
     assert app.name in log["stream"]["juju_application"]
     assert "filename" not in log["stream"]
-    juju.remove_application(app.name, destroy_storage=True, force=True)

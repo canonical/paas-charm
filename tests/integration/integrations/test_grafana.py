@@ -62,5 +62,3 @@ def test_grafana_integration(
         ).raise_for_status()
         check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
         check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
-
-    juju.remove_application(app.name, destroy_storage=True, force=True)
