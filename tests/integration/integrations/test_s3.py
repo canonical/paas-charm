@@ -40,7 +40,8 @@ def test_s3_integration(
 
     juju.wait(
         lambda status: jubilant.all_active(status, [app.name, s3_integrator_app.name]),
-        timeout=600, delay=3
+        timeout=600,
+        delay=3,
     )
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address

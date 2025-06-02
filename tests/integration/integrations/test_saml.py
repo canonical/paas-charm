@@ -6,10 +6,10 @@
 import logging
 import urllib.parse
 
-from saml_test_helper import SamlK8sTestHelper
 import jubilant
 import pytest
 import requests
+from saml_test_helper import SamlK8sTestHelper
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +51,7 @@ def test_saml_integration(
         trust=True,
     )
 
-    juju.wait(
-        lambda status: jubilant.all_blocked(status, [saml_integrator_app_name]), timeout=600
-    )
+    juju.wait(lambda status: jubilant.all_blocked(status, [saml_integrator_app_name]), timeout=600)
 
     saml_helper.prepare_pod(model_name, f"{saml_integrator_app_name}-0")
     saml_helper.prepare_pod(model_name, f"{app.name}-0")
@@ -63,13 +61,14 @@ def test_saml_integration(
         {
             "entity_id": saml_helper.entity_id,
             "metadata_url": saml_helper.metadata_url,
-        }
+        },
     )
 
     juju.integrate(saml_integrator_app_name, app.name)
 
     juju.wait(
-        lambda status: jubilant.all_active(status, [saml_integrator_app_name, app.name]), timeout=600
+        lambda status: jubilant.all_active(status, [saml_integrator_app_name, app.name]),
+        timeout=600,
     )
 
     status = juju.status()

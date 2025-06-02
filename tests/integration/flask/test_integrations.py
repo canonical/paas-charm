@@ -1,16 +1,12 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Flask charm integrations, like S3 and Saml."""
+"""Integration tests for Flask charm integrations, like Rabbitmq."""
 import logging
-import urllib.parse
 
 import pytest
 import requests
 from juju.application import Application
-from juju.model import Model
-from pytest_operator.plugin import OpsTest
-from saml_test_helper import SamlK8sTestHelper
 
 logger = logging.getLogger(__name__)
 
