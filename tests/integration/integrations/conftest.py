@@ -270,12 +270,6 @@ def tempo_app_fixture(
     juju.integrate(f"{tempo_app}:s3", f"{s3_integrator_app.name}:s3-credentials")
     juju.integrate(f"{tempo_app}:tempo-cluster", f"{worker_app}:tempo-cluster")
 
-    juju.wait(
-        lambda status: jubilant.all_active(
-            status, [s3_integrator_app.name, tempo_app, worker_app]
-        ),
-        timeout=2000,
-    )
     return App(tempo_app)
 
 
