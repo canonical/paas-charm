@@ -1,4 +1,4 @@
-name: my-rock-name
+name: spring-boot-k8s
 # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
 # for more information about bases and using 'bare' bases for chiselled rocks
 base: bare # as an alternative, a ubuntu base can be used
