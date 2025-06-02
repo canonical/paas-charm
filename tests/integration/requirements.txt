@@ -1,5 +1,4 @@
 aiohttp == 3.11.7
-boto3 == 1.38.12
 cosl == 0.1.0
 git+https://github.com/canonical/saml-test-idp.git
 jubilant == 0.4.0

@@ -164,9 +164,6 @@ def generate_app_fixture(
     juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
     yield App(app_name)
 
-    # TODO Do we really want to remove it?
-    # juju.remove_application(app_name, destroy_storage=True, force=True)
-
 
 @pytest.fixture(scope="module", name="minio_app_name")
 def minio_app_name_fixture() -> str:

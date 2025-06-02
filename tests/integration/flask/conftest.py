@@ -5,12 +5,9 @@
 
 import os
 import pathlib
-from secrets import token_hex
 
-import boto3
 import pytest
 import pytest_asyncio
-from botocore.config import Config as BotoConfig
 from juju.application import Application
 from juju.model import Model
 from pytest import Config, FixtureRequest
