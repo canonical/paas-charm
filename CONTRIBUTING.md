@@ -52,6 +52,16 @@ tox devenv -e integration
 source venv/bin/activate
 ```
 
+### Testing development changes in the PaaS charm library
+
+When testing the latest changes to the PaaS charm library within the charm code, insert the
+following to the `requirements.txt` dependency.
+
+```requirements.txt
+<other-dependencies>
+https://github.com/canonical/paas-charm/archive/<branch-name>.tar.gz
+```
+
 ### Testing
 
 This project uses `tox` for managing test environments. There are some pre-configured environments

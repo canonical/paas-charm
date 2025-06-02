@@ -71,11 +71,20 @@ def generate_db_env(
     uri = relation_data.uris.split(",")[0]
     parsed = urlparse(uri)
     if database_name in ("mysql", "postgresql"):
-        return {
+        envvars = {
             "spring.datasource.username": parsed.username,
             "spring.datasource.password": parsed.password,
             "spring.datasource.url": f"jdbc:{parsed.scheme}://{parsed.hostname}:{parsed.port}{parsed.path}",
+            "spring.jpa.hibernate.ddl-auto": "none",
+            # used for migrate.sh
+            f"{database_name.upper()}_DB_PASSWORD": parsed.password,
+            f"{database_name.upper()}_DB_HOSTNAME": parsed.hostname,
+            f"{database_name.upper()}_DB_USERNAME": parsed.username,
         }
+        db_name = parsed.path.removeprefix("/") if parsed.path else None
+        if db_name is not None:
+            envvars["POSTGRESQL_DB_NAME"] = db_name
+        return envvars
     if database_name == "mongodb":
         return {"spring.data.mongodb.url": uri}
     logger.warning(
@@ -94,7 +103,10 @@ def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) 
         OpenFGA environment mappings if OpenFGA requirer is available, empty
         dictionary otherwise.
     """
-    pass
+    if not relation_data:
+        return {}
+    # TODO
+    return {}
 
 
 def generate_rabbitmq_env(
@@ -115,7 +127,7 @@ def generate_rabbitmq_env(
     return {}
 
 
-def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> dict[str, str]:
+def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from Redis relation data.
 
     Args:
@@ -133,7 +145,7 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData" | None = None) -> 
     }
 
 
-def generate_s3_env(relation_data: "PaaSS3RelationData" | None = None) -> dict[str, str]:
+def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 relation data.
 
     Args:
@@ -147,6 +159,7 @@ def generate_s3_env(relation_data: "PaaSS3RelationData" | None = None) -> dict[s
         return {}
 
     return {
+
         "aws.region": relation_data.region,
         "aws.endpointUrl": relation_data.endpoint,
         "aws.s3.bucket": relation_data.bucket,
@@ -155,7 +168,7 @@ def generate_s3_env(relation_data: "PaaSS3RelationData" | None = None) -> dict[s
     }
 
 
-def generate_saml_env(relation_data: "PaaSSAMLRelationData" | None = None) -> dict[str, str]:
+def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from SAML relation data.
 
     Args:
@@ -171,7 +184,7 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData" | None = None) -> di
     return {}
 
 
-def generate_smtp_env(relation_data: "SmtpRelationData" | None = None) -> dict[str, str]:
+def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from SMTP relation data.
 
     Args:
@@ -187,7 +200,7 @@ def generate_smtp_env(relation_data: "SmtpRelationData" | None = None) -> dict[s
     return {}
 
 
-def generate_tracing_env(relation_data: "PaaSTracingRelationData" | None = None) -> dict[str, str]:
+def generate_tracing_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from tracing relation data.
 
     Args:
@@ -242,7 +255,7 @@ class Charm(PaasCharm):
         Args:
             framework: operator framework.
         """
-        super().__init__(framework=framework, framework_name="springboot")
+        super().__init__(framework=framework, framework_name="spring-boot")
 
     @property
     def _workload_config(self) -> WorkloadConfig:
