@@ -26,6 +26,7 @@ def pytest_addoption(parser):
     parser.addoption("--go-app-image", action="store")
     parser.addoption("--flask-minimal-app-image", action="store")
     parser.addoption("--expressjs-app-image", action="store")
+    parser.addoption("--spring-boot-app-image", action="store")
     parser.addoption("--localstack-address", action="store")
     parser.addoption("--kube-config", action="store")
 

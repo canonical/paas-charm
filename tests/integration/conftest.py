@@ -17,10 +17,7 @@ from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import (
-    inject_charm_config,
-    inject_venv,
-)
+from tests.integration.helpers import inject_charm_config, inject_venv
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -105,6 +102,15 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
     image = pytestconfig.getoption("--flask-minimal-app-image")
     if not image:
         raise ValueError("the following arguments are required: --flask-minimal-app-image")
+    return image
+
+
+@pytest.fixture(scope="module", name="spring_boot_app_image")
+def fixture_spring_boot_app_image(pytestconfig: Config):
+    """Return the --spring-boot-app-image test parameter."""
+    image = pytestconfig.getoption("--spring-boot-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --spring-boot-app-image")
     return image
 
 
@@ -579,6 +585,27 @@ async def expressjs_non_root_app_fixture(
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
+    return app
+
+
+@pytest_asyncio.fixture(scope="module", name="spring_boot_app")
+async def spring_boot_app_fixture(
+    pytestconfig: pytest.Config,
+    model: Model,
+    spring_boot_app_image: str,
+    postgresql_k8s,
+    tmp_path_factory,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+    charm_file = build_charm_file(pytestconfig, "spring-boot", tmp_path_factory)
+    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+    await model.integrate(app_name, postgresql_k8s.name)
+    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
 
