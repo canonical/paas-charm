@@ -2,4 +2,4 @@
 # See LICENSE file for licensing details.
 
 [FILE_PATTERN: tests/*]
-disable=C0114,C0116,C0301,R0913,R0914,R0917,W0212
+disable=line-too-long,missing-function-docstring,missing-module-docstring,protected-access,too-many-arguments,too-many-locals,too-many-positional-arguments
