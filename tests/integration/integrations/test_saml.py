@@ -51,7 +51,7 @@ def test_saml_integration(
         trust=True,
     )
 
-    juju.wait(lambda status: jubilant.all_blocked(status, [saml_integrator_app_name]), timeout=600)
+    juju.wait(lambda status: jubilant.all_blocked(status, saml_integrator_app_name), timeout=600)
 
     saml_helper.prepare_pod(model_name, f"{saml_integrator_app_name}-0")
     saml_helper.prepare_pod(model_name, f"{app.name}-0")
@@ -67,7 +67,7 @@ def test_saml_integration(
     juju.integrate(saml_integrator_app_name, app.name)
 
     juju.wait(
-        lambda status: jubilant.all_active(status, [saml_integrator_app_name, app.name]),
+        lambda status: jubilant.all_active(status, saml_integrator_app_name, app.name),
         timeout=600,
     )
 

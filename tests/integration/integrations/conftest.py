@@ -215,7 +215,7 @@ def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3
         channel="edge",
     )
     juju.wait(
-        lambda status: jubilant.all_blocked(status, [s3_integrator]),
+        lambda status: jubilant.all_blocked(status, s3_integrator),
         timeout=120,
     )
     status = juju.status()

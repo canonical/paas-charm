@@ -39,7 +39,7 @@ def test_s3_integration(
     juju.integrate(f"{app.name}:s3", f"{s3_integrator_app.name}:s3-credentials")
 
     juju.wait(
-        lambda status: jubilant.all_active(status, [app.name, s3_integrator_app.name]),
+        lambda status: jubilant.all_active(status, app.name, s3_integrator_app.name),
         timeout=600,
         delay=3,
     )
