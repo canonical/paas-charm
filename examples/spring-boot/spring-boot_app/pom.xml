@@ -35,7 +35,7 @@
 			<url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
 		</repository>
 	</repositories>
-	<dependencyManagement>
+	<!-- <dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>io.opentelemetry.instrumentation</groupId>
@@ -45,7 +45,7 @@
 				<scope>import</scope>
 			</dependency>
 		</dependencies>
-	</dependencyManagement>
+	</dependencyManagement> -->
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

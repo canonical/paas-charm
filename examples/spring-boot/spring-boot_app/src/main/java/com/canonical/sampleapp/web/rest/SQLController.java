@@ -41,6 +41,10 @@ public class SQLController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO userDTO) throws URISyntaxException {
+        if (userService.getUserByName(userDTO.getName()).isPresent()) {
+            User existingUser = userService.getUserByName(userDTO.getName()).get();
+            return ResponseEntity.badRequest().body(existingUser);
+        }
         User newUser = userService.createUser(userDTO);
         return ResponseEntity
                 .created(new URI("/users/" + newUser.getName()))
