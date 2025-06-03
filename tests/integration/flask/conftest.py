@@ -5,12 +5,9 @@
 
 import os
 import pathlib
-from secrets import token_hex
 
-import boto3
 import pytest
 import pytest_asyncio
-from botocore.config import Config as BotoConfig
 from juju.application import Application
 from juju.model import Model
 from pytest import Config, FixtureRequest
@@ -223,73 +220,6 @@ async def update_secret_config(model: Model, request: FixtureRequest, flask_app:
     for secret_name in request_config:
         await model.remove_secret(secret_name)
     await model.wait_for_idle(apps=[flask_app.name])
-
-
-@pytest.fixture(scope="module", name="localstack_address")
-def localstack_address_fixture(pytestconfig: Config):
-    """Provides localstack IP address to be used in the integration test."""
-    address = pytestconfig.getoption("--localstack-address")
-    if not address:
-        raise ValueError("--localstack-address argument is required for selected test cases")
-    yield address
-
-
-@pytest.fixture(scope="function", name="s3_configuration")
-def s3_configuration_fixture(localstack_address: str) -> dict:
-    """Return the S3 configuration to use for media
-
-    Returns:
-        The S3 configuration as a dict
-    """
-    return {
-        "endpoint": f"http://{localstack_address}:4566",
-        "bucket": "paas-bucket",
-        "path": "/path",
-        "region": "us-east-1",
-        "s3-uri-style": "path",
-    }
-
-
-@pytest.fixture(scope="module", name="s3_credentials")
-def s3_credentials_fixture(localstack_address: str) -> dict:
-    """Return the S3 credentials
-
-    Returns:
-        The S3 credentials as a dict
-    """
-    return {
-        "access-key": token_hex(16),
-        "secret-key": token_hex(16),
-    }
-
-
-@pytest.fixture(scope="function", name="boto_s3_client")
-def boto_s3_client_fixture(model: Model, s3_configuration: dict, s3_credentials: dict):
-    """Return a S3 boto3 client ready to use
-
-    Returns:
-        The boto S3 client
-    """
-    s3_client_config = BotoConfig(
-        region_name=s3_configuration["region"],
-        s3={
-            "addressing_style": "virtual",
-        },
-        # no_proxy env variable is not read by boto3, so
-        # this is needed for the tests to avoid hitting the proxy.
-        proxies={},
-    )
-
-    s3_client = boto3.client(
-        "s3",
-        s3_configuration["region"],
-        aws_access_key_id=s3_credentials["access-key"],
-        aws_secret_access_key=s3_credentials["secret-key"],
-        endpoint_url=s3_configuration["endpoint"],
-        use_ssl=False,
-        config=s3_client_config,
-    )
-    yield s3_client
 
 
 @pytest_asyncio.fixture(scope="function", name="rabbitmq_server_integration")
