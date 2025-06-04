@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for 12Factor charms Grafana integration."""
+
 import logging
 
 import jubilant
@@ -43,7 +44,7 @@ def test_grafana_integration(
 
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, cos_apps["grafana_app"].name]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, cos_apps["grafana_app"].name))
     status = juju.status()
     task = juju.run(f"{cos_apps['grafana_app'].name}/0", "get-admin-password")
     password = task.results["admin-password"]
@@ -62,5 +63,3 @@ def test_grafana_integration(
         ).raise_for_status()
         check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
         check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
-
-    juju.remove_application(app.name, destroy_storage=True, force=True)

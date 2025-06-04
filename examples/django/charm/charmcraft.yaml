@@ -15,6 +15,32 @@ summary: An example Django application.
 
 description: An example Django application.
 
+charm-libs:
+- lib: traefik-k8s.ingress
+  version: '2'
+- lib: observability-libs.juju_topology
+  version: '0'
+- lib: grafana-k8s.grafana_dashboard
+  version: '0.35'
+- lib: loki-k8s.loki_push_api
+  version: '1'
+- lib: data-platform-libs.data_interfaces
+  version: '0'
+- lib: prometheus-k8s.prometheus_scrape
+  version: '0'
+- lib: redis-k8s.redis
+  version: '0'
+- lib: data-platform-libs.s3
+  version: '0'
+- lib: saml-integrator.saml
+  version: '0'
+- lib: openfga-k8s.openfga
+  version: '1'
+- lib: smtp-integrator.smtp
+  version: '0'
+- lib: tempo-coordinator-k8s.tracing
+  version: '0'
+
 actions:
   rotate-secret-key:
     description: Rotate the django secret key. Users will be forced to log in again.

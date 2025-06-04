@@ -3,6 +3,9 @@
 
 from secrets import token_hex
 
+# Very similar cases to other frameworks. Disable duplicated checks.
+# pylint: disable=R0801
+
 DEFAULT_LAYER = {
     "services": {
         "flask": {

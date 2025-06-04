@@ -1,9 +1,8 @@
 aiohttp == 3.11.7
-boto3 == 1.38.12
 cosl == 0.1.0
 git+https://github.com/canonical/saml-test-idp.git
-jubilant == 1.0.1
-juju == 3.5.2.1
+jubilant == 1.1.0
+juju == 3.6.1.2
 minio == 7.2.14
 nest_asyncio == 1.6.0
 ops >= 1.5.0

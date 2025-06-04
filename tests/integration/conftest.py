@@ -78,15 +78,6 @@ def fixture_test_db_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-@pytest.fixture(scope="module", name="test_db_flask_image")
-def fixture_test_db_flask_image(pytestconfig: Config):
-    """Return the --test-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-db-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-db-flask-image")
-    return test_flask_image
-
-
 @pytest.fixture(scope="module", name="expressjs_app_image")
 def fixture_expressjs_app_image(pytestconfig: Config):
     """Return the --expressjs-app-image test parameter."""
@@ -128,8 +119,6 @@ def build_charm_file(
 
     if not charm_file:
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
         try:
             subprocess.run(
                 [
@@ -535,7 +524,8 @@ def expressjs_app_fixture(
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(
-        lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]), timeout=300
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
+        timeout=300,
     )
 
     return App(app_name)

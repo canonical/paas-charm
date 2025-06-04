@@ -48,10 +48,10 @@ def test_smtp_integrations(
     if not juju.status().apps.get(smtp_integrator_app):
         juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
 
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, smtp_integrator_app]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, smtp_integrator_app))
 
     juju.integrate(app.name, f"{smtp_integrator_app}:smtp")
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, smtp_integrator_app]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, smtp_integrator_app))
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
@@ -64,5 +64,3 @@ def test_smtp_integrations(
     assert "<tester@example.com>" in mails[0]["sender"]
     assert mails[0]["recipients"] == ["<test@example.com>"]
     assert mails[0]["subject"] == "hello"
-
-    juju.remove_application(app.name, destroy_storage=True, force=True)
