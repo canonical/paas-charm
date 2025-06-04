@@ -7,6 +7,7 @@ import collections
 import logging
 import pathlib
 import time
+from secrets import token_hex
 
 import jubilant
 import kubernetes
@@ -42,16 +43,12 @@ def deploy_postgresql(
             "plugin_pg_trgm_enable": "true",
         },
     )
-    juju.wait(
-        lambda status: status.apps["postgresql-k8s"].is_active,
-        timeout=20 * 60,
-    )
 
 
 @pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -66,7 +63,7 @@ def flask_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path
 @pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask-minimal"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -81,7 +78,7 @@ def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, 
 @pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "django"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -96,7 +93,7 @@ def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_pat
 @pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "fastapi"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -108,7 +105,7 @@ def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_pa
 @pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "go"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -119,7 +116,7 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"
-    return generate_app_fixture(
+    yield from generate_app_fixture(
         juju=juju,
         pytestconfig=pytestconfig,
         framework=framework,
@@ -161,19 +158,44 @@ def generate_app_fixture(
         juju.integrate(app_name, "postgresql-k8s:database")
         juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
     juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
+    yield App(app_name)
 
-    return App(app_name)
+
+@pytest.fixture(scope="module", name="minio_app_name")
+def minio_app_name_fixture() -> str:
+    return "minio"
 
 
-def deploy_and_configure_minio(
+@pytest.fixture(scope="module", name="s3_credentials")
+def s3_credentials_fixture(
     juju: jubilant.Juju,
-) -> None:
-    """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
-    config = {
-        "access-key": "accesskey",
-        "secret-key": "secretkey",
+):
+    return {
+        "access-key": token_hex(16),
+        "secret-key": token_hex(16),
     }
-    minio_app_name = "minio"
+
+
+@pytest.fixture(scope="module", name="s3_configuration")
+def s3_configuration_fixture(minio_app_name: str) -> dict:
+    """Return the S3 configuration to use for media
+
+    Returns:
+        The S3 configuration as a dict
+    """
+    return {
+        "bucket": "paas-bucket",
+        "path": "/path",
+        "region": "us-east-1",
+        "s3-uri-style": "path",
+        "endpoint": f"http://{minio_app_name}-0.{minio_app_name}-endpoints:9000",
+    }
+
+
+@pytest.fixture(scope="module", name="minio_app")
+def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
+    """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
+    config = s3_credentials
     juju.deploy(
         minio_app_name,
         channel="edge",
@@ -182,37 +204,51 @@ def deploy_and_configure_minio(
     )
 
     juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=2000)
+    return App(minio_app_name)
+
+
+@pytest.fixture(scope="module", name="s3_integrator_app")
+def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3_configuration):
+    s3_integrator = "s3-integrator"
+    juju.deploy(
+        s3_integrator,
+        channel="edge",
+    )
+    juju.wait(
+        lambda status: jubilant.all_blocked(status, s3_integrator),
+        timeout=120,
+    )
     status = juju.status()
-    minio_addr = status.apps[minio_app_name].units[minio_app_name + "/0"].address
+    minio_addr = status.apps[minio_app.name].units[minio_app.name + "/0"].address
 
     mc_client = Minio(
         f"{minio_addr}:9000",
-        access_key="accesskey",
-        secret_key="secretkey",
+        access_key=s3_credentials["access-key"],
+        secret_key=s3_credentials["secret-key"],
         secure=False,
     )
 
     # create tempo bucket
-    found = mc_client.bucket_exists("tempo")
+    bucket_name = s3_configuration["bucket"]
+    found = mc_client.bucket_exists(bucket_name)
     if not found:
-        mc_client.make_bucket("tempo")
+        mc_client.make_bucket(bucket_name)
 
     # configure s3-integrator
     juju.config(
         "s3-integrator",
-        {
-            "endpoint": f"minio-0.minio-endpoints.{juju.status().model.name}.svc.cluster.local:9000",
-            "bucket": "tempo",
-        },
+        s3_configuration,
     )
 
-    task = juju.run("s3-integrator/0", "sync-s3-credentials", config)
+    task = juju.run(f"{s3_integrator}/0", "sync-s3-credentials", s3_credentials)
     assert task.status == "completed"
+    return App(s3_integrator)
 
 
 @pytest.fixture(scope="module", name="tempo_app")
-def deploy_tempo_cluster(
+def tempo_app_fixture(
     juju: jubilant.Juju,
+    s3_integrator_app,
 ):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
@@ -231,18 +267,9 @@ def deploy_tempo_cluster(
         channel=coordinator_channel,
         trust=True,
     )
-    juju.deploy(
-        "s3-integrator",
-        channel="edge",
-    )
-    juju.integrate(f"{tempo_app}:s3", "s3-integrator:s3-credentials")
+    juju.integrate(f"{tempo_app}:s3", f"{s3_integrator_app.name}:s3-credentials")
     juju.integrate(f"{tempo_app}:tempo-cluster", f"{worker_app}:tempo-cluster")
-    deploy_and_configure_minio(juju)
 
-    juju.wait(
-        lambda status: jubilant.all_active(status, ["s3-integrator", tempo_app, worker_app]),
-        timeout=2000,
-    )
     return App(tempo_app)
 
 
@@ -311,7 +338,9 @@ def mailcatcher(load_kube_config, juju):
         time.sleep(1)
     SmtpCredential = collections.namedtuple("SmtpCredential", "host port pod_ip")
     return SmtpCredential(
-        host=f"mailcatcher-service.{namespace}.svc.cluster.local", port=1025, pod_ip=pod_ip
+        host=f"mailcatcher-service.{namespace}.svc.cluster.local",
+        port=1025,
+        pod_ip=pod_ip,
     )
 
 
@@ -369,7 +398,7 @@ def deploy_cos_fixture(
         )
         juju.wait(
             lambda status: jubilant.all_active(
-                status, [loki_app.name, prometheus_app.name, grafana_app_name]
+                status, loki_app.name, prometheus_app.name, grafana_app_name
             )
         )
         juju.integrate(
@@ -399,6 +428,6 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
     juju.wait(
-        lambda status: jubilant.all_active(status, [openfga_server_app.name, "postgresql-k8s"])
+        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s")
     )
     return openfga_server_app

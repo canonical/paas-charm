@@ -161,7 +161,7 @@ cython_debug/
 
 *.charm
 *.rock
-!examples/**/lib
+examples/**/lib
 
 # Development environment
 .vscode

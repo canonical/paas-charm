@@ -4,7 +4,7 @@
 """Go charm unit tests for the generic app module."""
 
 import pathlib
-import unittest
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -20,7 +20,7 @@ from paas_charm.redis import PaaSRedisRelationData
     [
         pytest.param(
             {},
-            {},
+            {"otherconfig": "othervalue"},
             {},
             None,
             {
@@ -32,7 +32,7 @@ from paas_charm.redis import PaaSRedisRelationData
         ),
         pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
-            {"extra-config", "extravalue"},
+            {"extra-config": "extravalue"},
             {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
             IntegrationsState(
                 redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
@@ -50,7 +50,7 @@ from paas_charm.redis import PaaSRedisRelationData
                 "APP_METRICS_PATH": "/m",
                 "APP_METRICS_PORT": "9000",
                 "APP_SECRET_KEY": "notfoobar",
-                "APP_OTHERCONFIG": "othervalue",
+                "APP_EXTRA-CONFIG": "extravalue",
                 "APP_BASE_URL": "https://paas.example.com",
                 "HTTP_PROXY": "http://proxy.test",
                 "http_proxy": "http://proxy.test",
@@ -113,15 +113,15 @@ def test_go_environment_vars(
         is_secret_storage_ready=True,
         framework_config=framework_config.dict(exclude_none=True),
         base_url="https://paas.example.com",
-        user_defined_config={"otherconfig": "othervalue"},
+        user_defined_config=user_defined_config,
         integrations=integrations,
     )
 
     app = App(
-        container=unittest.mock.MagicMock(),
+        container=MagicMock(),
         charm_state=charm_state,
         workload_config=workload_config,
-        database_migration=unittest.mock.MagicMock(),
+        database_migration=MagicMock(),
     )
     env = app.gen_environment()
     assert env == expected

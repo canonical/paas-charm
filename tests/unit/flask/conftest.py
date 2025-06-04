@@ -10,7 +10,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from examples.flask.src.charm import FlaskCharm
+from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 
@@ -21,7 +21,7 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 @pytest.fixture(autouse=True, scope="package")
 def cwd():
-    return os.chdir(PROJECT_ROOT / "examples/flask")
+    return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
 @pytest.fixture(name="harness")

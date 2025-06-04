@@ -1,0 +1,5 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+[FILE_PATTERN: tests/*]
+disable=line-too-long,missing-function-docstring,missing-module-docstring,protected-access,too-many-arguments,too-many-locals,too-many-positional-arguments

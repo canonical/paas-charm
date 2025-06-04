@@ -40,7 +40,7 @@ def test_user_defined_config(
     assert: the value of the env variable and the config should match.
     """
     juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
-    juju.wait(lambda status: jubilant.all_active(status, [expressjs_app.name, "postgresql-k8s"]))
+    juju.wait(lambda status: jubilant.all_active(status, expressjs_app.name, "postgresql-k8s"))
 
     status = juju.status()
     for unit in status.apps[expressjs_app.name].units.values():

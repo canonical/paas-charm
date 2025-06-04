@@ -78,15 +78,6 @@ def fixture_test_db_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-@pytest.fixture(scope="module", name="test_db_flask_image")
-def fixture_test_db_flask_image(pytestconfig: Config):
-    """Return the --test-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-db-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-db-flask-image")
-    return test_flask_image
-
-
 @pytest.fixture(scope="module", name="expressjs_app_image")
 def fixture_expressjs_app_image(pytestconfig: Config):
     """Return the --expressjs-app-image test parameter."""
@@ -128,8 +119,6 @@ def build_charm_file(
 
     if not charm_file:
         charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
-        if framework == "flask":
-            charm_location = PROJECT_ROOT / f"examples/{framework}"
         try:
             subprocess.run(
                 [
@@ -535,7 +524,8 @@ def expressjs_app_fixture(
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(
-        lambda status: jubilant.all_active(status, [app_name, "postgresql-k8s"]), timeout=300
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
+        timeout=300,
     )
 
     return App(app_name)
@@ -587,14 +577,12 @@ async def expressjs_non_root_app_fixture(
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
 
-
-@pytest_asyncio.fixture(scope="module", name="spring_boot_app")
-async def spring_boot_app_fixture(
+@pytest.fixture(scope="module", name="spring_boot_app")
+def spring_boot_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
-    spring_boot_app_image: str,
-    postgresql_k8s,
     tmp_path_factory,
+    spring_boot_app_image: str,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "spring-boot-k8s"
@@ -602,11 +590,47 @@ async def spring_boot_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
+    try: 
+        juju.deploy(
+            "postgresql-k8s",
+            channel="14/stable",
+            base="ubuntu@22.04",
+            revision=300,
+            trust=True,
+            config={
+                "profile": "testing",
+                "plugin_hstore_enable": "true",
+                "plugin_pg_trgm_enable": "true",
+            },
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
     charm_file = build_charm_file(pytestconfig, "spring-boot", tmp_path_factory)
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
-    return app
+    try: 
+        juju.deploy(
+        charm=charm_file,
+        app=app_name,
+        resources=resources,
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+    # Add required relations
+    try: 
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant._juju.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300
+    )
+
+    return App(app_name)
+
 
 
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")

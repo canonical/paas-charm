@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for 12Factor charms Loki integration."""
+
 import logging
 import time
 
@@ -42,7 +43,7 @@ def test_loki_integration(
 
     juju.integrate(app.name, loki_app.name)
 
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, loki_app.name]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, loki_app.name))
     status = juju.status()
 
     app_ip = status.apps[app.name].units[f"{app.name}/0"].address
@@ -62,4 +63,3 @@ def test_loki_integration(
     logging.info("retrieve sample application log: %s", log)
     assert app.name in log["stream"]["juju_application"]
     assert "filename" not in log["stream"]
-    juju.remove_application(app.name, destroy_storage=True, force=True)

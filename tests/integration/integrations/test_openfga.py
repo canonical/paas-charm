@@ -37,17 +37,15 @@ def test_openfga_integrations(
     assert: The request succeeds.
     """
     app = request.getfixturevalue(app_fixture)
-    juju.wait(lambda status: jubilant.all_active(status, [app.name, openfga_server_app.name]))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, openfga_server_app.name))
 
     juju.integrate(app.name, f"{openfga_server_app.name}:openfga")
     juju.wait(
         lambda status: jubilant.all_active(
-            status, [app.name, openfga_server_app.name, postgresql_k8s.name]
+            status, app.name, openfga_server_app.name, postgresql_k8s.name
         )
     )
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
     check_openfga_auth_models_patiently(unit_ip, port)
-
-    juju.remove_application(app.name, destroy_storage=True, force=True)

@@ -6,6 +6,9 @@
 # this is a unit test file
 # pylint: disable=protected-access
 
+# Very similar cases to other frameworks. Disable duplicated checks.
+# pylint: disable=R0801
+
 import unittest.mock
 from secrets import token_hex
 
@@ -328,14 +331,14 @@ def test_missing_required_integration_stops_all_and_sets_migration_to_pending(ha
     relation_id = harness.add_relation("s3", "s3", **INTEGRATIONS_RELATION_DATA["s3"])
     harness.begin_with_initial_hooks()
     assert isinstance(harness.model.unit.status, ops.model.ActiveStatus)
-    for name, service in container.get_services().items():
+    for service in container.get_services().values():
         assert service.current == ServiceStatus.ACTIVE
     assert harness._charm._database_migration.get_status() == DatabaseMigrationStatus.COMPLETED
 
     harness.remove_relation(relation_id)
 
     assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-    for name, service in container.get_services().items():
+    for service in container.get_services().values():
         assert service.current == ServiceStatus.INACTIVE
     assert harness._charm._database_migration.get_status() == DatabaseMigrationStatus.PENDING
 

@@ -40,7 +40,7 @@ show_missing = true
 minversion = "6.0"
 log_cli_level = "INFO"
 pythonpath = [
-  "examples/flask/lib",
+  "examples/flask/charm/lib",
   "examples/django/charm/lib",
   "examples/fastapi/charm/lib",
   "examples/go/charm/lib",
@@ -57,7 +57,8 @@ target-version = ["py38"]
 extend-exclude = '''
 
 (
-  examples/flask/lib/.*
+  examples/flask/charm/lib/.*
+  |   examples/flask-minimal/charm/lib/.*
   |   examples/django/charm/lib/.*
   |   examples/fastapi/charm/lib/.*
   |   examples/go/charm/lib/.*
@@ -69,7 +70,8 @@ extend-exclude = '''
 line_length = 99
 profile = "black"
 skip = [
-  "examples/flask/lib",
+  "examples/flask/charm/lib",
+  "examples/flask-minimal/charm/lib",
   "examples/django/charm/lib",
   "examples/fastapi/charm/lib",
   "examples/go/charm/lib",
