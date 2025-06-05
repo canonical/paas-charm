@@ -101,10 +101,10 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
 
 @pytest.fixture(scope="module", name="spring_boot_app_image")
 def fixture_spring_boot_app_image(pytestconfig: Config):
-    """Return the --spring-boot-app-image test parameter."""
-    image = pytestconfig.getoption("--spring-boot-app-image")
+    """Return the --paas-spring-boot-app-image test parameter."""
+    image = pytestconfig.getoption("--paas-spring-boot-app-image")
     if not image:
-        raise ValueError("the following arguments are required: --spring-boot-app-image")
+        raise ValueError("the following arguments are required: --paas-spring-boot-app-image")
     return image
 
 
