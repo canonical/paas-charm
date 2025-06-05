@@ -25,10 +25,8 @@ public class TableController {
 
     private final Logger log = LoggerFactory.getLogger(TableController.class);
 
-    private final UserService userService;
 
-    public TableController(UserService userService) {
-        this.userService = userService;
+    public TableController() {
     }
 
     @GetMapping("/{name}")

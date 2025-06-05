@@ -29,18 +29,19 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/users")
-public class SQLController {
+public class UserController {
 
-    private final Logger log = LoggerFactory.getLogger(SQLController.class);
+    private final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
 
-    public SQLController(UserService userService) {
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping
     public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO userDTO) throws URISyntaxException {
+        log.debug("REST request to create User : {}", userDTO);
         if (userService.getUserByName(userDTO.getName()).isPresent()) {
             User existingUser = userService.getUserByName(userDTO.getName()).get();
             return ResponseEntity.badRequest().body(existingUser);
@@ -53,7 +54,7 @@ public class SQLController {
 
     @GetMapping("/{name}")
     public ResponseEntity<UserDTO> getUser(@PathVariable String name) {
-        log.debug("REST request to get User : {}", name);
+        log.debug("REST request to get User : {}", userService.getUserByName(name).map(UserDTO::new));
         return this.wrapOrNotFound(userService.getUserByName(name).map(UserDTO::new));
     }
 
