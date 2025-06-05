@@ -13,11 +13,28 @@ from tests.integration.helpers import get_mails_patiently
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+retry_strategy = Retry(
+    total=5,
+    connect=5,
+    read=5,
+    other=5,
+    backoff_factor=5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET"],
+    raise_on_status=False,
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+http = requests.Session()
+http.mount("http://", adapter)
 
 
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
+        ("spring_boot_app", 8080),
         ("expressjs_app", 8080),
         ("fastapi_app", 8080),
         ("go_app", 8080),
@@ -55,7 +72,7 @@ def test_smtp_integrations(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = requests.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
+    response = http.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
     assert response.status_code == 200
     assert "Sent" in response.text
 

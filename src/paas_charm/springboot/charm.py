@@ -191,7 +191,16 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     """
     if not relation_data:
         return {}
-    return {}
+    return {
+        "spring.mail.host": relation_data.host,
+        "spring.mail.port": relation_data.port,
+        "spring.mail.username": f"{relation_data.user}@{relation_data.domain}",
+        "spring.mail.password": relation_data.password,
+        "spring.mail.properties.mail.smtp.auth": relation_data.auth_type.value,
+        "spring.mail.properties.mail.smtp.starttls.enable": str(
+            relation_data.transport_security.value == "starttls"
+        ).lower(),
+    }
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:

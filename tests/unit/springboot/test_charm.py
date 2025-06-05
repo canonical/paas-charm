@@ -7,10 +7,19 @@
 # pylint: disable=R0801
 
 import unittest
+from unittest.mock import MagicMock
 
 import ops
 import pytest
+from charms.smtp_integrator.v0.smtp import (
+    AuthType,
+    SmtpRelationData,
+    TransportSecurity,
+)
 from ops.testing import Harness
+
+from paas_charm.charm_state import IntegrationsState
+from paas_charm.springboot.charm import SpringBootApp
 
 from .constants import DEFAULT_LAYER, SPRINGBOOT_CONTAINER_NAME
 
@@ -115,3 +124,51 @@ def test_metrics_config(harness: Harness):
     scrape_jobs = relation_data_app["scrape_jobs"]
     assert "/metricspath" in scrape_jobs
     assert "*:9999" in scrape_jobs
+
+
+@pytest.mark.parametrize(
+    "integrations, expected_env",
+    [
+        pytest.param(
+            IntegrationsState(
+                smtp=SmtpRelationData(
+                    host="smtp.example.com",
+                    port=587,
+                    user="testingusername",
+                    password="testingpassword",
+                    password_id=None,
+                    auth_type=AuthType.PLAIN,
+                    transport_security=TransportSecurity.STARTTLS,
+                    domain="example.com",
+                    skip_ssl_verify=False,
+                )
+            ),
+            {
+                "spring.mail.host": "smtp.example.com",
+                "spring.mail.port": 587,
+                "spring.mail.username": "testingusername@example.com",
+                "spring.mail.password": "testingpassword",
+                "spring.mail.properties.mail.smtp.auth": "plain",
+                "spring.mail.properties.mail.smtp.starttls.enable": "true",
+            },
+            id="SMTP",
+        ),
+    ],
+)
+def test_generate_integration_environments(
+    integrations: IntegrationsState, expected_env: dict[str, str]
+):
+    """
+    arrange: given integration state.
+    act: when _generate_integration_environments is called.
+    assert: expected environment variables are populated.
+    """
+    charm_state = MagicMock()
+    charm_state.integrations = integrations
+    app = SpringBootApp(
+        container=MagicMock(),
+        charm_state=charm_state,
+        workload_config=MagicMock(),
+        database_migration=MagicMock(),
+    )
+    assert app._generate_integration_environments() == expected_env
