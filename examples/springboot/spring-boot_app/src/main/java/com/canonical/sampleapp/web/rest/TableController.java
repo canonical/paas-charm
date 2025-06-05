@@ -25,18 +25,22 @@ public class TableController {
 
     private final Logger log = LoggerFactory.getLogger(TableController.class);
 
+    private final UserService userService;
 
-    public TableController() {
+    public TableController(UserService userService) {
+        this.userService = userService;
     }
+
 
     @GetMapping("/{name}")
     public ResponseEntity<String> getTable(@PathVariable String name) {
         log.info("REST request to get Table : {}", name);
-        if (!name.contentEquals("users")) {
-            return ResponseEntity.badRequest().body("FAILURE");
+        try {
+            return ResponseEntity.ok().body(userService.countUsers() + " users found");
+        } catch (Exception e) {
+            log.error("Error retrieving table: {}", name, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving table", e);
         }
-
-        return ResponseEntity.ok().body("SUCCESS");
     }
 
     public <X> ResponseEntity<X> wrapOrNotFound(Optional<X> maybeResponse) {
