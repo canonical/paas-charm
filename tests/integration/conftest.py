@@ -10,12 +10,15 @@ from typing import cast
 import jubilant
 import pytest
 import pytest_asyncio
+import requests
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from tests.integration.helpers import (
     inject_charm_config,
@@ -34,6 +37,25 @@ NON_OPTIONAL_CONFIGS = {
         }
     }
 }
+
+
+@pytest.fixture(scope="function", name="http")
+def fixture_http_client():
+    """Return the --test-flask-image test parameter."""
+    retry_strategy = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        other=5,
+        backoff_factor=5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "POST", "GET", "OPTIONS"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("http://", adapter)
+    return http
 
 
 @pytest.fixture(scope="module", name="test_flask_image")
@@ -99,10 +121,20 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="spring_boot_app_image")
+def fixture_spring_boot_app_image(pytestconfig: Config):
+    """Return the --paas-spring-boot-app-image test parameter."""
+    image = pytestconfig.getoption("--paas-spring-boot-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --paas-spring-boot-app-image")
+    return image
+
+
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
     tmp_path_factory,
+    charm_location: pathlib.Path = None,
     charm_dict: dict = None,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
@@ -112,7 +144,8 @@ def build_charm_file(
     )
 
     if not charm_file:
-        charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
+        if not charm_location:
+            charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         try:
             subprocess.run(
                 [
@@ -570,6 +603,61 @@ async def expressjs_non_root_app_fixture(
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
+
+
+@pytest.fixture(scope="module", name="spring_boot_app")
+def spring_boot_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+    spring_boot_app_image: str,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+    try:
+        juju.deploy(
+            "postgresql-k8s",
+            channel="14/stable",
+            base="ubuntu@22.04",
+            revision=300,
+            trust=True,
+            config={
+                "profile": "testing",
+                "plugin_hstore_enable": "true",
+                "plugin_pg_trgm_enable": "true",
+            },
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    charm_file = build_charm_file(
+        pytestconfig, "spring-boot", tmp_path_factory, PROJECT_ROOT / "examples/springboot/charm"
+    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            app=app_name,
+            resources=resources,
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+    # Add required relations
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant._juju.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
+
+    return App(app_name)
 
 
 @pytest_asyncio.fixture(scope="module", name="ops_test_lxd")

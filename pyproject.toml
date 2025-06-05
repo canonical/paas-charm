@@ -46,6 +46,7 @@ pythonpath = [
   "examples/go/charm/lib",
   "examples/expressjs/charm/lib",
   "examples/flask-minimal/charm/lib",
+  "examples/springboot/charm/lib",
   "lib",
   "src"
 ]
@@ -63,6 +64,7 @@ extend-exclude = '''
   |   examples/fastapi/charm/lib/.*
   |   examples/go/charm/lib/.*
   |   examples/expressjs/charm/lib/.*
+  |   examples/springboot/charm/lib/.*
 )
 '''
 
@@ -76,6 +78,7 @@ skip = [
   "examples/fastapi/charm/lib",
   "examples/go/charm/lib",
   "examples/expressjs/charm/lib",
+  "examples/springboot/charm/lib",
 ]
 
 # Linting tools configuration
