@@ -5,3 +5,4 @@ ignore_files:
   - examples/go/charm/lib/charms/redis_k8s/v0/redis.py
   - examples/expressjs/charm/lib/charms/redis_k8s/v0/redis.py
   - examples/flask-minimal/charm/lib/charms/redis_k8s/v0/redis.py
+  - examples/springboot/charm/lib/charms/redis_k8s/v0/redis.py
