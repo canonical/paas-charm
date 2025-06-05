@@ -72,15 +72,20 @@ def generate_db_env(
     parsed = urlparse(uri)
     if database_name in ("mysql", "postgresql"):
         envvars = {
-            "spring.datasource.username": parsed.username,
-            "spring.datasource.password": parsed.password,
             "spring.datasource.url": f"jdbc:{parsed.scheme}://{parsed.hostname}:{parsed.port}{parsed.path}",
             "spring.jpa.hibernate.ddl-auto": "none",
-            # used for migrate.sh
-            f"{database_name.upper()}_DB_PASSWORD": parsed.password,
-            f"{database_name.upper()}_DB_HOSTNAME": parsed.hostname,
-            f"{database_name.upper()}_DB_USERNAME": parsed.username,
         }
+        if parsed.username:
+            envvars["spring.datasource.username"] = parsed.username
+            # used for migrate.sh
+            envvars[f"{database_name.upper()}_DB_USERNAME"] = parsed.username
+        if parsed.password:
+            envvars["spring.datasource.password"] = parsed.password
+            # used for migrate.sh
+            envvars[f"{database_name.upper()}_DB_PASSWORD"] = parsed.password
+        if parsed.hostname:
+            # used for migrate.sh
+            envvars[f"{database_name.upper()}_DB_HOSTNAME"] = parsed.hostname
         db_name = parsed.path.removeprefix("/") if parsed.path else None
         if db_name is not None:
             envvars["POSTGRESQL_DB_NAME"] = db_name
@@ -105,7 +110,6 @@ def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) 
     """
     if not relation_data:
         return {}
-    # TODO
     return {}
 
 
@@ -123,11 +127,12 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    # TODO
     return {}
 
 
-def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
+def generate_redis_env(
+    relation_data: "PaaSRedisRelationData | None" = None,
+) -> dict[str, str]:
     """Generate environment variable from Redis relation data.
 
     Args:
@@ -139,10 +144,7 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> 
     """
     if not relation_data:
         return {}
-    return {
-        "spring.redis.host": relation_data.url.host,
-        "spring.redis.port": relation_data.url.port,
-    }
+    return {}
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
@@ -157,17 +159,12 @@ def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[s
     """
     if not relation_data:
         return {}
-
-    return {
-        "aws.region": relation_data.region,
-        "aws.endpointUrl": relation_data.endpoint,
-        "aws.s3.bucket": relation_data.bucket,
-        "aws.accessKeyId": relation_data.access_key,
-        "aws.secretKey": relation_data.secret_key,
-    }
+    return {}
 
 
-def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
+def generate_saml_env(
+    relation_data: "PaaSSAMLRelationData | None" = None,
+) -> dict[str, str]:
     """Generate environment variable from SAML relation data.
 
     Args:
@@ -179,7 +176,6 @@ def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> di
     """
     if not relation_data:
         return {}
-    # TODO
     return {}
 
 
@@ -195,16 +191,7 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     """
     if not relation_data:
         return {}
-    return {
-        "spring.mail.host": relation_data.host,
-        "spring.mail.port": relation_data.port,
-        "spring.mail.username": f"{relation_data.user}@{relation_data.domain}",
-        "spring.mail.password": relation_data.password,
-        "spring.mail.properties.mail.smtp.auth": relation_data.auth_type.value,
-        "spring.mail.properties.mail.smtp.starttls.enable": str(
-            relation_data.transport_security.value == "starttls"
-        ).lower(),
-    }
+    return {}
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
@@ -219,7 +206,6 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
     """
     if not relation_data:
         return {}
-    # TODO
     return {}
 
 
