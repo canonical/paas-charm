@@ -600,19 +600,10 @@ async def deploy_rabbitmq_server_fixture(
     ops_test: OpsTest,
 ) -> Application:
     """Deploy rabbitmq-server machine app."""
-    _, status, _ = await ops_test.juju("status", "--format", "json")
-    version = json.loads(status)["model"]["version"]
-    if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
-        app = await lxd_model.deploy(
-            "rabbitmq-server",
-            channel="latest/edge",
-        )
-    else:
-        app = await lxd_model.deploy(
-            "rabbitmq-server",
-            channel="latest/edge",
-            series="jammy",
-        )
+    app = await lxd_model.deploy(
+        "rabbitmq-server",
+        channel="latest/edge",
+    )
 
     await lxd_model.wait_for_idle(raise_on_blocked=True)
     await lxd_model.create_offer("rabbitmq-server:amqp")

@@ -1,3 +1,4 @@
+
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
@@ -431,3 +432,75 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
         lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s")
     )
     return openfga_server_app
+
+@pytest.fixture(scope="module", name="rabbitmq_server_app")
+def deploy_rabbitmq_server_fixture(juju: jubilant.Juju) -> App:
+    """Deploy rabbitmq server machine charm."""
+    import yaml
+    import tempfile
+    cloud_name = "lxdremote"
+    status = juju.status()
+
+    import socket
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('8.8.8.8', 1))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
+
+    cloud_definition = {
+        "clouds": {
+            cloud_name: {
+                "type": "lxd",
+                "auth-types": ["certificate"],
+                "endpoint": f"https://{get_ip()}:8443"
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(dir='.') as cloud_definition_file:
+        with cloud_definition_file.file as temp_file:
+            temp_file.write(yaml.dump(cloud_definition).encode())
+        juju.cli("add-cloud", "--controller", status.model.controller, "-f", cloud_definition_file.name, include_model=False)
+
+    juju_credentials_output = juju.cli("show-credential", "localhost", "localhost", "--format", "yaml", "--show-secrets", include_model=False)
+    juju_credentials = yaml.safe_load(juju_credentials_output)
+    lxd_credentials = {
+        "credentials": {
+            cloud_name: {
+                # We expect localhost (lxd) credentials to be created automatically.
+                "admin": juju_credentials['client-credentials']['localhost']['localhost']['content']
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(dir='.') as credentials_file:
+        with credentials_file.file as temp_file:
+            temp_file.write(yaml.dump(lxd_credentials).encode())
+        juju.cli("add-credential", cloud_name, "--controller", status.model.controller, "-f", credentials_file.name, include_model=False)
+
+    lxd_model = juju.status().model.name + "-lxd"
+    juju_lxd = jubilant.Juju(model=lxd_model)
+    try:
+        juju_lxd.add_model(model=lxd_model, cloud=cloud_name)
+    except jubilant.CLIError as ex:
+        # to review what we do in this case.
+        if "already exists" not in ex.stderr:
+            raise
+    # ok, now the model is there.
+    rabbitmq_server_name = "rabbitmq-server"
+    try:
+        juju_lxd.deploy(
+            rabbitmq_server_name,
+            channel="edge",
+        )
+    except jubilant.CLIError as ex:
+        # to review what we do in this case.
+        if "already exists" not in ex.stderr:
+            raise
+    juju_lxd.cli("offer", f"{lxd_model}.{rabbitmq_server_name}:amqp", include_model=False)
+    juju_lxd.wait(lambda status: jubilant.all_active(status, rabbitmq_server_name), delay=10)
+    yield App(f"{lxd_model}.{rabbitmq_server_name}")

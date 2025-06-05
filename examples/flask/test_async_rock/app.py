@@ -1,12 +1,9 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import logging
-import os
-import socket
 import time
 
-from flask import Flask, g, jsonify, request
+from flask import Flask, request
 
 app = Flask(__name__)
 
