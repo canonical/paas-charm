@@ -24,15 +24,19 @@ def test_rabbitmq_server_integration(
     request: pytest.FixtureRequest,
     # TODO this is a trick, this is really "model-lxd.rabbitmq-server"
     rabbitmq_server_app,
+    lxd_controller_name,
+    lxd_model_name
 ):
     """
     arrange: Flask and rabbitmq-server deployed
     act: Integrate flask with rabbitmq-server
     assert: Assert that RabbitMQ works correctly
     """
+    rabbitmq_offer_url = f"{lxd_controller_name}:admin/{lxd_model_name}.{rabbitmq_server_app.name}"
+
     app = request.getfixturevalue(app_fixture)
     # TODO rabbitmq_server_app is really a url offer
-    juju.integrate(app.name, rabbitmq_server_app.name)
+    juju.integrate(app.name, rabbitmq_offer_url)
 
     juju.wait(lambda status: jubilant.all_active(status, app.name), delay=10)
 

@@ -764,7 +764,7 @@ def run_action(ops_test: OpsTest):
     return _run_action
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""
 
