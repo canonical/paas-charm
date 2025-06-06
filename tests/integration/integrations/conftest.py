@@ -431,3 +431,66 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
         lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s")
     )
     return openfga_server_app
+
+
+@pytest.fixture(scope="session", name="lxd_controller_name")
+def lxd_controller_name_fixture() -> str:
+    return "localhost"
+
+
+@pytest.fixture(scope="session", name="lxd_model_name")
+def lxd_model_name_fixture(juju: jubilant.Juju) -> str:
+    status = juju.status()
+    return status.model.name
+
+
+@pytest.fixture(scope="session", name="rabbitmq_server_app")
+def deploy_rabbitmq_server_fixture(
+    juju: jubilant.Juju, lxd_controller_name, lxd_model_name
+) -> App:
+    """Deploy rabbitmq server machine charm."""
+    status = juju.status()
+
+    original_controller_name = status.model.controller
+    original_model_name = status.model.name
+    lxd_cloud_name = "lxd"
+    rabbitmq_server_name = "rabbitmq-server"
+
+    try:
+        juju.cli("bootstrap", lxd_cloud_name, lxd_controller_name, include_model=False)
+    except jubilant.CLIError as ex:
+        # TODO to review what we do in this case.
+        if "already exists" not in ex.stderr:
+            raise
+
+    try:
+        juju.cli("switch", f"{lxd_controller_name}:", include_model=False)
+        # same model name as the original one.
+        juju_lxd = jubilant.Juju(model=lxd_model_name)
+        try:
+            juju_lxd.add_model(lxd_model_name)
+        except jubilant.CLIError as ex:
+            # to review what we do in this case.
+            if "already exists" not in ex.stderr:
+                raise
+        juju_lxd.cli("switch", lxd_model_name, include_model=False)
+        try:
+            juju_lxd.deploy(
+                rabbitmq_server_name,
+                channel="edge",
+            )
+        except jubilant.CLIError as ex:
+            # to review what we do in this case.
+            if "already exists" not in ex.stderr:
+                raise
+        juju_lxd.cli("offer", f"{rabbitmq_server_name}:amqp", include_model=False)
+        juju_lxd.wait(
+            lambda status: jubilant.all_active(status, rabbitmq_server_name),
+            timeout=6 * 60,
+            delay=10,
+        )
+    finally:
+        juju.cli(
+            "switch", f"{original_controller_name}:{original_model_name}", include_model=False
+        )
+    yield App(f"{rabbitmq_server_name}")
