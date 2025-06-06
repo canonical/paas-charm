@@ -4,9 +4,9 @@
 """Integration tests for Rabbitmq Integration."""
 import logging
 
+import jubilant
 import pytest
 import requests
-import jubilant
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
-    ]
+    ],
 )
 def test_rabbitmq_server_integration(
     juju: jubilant.Juju,
@@ -25,7 +25,7 @@ def test_rabbitmq_server_integration(
     # TODO this is a trick, this is really "model-lxd.rabbitmq-server"
     rabbitmq_server_app,
     lxd_controller_name,
-    lxd_model_name
+    lxd_model_name,
 ):
     """
     arrange: Flask and rabbitmq-server deployed

@@ -1,4 +1,3 @@
-
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
@@ -433,20 +432,21 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     )
     return openfga_server_app
 
+
 @pytest.fixture(scope="session", name="lxd_controller_name")
 def lxd_controller_name_fixture() -> str:
     return "localhost"
+
 
 @pytest.fixture(scope="session", name="lxd_model_name")
 def lxd_model_name_fixture(juju: jubilant.Juju) -> str:
     status = juju.status()
     return status.model.name
 
+
 @pytest.fixture(scope="session", name="rabbitmq_server_app")
 def deploy_rabbitmq_server_fixture(
-        juju: jubilant.Juju,
-        lxd_controller_name,
-        lxd_model_name
+    juju: jubilant.Juju, lxd_controller_name, lxd_model_name
 ) -> App:
     """Deploy rabbitmq server machine charm."""
     status = juju.status()
@@ -484,7 +484,13 @@ def deploy_rabbitmq_server_fixture(
             if "already exists" not in ex.stderr:
                 raise
         juju_lxd.cli("offer", f"{rabbitmq_server_name}:amqp", include_model=False)
-        juju_lxd.wait(lambda status: jubilant.all_active(status, rabbitmq_server_name), delay=10)
+        juju_lxd.wait(
+            lambda status: jubilant.all_active(status, rabbitmq_server_name),
+            timeout=6 * 60,
+            delay=10,
+        )
     finally:
-        juju.cli("switch", f"{original_controller_name}:{original_model_name}", include_model=False)
+        juju.cli(
+            "switch", f"{original_controller_name}:{original_model_name}", include_model=False
+        )
     yield App(f"{rabbitmq_server_name}")
