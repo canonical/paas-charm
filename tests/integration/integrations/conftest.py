@@ -48,7 +48,12 @@ def deploy_postgresql(
 
 
 @pytest.fixture(scope="module", name="flask_app")
-def flask_app_fixture(juju: jubilant.Juju, request: pytest.FixtureRequest, pytestconfig: pytest.Config, tmp_path_factory):
+def flask_app_fixture(
+    juju: jubilant.Juju,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+):
     framework = "flask"
     yield from generate_app_fixture(
         juju=juju,
@@ -517,6 +522,7 @@ def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_mode
     # name as there is a local offer with this name.
     return App(rabbitmq_server_name)
 
+
 @pytest.fixture(scope="module", name="rabbitmq_k8s_app")
 def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     """Deploy rabbitmq-k8s app."""
@@ -532,6 +538,7 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
         trust=True,
     )
     juju.wait(
-        lambda status: jubilant.all_active(status, rabbitmq_k8s.name), timeout=6 * 60,
+        lambda status: jubilant.all_active(status, rabbitmq_k8s.name),
+        timeout=6 * 60,
     )
     return rabbitmq_k8s

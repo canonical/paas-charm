@@ -150,7 +150,9 @@ def check_openfga_auth_models_patiently(unit_ip: str, port: int):
 
 
 @contextlib.contextmanager
-def jubilant_temp_controller(juju: Juju, controller: str, model: str = "") -> Generator[Juju, None, None]:
+def jubilant_temp_controller(
+    juju: Juju, controller: str, model: str = ""
+) -> Generator[Juju, None, None]:
     try:
         status = juju.status()
         original_controller_name = status.model.controller
