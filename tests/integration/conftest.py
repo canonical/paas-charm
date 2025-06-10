@@ -13,7 +13,6 @@ import pytest_asyncio
 import requests
 from juju.application import Application
 from juju.errors import JujuError
-from juju.juju import Juju
 from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
@@ -610,6 +609,64 @@ async def expressjs_non_root_app_fixture(
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
     return app
+
+
+@pytest.fixture(scope="module", name="spring_boot_app")
+def spring_boot_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+    spring_boot_app_image: str,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+    try:
+        juju.deploy(
+            "postgresql-k8s",
+            channel="14/stable",
+            base="ubuntu@22.04",
+            revision=300,
+            trust=True,
+            config={
+                "profile": "testing",
+                "plugin_hstore_enable": "true",
+                "plugin_pg_trgm_enable": "true",
+            },
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    charm_file = build_charm_file(
+        pytestconfig,
+        "spring-boot",
+        tmp_path_factory,
+        charm_location=PROJECT_ROOT / "examples/springboot/charm",
+    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            app=app_name,
+            resources=resources,
+        )
+    except jubilant._juju.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+    # Add required relations
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant._juju.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
+
+    return App(app_name)
 
 
 @pytest_asyncio.fixture(scope="module", name="get_unit_ips")
