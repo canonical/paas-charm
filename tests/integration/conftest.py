@@ -10,12 +10,15 @@ from typing import cast
 import jubilant
 import pytest
 import pytest_asyncio
+import requests
 from juju.application import Application
 from juju.errors import JujuError
 from juju.juju import Juju
 from juju.model import Model
 from pytest import Config
 from pytest_operator.plugin import OpsTest
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from tests.integration.helpers import (
     inject_charm_config,
@@ -34,6 +37,25 @@ NON_OPTIONAL_CONFIGS = {
         }
     }
 }
+
+
+@pytest.fixture(scope="function", name="http")
+def fixture_http_client():
+    """Return the --test-flask-image test parameter."""
+    retry_strategy = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        other=5,
+        backoff_factor=5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "POST", "GET", "OPTIONS"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("http://", adapter)
+    return http
 
 
 @pytest.fixture(scope="module", name="test_flask_image")
@@ -101,10 +123,10 @@ def fixture_flask_minimal_app_image(pytestconfig: Config):
 
 @pytest.fixture(scope="module", name="spring_boot_app_image")
 def fixture_spring_boot_app_image(pytestconfig: Config):
-    """Return the --spring-boot-app-image test parameter."""
-    image = pytestconfig.getoption("--spring-boot-app-image")
+    """Return the --paas-spring-boot-app-image test parameter."""
+    image = pytestconfig.getoption("--paas-spring-boot-app-image")
     if not image:
-        raise ValueError("the following arguments are required: --spring-boot-app-image")
+        raise ValueError("the following arguments are required: --paas-spring-boot-app-image")
     return image
 
 

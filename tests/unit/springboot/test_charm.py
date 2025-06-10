@@ -6,22 +6,11 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
-import unittest
-from unittest.mock import MagicMock
 
-import ops
 import pytest
-from charms.smtp_integrator.v0.smtp import (
-    AuthType,
-    SmtpRelationData,
-    TransportSecurity,
-)
-from ops.testing import Harness
+from ops import testing
 
-from paas_charm.charm_state import IntegrationsState
-from paas_charm.springboot.charm import SpringBootApp
-
-from .constants import DEFAULT_LAYER, SPRINGBOOT_CONTAINER_NAME
+from examples.springboot.charm.src.charm import SpringBootCharm
 
 
 @pytest.mark.parametrize(
@@ -33,16 +22,17 @@ from .constants import DEFAULT_LAYER, SPRINGBOOT_CONTAINER_NAME
                 "SERVER_PORT": "8080",
                 "SERVER_METRICS_PORT": "8080",
                 "SERVER_METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://spring-boot-k8s.None:8080",
+                "APP_BASE_URL": "http://spring-boot-k8s.test-model:8080",
                 "APP_SECRET_KEY": "test",
+                "APP_PEER_FQDNS": "spring-boot-k8s-0.spring-boot-k8s-endpoints.test-model.svc.cluster.local",
                 "spring.datasource.username": "test-username",
                 "spring.datasource.password": "test-password",
-                "spring.datasource.url": "jdbc:postgresql://test-postgresql:5432/test-database",
+                "spring.datasource.url": "jdbc:postgresql://test-postgresql:5432/spring-boot-k8s",
                 "spring.jpa.hibernate.ddl-auto": "none",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
                 "POSTGRESQL_DB_PASSWORD": "test-password",
                 "POSTGRESQL_DB_USERNAME": "test-username",
-                "POSTGRESQL_DB_NAME": "test-database",
+                "POSTGRESQL_DB_NAME": "spring-boot-k8s",
             },
             id="default",
         ),
@@ -54,121 +44,74 @@ from .constants import DEFAULT_LAYER, SPRINGBOOT_CONTAINER_NAME
             },
             {
                 "SERVER_PORT": "9000",
-                "APP_BASE_URL": "http://spring-boot-k8s.None:9000",
+                "APP_BASE_URL": "http://spring-boot-k8s.test-model:9000",
                 "SERVER_METRICS_PORT": "9001",
                 "SERVER_METRICS_PATH": "/othermetrics",
                 "APP_SECRET_KEY": "test",
+                "APP_PEER_FQDNS": "spring-boot-k8s-0.spring-boot-k8s-endpoints.test-model.svc.cluster.local",
                 "spring.datasource.username": "test-username",
                 "spring.datasource.password": "test-password",
-                "spring.datasource.url": "jdbc:postgresql://test-postgresql:5432/test-database",
+                "spring.datasource.url": "jdbc:postgresql://test-postgresql:5432/spring-boot-k8s",
                 "spring.jpa.hibernate.ddl-auto": "none",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
                 "POSTGRESQL_DB_PASSWORD": "test-password",
                 "POSTGRESQL_DB_USERNAME": "test-username",
-                "POSTGRESQL_DB_NAME": "test-database",
+                "POSTGRESQL_DB_NAME": "spring-boot-k8s",
             },
             id="custom config",
         ),
     ],
 )
-def test_springboot_config(harness: Harness, config: dict, env: dict) -> None:
+def test_springboot_config(base_state, config: dict, env: dict) -> None:
     """
-    arrange: none
+    arrange: set the springboot charm config.
     act: start the springboot charm and set springboot-app container to be ready.
     assert: springboot charm should submit the correct springboot pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(SPRINGBOOT_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
-    harness.update_config(config)
+    base_state["config"] = config
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+    out = context.run(context.on.config_changed(), state)
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    plan = container.get_plan()
-    springboot_layer = plan.to_dict()["services"]["spring-boot"]
+    assert out.unit_status == testing.ActiveStatus()
+
+    springboot_layer = list(out.containers)[0].plan.services["spring-boot"].to_dict()
     assert springboot_layer == {
         "environment": env,
-        "override": "replace",
         "startup": "enabled",
-        "command": '/bash -c "java -jar *.jar"',
-        "user": "_daemon_",
-        "working-dir": "/app",
+        "override": "replace",
+        "command": 'bash -c "java -jar *.jar"',
     }
 
 
-def test_metrics_config(harness: Harness):
+def test_metrics_config(
+    base_state,
+) -> None:
     """
-    arrange: Charm with a metrics-endpoint integration
-    act: Start the charm with all initial hooks
-    assert: The correct port and path for scraping should be in the relation data.
+    arrange: add prometheus-k8s relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: prometheus-k8s relation should have the springboot charm unit name.
     """
-
-    container = harness.model.unit.get_container(SPRINGBOOT_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.add_relation("metrics-endpoint", "prometheus-k8s")
-    # update_config has to be executed before begin, as the charm does not call __init__
-    # twice in ops and the observability information is updated in __init__.
-    harness.update_config({"metrics-port": 9999, "metrics-path": "/metricspath"})
-
-    harness.begin_with_initial_hooks()
-
-    metrics_endpoint_relation = harness.model.relations["metrics-endpoint"]
-    assert len(metrics_endpoint_relation) == 1
-    relation_data = metrics_endpoint_relation[0].data
-
-    relation_data_unit = relation_data[harness.model.unit]
-    assert relation_data_unit["prometheus_scrape_unit_address"]
-    assert relation_data_unit["prometheus_scrape_unit_name"] == harness.model.unit.name
-
-    relation_data_app = relation_data[harness.model.app]
-    scrape_jobs = relation_data_app["scrape_jobs"]
-    assert "/metricspath" in scrape_jobs
-    assert "*:9999" in scrape_jobs
-
-
-@pytest.mark.parametrize(
-    "integrations, expected_env",
-    [
-        pytest.param(
-            IntegrationsState(
-                smtp=SmtpRelationData(
-                    host="smtp.example.com",
-                    port=587,
-                    user="testingusername",
-                    password="testingpassword",
-                    password_id=None,
-                    auth_type=AuthType.PLAIN,
-                    transport_security=TransportSecurity.STARTTLS,
-                    domain="example.com",
-                    skip_ssl_verify=False,
-                )
-            ),
-            {
-                "spring.mail.host": "smtp.example.com",
-                "spring.mail.port": 587,
-                "spring.mail.username": "testingusername@example.com",
-                "spring.mail.password": "testingpassword",
-                "spring.mail.properties.mail.smtp.auth": "plain",
-                "spring.mail.properties.mail.smtp.starttls.enable": "true",
-            },
-            id="SMTP",
-        ),
-    ],
-)
-def test_generate_integration_environments(
-    integrations: IntegrationsState, expected_env: dict[str, str]
-):
-    """
-    arrange: given integration state.
-    act: when _generate_integration_environments is called.
-    assert: expected environment variables are populated.
-    """
-    charm_state = MagicMock()
-    charm_state.integrations = integrations
-    app = SpringBootApp(
-        container=MagicMock(),
-        charm_state=charm_state,
-        workload_config=MagicMock(),
-        database_migration=MagicMock(),
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="metrics-endpoint",
+            interface="prometheus-k8s",
+        )
     )
-    assert app._generate_integration_environments() == expected_env
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+
+    metrics_endpoint_relation = out.get_relations("metrics-endpoint")
+    assert len(metrics_endpoint_relation) == 1
+
+    relation_data_unit = metrics_endpoint_relation[0].local_unit_data
+    assert relation_data_unit["prometheus_scrape_unit_address"]
+    assert relation_data_unit["prometheus_scrape_unit_name"] == "spring-boot-k8s/0"

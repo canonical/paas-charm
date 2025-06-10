@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 1.7.0 - 2025-06-05
+## 1.7.0 - 2025-06-10
 
 * feat: Added support for Spring boot.
 

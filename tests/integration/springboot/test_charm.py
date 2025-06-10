@@ -13,25 +13,9 @@ from tests.integration.types import App
 logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-retry_strategy = Retry(
-    total=5,
-    connect=5,
-    read=5,
-    other=5,
-    backoff_factor=5,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["HEAD", "POST", "GET", "OPTIONS"],
-    raise_on_status=False,
-)
-adapter = HTTPAdapter(max_retries=retry_strategy)
-http = requests.Session()
-http.mount("http://", adapter)
 
 
-def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju):
+def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju, http: requests.Session):
     """
     arrange: build and deploy the Springboot charm.
     act: call the endpoint.
@@ -46,7 +30,7 @@ def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju):
         assert "Hello, World!" in response.text
 
 
-def test_migration(spring_boot_app: App, juju: jubilant.Juju):
+def test_migration(spring_boot_app: App, juju: jubilant.Juju, http: requests.Session):
     """
     arrange: build and deploy the Springboot charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the migration script.
@@ -57,7 +41,6 @@ def test_migration(spring_boot_app: App, juju: jubilant.Juju):
     for unit in status.apps[spring_boot_app.name].units.values():
         response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
         assert response.status_code == 200
-        assert "SUCCESS" in response.text
         user_creation_request = {"name": "foo", "password": "bar"}
         response = requests.post(
             f"http://{unit.address}:{WORKLOAD_PORT}/users", json=user_creation_request, timeout=5

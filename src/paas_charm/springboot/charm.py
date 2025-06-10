@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Go Charm service."""
+"""Spring Boot Charm service."""
 
 import logging
 import pathlib
