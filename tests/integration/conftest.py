@@ -20,10 +20,7 @@ from pytest_operator.plugin import OpsTest
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from tests.integration.helpers import (
-    inject_charm_config,
-    inject_venv,
-)
+from tests.integration.helpers import inject_charm_config, inject_venv
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -53,9 +50,9 @@ def fixture_http_client():
         raise_on_status=False,
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
-    http = requests.Session()
-    http.mount("http://", adapter)
-    return http
+    with requests.Session() as http:
+        http.mount("http://", adapter)
+        yield http
 
 
 @pytest.fixture(scope="module", name="test_flask_image")
