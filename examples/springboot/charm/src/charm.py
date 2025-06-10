@@ -3,7 +3,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Go Charm service."""
+"""Spring Boot Charm service."""
 
 import typing
 
@@ -13,7 +13,7 @@ import paas_charm.springboot
 
 
 class SpringBootCharm(paas_charm.springboot.Charm):
-    """Go Charm service."""
+    """Spring Boot Charm service."""
 
     def __init__(self, *args: typing.Any) -> None:
         """Initialize the instance.

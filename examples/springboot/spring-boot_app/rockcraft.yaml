@@ -9,7 +9,7 @@ build-base: ubuntu@24.04 # build-base is required when the base is bare
 version: '0.1' # just for humans. Semantic versioning is recommended
 summary: A summary of your Spring boot application # 79 char long summary
 description: |
-    This is spring-boot-app's description. You have a paragraph or two to tell the
+    This is paas-spring-boot-app's description. You have a paragraph or two to tell the
     most important story about it. Keep it under 100 words though,
     we live in tweetspace and your description wants to look good in the
     container registries out there.
