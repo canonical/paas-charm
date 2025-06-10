@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import contextlib
 import io
 import json
 import logging
@@ -8,9 +9,11 @@ import os
 import pathlib
 import uuid
 import zipfile
+from typing import Generator
 
 import requests
 import yaml
+from jubilant import Juju
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 logger = logging.getLogger(__name__)
@@ -144,3 +147,19 @@ def check_openfga_auth_models_patiently(unit_ip: str, port: int):
     )
     assert "Listed authorization models" in response.text
     assert response.status_code == 200
+
+
+@contextlib.contextmanager
+def jubilant_temp_controller(
+    juju: Juju, controller: str, model: str = ""
+) -> Generator[Juju, None, None]:
+    try:
+        status = juju.status()
+        original_controller_name = status.model.controller
+        original_model_name = status.model.name
+        juju.cli("switch", f"{controller}:{model}", include_model=False)
+        yield juju
+    finally:
+        juju.cli(
+            "switch", f"{original_controller_name}:{original_model_name}", include_model=False
+        )
