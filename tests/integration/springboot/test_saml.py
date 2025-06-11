@@ -111,18 +111,14 @@ def simplesamlphp_ip_fixture(
 
 
 @pytest.fixture(scope="module", name="saml_integrator")
-def saml_integrator_fixture(
-    juju: jubilant.Juju, simplesamlphp_ip: str, saml_integrator: App, spring_boot_unit_ip: str
-):
+def saml_integrator_fixture(juju: jubilant.Juju, simplesamlphp_ip: str, spring_boot_unit_ip: str):
     """SAML integrator charm."""
     saml_config = {
         "entity_id": f"{spring_boot_unit_ip}:{WORKLOAD_PORT}",
         "metadata_url": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
     }
-    saml_integrator = juju.deploy(
-        "saml-integrator", channel="latest/stable", config=saml_config, trust=True
-    )
-    yield saml_integrator
+    juju.deploy("saml-integrator", channel="latest/stable", config=saml_config, trust=True)
+    yield App("saml-integrator")
 
 
 def test_springboot_saml_integration(
