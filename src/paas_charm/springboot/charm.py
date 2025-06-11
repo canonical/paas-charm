@@ -176,7 +176,13 @@ def generate_saml_env(
     """
     if not relation_data:
         return {}
-    return {}
+    return {
+"spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url, #"http://localhost:8080/simplesaml/saml2/idp/metadata.php",
+"spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id, #  "localhost:8081"
+# spring.security.saml2.relyingparty.registration.testentity.signing.credentials[0].private-key-location=classpath:saml.key
+# spring.security.saml2.relyingparty.registration.testentity.signing.credentials[0].certificate-location=classpath:saml.cert
+"spring.security.saml2.relyingparty.registration.testentity.identityprovider.singlesignon.sign-request": "true",
+    }
 
 
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
