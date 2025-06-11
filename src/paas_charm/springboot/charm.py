@@ -176,7 +176,10 @@ def generate_saml_env(
     """
     if not relation_data:
         return {}
-    return {}
+    return {
+        "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url,
+        "spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id,
+    }
 
 
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
