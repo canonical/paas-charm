@@ -140,40 +140,6 @@ async def deploy_traefik_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="loki_app")
-async def deploy_loki_fixture(
-    model: Model,
-    loki_app_name: str,
-):
-    """Deploy loki."""
-    app = await model.deploy(
-        "loki-k8s", application_name=loki_app_name, channel="latest/stable", trust=True
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="cos_apps")
-async def deploy_cos_fixture(
-    model: Model,
-    loki_app,  # pylint: disable=unused-argument
-    prometheus_app,  # pylint: disable=unused-argument
-    grafana_app_name: str,
-):
-    """Deploy the cos applications."""
-    cos_apps = await model.deploy(
-        "grafana-k8s",
-        application_name=grafana_app_name,
-        channel="1/stable",
-        revision=82,
-        series="focal",
-        trust=True,
-    )
-    await model.wait_for_idle(status="active")
-    return cos_apps
-
-
 @pytest_asyncio.fixture
 async def update_config(model: Model, request: FixtureRequest, flask_app: Application):
     """Update the flask application configuration.
