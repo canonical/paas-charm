@@ -13,22 +13,6 @@ from tests.integration.helpers import get_mails_patiently
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-retry_strategy = Retry(
-    total=5,
-    connect=5,
-    read=5,
-    other=5,
-    backoff_factor=5,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET"],
-    raise_on_status=False,
-)
-adapter = HTTPAdapter(max_retries=retry_strategy)
-http = requests.Session()
-http.mount("http://", adapter)
 
 
 @pytest.mark.parametrize(
@@ -48,6 +32,7 @@ def test_smtp_integrations(
     port,
     request: pytest.FixtureRequest,
     mailcatcher,
+    http: requests.Session,
 ):
     """
     arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.

@@ -48,6 +48,6 @@ def test_smtp_integration(
     assert environment["spring.mail.host"] == "mailcatcher"
     assert environment["spring.mail.port"] == 1025
     assert environment["spring.mail.username"] == "None@example.com"
-    assert environment["spring.mail.password"] == None
+    assert environment["spring.mail.password"] is None
     assert environment["spring.mail.properties.mail.smtp.auth"] == "none"
     assert environment["spring.mail.properties.mail.smtp.starttls.enable"] == "false"
