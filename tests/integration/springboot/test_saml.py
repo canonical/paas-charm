@@ -117,7 +117,7 @@ def saml_integrator_fixture(
     """SAML integrator charm."""
     saml_config = {
         "entity_id": f"{spring_boot_unit_ip}:{WORKLOAD_PORT}",
-        "metadata_url": f"{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
+        "metadata_url": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
     }
     saml_integrator = juju.deploy(
         "saml-integrator", channel="latest/stable", config=saml_config, trust=True
