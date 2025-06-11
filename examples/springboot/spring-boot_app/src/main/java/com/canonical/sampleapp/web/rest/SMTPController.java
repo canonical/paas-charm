@@ -11,8 +11,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @RequestMapping("/send_mail")
+@ConditionalOnProperty(name = "spring.mail.host")
 @RestController
 public class SMTPController {
     @Autowired
