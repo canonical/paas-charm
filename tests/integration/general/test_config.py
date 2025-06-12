@@ -4,12 +4,9 @@
 """Integration tests for CharmState in all supported frameworks."""
 
 
-import nest_asyncio
 import pytest
 from juju.application import Application
 from juju.model import Model
-
-nest_asyncio.apply()
 
 
 @pytest.mark.parametrize(
