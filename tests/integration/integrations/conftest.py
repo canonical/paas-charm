@@ -173,12 +173,7 @@ def generate_app_fixture(
             if "already exists" not in err.stderr:
                 raise err
         apps_to_wait_for.append("postgresql-k8s")
-    juju.wait(
-        lambda status: jubilant.all_active(
-            status, *apps_to_wait_for
-        ),
-        timeout=10 * 60
-    )
+    juju.wait(lambda status: jubilant.all_active(status, *apps_to_wait_for), timeout=10 * 60)
     yield App(app_name)
 
 

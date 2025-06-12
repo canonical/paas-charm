@@ -43,9 +43,11 @@ def test_prometheus_integration(
 
         status = juju.status()
         assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active
-        unit_ip = status.apps[app.name].units[app.name + "/0"].address
+        prometheus_unit_ip = (
+            status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].address
+        )
         query_targets = requests.get(
-            f"http://{unit_ip}:9090/api/v1/targets", timeout=10
+            f"http://{prometheus_unit_ip}:9090/api/v1/targets", timeout=10
         ).json()
         assert len(query_targets["data"]["activeTargets"])
     finally:
