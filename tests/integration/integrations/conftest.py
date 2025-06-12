@@ -15,7 +15,7 @@ import kubernetes
 import pytest
 from minio import Minio
 
-from tests.integration.conftest import build_charm_file
+from tests.integration.conftest import generate_app_fixture, deploy_postgresql
 from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
@@ -24,33 +24,9 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 logger = logging.getLogger(__name__)
 
 
-def deploy_postgresql(
-    juju: jubilant.Juju,
-):
-    """Deploy and set up postgresql charm needed for the 12-factor charm."""
-
-    if juju.status().apps.get("postgresql-k8s"):
-        logger.info("postgresql-k8s already deployed")
-        return
-
-    juju.deploy(
-        "postgresql-k8s",
-        channel="14/stable",
-        base="ubuntu@22.04",
-        revision=300,
-        trust=True,
-        config={
-            "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
-
-
 @pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(
     juju: jubilant.Juju,
-    request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     tmp_path_factory,
 ):
@@ -129,52 +105,6 @@ def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_
         framework=framework,
         tmp_path_factory=tmp_path_factory,
     )
-
-
-def generate_app_fixture(
-    juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
-    framework: str,
-    tmp_path_factory,
-    image_name: str = "",
-    use_postgres: bool = True,
-    config: dict[str, str] | None = None,
-    resources: dict[str, str] | None = None,
-):
-    """Generates the charm, configures and deploys it and the relations it depends on."""
-    app_name = f"{framework}-k8s"
-    if image_name == "":
-        image_name = f"{framework}-app-image"
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
-    if use_existing:
-        return App(app_name)
-    if resources is None:
-        resources = {
-            "app-image": pytestconfig.getoption(f"--{image_name}"),
-        }
-    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
-    try:
-        juju.deploy(
-            charm=charm_file,
-            resources=resources,
-            config=config,
-        )
-    except jubilant.CLIError as err:
-        if "application already exists" not in err.stderr:
-            raise err
-
-    # Add required relations
-    apps_to_wait_for = [app_name]
-    if use_postgres:
-        deploy_postgresql(juju)
-        try:
-            juju.integrate(app_name, "postgresql-k8s:database")
-        except jubilant.CLIError as err:
-            if "already exists" not in err.stderr:
-                raise err
-        apps_to_wait_for.append("postgresql-k8s")
-    juju.wait(lambda status: jubilant.all_active(status, *apps_to_wait_for), timeout=10 * 60)
-    yield App(app_name)
 
 
 @pytest.fixture(scope="module", name="minio_app_name")
