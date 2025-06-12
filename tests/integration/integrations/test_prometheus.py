@@ -58,7 +58,11 @@ def test_prometheus_integration(
         assert len(active_targets)
         for active_target in active_targets:
             scrape_url = active_target["scrapeUrl"]
-            if str(metrics_port) in scrape_url and metrics_path in scrape_url and app_unit_ip in scrape_url:
+            if (
+                str(metrics_port) in scrape_url
+                and metrics_path in scrape_url
+                and app_unit_ip in scrape_url
+            ):
                 # scrape the url directly to see if it works
                 response = requests.get(scrape_url, timeout=10)
                 response.raise_for_status()
