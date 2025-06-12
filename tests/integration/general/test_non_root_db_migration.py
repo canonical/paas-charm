@@ -7,10 +7,12 @@
 import logging
 
 import juju.model
+import nest_asyncio
 import pytest
 import requests
 from juju.application import Application
 
+nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
 

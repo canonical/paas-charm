@@ -15,6 +15,10 @@ from juju.application import Application
 
 logger = logging.getLogger(__name__)
 
+import nest_asyncio
+
+nest_asyncio.apply()
+
 
 @pytest.mark.parametrize(
     "non_root_app_fixture, port",
