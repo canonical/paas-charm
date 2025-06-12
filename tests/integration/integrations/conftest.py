@@ -153,18 +153,32 @@ def generate_app_fixture(
             "app-image": pytestconfig.getoption(f"--{image_name}"),
         }
     charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
-    juju.deploy(
-        charm=charm_file,
-        resources=resources,
-        config=config,
-    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            resources=resources,
+            config=config,
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
 
     # Add required relations
+    apps_to_wait_for = [app_name]
     if use_postgres:
         deploy_postgresql(juju)
-        juju.integrate(app_name, "postgresql-k8s:database")
-        juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
-    juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
+        try:
+            juju.integrate(app_name, "postgresql-k8s:database")
+        except jubilant.CLIError as err:
+            if "already exists" not in err.stderr:
+                raise err
+        apps_to_wait_for.append("postgresql-k8s")
+    juju.wait(
+        lambda status: jubilant.all_active(
+            status, *apps_to_wait_for
+        ),
+        timeout=10 * 60
+    )
     yield App(app_name)
 
 
@@ -368,6 +382,7 @@ def deploy_prometheus_fixture(
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
         error=jubilant.any_blocked,
+        timeout=6 * 60,
     )
     return App(prometheus_app_name)
 

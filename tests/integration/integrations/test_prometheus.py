@@ -37,13 +37,16 @@ def test_prometheus_integration(
         targets.
     """
     app = request.getfixturevalue(app_fixture)
-    juju.integrate(app.name, prometheus_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, prometheus_app.name))
+    try:
+        juju.integrate(app.name, prometheus_app.name)
+        juju.wait(lambda status: jubilant.all_active(status, app.name, prometheus_app.name))
 
-    status = juju.status()
-    assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active
-    for unit in status.apps[prometheus_app.name].units.values():
+        status = juju.status()
+        assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active
+        unit_ip = status.apps[app.name].units[app.name + "/0"].address
         query_targets = requests.get(
-            f"http://{unit.address}:9090/api/v1/targets", timeout=10
+            f"http://{unit_ip}:9090/api/v1/targets", timeout=10
         ).json()
         assert len(query_targets["data"]["activeTargets"])
+    finally:
+        juju.remove_relation(app.name, prometheus_app.name)

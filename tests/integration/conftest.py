@@ -637,7 +637,7 @@ def spring_boot_app_fixture(
                 "plugin_pg_trgm_enable": "true",
             },
         )
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
 
@@ -653,7 +653,7 @@ def spring_boot_app_fixture(
             app=app_name,
             resources=resources,
         )
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "application already exists" in err.stderr:
             juju.refresh(app_name, path=charm_file, resources=resources)
         else:
@@ -661,7 +661,7 @@ def spring_boot_app_fixture(
     # Add required relations
     try:
         juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
     juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
