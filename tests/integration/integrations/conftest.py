@@ -360,6 +360,12 @@ def mailcatcher(load_kube_config, juju):
     )
 
 
+@pytest.fixture(scope="module", name="prometheus_app_name")
+def prometheus_app_name_fixture() -> str:
+    """Return the name of the prometheus application deployed for tests."""
+    return "prometheus-k8s"
+
+
 @pytest.fixture(scope="module", name="prometheus_app")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
