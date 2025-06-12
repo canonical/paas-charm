@@ -9,3 +9,4 @@ opentelemetry-exporter-otlp
 opentelemetry-exporter-otlp-proto-http
 fastapi-mail
 openfga_sdk
+prometheus-fastapi-instrumentator

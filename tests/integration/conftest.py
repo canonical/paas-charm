@@ -709,12 +709,6 @@ def traefik_app_name_fixture() -> str:
     return "traefik-k8s"
 
 
-@pytest.fixture(scope="module", name="prometheus_app_name")
-def prometheus_app_name_fixture() -> str:
-    """Return the name of the prometheus application deployed for tests."""
-    return "prometheus-k8s"
-
-
 @pytest.fixture(scope="module", name="loki_app_name")
 def loki_app_name_fixture() -> str:
     """Return the name of the prometheus application deployed for tests."""
@@ -725,25 +719,6 @@ def loki_app_name_fixture() -> str:
 def grafana_app_name_fixture() -> str:
     """Return the name of the grafana application deployed for tests."""
     return "grafana-k8s"
-
-
-@pytest_asyncio.fixture(scope="module", name="prometheus_app")
-async def deploy_prometheus_fixture(
-    model: Model,
-    prometheus_app_name: str,
-):
-    """Deploy prometheus."""
-    app = await model.deploy(
-        "prometheus-k8s",
-        application_name=prometheus_app_name,
-        channel="1/stable",
-        revision=129,
-        series="focal",
-        trust=True,
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="postgresql_k8s")
