@@ -1,3 +1,8 @@
+/*
+ * Copyright 2025 Canonical Ltd.
+ * See LICENSE file for licensing details.
+ */
+
 package com.canonical.sampleapp.config;
 
 import static org.springframework.security.config.Customizer.withDefaults;
