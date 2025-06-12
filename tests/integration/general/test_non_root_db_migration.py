@@ -62,17 +62,11 @@ def test_non_root_db_migration(
         the database migration script has been executed and only executed once.
     """
     app = request.getfixturevalue(non_root_app_fixture)
-    juju.wait(
-        lambda status: jubilant.all_active(status, app.name), delay=5
-    )
+    juju.wait(lambda status: jubilant.all_active(status, app.name), delay=5)
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    
+
     if app_name == "fastapi-k8s":
-        assert (
-            requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
-        )
+        assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
     else:
-        assert (
-            requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
-        )
+        assert requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200

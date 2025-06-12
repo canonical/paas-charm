@@ -234,9 +234,8 @@ def flask_non_root_db_app_fixture(
         resources={
             "flask-app-image": test_db_flask_image,
         },
-        charm_dict={"charm-user": "non-root"}
+        charm_dict={"charm-user": "non-root"},
     )
-
 
 
 @pytest.fixture(scope="module", name="flask_non_root_app")
@@ -257,7 +256,7 @@ def flask_non_root_app_fixture(
         resources={
             "flask-app-image": test_flask_image,
         },
-        charm_dict={"charm-user": "non-root"}
+        charm_dict={"charm-user": "non-root"},
     )
 
 
@@ -362,7 +361,7 @@ def django_non_root_app_fixture(
         resources={
             "django-app-image": django_app_image,
         },
-        charm_dict={"charm-user": "non-root"}
+        charm_dict={"charm-user": "non-root"},
     )
 
 
@@ -428,9 +427,11 @@ def fastapi_non_root_app_fixture(
         pytestconfig=pytestconfig,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
-        resources={"app-image": fastapi_app_image,},
+        resources={
+            "app-image": fastapi_app_image,
+        },
         config={"non-optional-string": "non-optional-value"},
-        charm_dict={"charm-user": "non-root"}
+        charm_dict={"charm-user": "non-root"},
     )
 
 
@@ -588,7 +589,7 @@ def expressjs_non_root_app_fixture(
         resources={
             "app-image": expressjs_app_image,
         },
-        charm_dict={"charm-user": "non-root"}
+        charm_dict={"charm-user": "non-root"},
     )
 
 
@@ -852,5 +853,3 @@ def deploy_postgresql(
             "plugin_pg_trgm_enable": "true",
         },
     )
-
-

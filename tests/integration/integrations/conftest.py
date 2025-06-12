@@ -15,7 +15,7 @@ import kubernetes
 import pytest
 from minio import Minio
 
-from tests.integration.conftest import generate_app_fixture, deploy_postgresql
+from tests.integration.conftest import deploy_postgresql, generate_app_fixture
 from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
