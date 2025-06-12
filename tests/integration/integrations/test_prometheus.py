@@ -15,19 +15,20 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "app_fixture,metrics_port",
+    "app_fixture,metrics_port,metrics_path",
     [
-        ("expressjs_app", 8080),
-        ("go_app", 8080),
-        ("fastapi_app", 8080),
-        ("flask_app", 9102),
-        ("django_app", 9102),
+        ("expressjs_app", 8080, "/metrics"),
+        ("go_app", 8081, "/metrics"),
+        ("fastapi_app", 8080, "/metrics"),
+        ("flask_app", 9102, "/metrics"),
+        ("django_app", 9102, "/metrics"),
     ],
 )
 def test_prometheus_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
     metrics_port: int,
+    metrics_path: str,
     juju: jubilant.Juju,
     prometheus_app: App,
 ):
@@ -57,7 +58,7 @@ def test_prometheus_integration(
         assert len(active_targets)
         for active_target in active_targets:
             scrape_url = active_target["scrapeUrl"]
-            if str(metrics_port) in scrape_url and app_unit_ip in scrape_url:
+            if str(metrics_port) in scrape_url and metrics_path in scrape_url and app_unit_ip in scrape_url:
                 # scrape the url directly to see if it works
                 response = requests.get(scrape_url, timeout=10)
                 response.raise_for_status()

@@ -93,6 +93,7 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
         pytestconfig=pytestconfig,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        config={"metrics-port": 8081},
     )
 
 
