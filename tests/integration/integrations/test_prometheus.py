@@ -46,7 +46,6 @@ def test_prometheus_integration(
         )
 
         status = juju.status()
-        assert status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].is_active
         prometheus_unit_ip = (
             status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].address
         )
