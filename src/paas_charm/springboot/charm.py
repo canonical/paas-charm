@@ -184,7 +184,7 @@ def generate_saml_env(
     if relation_data.single_sign_on_redirect_url:
         env[
             "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
-        ] = (relation_data.single_sign_on_redirect_url,)
+        ] = relation_data.single_sign_on_redirect_url
 
     if relation_data.signing_certificate:
         env[
