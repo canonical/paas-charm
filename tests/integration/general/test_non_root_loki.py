@@ -5,7 +5,6 @@
 """Integration tests for non-root Charms Loki integration."""
 
 import logging
-import time
 
 import jubilant
 import pytest
@@ -50,7 +49,7 @@ def test_non_root_loki_integration(
         # populate the access log
         for _ in range(120):
             requests.get(f"http://{unit_ip}:{port}", timeout=10)
-            time.sleep(1)
+
         loki_ip = status.apps[loki_app.name].units[loki_app.name + "/0"].address
         log_query = requests.get(
             f"http://{loki_ip}:3100/loki/api/v1/query_range",
