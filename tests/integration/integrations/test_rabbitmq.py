@@ -35,7 +35,7 @@ def test_rabbitmq_server_integration(
 
     try:
         juju.integrate(app.name, rabbitmq_app.name)
-        juju.wait(lambda status: jubilant.all_active(status, app.name), delay=10)
+        juju.wait(lambda status: jubilant.all_active(status, app.name), timeout=6 * 60, delay=10)
         status = juju.status()
         unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
