@@ -24,16 +24,37 @@ The solution is aimed at developers who create applications based on the
 can take advantage of the solution to simplify their operations and deploy
 their applications to production.
 
-Documentation
--------------
+In this documentation
+---------------------
 
-Documentation for this project is located in a few places:
+.. grid:: 1 1 2 2
 
-1. This site: Documentation related to the product and development
-2. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
-   Documentation related to the OCI image containers
-3. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/>`_:
-   Documentation related to the software operators (charms)
+    .. grid-item-card:: Tutorial
+        :link: tutorial/index
+        :link-type: doc
+
+        **Get started** - a hands-on introduction to the tooling
+
+    .. grid-item-card:: How-to guides
+        :link: how-to/index
+        :link-type: doc
+
+        **Step-by-step guides** covering key operations and common tasks
+
+.. grid:: 1 1 2 2
+    :reverse:
+
+    .. grid-item-card:: Reference
+        :link: reference/index
+        :link-type: doc
+
+        **Technical information**
+
+    .. grid-item-card:: Explanation
+        :link: explanation/index
+        :link-type: doc
+
+        **Discussion and clarification** of key topics
 
 Contributing to this documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
