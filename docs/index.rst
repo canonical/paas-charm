@@ -66,7 +66,7 @@ additional documentation is available in their respective documentation sites:
    Documentation related to the software operators (charms)
 
 Contributing to this documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 Documentation is an important part of this project, and we take the same open-source
 approach to the documentation as the code. As such, we welcome community contributions,
@@ -89,10 +89,12 @@ suggestions, fixes and constructive feedback.
 * `Get support <https://discourse.charmhub.io/>`_
 * `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
 * :ref:`Contribute <how-to-contribute>`
-* Roadmap
 
-Thinking about using this solution in your next project? Get in touch!
+Get in touch
+~~~~~~~~~~~~
 
+Do you have a project or setup where you want to employ this solution? Reach out
+to share your use case and get started!
 
 .. toctree::
    :hidden:
