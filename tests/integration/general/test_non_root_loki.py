@@ -5,6 +5,7 @@
 """Integration tests for non-root Charms Loki integration."""
 
 import logging
+import time
 
 import jubilant
 import pytest
@@ -47,15 +48,18 @@ def test_non_root_loki_integration(
         status = juju.status()
         unit_ip = status.apps[non_root_app.name].units[non_root_app.name + "/0"].address
         # populate the access log
-        for _ in range(120):
+        for _ in range(10):
             requests.get(f"http://{unit_ip}:{port}", timeout=10)
-
+        # Give some time for the logs to be pushed to loki.
+        time.sleep(10)
         loki_ip = status.apps[loki_app.name].units[loki_app.name + "/0"].address
         log_query = requests.get(
             f"http://{loki_ip}:3100/loki/api/v1/query_range",
             timeout=10,
             params={"query": f'{{juju_application="{non_root_app.name}"}}'},
         ).json()
+        # In Flask and Django, other streams exists (like the celery workers).
+        # Just test that there is something.
         result = log_query["data"]["result"]
         assert result
         log = result[-1]
