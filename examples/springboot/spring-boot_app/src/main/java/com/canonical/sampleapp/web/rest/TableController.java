@@ -31,7 +31,6 @@ public class TableController {
         this.userService = userService;
     }
 
-
     @GetMapping("/{name}")
     public ResponseEntity<String> getTable(@PathVariable String name) {
         log.info("REST request to get Table : {}", name);

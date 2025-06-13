@@ -60,10 +60,11 @@ public class UserService {
         log.debug("Created Information for User: {}", user);
         return user;
     }
+
     public Long countUsers() {
         return userRepository.count();
     }
-    
+
     @Transactional(readOnly = true)
     public Optional<User> getUserByName(String name) {
         return userRepository.findOneByName(name);

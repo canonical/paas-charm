@@ -13,7 +13,7 @@ jobs:
     with:
       extra-arguments: '-x --log-format="%(asctime)s %(levelname)s %(message)s"'
       charmcraft-channel: latest/edge
-      modules: '["test_charm.py", "test_config.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_grafana.py", "test_loki.py", "test_minimal.py", "test_non_root_db_migration.py", "test_non_root_loki.py", "test_openfga.py", "test_prometheus.py", "test_proxy.py", "test_rabbitmq.py", "test_s3.py", "test_saml.py", "test_smtp.py", "test_tracing.py", "test_workers.py"]'
+      modules: '["test_charm.py", "test_config.py", "test_database.py", "test_db_migration.py", "test_django.py", "test_django_integrations.py", "test_fastapi.py", "test_go.py", "test_grafana.py", "test_loki.py", "test_minimal.py", "test_non_root_db_migration.py", "test_non_root_loki.py", "test_openfga.py", "test_prometheus.py", "test_proxy.py", "test_rabbitmq.py", "test_s3.py", "test_saml.py", "test_smtp.py", "test_tracing.py", "test_workers.py", "test_spring_saml.py"]'
       rockcraft-channel: latest/edge
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable

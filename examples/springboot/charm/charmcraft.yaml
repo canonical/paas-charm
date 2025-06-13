@@ -104,6 +104,10 @@ requires:
     interface: smtp
     optional: True
     limit: 1
+  saml:
+    interface: saml
+    optional: True
+    limit: 1
   openfga:
     interface: openfga
     optional: True
