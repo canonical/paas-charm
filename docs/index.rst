@@ -14,15 +14,16 @@ frameworks coming soon.
 
 With a few simple commands, you can set up a fully integrated and observable
 Kubernetes environment for your web application. These commands create
-production-ready OCI-compliant container images for your web application and
-software operators wrapped around the container images. From there, you can
-deploy your web application, connect it to a database, add ingress and
-observability and much more.
+production-ready container images for your web application compliant with
+the Open Container Initiative (OCI), along with software operators wrapped around
+the container images. From there, you can deploy your web application,
+connect it to a database, add ingress and observability and much more.
 
 The solution is aimed at developers who create applications based on the
 `12-factor methodology. <https://12factor.net/>`_ Web developers and operators
-can take advantage of the solution to simplify their operations and deploy
-their applications to production.
+can take advantage of the solution to quickly containerize their application,
+prepare their projects for deployment, and connect their application to the
+features that they need for full-scale production.
 
 In this documentation
 ---------------------
