@@ -34,7 +34,7 @@ In this documentation
         :link: tutorial/index
         :link-type: doc
 
-        **Get started** - a hands-on introduction to the tooling
+        **Get started** with a hands-on introduction to the tooling
 
     .. grid-item-card:: How-to guides
         :link: how-to/index
@@ -49,13 +49,21 @@ In this documentation
         :link: reference/index
         :link-type: doc
 
-        **Technical information**
+        **Technical information** about the tooling
 
     .. grid-item-card:: Explanation
         :link: explanation/index
         :link-type: doc
 
         **Discussion and clarification** of key topics
+
+Since the tooling is natively part of the Rockcraft and Charmcraft products,
+additional documentation is available in their respective documentation sites:
+
+1. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/>`_:
+   Documentation related to the OCI image containers
+2. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/>`_:
+   Documentation related to the software operators (charms)
 
 Contributing to this documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
