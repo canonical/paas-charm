@@ -62,8 +62,8 @@ Contributing to this documentation
 Documentation is an important part of this project, and we take the same open-source
 approach to the documentation as the code. As such, we welcome community contributions,
 suggestions and constructive feedback on our documentation. Our documentation is hosted
-on Read The Docs to enable easy collaboration. Please use the "Edit this page on GitHub"
-or "Give Feedback" links on each documentation page to either directly change something
+on Read The Docs to enable easy collaboration. Please use the "Contribute to this page"
+links at the top of each documentation page to either directly change something
 you see that's wrong, ask a question, or make a suggestion about a potential change.
 
 If there's a particular area of documentation that you'd like to see that's missing,
