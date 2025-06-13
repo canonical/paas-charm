@@ -10,4 +10,5 @@ configuration of web app frameworks.
 .. toctree::
    :maxdepth: 1
 
+   foundations
    Charm architecture <charm-architecture>
