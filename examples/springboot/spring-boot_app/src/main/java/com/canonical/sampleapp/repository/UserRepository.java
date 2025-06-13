@@ -17,6 +17,6 @@ import com.canonical.sampleapp.domain.User;
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     Optional<User> findOneByName(String name);
 }

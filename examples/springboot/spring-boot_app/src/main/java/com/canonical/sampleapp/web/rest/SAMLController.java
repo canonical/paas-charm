@@ -5,12 +5,14 @@
 
 package com.canonical.sampleapp.web.rest;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@ConditionalOnProperty(name = "spring.security.saml2.relyingparty.registration.testentity.entity-id")
 @Controller
 public class SAMLController {
     // saml endpoint is reserved

@@ -177,12 +177,21 @@ def generate_saml_env(
     if not relation_data:
         return {}
 
-    return {
+    env = {
         "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url.unicode_string(),
         "spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id,
-        "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url": relation_data.single_sign_on_redirect_url,
-        "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location": "file:/app/saml.cert",
     }
+    if relation_data.single_sign_on_redirect_url:
+        env[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
+        ] = (relation_data.single_sign_on_redirect_url,)
+
+    if relation_data.signing_certificate:
+        env[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
+        ] = "file:/app/saml.cert"
+
+    return env
 
 
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
