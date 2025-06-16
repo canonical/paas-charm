@@ -68,41 +68,6 @@ async def test_migration(
         assert "SUCCESS" in response.text
 
 
-async def test_prometheus_integration(
-    model: Model,
-    go_app: Application,
-    prometheus_app,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
-):
-    """
-    arrange: after Go charm has been deployed.
-    act: establish relations established with prometheus charm.
-    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
-        targets.
-    """
-    await model.add_relation(prometheus_app.name, go_app.name)
-    await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
-
-    config = await go_app.get_config()
-    await go_app.set_config({"metrics-port": str(config["metrics-port"]["value"] + 1)})
-    await model.wait_for_idle(apps=[go_app.name, prometheus_app.name], status="active")
-    config = await go_app.get_config()
-
-    for unit_ip in await get_unit_ips(prometheus_app.name):
-        query_targets = requests.get(f"http://{unit_ip}:9090/api/v1/targets", timeout=10).json()
-        active_targets = query_targets["data"]["activeTargets"]
-        assert len(active_targets)
-        for active_target in active_targets:
-            scrape_url = active_target["scrapeUrl"]
-            metrics_path = config["metrics-path"]["value"]
-            metrics_port = str(config["metrics-port"]["value"])
-            if metrics_path in scrape_url and metrics_port in scrape_url:
-                break
-        else:
-            logger.error("Application not scraped. Scraped targets: %s", active_targets)
-            assert False, "Scrape Target not configured correctly"
-
-
 async def test_open_ports(
     ops_test: OpsTest,
     model: Model,

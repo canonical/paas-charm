@@ -15,7 +15,7 @@ import kubernetes
 import pytest
 from minio import Minio
 
-from tests.integration.conftest import build_charm_file
+from tests.integration.conftest import deploy_postgresql, generate_app_fixture
 from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
@@ -24,33 +24,9 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 logger = logging.getLogger(__name__)
 
 
-def deploy_postgresql(
-    juju: jubilant.Juju,
-):
-    """Deploy and set up postgresql charm needed for the 12-factor charm."""
-
-    if juju.status().apps.get("postgresql-k8s"):
-        logger.info("postgresql-k8s already deployed")
-        return
-
-    juju.deploy(
-        "postgresql-k8s",
-        channel="14/stable",
-        base="ubuntu@22.04",
-        revision=300,
-        trust=True,
-        config={
-            "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
-
-
 @pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(
     juju: jubilant.Juju,
-    request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     tmp_path_factory,
 ):
@@ -117,6 +93,7 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
         pytestconfig=pytestconfig,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        config={"metrics-port": 8081},
     )
 
 
@@ -129,43 +106,6 @@ def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_
         framework=framework,
         tmp_path_factory=tmp_path_factory,
     )
-
-
-def generate_app_fixture(
-    juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
-    framework: str,
-    tmp_path_factory,
-    image_name: str = "",
-    use_postgres: bool = True,
-    config: dict[str, str] | None = None,
-    resources: dict[str, str] | None = None,
-):
-    """Generates the charm, configures and deploys it and the relations it depends on."""
-    app_name = f"{framework}-k8s"
-    if image_name == "":
-        image_name = f"{framework}-app-image"
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
-    if use_existing:
-        return App(app_name)
-    if resources is None:
-        resources = {
-            "app-image": pytestconfig.getoption(f"--{image_name}"),
-        }
-    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
-    juju.deploy(
-        charm=charm_file,
-        resources=resources,
-        config=config,
-    )
-
-    # Add required relations
-    if use_postgres:
-        deploy_postgresql(juju)
-        juju.integrate(app_name, "postgresql-k8s:database")
-        juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=30 * 60)
-    juju.wait(lambda status: status.apps[app_name].is_active, timeout=10 * 60)
-    yield App(app_name)
 
 
 @pytest.fixture(scope="module", name="minio_app_name")
@@ -351,6 +291,12 @@ def mailcatcher(load_kube_config, juju):
     )
 
 
+@pytest.fixture(scope="module", name="prometheus_app_name")
+def prometheus_app_name_fixture() -> str:
+    """Return the name of the prometheus application deployed for tests."""
+    return "prometheus-k8s"
+
+
 @pytest.fixture(scope="module", name="prometheus_app")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
@@ -368,6 +314,7 @@ def deploy_prometheus_fixture(
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
         error=jubilant.any_blocked,
+        timeout=6 * 60,
     )
     return App(prometheus_app_name)
 
@@ -435,7 +382,8 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
     juju.wait(
-        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s")
+        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
+        timeout=6 * 60,
     )
     return openfga_server_app
 

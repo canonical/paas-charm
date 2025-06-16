@@ -6,13 +6,10 @@
 
 import logging
 
-import juju.model
-import nest_asyncio
+import jubilant
 import pytest
 import requests
-from juju.application import Application
 
-nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
 
@@ -50,14 +47,12 @@ logger = logging.getLogger(__name__)
         ),
     ],
 )
-async def test_non_root_db_migration(
+def test_non_root_db_migration(
+    juju: jubilant.Juju,
     non_root_app_fixture: str,
     app_name: str,
     endpoint: str,
     port: int,
-    model: juju.model.Model,
-    get_unit_ips,
-    postgresql_k8s: Application,
     request,
 ):
     """
@@ -66,19 +61,12 @@ async def test_non_root_db_migration(
     assert: requesting the charm should return a correct response indicate
         the database migration script has been executed and only executed once.
     """
-    request.getfixturevalue(non_root_app_fixture)
-    await model.wait_for_idle(
-        apps=[app_name, postgresql_k8s.name],
-        status="active",
-        timeout=20 * 60,
-        idle_period=2 * 60,
-    )
-    for unit_ip in await get_unit_ips(app_name):
-        if app_name == "fastapi-k8s":
-            assert (
-                requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
-            )
-        else:
-            assert (
-                requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
-            )
+    app = request.getfixturevalue(non_root_app_fixture)
+    juju.wait(lambda status: jubilant.all_active(status, app.name), delay=5)
+    status = juju.status()
+    unit_ip = status.apps[app.name].units[app.name + "/0"].address
+
+    if app_name == "fastapi-k8s":
+        assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
+    else:
+        assert requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200

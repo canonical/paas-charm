@@ -152,6 +152,11 @@ html_context = {
     # "sequential_nav": "both",
 }
 
+# Target repository for the edit button on pages
+html_theme_options = {
+    "source_edit_link": "https://github.com/canonical/paas-charm",
+}
+
 # Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
 #
 # TODO: If your documentation is hosted on https://docs.ubuntu.com/,

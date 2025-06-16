@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 1.7.2 - 2025-06-12
+
+## 1.7.2 - 2025-06-16
 
 * feat: Added SAML support for Spring boot.
 
-## 1.7.1 - 2025-06-11
+## 1.7.1 - 2025-06-12
 
+* docs: Added an edit button to the RTD project.
 * feat: Added SMTP support for Spring boot.
 
 ## 1.7.0 - 2025-06-11

@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
-from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -43,6 +43,11 @@ set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 FastAPIInstrumentor.instrument_app(app)
 tracer = trace.get_tracer(__name__)
+
+# Collect metrics and exposes the /metrics endpoint
+# This may be not appropriate for a production environment, as the metrics
+# may be publicly accessible
+Instrumentator().instrument(app).expose(app)
 
 engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
 

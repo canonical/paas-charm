@@ -250,7 +250,7 @@ func main() {
 		counter: requestCounter,
 		service: service.Service{PostgresqlURL: postgresqlURL},
 	}
-	mux.HandleFunc("/", mainHandler.serveHelloWorld)
+	mux.HandleFunc("/{$}", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
 	mux.HandleFunc("/openfga/list-authorization-models", mainHandler.serveOpenFgaListAuthorizationModels)
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)

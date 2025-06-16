@@ -201,66 +201,63 @@ async def flask_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="loki_app")
-async def deploy_loki_fixture(
-    model: Model,
+@pytest.fixture(scope="module", name="loki_app")
+def deploy_loki_fixture(
+    juju: jubilant.Juju,
     loki_app_name: str,
-):
+) -> App:
     """Deploy loki."""
-    app = await model.deploy(
-        "loki-k8s", application_name=loki_app_name, channel="latest/stable", trust=True
+    if not juju.status().apps.get(loki_app_name):
+        juju.deploy(loki_app_name, channel="latest/stable", trust=True)
+    juju.wait(
+        lambda status: status.apps[loki_app_name].is_active,
+        error=jubilant.any_blocked,
     )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
+    return App(loki_app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="flask_non_root_db_app")
-async def flask_non_root_db_app_fixture(
+@pytest.fixture(scope="module", name="flask_non_root_db_app")
+def flask_non_root_db_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    postgresql_k8s,
-    model: Model,
     test_db_flask_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the non-root flask charm with test-db-flask image."""
-    app_name = "flask-k8s"
-
-    resources = {
-        "flask-app-image": test_db_flask_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", tmp_path_factory, charm_dict={"charm-user": "non-root"}
+    framework = "flask"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
+        resources={
+            "flask-app-image": test_db_flask_image,
+        },
+        charm_dict={"charm-user": "non-root"},
     )
-    app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
-    return app
 
 
-@pytest_asyncio.fixture(scope="module", name="flask_non_root_app")
-async def flask_non_root_app_fixture(
+@pytest.fixture(scope="module", name="flask_non_root_app")
+def flask_non_root_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
     test_flask_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the non-root flask charm with test-flask image and non-root charm user."""
-    app_name = "flask-k8s"
-
-    resources = {
-        "flask-app-image": test_flask_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", tmp_path_factory, charm_dict={"charm-user": "non-root"}
+    framework = "flask"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "flask-app-image": test_flask_image,
+        },
+        charm_dict={"charm-user": "non-root"},
     )
-    app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(apps=[app_name], status="active", timeout=300)
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="flask_blocked_app")
@@ -345,34 +342,27 @@ async def django_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="django_non_root_app")
-async def django_non_root_app_fixture(
+@pytest.fixture(scope="module", name="django_non_root_app")
+def django_non_root_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
     django_app_image: str,
-    postgresql_k8s: Application,
     tmp_path_factory,
 ):
     """Build and deploy the non-root Django charm with django-app image."""
-    app_name = "django-k8s"
-
-    resources = {
-        "django-app-image": django_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "django", tmp_path_factory, charm_dict={"charm-user": "non-root"}
-    )
-
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
+    framework = "django"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         config={"django-allowed-hosts": "*"},
-        application_name=app_name,
-        series="jammy",
+        resources={
+            "django-app-image": django_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
     )
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="fastapi_app")
@@ -423,30 +413,26 @@ async def fastapi_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="fastapi_non_root_app")
-async def fastapi_non_root_app_fixture(
+@pytest.fixture(scope="module", name="fastapi_non_root_app")
+def fastapi_non_root_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
     fastapi_app_image: str,
-    postgresql_k8s: Application,
     tmp_path_factory,
 ):
     """Build and deploy the non-root FastAPI charm with fastapi-app image."""
-    app_name = "fastapi-k8s"
-
-    resources = {"app-image": fastapi_app_image}
-    charm_file = build_charm_file(
-        pytestconfig, "fastapi", tmp_path_factory, charm_dict={"charm-user": "non-root"}
-    )
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        application_name=app_name,
+    framework = "fastapi"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": fastapi_app_image,
+        },
         config={"non-optional-string": "non-optional-value"},
+        charm_dict={"charm-user": "non-root"},
     )
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="go_app")
@@ -494,27 +480,25 @@ async def go_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="go_non_root_app")
-async def go_non_root_app_fixture(
+@pytest.fixture(scope="module", name="go_non_root_app")
+def go_non_root_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
     go_app_image: str,
-    postgresql_k8s,
     tmp_path_factory,
 ):
     """Build and deploy the non-root Go charm with go-app image."""
-    app_name = "go-k8s"
-
-    resources = {
-        "app-image": go_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "go", tmp_path_factory, charm_dict={"charm-user": "non-root"}
+    framework = "go"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": go_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
     )
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
-    return app
 
 
 @pytest.fixture(scope="module", name="expressjs_app")
@@ -588,27 +572,25 @@ async def expressjs_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="expressjs_non_root_app")
-async def expressjs_non_root_app_fixture(
+@pytest.fixture(scope="module", name="expressjs_non_root_app")
+def expressjs_non_root_app_fixture(
+    juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    model: Model,
-    expressjs_app_image: str,
-    postgresql_k8s,
     tmp_path_factory,
+    expressjs_app_image: str,
 ):
     """Build and deploy the non-root Go charm with go-app image."""
-    app_name = "expressjs-k8s"
-
-    resources = {
-        "app-image": expressjs_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "expressjs", tmp_path_factory, charm_dict={"charm-user": "non-root"}
+    framework = "expressjs"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": expressjs_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
     )
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name, app_name], status="active", timeout=300)
-    return app
 
 
 @pytest.fixture(scope="module", name="spring_boot_app")
@@ -637,7 +619,7 @@ def spring_boot_app_fixture(
                 "plugin_pg_trgm_enable": "true",
             },
         )
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
 
@@ -653,7 +635,7 @@ def spring_boot_app_fixture(
             app=app_name,
             resources=resources,
         )
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "application already exists" in err.stderr:
             juju.refresh(app_name, path=charm_file, resources=resources)
         else:
@@ -661,7 +643,7 @@ def spring_boot_app_fixture(
     # Add required relations
     try:
         juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant._juju.CLIError as err:
+    except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
     juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
@@ -709,12 +691,6 @@ def traefik_app_name_fixture() -> str:
     return "traefik-k8s"
 
 
-@pytest.fixture(scope="module", name="prometheus_app_name")
-def prometheus_app_name_fixture() -> str:
-    """Return the name of the prometheus application deployed for tests."""
-    return "prometheus-k8s"
-
-
 @pytest.fixture(scope="module", name="loki_app_name")
 def loki_app_name_fixture() -> str:
     """Return the name of the prometheus application deployed for tests."""
@@ -725,25 +701,6 @@ def loki_app_name_fixture() -> str:
 def grafana_app_name_fixture() -> str:
     """Return the name of the grafana application deployed for tests."""
     return "grafana-k8s"
-
-
-@pytest_asyncio.fixture(scope="module", name="prometheus_app")
-async def deploy_prometheus_fixture(
-    model: Model,
-    prometheus_app_name: str,
-):
-    """Deploy prometheus."""
-    app = await model.deploy(
-        "prometheus-k8s",
-        application_name=prometheus_app_name,
-        channel="1/stable",
-        revision=129,
-        series="focal",
-        trust=True,
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="postgresql_k8s")
@@ -826,3 +783,73 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
         yield juju
         show_debug_log(juju)
         return
+
+
+def generate_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    framework: str,
+    tmp_path_factory,
+    image_name: str = "",
+    use_postgres: bool = True,
+    config: dict[str, str] | None = None,
+    resources: dict[str, str] | None = None,
+    charm_dict: dict = None,
+):
+    """Generates the charm, configures and deploys it and the relations it depends on."""
+    app_name = f"{framework}-k8s"
+    if image_name == "":
+        image_name = f"{framework}-app-image"
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        return App(app_name)
+    if resources is None:
+        resources = {
+            "app-image": pytestconfig.getoption(f"--{image_name}"),
+        }
+    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory, charm_dict=charm_dict)
+    try:
+        juju.deploy(
+            charm=charm_file,
+            resources=resources,
+            config=config,
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    # Add required relations
+    apps_to_wait_for = [app_name]
+    if use_postgres:
+        deploy_postgresql(juju)
+        try:
+            juju.integrate(app_name, "postgresql-k8s:database")
+        except jubilant.CLIError as err:
+            if "already exists" not in err.stderr:
+                raise err
+        apps_to_wait_for.append("postgresql-k8s")
+    juju.wait(lambda status: jubilant.all_active(status, *apps_to_wait_for), timeout=10 * 60)
+    yield App(app_name)
+
+
+def deploy_postgresql(
+    juju: jubilant.Juju,
+):
+    """Deploy and set up postgresql charm needed for the 12-factor charm."""
+
+    if juju.status().apps.get("postgresql-k8s"):
+        logger.info("postgresql-k8s already deployed")
+        return
+
+    juju.deploy(
+        "postgresql-k8s",
+        channel="14/stable",
+        base="ubuntu@22.04",
+        revision=300,
+        trust=True,
+        config={
+            "profile": "testing",
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
+        },
+    )

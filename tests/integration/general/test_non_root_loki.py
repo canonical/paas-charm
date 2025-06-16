@@ -4,20 +4,16 @@
 
 """Integration tests for non-root Charms Loki integration."""
 
-import asyncio
 import logging
-import typing
+import time
 
-import juju.model
+import jubilant
 import pytest
 import requests
-from juju.application import Application
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
-
-import nest_asyncio
-
-nest_asyncio.apply()
 
 
 @pytest.mark.parametrize(
@@ -30,13 +26,11 @@ nest_asyncio.apply()
         pytest.param("expressjs_non_root_app", 8080, id="ExpressJS non-root"),
     ],
 )
-async def test_non_root_loki_integration(
-    model: juju.model.Model,
-    loki_app_name: str,
+def test_non_root_loki_integration(
+    juju: jubilant.Juju,
     non_root_app_fixture: str,
     port: int,
-    loki_app: Application,  # pylint: disable=unused-argument
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+    loki_app: App,
     request,
 ):
     """
@@ -46,25 +40,31 @@ async def test_non_root_loki_integration(
         loki to scrape.
     """
     non_root_app = request.getfixturevalue(non_root_app_fixture)
-    await model.add_relation(loki_app_name, non_root_app.name)
-
-    await model.wait_for_idle(
-        apps=[non_root_app.name, loki_app_name], status="active", idle_period=60
-    )
-    unit_ip = (await get_unit_ips(non_root_app.name))[0]
-    # populate the access log
-    for _ in range(120):
-        requests.get(f"http://{unit_ip}:{port}", timeout=10)
-        await asyncio.sleep(1)
-    loki_ip = (await get_unit_ips(loki_app_name))[0]
-    log_query = requests.get(
-        f"http://{loki_ip}:3100/loki/api/v1/query_range",
-        timeout=10,
-        params={"query": f'{{juju_application="{non_root_app.name}"}}'},
-    ).json()
-    result = log_query["data"]["result"]
-    assert result
-    log = result[-1]
-    logging.info("retrieve sample application log: %s", log)
-    assert log["values"]  # any("python-requests" in line[1] for line in log["values"])
-    assert "filename" not in log["stream"]
+    try:
+        juju.integrate(loki_app.name, non_root_app.name)
+        juju.wait(
+            lambda status: jubilant.all_active(status, non_root_app.name, loki_app.name), delay=10
+        )
+        status = juju.status()
+        unit_ip = status.apps[non_root_app.name].units[non_root_app.name + "/0"].address
+        # populate the access log
+        for _ in range(10):
+            requests.get(f"http://{unit_ip}:{port}", timeout=10)
+        # Give some time for the logs to be pushed to loki.
+        time.sleep(10)
+        loki_ip = status.apps[loki_app.name].units[loki_app.name + "/0"].address
+        log_query = requests.get(
+            f"http://{loki_ip}:3100/loki/api/v1/query_range",
+            timeout=10,
+            params={"query": f'{{juju_application="{non_root_app.name}"}}'},
+        ).json()
+        # In Flask and Django, other streams exists (like the celery workers).
+        # Just test that there is something.
+        result = log_query["data"]["result"]
+        assert result
+        log = result[-1]
+        logging.info("retrieve sample application log: %s", log)
+        assert log["values"]
+        assert "filename" not in log["stream"]
+    finally:
+        juju.remove_relation(loki_app.name, non_root_app.name)
