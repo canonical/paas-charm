@@ -108,6 +108,10 @@ requires:
     interface: saml
     optional: True
     limit: 1
+  redis:
+    interface: redis
+    optional: True
+    limit: 1
   openfga:
     interface: openfga
     optional: True

@@ -144,7 +144,18 @@ def generate_redis_env(
     """
     if not relation_data:
         return {}
-    return {}
+    parsed = urlparse(str(relation_data.url))
+    env = {"spring.data.redis.url": str(relation_data.url)}
+    if parsed.hostname:
+        env["spring.data.redis.host"] = parsed.hostname
+    if parsed.port:
+        env["spring.data.redis.port"] = str(parsed.port)
+    if parsed.username:
+        env["spring.data.redis.username"] = parsed.username
+    if parsed.password:
+        env["spring.data.redis.password"] = parsed.password
+
+    return env
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
