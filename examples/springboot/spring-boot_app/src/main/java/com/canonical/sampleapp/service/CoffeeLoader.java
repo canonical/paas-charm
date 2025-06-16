@@ -1,3 +1,8 @@
+/*
+* Copyright 2025 Canonical Ltd.
+* See LICENSE file for licensing details.
+*/
+
 package com.canonical.sampleapp.service;
 
 import java.util.UUID;
