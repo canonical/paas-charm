@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.7.1 - 2025-06-16
+
+* docs: Refactored the RTD home page. Moved content into Explanation.
+
 ## 1.7.1 - 2025-06-12
 
 * docs: Added an edit button to the RTD project.
