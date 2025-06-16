@@ -487,6 +487,6 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     )
     juju.wait(
         lambda status: jubilant.all_active(status, rabbitmq_k8s.name),
-        timeout=6 * 60,
+        timeout=10 * 60,
     )
     return rabbitmq_k8s
