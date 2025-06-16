@@ -303,7 +303,8 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        if charm_state.integrations.saml:
+if charm_state.integrations.saml and charm_state.integrations.saml.signing_certificate:
+    ...
             if charm_state.integrations.saml.signing_certificate:
                 cert = charm_state.integrations.saml.signing_certificate
                 if not cert.startswith("-----BEGIN CERTIFICATE-----"):
