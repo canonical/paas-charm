@@ -6,6 +6,7 @@ CVE-2025-47273
 CVE-2024-45337
 CVE-2024-45338
 CVE-2025-22869
+CVE-2025-22874
 # NodeJS
 # uglify-js
 CVE-2015-8857
@@ -27,6 +28,15 @@ CVE-2024-45590
 CVE-2024-4068
 # @babel/traverse
 CVE-2023-45133
-# Spring boot
-#  apache-commons-io
+# Spring boot apache-commons-io
 CVE-2024-47554
+# net.minidev:json-smart
+CVE-2024-57699
+# org.apache.tomcat.embed:tomcat-embed-core 
+CVE-2025-24813
+# org.springframework.boot:spring-boot 
+CVE-2025-22235
+# org.postgresql:postgresql (spring-boot-0.0.1.jar)
+CVE-2025-49146
+# usr/local/bin/go-app (gobinary)
+CVE-2025-22874
