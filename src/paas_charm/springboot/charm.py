@@ -144,7 +144,18 @@ def generate_redis_env(
     """
     if not relation_data:
         return {}
-    return {}
+    parsed = urlparse(str(relation_data.url))
+    env = {"spring.data.redis.url": str(relation_data.url)}
+    if parsed.hostname:
+        env["spring.data.redis.host"] = parsed.hostname
+    if parsed.port:
+        env["spring.data.redis.port"] = str(parsed.port)
+    if parsed.username:
+        env["spring.data.redis.username"] = parsed.username
+    if parsed.password:
+        env["spring.data.redis.password"] = parsed.password
+
+    return env
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
@@ -176,7 +187,22 @@ def generate_saml_env(
     """
     if not relation_data:
         return {}
-    return {}
+
+    env = {
+        "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url.unicode_string(),
+        "spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id,
+    }
+    if relation_data.single_sign_on_redirect_url:
+        env[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
+        ] = relation_data.single_sign_on_redirect_url
+
+    if relation_data.signing_certificate:
+        env[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
+        ] = "file:/app/saml.cert"
+
+    return env
 
 
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
@@ -266,6 +292,7 @@ class Charm(PaasCharm):
         base_dir = pathlib.Path("/app")
         state_dir = base_dir / "state"
         framework_config = typing.cast(SpringBootConfig, self.get_framework_config())
+
         return WorkloadConfig(
             framework=framework_name,
             container_name=WORKLOAD_CONTAINER_NAME,
@@ -287,6 +314,12 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
+        if charm_state.integrations.saml and charm_state.integrations.saml.signing_certificate:
+            cert = charm_state.integrations.saml.signing_certificate
+            if not cert.startswith("-----BEGIN CERTIFICATE-----"):
+                cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
+            self._container.push(self._workload_config.app_dir / "saml.cert", cert)
+
         return SpringBootApp(
             container=self._container,
             charm_state=charm_state,

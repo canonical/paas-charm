@@ -51,3 +51,108 @@ def test_smtp_integration(
     assert environment["spring.mail.password"] is None
     assert environment["spring.mail.properties.mail.smtp.auth"] == "none"
     assert environment["spring.mail.properties.mail.smtp.starttls.enable"] == "false"
+
+
+def test_saml_integration(
+    base_state,
+) -> None:
+    """
+    arrange: add saml relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the saml related env variables.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="saml",
+            interface="saml-integrator",
+            remote_app_data={
+                "entity_id": "http://example.com/entity",
+                "metadata_url": "http://example.com/metadata",
+                "x509certs": "cert1",
+                "single_sign_on_service_redirect_url": "http://example.com/sso",
+                "single_sign_on_service_redirect_binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+            },
+        )
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    saml_relation = out.get_relations("saml")
+    assert len(saml_relation) == 1
+
+    assert (
+        environment[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri"
+        ]
+        == "http://example.com/metadata"
+    )
+    assert (
+        environment["spring.security.saml2.relyingparty.registration.testentity.entity-id"]
+        == "http://example.com/entity"
+    )
+    assert (
+        environment[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
+        ]
+        == "http://example.com/sso"
+    )
+    assert (
+        environment[
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
+        ]
+        == "file:/app/saml.cert"
+    )
+
+
+def test_redis_integration(
+    base_state,
+) -> None:
+    """
+    arrange: add redis relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the redis related env variables.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="redis",
+            interface="redis",
+            remote_app_data={
+                "leader-host": "redis-k8s-0.redis-k8s-endpoints.test-model.svc.cluster.local",
+            },
+            remote_units_data={
+                0: {
+                    "port": "6379",
+                    "username": "",
+                    "password": "",
+                }
+            },
+        )
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    redis_relation = out.get_relations("redis")
+    assert len(redis_relation) == 1
+
+    assert (
+        environment["spring.data.redis.host"]
+        == "redis-k8s-0.redis-k8s-endpoints.test-model.svc.cluster.local"
+    )
+    assert environment["spring.data.redis.port"] == "6379"
+    assert (
+        environment["spring.data.redis.url"]
+        == "redis://redis-k8s-0.redis-k8s-endpoints.test-model.svc.cluster.local:6379"
+    )
+    assert environment.get("spring.data.redis.username") is None
+    assert environment.get("spring.data.redis.password") is None

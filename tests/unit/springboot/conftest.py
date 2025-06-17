@@ -46,6 +46,7 @@ def base_state_fixture(postgresql_relation):
             testing.Container(
                 name="app",
                 can_connect=True,
+                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
                 _base_plan={
                     "services": {
                         "spring-boot": {
