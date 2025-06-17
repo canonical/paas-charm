@@ -17,11 +17,10 @@ following Canonical products:
   tool to create rocks – a new generation of secure, stable and OCI-compliant
   container images, based on Ubuntu.
 
-A Rockcraft framework (conceptually similar to a `snap
-extension <https://snapcraft.io/docs/snapcraft-extensions>`_) is initially
-used to facilitate the creation of a well structured, minimal and hardened
-container image, called a rock. A Charmcraft profile can then be leveraged to
-add a software operator (charm) around the aforementioned container image.
+A Rockcraft framework is initially used to facilitate the creation of a well
+structured, minimal and hardened container image, called a rock. A Charmcraft
+profile can then be leveraged to add a software operator (charm) around the
+aforementioned container image.
 
 Encapsulating the original 12-factor application in a charm allows your
 application to benefit from the entire
