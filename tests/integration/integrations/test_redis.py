@@ -9,8 +9,6 @@ import jubilant
 import pytest
 import requests
 
-# caused by pytest fixtures
-# pylint: disable=too-many-arguments
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -33,8 +31,8 @@ def test_with_database(
     http: requests.Session,
 ):
     """
-    arrange: build and deploy the flask charm.
-    act: deploy the database and relate it to the charm.
+    arrange: build and deploy the paas charm.
+    act: deploy the redis database and relate it to the charm.
     assert: requesting the charm should return a correct response
     """
     app = request.getfixturevalue(app_fixture)
