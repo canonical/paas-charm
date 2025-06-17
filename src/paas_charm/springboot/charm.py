@@ -314,12 +314,11 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        if charm_state.integrations.saml:
-            if charm_state.integrations.saml.signing_certificate:
-                cert = charm_state.integrations.saml.signing_certificate
-                if not cert.startswith("-----BEGIN CERTIFICATE-----"):
-                    cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
-                self._container.push(self._workload_config.app_dir / "saml.cert", cert)
+        if charm_state.integrations.saml and charm_state.integrations.saml.signing_certificate:
+            cert = charm_state.integrations.saml.signing_certificate
+            if not cert.startswith("-----BEGIN CERTIFICATE-----"):
+                cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
+            self._container.push(self._workload_config.app_dir / "saml.cert", cert)
 
         return SpringBootApp(
             container=self._container,
