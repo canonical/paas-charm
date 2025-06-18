@@ -1,4 +1,9 @@
-package com.canonical.sampleapp.service;
+/*
+* Copyright 2025 Canonical Ltd.
+* See LICENSE file for licensing details.
+*/
+
+ package com.canonical.sampleapp.service;
 
 import java.io.IOException;
 import java.util.List;
