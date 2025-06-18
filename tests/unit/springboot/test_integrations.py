@@ -156,3 +156,40 @@ def test_redis_integration(
     )
     assert environment.get("spring.data.redis.username") is None
     assert environment.get("spring.data.redis.password") is None
+
+
+def test_s3_integration(
+    base_state,
+) -> None:
+    """
+    arrange: add s3 relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the s3 related env variables.
+    """
+    s3_app_data = {
+        "access-key": "access-key",
+        "bucket": "paas-bucket",
+        "endpoint": "http://s3-0.test-endpoint:9000",
+        "region": "mars-north-3",
+        "secret-key": "super-duper-secret-key",
+    }
+    base_state["relations"].append(
+        testing.Relation(endpoint="s3", interface="s3", remote_app_data=s3_app_data)
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    redis_relation = out.get_relations("s3")
+    assert len(redis_relation) == 1
+
+    assert environment["spring.cloud.aws.credentials.accessKey"] == s3_app_data["access-key"]
+    assert environment["spring.cloud.aws.credentials.secretKey"] == s3_app_data["secret-key"]
+    assert environment["spring.cloud.aws.region.static"] == s3_app_data["region"]
+    assert environment["spring.cloud.aws.s3.bucket"] == s3_app_data["bucket"]
+    assert environment["spring.cloud.aws.s3.endpoint"] == s3_app_data["endpoint"]

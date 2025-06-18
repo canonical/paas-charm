@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationContextInitializer=\
+  com.canonical.sampleapp.config.DisableS3IfNoAccessKeyInitializer

@@ -170,7 +170,17 @@ def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[s
     """
     if not relation_data:
         return {}
-    return {}
+    env = {
+        "spring.cloud.aws.credentials.accessKey": relation_data.access_key,
+        "spring.cloud.aws.credentials.secretKey": relation_data.secret_key,
+        "spring.cloud.aws.s3.bucket": relation_data.bucket,
+    }
+    if relation_data.region:
+        env["spring.cloud.aws.region.static"] = relation_data.region
+    if relation_data.endpoint:
+        env["spring.cloud.aws.s3.endpoint"] = relation_data.endpoint
+
+    return env
 
 
 def generate_saml_env(

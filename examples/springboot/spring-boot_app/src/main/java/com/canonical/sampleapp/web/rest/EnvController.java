@@ -29,4 +29,9 @@ public class EnvController {
     public List<String> jvmArguments() {
         return ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
+
+    @GetMapping(value = "/env", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> allEnvVars() {
+        return System.getenv();
+    }
 }

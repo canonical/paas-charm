@@ -116,6 +116,10 @@ requires:
     interface: openfga
     optional: True
     limit: 1
+  s3:
+    interface: s3
+    optional: True
+    limit: 1
 resources:
   app-image:
     description: Spring Boot application image.

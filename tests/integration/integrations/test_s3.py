@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
+        ("spring_boot_app", 8080),
     ],
 )
 def test_s3_integration(
@@ -28,6 +29,7 @@ def test_s3_integration(
     s3_integrator_app: App,
     s3_credentials,
     s3_configuration,
+    http,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -46,17 +48,24 @@ def test_s3_integration(
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    response = requests.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    response = http.get(f"http://{unit_ip}:{port}/env", timeout=5)
     assert response.status_code == 200
     env = response.json()
 
-    assert env["S3_ACCESS_KEY"] == s3_credentials["access-key"]
-    assert env["S3_SECRET_KEY"] == s3_credentials["secret-key"]
-    assert env["S3_BUCKET"] == s3_configuration["bucket"]
-    assert env["S3_ENDPOINT"] == s3_configuration["endpoint"]
-    assert env["S3_PATH"] == s3_configuration["path"]
-    assert env["S3_REGION"] == s3_configuration["region"]
-    assert env["S3_URI_STYLE"] == s3_configuration["s3-uri-style"]
+    if app_fixture == "spring_boot_app":
+        assert env["spring.cloud.aws.credentials.accessKey"] == s3_credentials["access-key"]
+        assert env["spring.cloud.aws.credentials.secretKey"] == s3_credentials["secret-key"]
+        assert env["spring.cloud.aws.s3.bucket"] == s3_configuration["bucket"]
+        assert env["spring.cloud.aws.s3.endpoint"] == s3_configuration["endpoint"]
+        assert env["spring.cloud.aws.region.static"] == s3_configuration["region"]
+    else:
+        assert env["S3_ACCESS_KEY"] == s3_credentials["access-key"]
+        assert env["S3_SECRET_KEY"] == s3_credentials["secret-key"]
+        assert env["S3_BUCKET"] == s3_configuration["bucket"]
+        assert env["S3_ENDPOINT"] == s3_configuration["endpoint"]
+        assert env["S3_PATH"] == s3_configuration["path"]
+        assert env["S3_REGION"] == s3_configuration["region"]
+        assert env["S3_URI_STYLE"] == s3_configuration["s3-uri-style"]
 
     # Check that it list_objects in the bucket. If the connection
     # is unsuccessful of the bucket does not exist, the code raises.
