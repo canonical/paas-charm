@@ -3,7 +3,7 @@
 * See LICENSE file for licensing details.
 */
 
- package com.canonical.sampleapp.service;
+package com.canonical.sampleapp.service;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,24 +38,25 @@ public class S3Service {
 
     public List<String> listObjectKeys(String bucketName) {
         return s3Client.listObjectsV2(builder -> builder.bucket(bucketName))
-                       .contents()
-                       .stream()
-                       .map(obj -> obj.key())
-                       .collect(Collectors.toList());
-    }    
-    
+                .contents()
+                .stream()
+                .map(obj -> obj.key())
+                .collect(Collectors.toList());
+    }
+
     public String putObject(String bucketName, Resource resource) throws IOException {
         String key = resource.getFilename() != null ? resource.getFilename() : UUID.randomUUID().toString();
         try {
             s3Client.putObject(
-                builder -> builder.bucket(bucketName).key(key),
-                software.amazon.awssdk.core.sync.RequestBody.fromInputStream(resource.getInputStream(), resource.contentLength())
-            );
+                    builder -> builder.bucket(bucketName).key(key),
+                    software.amazon.awssdk.core.sync.RequestBody.fromInputStream(resource.getInputStream(),
+                            resource.contentLength()));
             return key;
         } catch (Exception e) {
             throw new IOException("Failed to upload to S3", e);
         }
     }
+
     public void removeObject(String bucketName, String key) throws IOException {
         try {
             s3Client.deleteObject(builder -> builder.bucket(bucketName).key(key));
@@ -63,6 +64,7 @@ public class S3Service {
             throw new IOException(String.format("Failed to delete s3://%s/%s", bucketName, key), e);
         }
     }
+
     public boolean checkConnection() {
         try {
             s3Client.listBuckets();

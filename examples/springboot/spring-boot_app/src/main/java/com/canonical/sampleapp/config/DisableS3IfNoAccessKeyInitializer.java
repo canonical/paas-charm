@@ -14,7 +14,8 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
 // If the AWS S3 access key is not set, disable S3 support in the application context.
-public class DisableS3IfNoAccessKeyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class DisableS3IfNoAccessKeyInitializer
+        implements ApplicationContextInitializer<ConfigurableApplicationContext> {
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
         ConfigurableEnvironment env = applicationContext.getEnvironment();

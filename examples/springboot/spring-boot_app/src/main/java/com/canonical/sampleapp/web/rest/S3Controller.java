@@ -40,7 +40,6 @@ public class S3Controller {
         this.service = service;
     }
 
-
     @GetMapping("/{bucketName}/objects/{objectKey}")
     public ResponseEntity<Resource> downloadS3Object(@PathVariable String bucketName, @PathVariable String objectKey) {
         try {
@@ -50,18 +49,20 @@ public class S3Controller {
             return ResponseEntity.notFound().build();
         }
     }
+
     @GetMapping("/{bucketName}")
     public ResponseEntity<List<String>> getS3Objects(@PathVariable String bucketName) {
-    try {
-        List<String> keys = service.listObjectKeys(bucketName);
-        return ResponseEntity.ok(keys);
-    } catch (Exception exception) {
-        return ResponseEntity.notFound().build();
-    }
+        try {
+            List<String> keys = service.listObjectKeys(bucketName);
+            return ResponseEntity.ok(keys);
+        } catch (Exception exception) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-     @PostMapping(path = "/{bucketName}/objects", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> uploadS3Object(@PathVariable String bucketName, @RequestParam("file") MultipartFile file)
+    @PostMapping(path = "/{bucketName}/objects", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> uploadS3Object(@PathVariable String bucketName,
+            @RequestParam("file") MultipartFile file)
             throws URISyntaxException, IOException {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -80,6 +81,7 @@ public class S3Controller {
             return ResponseEntity.notFound().build();
         }
     }
+
     @GetMapping("/status")
     public ResponseEntity<String> getS3Status() {
         if (service.checkConnection()) {
