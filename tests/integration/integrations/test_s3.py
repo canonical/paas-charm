@@ -7,7 +7,6 @@ import logging
 
 import jubilant
 import pytest
-import requests
 
 from tests.integration.types import App
 
@@ -69,6 +68,6 @@ def test_s3_integration(
 
     # Check that it list_objects in the bucket. If the connection
     # is unsuccessful of the bucket does not exist, the code raises.
-    response = requests.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
+    response = http.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" == response.text

@@ -39,5 +39,5 @@ header:
     - 'examples/springboot/charm/lib/charms/redis_k8s/v0/redis.py'
     - 'docs/**'
     - 'examples/springboot/spring-boot_app/pom.xml'
-    - 'examples/springboot/spring-boot_app/src/main/resources/META-INF/spring.factories '
+    - 'examples/springboot/spring-boot_app/src/main/resources/**'
   comment: on-failure
