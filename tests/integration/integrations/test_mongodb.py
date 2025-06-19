@@ -17,17 +17,17 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, port, endpoint",
     [
-        ("flask_app", 8000, "redis/status"),
-        ("spring_boot_app", 8080, "redis/status"),
+        ("flask_app", 8000, "mongodb/status"),
+        ("spring_boot_app", 8080, "mongodb/status"),
     ],
 )
-def test_with_redis(
+def test_with_mongodb(
     juju: jubilant.Juju,
     app_fixture: App,
     port,
     endpoint: str,
     request: pytest.FixtureRequest,
-    redis_app: App,
+    mongodb_app: App,
     http: requests.Session,
 ):
     """
@@ -37,8 +37,8 @@ def test_with_redis(
     """
     app = request.getfixturevalue(app_fixture)
 
-    juju.integrate(app.name, redis_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, redis_app.name))
+    juju.integrate(app.name, mongodb_app.name)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, mongodb_app.name))
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address

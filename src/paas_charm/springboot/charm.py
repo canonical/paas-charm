@@ -91,7 +91,7 @@ def generate_db_env(
             envvars["POSTGRESQL_DB_NAME"] = db_name
         return envvars
     if database_name == "mongodb":
-        return {"spring.data.mongodb.url": uri}
+        return {"spring.data.mongodb.uri": uri}
     logger.warning(
         "Unknown database relation %s, no environment variables generated", database_name
     )
