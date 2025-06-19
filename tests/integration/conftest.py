@@ -592,6 +592,8 @@ def expressjs_non_root_app_fixture(
         charm_dict={"charm-user": "non-root"},
     )
 
+    
+
 
 @pytest.fixture(scope="module", name="spring_boot_app")
 def spring_boot_app_fixture(
@@ -648,6 +650,42 @@ def spring_boot_app_fixture(
             raise err
     juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
 
+    return App(app_name)
+
+
+
+@pytest.fixture(scope="module", name="spring_boot_mysql_app")
+def spring_boot_mysql_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+    spring_boot_app_image: str,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+
+    charm_file = build_charm_file(
+        pytestconfig,
+        "spring-boot",
+        tmp_path_factory,
+        charm_location=PROJECT_ROOT / "examples/springboot/charm",
+    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            app=app_name,
+            resources=resources,
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+    
     return App(app_name)
 
 

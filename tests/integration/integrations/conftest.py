@@ -168,7 +168,6 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
         trust=True,
     )
 
-    juju.wait(lambda status: status.apps[redis_app_name].is_active, timeout=2000)
     return App(redis_app_name)
 
 
@@ -186,8 +185,25 @@ def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
         trust=True,
     )
 
-    juju.wait(lambda status: status.apps[mongodb_app_name].is_active, timeout=2000)
     return App(mongodb_app_name)
+
+
+@pytest.fixture(scope="module", name="mysql_app_name")
+def mysql_app_name_fixture() -> str:
+    return "mysql-k8s"
+
+
+@pytest.fixture(scope="module", name="mysql_app")
+def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
+    """Deploy and set up Redis."""
+    juju.deploy(
+        mysql_app_name,
+        channel="8.0/stable",
+        revision=140,
+        trust=True,
+    )
+
+    return App(mysql_app_name)
 
 
 @pytest.fixture(scope="module", name="s3_integrator_app")

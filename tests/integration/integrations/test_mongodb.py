@@ -38,7 +38,7 @@ def test_with_mongodb(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, mongodb_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, mongodb_app.name))
+    juju.wait(lambda status: jubilant.all_active(status, app.name, mongodb_app.name), timeout=2000)
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
