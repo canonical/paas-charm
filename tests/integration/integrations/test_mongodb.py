@@ -2,7 +2,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for Redis database integration."""
+"""Integration tests for MongoDB database integration."""
 import logging
 
 import jubilant
@@ -32,7 +32,7 @@ def test_with_mongodb(
 ):
     """
     arrange: build and deploy the paas charm.
-    act: deploy the redis database and relate it to the charm.
+    act: deploy the MongoDB database and relate it to the charm.
     assert: requesting the charm should return a correct response
     """
     app = request.getfixturevalue(app_fixture)
