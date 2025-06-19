@@ -26,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.canonical.sampleapp.service.S3Service;
 
+import software.amazon.awssdk.core.exception.SdkServiceException;
+
 @ConditionalOnProperty(name = "spring.cloud.aws.credentials.accessKey")
 @RestController
 @RequestMapping("/s3")
@@ -55,7 +57,7 @@ public class S3Controller {
         try {
             List<String> keys = service.listObjectKeys(bucketName);
             return ResponseEntity.ok(keys);
-        } catch (Exception exception) {
+        } catch (SdkServiceException exception) {
             return ResponseEntity.notFound().build();
         }
     }

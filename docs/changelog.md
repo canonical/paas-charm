@@ -12,24 +12,24 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## 1.7.4 - 2025-06-19
 
-* feat: Added S3 support for Spring boot.
+* feat: Added S3 support for Spring Boot.
 
 ## 1.7.3 - 2025-06-17
 
-* feat: Added Redis support for Spring boot.
+* feat: Added Redis support for Spring Boot.
 
 ## 1.7.2 - 2025-06-17
 
-* feat: Added SAML support for Spring boot.
+* feat: Added SAML support for Spring Boot.
 
 ## 1.7.1 - 2025-06-12
 
 * docs: Added an edit button to the RTD project.
-* feat: Added SMTP support for Spring boot.
+* feat: Added SMTP support for Spring Boot.
 
 ## 1.7.0 - 2025-06-11
 
-* feat: Added support for Spring boot.
+* feat: Added support for Spring Boot.
 
 ## 1.6.0 - 2025-05-26
 

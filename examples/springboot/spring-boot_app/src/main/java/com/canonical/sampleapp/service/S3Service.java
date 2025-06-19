@@ -15,6 +15,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
+import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.services.s3.S3Client;
 
 @ConditionalOnProperty(name = "spring.cloud.aws.credentials.accessKey")
@@ -48,11 +49,11 @@ public class S3Service {
         String key = resource.getFilename() != null ? resource.getFilename() : UUID.randomUUID().toString();
         try {
             s3Client.putObject(
-                    builder -> builder.bucket(bucketName).key(key),
-                    software.amazon.awssdk.core.sync.RequestBody.fromInputStream(resource.getInputStream(),
-                            resource.contentLength()));
+                builder -> builder.bucket(bucketName).key(key),
+                software.amazon.awssdk.core.sync.RequestBody.fromInputStream(resource.getInputStream(),
+                    resource.contentLength()));
             return key;
-        } catch (Exception e) {
+        } catch (SdkServiceException e) {
             throw new IOException("Failed to upload to S3", e);
         }
     }
@@ -60,7 +61,7 @@ public class S3Service {
     public void removeObject(String bucketName, String key) throws IOException {
         try {
             s3Client.deleteObject(builder -> builder.bucket(bucketName).key(key));
-        } catch (Exception e) {
+        } catch (SdkServiceException e) {
             throw new IOException(String.format("Failed to delete s3://%s/%s", bucketName, key), e);
         }
     }
@@ -69,7 +70,7 @@ public class S3Service {
         try {
             s3Client.listBuckets();
             return true;
-        } catch (Exception e) {
+        } catch (SdkServiceException e) {
             e.printStackTrace();
             return false;
         }
