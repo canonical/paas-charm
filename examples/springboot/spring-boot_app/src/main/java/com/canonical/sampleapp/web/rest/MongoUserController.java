@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,7 +49,7 @@ public class MongoUserController {
         try {
             userRepo.count();
             return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
             return new ResponseEntity<>("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
