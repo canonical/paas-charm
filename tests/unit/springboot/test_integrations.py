@@ -193,3 +193,41 @@ def test_s3_integration(
     assert environment["spring.cloud.aws.region.static"] == s3_app_data["region"]
     assert environment["spring.cloud.aws.s3.bucket"] == s3_app_data["bucket"]
     assert environment["spring.cloud.aws.s3.endpoint"] == s3_app_data["endpoint"]
+
+
+def test_mongodb_integration(
+    base_state,
+) -> None:
+    """
+    arrange: add mongodb relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the mongodb related env variables.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="mongodb",
+            interface="mongodb_client",
+            remote_app_data={
+                "database": "spring-boot-k8s",
+                "endpoints": "test-mongodb:27017",
+                "password": "test-mongodb-password",
+                "username": "test-mongodb-username",
+            },
+        )
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    mongodb_relation = out.get_relations("mongodb")
+    assert len(mongodb_relation) == 1
+
+    assert (
+        environment["spring.data.mongodb.uri"]
+        == "mongodb://test-mongodb-username:test-mongodb-password@test-mongodb:27017/spring-boot-k8s"
+    )

@@ -171,6 +171,7 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
     juju.wait(lambda status: status.apps[redis_app_name].is_active, timeout=2000)
     return App(redis_app_name)
 
+
 @pytest.fixture(scope="module", name="mongodb_app_name")
 def mongodb_app_name_fixture() -> str:
     return "mongodb-k8s"
