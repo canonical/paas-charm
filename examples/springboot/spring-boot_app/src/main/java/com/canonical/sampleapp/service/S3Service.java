@@ -10,10 +10,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+
+import com.canonical.sampleapp.web.rest.UserController;
 
 import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -24,17 +28,20 @@ public class S3Service {
     private final S3Client s3Client;
     private final ResourceLoader resourceLoader;
 
+    private final Logger log = LoggerFactory.getLogger(UserController.class);
+
     S3Service(S3Client s3Client, ResourceLoader resourceLoader) {
         this.s3Client = s3Client;
         this.resourceLoader = resourceLoader;
     }
 
     public Resource getObject(String bucketName, String key) throws IOException {
-        final Resource resource = resourceLoader.getResource(String.format("s3://%s/%s", bucketName, key));
+        String resourcePath = String.format("s3://%s/%s", bucketName, key);
+        final Resource resource = resourceLoader.getResource(resourcePath);
         if (resource.exists()) {
             return resource;
         }
-        throw new IOException(String.format("s3://%s/%s", bucketName, key));
+        throw new IOException(resourcePath);
     }
 
     public List<String> listObjectKeys(String bucketName) {
@@ -71,7 +78,7 @@ public class S3Service {
             s3Client.listBuckets();
             return true;
         } catch (SdkServiceException e) {
-            e.printStackTrace();
+            log.debug("Failed to connect : {}", e.getMessage());
             return false;
         }
     }

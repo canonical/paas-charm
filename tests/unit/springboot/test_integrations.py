@@ -185,8 +185,8 @@ def test_s3_integration(
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
-    redis_relation = out.get_relations("s3")
-    assert len(redis_relation) == 1
+    s3_relation = out.get_relations("s3")
+    assert len(s3_relation) == 1
 
     assert environment["spring.cloud.aws.credentials.accessKey"] == s3_app_data["access-key"]
     assert environment["spring.cloud.aws.credentials.secretKey"] == s3_app_data["secret-key"]
