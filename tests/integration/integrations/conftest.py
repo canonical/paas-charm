@@ -344,7 +344,7 @@ def deploy_loki_fixture(
 ) -> App:
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
-        juju.deploy(loki_app_name, channel="latest/stable", trust=True)
+        juju.deploy(loki_app_name, channel="1/stable", trust=True)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
