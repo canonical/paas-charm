@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-
-## 1.7.4 - 2025-06-19
+## 1.7.4 - 2025-06-20
 
 * feat: Added S3 support for Spring Boot.
 
 ## 1.7.3 - 2025-06-17
 
-* feat: Added Redis support for Spring Boot.
+* feat: Added Redis support for Spring boot.
+* docs: Refactored the RTD home page. Moved content into Explanation.
 
 ## 1.7.2 - 2025-06-17
 
