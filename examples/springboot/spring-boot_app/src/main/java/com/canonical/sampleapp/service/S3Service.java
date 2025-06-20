@@ -78,7 +78,7 @@ public class S3Service {
             s3Client.listBuckets();
             return true;
         } catch (SdkServiceException e) {
-            log.debug("Failed to connect : {}", e.getMessage());
+            log.error("Failed to connect : {}", e.getMessage());
             return false;
         }
     }
