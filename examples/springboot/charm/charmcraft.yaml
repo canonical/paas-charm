@@ -120,6 +120,10 @@ requires:
     interface: s3
     optional: True
     limit: 1
+  mongodb:
+    interface: mongodb_client
+    optional: True
+    limit: 1
 resources:
   app-image:
     description: Spring Boot application image.

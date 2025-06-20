@@ -172,6 +172,24 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
     return App(redis_app_name)
 
 
+@pytest.fixture(scope="module", name="mongodb_app_name")
+def mongodb_app_name_fixture() -> str:
+    return "mongodb-k8s"
+
+
+@pytest.fixture(scope="module", name="mongodb_app")
+def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
+    """Deploy and set up Redis."""
+    juju.deploy(
+        mongodb_app_name,
+        channel="6/beta",
+        revision=61,
+        trust=True,
+    )
+
+    return App(mongodb_app_name)
+
+
 @pytest.fixture(scope="module", name="s3_integrator_app")
 def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3_configuration):
     s3_integrator = "s3-integrator"
