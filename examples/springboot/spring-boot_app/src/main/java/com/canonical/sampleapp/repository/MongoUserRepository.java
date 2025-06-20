@@ -13,7 +13,6 @@ import com.canonical.sampleapp.domain.MongoUser;
 
 public interface MongoUserRepository extends MongoRepository<MongoUser, String> {
 
-    // @Query("{name:'?0'}")
     Optional<MongoUser> findUserByName(String name);
 
     public long count();
