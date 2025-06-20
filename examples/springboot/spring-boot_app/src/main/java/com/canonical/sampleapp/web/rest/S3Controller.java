@@ -88,9 +88,7 @@ public class S3Controller {
     public ResponseEntity<String> getS3Status() {
         if (service.checkConnection()) {
             return ResponseEntity.ok().body("SUCCESS");
-        } else {
-            return ResponseEntity.status(503).build(); // Service Unavailable
         }
+        return ResponseEntity.status(503).build(); // Service Unavailable
     }
-
 }
