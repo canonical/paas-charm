@@ -49,7 +49,7 @@ def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pa
     modified_metadata = yaml.safe_dump(charm_metadata)
     modified_actions = yaml.safe_dump(charm_actions)
 
-    temp_zip_path = charm + ".temp"
+    temp_zip_path = str(charm) + ".temp"
     try:
         with zipfile.ZipFile(charm, "r") as zin:
             with zipfile.ZipFile(temp_zip_path, "w") as zout:
