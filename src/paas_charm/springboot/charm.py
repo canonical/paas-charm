@@ -87,8 +87,8 @@ def generate_db_env(
             # used for migrate.sh
             envvars[f"{database_name.upper()}_DB_HOSTNAME"] = parsed.hostname
         db_name = parsed.path.removeprefix("/") if parsed.path else None
-        if db_name is not None and database_name == "postgresql":
-                envvars["POSTGRESQL_DB_NAME"] = db_name
+        if db_name is not None:
+            envvars[f"{database_name.upper()}_DB_NAME"] = db_name
         return envvars
     if database_name == "mongodb":
         return {"spring.data.mongodb.uri": uri}

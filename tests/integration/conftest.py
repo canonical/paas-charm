@@ -11,6 +11,7 @@ import jubilant
 import pytest
 import pytest_asyncio
 import requests
+import yaml
 from juju.application import Application
 from juju.errors import JujuError
 from juju.model import Model
@@ -168,7 +169,7 @@ def build_charm_file(
         charm_file = PROJECT_ROOT / charm_file
     inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
     if charm_dict:
-        charm_file = inject_charm_config(
+        inject_charm_config(
             charm_file,
             charm_dict,
             tmp_path_factory.mktemp(framework),
@@ -592,8 +593,6 @@ def expressjs_non_root_app_fixture(
         charm_dict={"charm-user": "non-root"},
     )
 
-    
-
 
 @pytest.fixture(scope="module", name="spring_boot_app")
 def spring_boot_app_fixture(
@@ -653,7 +652,6 @@ def spring_boot_app_fixture(
     return App(app_name)
 
 
-
 @pytest.fixture(scope="module", name="spring_boot_mysql_app")
 def spring_boot_mysql_app_fixture(
     juju: jubilant.Juju,
@@ -667,11 +665,33 @@ def spring_boot_mysql_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
+    file = str(PROJECT_ROOT / "examples/springboot/charm/charmcraft.yaml")
+
+    f = open(file, "r")
+    content = f.read()
+    charm_metadata = yaml.safe_load(content)
+    f.close()
+    updated_dict = {
+        "requires": {
+            **charm_metadata["requires"],
+            "mysql": {
+                "interface": "mysql_client",
+                "optional": False,
+                "limit": 1,
+            },
+            "postgresql": {
+                "interface": "postgresql_client",
+                "optional": True,
+                "limit": 1,
+            },
+        }
+    }
 
     charm_file = build_charm_file(
         pytestconfig,
         "spring-boot",
         tmp_path_factory,
+        charm_dict=updated_dict,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
     try:
@@ -685,7 +705,7 @@ def spring_boot_mysql_app_fixture(
             juju.refresh(app_name, path=charm_file, resources=resources)
         else:
             raise err
-    
+
     return App(app_name)
 
 

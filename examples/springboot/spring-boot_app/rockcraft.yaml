@@ -57,6 +57,7 @@ parts:
     stage-packages:
       # Added manually for the migrations
       - postgresql-client
+      - mysql-client
   migrate:
     plugin: dump
     source: .

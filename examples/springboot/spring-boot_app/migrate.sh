@@ -9,3 +9,11 @@ if [ -n "${POSTGRESQL_DB_NAME}" ]; then
         password CHAR(60) NOT NULL
     );"
 fi
+
+if [ -n "${MYSQL_DB_NAME}" ]; then
+    mysql -h "${MYSQL_DB_HOSTNAME}" -u "${MYSQL_DB_USERNAME}" --password="${MYSQL_DB_PASSWORD}" -D "${MYSQL_DB_NAME}" -e "CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name CHAR(50) NOT NULL UNIQUE,
+        password CHAR(60) NOT NULL
+    );"
+fi

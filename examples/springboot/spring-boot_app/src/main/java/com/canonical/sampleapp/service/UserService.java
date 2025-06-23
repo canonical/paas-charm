@@ -65,6 +65,20 @@ public class UserService {
         return userRepository.count();
     }
 
+    public String getDatabaseType() {
+        try {
+            String dataEnvVar = System.getenv().get("spring.datasource.url");
+            // Remove "jdbc:" prefix if present
+            String url = dataEnvVar.startsWith("jdbc:") ? dataEnvVar.substring(5) : dataEnvVar;
+            java.net.URI uri = new java.net.URI(url.replaceFirst(":", "://"));
+            String scheme = uri.getScheme();
+            return scheme != null ? scheme : "unknown";
+        } catch (Exception e) {
+            log.error("Could not determine database type", e);
+        }
+        return "unknown";
+    }
+
     @Transactional(readOnly = true)
     public Optional<User> getUserByName(String name) {
         return userRepository.findOneByName(name);
