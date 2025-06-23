@@ -9,6 +9,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,7 @@ import jakarta.validation.Valid;
 public class MongoUserController {
     @Autowired
     MongoUserRepository userRepo;
+    private final Logger log = LoggerFactory.getLogger(MongoUserController.class);
 
     @PostMapping("/users")
     public ResponseEntity<MongoUser> createUser(@Valid @RequestBody MongoUser user) throws URISyntaxException {
@@ -55,6 +58,7 @@ public class MongoUserController {
             userRepo.count();
             return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
         } catch (DataAccessException e) {
+            log.error("Failed to connect : {}", e.getMessage());
             return new ResponseEntity<>("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

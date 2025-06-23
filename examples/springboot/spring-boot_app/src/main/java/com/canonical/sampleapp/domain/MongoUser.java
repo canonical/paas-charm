@@ -19,7 +19,6 @@ public class MongoUser {
     private String password;
 
     public MongoUser(String id, String name, String password) {
-        super();
         this.id = id;
         this.name = name;
         this.password = password;

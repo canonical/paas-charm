@@ -8,6 +8,7 @@ import logging
 import jubilant
 import pytest
 import requests
+from retry import retry
 
 from tests.integration.types import App
 
@@ -42,6 +43,11 @@ def test_with_mongodb(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
-    assert response.status_code == 200
-    assert "SUCCESS" in response.text, f"Response: {response.text}"
+
+    @retry(tries=3, delay=5)
+    def check_mongodb():
+        response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
+        assert response.status_code == 200
+        assert "SUCCESS" in response.text, f"Response: {response.text}"
+
+    check_mongodb()
