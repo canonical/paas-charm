@@ -62,5 +62,4 @@ public class MongoUserController {
             return new ResponseEntity<>("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

@@ -181,7 +181,8 @@ def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
     """Deploy and set up Redis."""
     juju.deploy(
         mongodb_app_name,
-        channel="6/edge",
+        channel="6/beta",
+        revision=61,
         trust=True,
     )
 
