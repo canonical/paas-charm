@@ -380,11 +380,7 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig,
-        "fastapi",
-        tmp_path_factory,
-    )
+    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -600,7 +596,10 @@ def expressjs_non_root_app_fixture(
 
 @pytest.fixture(scope="module", name="spring_boot_app")
 def spring_boot_app_fixture(
-    juju: jubilant.Juju, pytestconfig: pytest.Config, spring_boot_app_image: str, tmp_path_factory
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+    spring_boot_app_image: str,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "spring-boot-k8s"

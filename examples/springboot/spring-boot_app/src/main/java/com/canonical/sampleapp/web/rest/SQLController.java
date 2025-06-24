@@ -31,8 +31,8 @@ public class SQLController {
                 userService.countUsers();
                 return ResponseEntity.ok().body("SUCCESS");
             }
-        } catch (Exception e) {
-            log.error("Error connecting to the database " + dbApp, e);
+        } catch (DataAccessException e) {
+            log.error("Database access error connecting to the database " + dbApp, e);
         }
         return ResponseEntity.ok().body("FAILURE");
     }
