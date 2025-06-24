@@ -115,7 +115,6 @@ def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) 
             ("openfga.store-id", relation_data.store_id),
             ("openfga.credentials.method", "API_TOKEN"),
             ("openfga.credentials.config.api-token", relation_data.token),
-            ("openfga.api-url", relation_data.grpc_api_url),
             ("openfga.api-url", relation_data.http_api_url),
         )
         if v is not None
