@@ -231,3 +231,30 @@ def test_mongodb_integration(
         environment["spring.data.mongodb.uri"]
         == "mongodb://test-mongodb-username:test-mongodb-password@test-mongodb:27017/spring-boot-k8s"
     )
+
+
+def test_mysql_integration(
+    mysql_base_state,
+) -> None:
+    """
+    arrange: add mysql relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the mysql related env variables.
+    """
+    state = testing.State(**mysql_base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    mysql_relation = out.get_relations("mysql")
+    assert len(mysql_relation) == 1
+
+    assert environment["spring.datasource.username"] == "test-username"
+    assert environment["spring.datasource.password"] == "test-password"
+    assert environment["spring.datasource.url"] == "jdbc:mysql://test-mysql:3306/spring-boot-k8s"
+    assert environment["spring.jpa.hibernate.ddl-auto"] == "none"
+    assert environment["MYSQL_DB_NAME"] == "spring-boot-k8s"
