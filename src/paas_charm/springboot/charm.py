@@ -24,7 +24,6 @@ if typing.TYPE_CHECKING:
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
-    from paas_charm.tracing import PaaSTracingRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -239,21 +238,6 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
-def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from tracing relation data.
-
-    Args:
-        relation_data: The charm tracing integration relation data.
-
-    Returns:
-        OTLP Tracing environment mappings if tracing relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return {}
-
-
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -265,7 +249,6 @@ class SpringBootApp(App):
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
-        generate_tempo_env: Maps tempo tracing connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)
@@ -275,7 +258,6 @@ class SpringBootApp(App):
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
-    generate_tempo_env = staticmethod(generate_tempo_env)
 
 
 class Charm(PaasCharm):
