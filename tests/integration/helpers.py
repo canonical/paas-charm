@@ -4,10 +4,10 @@
 import contextlib
 import io
 import json
-import uuid
 import logging
 import os
 import pathlib
+import uuid
 import zipfile
 from typing import Generator
 
@@ -68,6 +68,7 @@ def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pa
     with open(charm, "wb") as new_charm_file:
         new_charm_file.write(new_charm.getvalue())
     return str(charm)
+
 
 def get_traces(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API."""
