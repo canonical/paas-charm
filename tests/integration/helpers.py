@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 import contextlib
+import io
 import json
 import logging
 import os
@@ -30,6 +31,7 @@ def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
             zip_file.write(file, os.path.join("venv/", rel_path))
 
 
+
 def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pathlib.Path) -> str:
     """Inject some charm configurations into the correct yaml file in a packed charm file."""
     config_dict = charm_dict.get("config", {})
@@ -48,33 +50,25 @@ def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pa
     modified_config = yaml.safe_dump(charm_config)
     modified_metadata = yaml.safe_dump(charm_metadata)
     modified_actions = yaml.safe_dump(charm_actions)
-
-    temp_zip_path = str(charm) + ".temp"
-    try:
-        with zipfile.ZipFile(charm, "r") as zin:
-            with zipfile.ZipFile(temp_zip_path, "w") as zout:
-                for item in zin.infolist():
-                    if item.filename == "config.yaml":
-                        zout.writestr(item, modified_config.encode())
-                    elif item.filename == "metadata.yaml":
-                        zout.writestr(item, modified_metadata.encode())
-                    elif item.filename == "actions.yaml":
-                        zout.writestr(item, modified_actions.encode())
-                    else:
-                        zout.writestr(item, zin.read(item.filename))
-
-        # Replace the original file with the temporary file
-        os.remove(charm)
-        os.rename(temp_zip_path, charm)
-
-    except FileNotFoundError:
-        print(f"Error: The file '{charm}' was not found.")
-    except KeyError as e:
-        print(f"Error: File was not found inside the ZIP. e: {e}")
-    finally:
-        # Clean up the temporary file if it still exists
-        if os.path.exists(temp_zip_path):
-            os.remove(temp_zip_path)
+    new_charm = io.BytesIO()
+    with zipfile.ZipFile(new_charm, "w") as new_charm_zip:
+        for item in charm_zip.infolist():
+            if item.filename == "config.yaml":
+                new_charm_zip.writestr(item, modified_config)
+            elif item.filename == "metadata.yaml":
+                new_charm_zip.writestr(item, modified_metadata)
+            elif item.filename == "actions.yaml":
+                new_charm_zip.writestr(item, modified_actions)
+            else:
+                with charm_zip.open(item) as file:
+                    data = file.read()
+                new_charm_zip.writestr(item, data)
+    charm_zip.close()
+    # charm = (tmp_dir / f"{uuid.uuid4()}.charm").absolute()
+    with open(charm, "wb") as new_charm_file:
+        new_charm_file.write(new_charm.getvalue())
+    # os.rename(temp_zip_path, charm)
+    return str(charm)
 
 
 def get_traces(tempo_host: str, service_name: str):
