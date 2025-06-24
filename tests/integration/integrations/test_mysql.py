@@ -8,7 +8,7 @@ import logging
 import jubilant
 import pytest
 import requests
-import retry
+from retry import retry
 
 from tests.integration.types import App
 
