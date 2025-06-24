@@ -4,6 +4,7 @@
 import contextlib
 import io
 import json
+import uuid
 import logging
 import os
 import pathlib
@@ -31,7 +32,7 @@ def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
             zip_file.write(file, os.path.join("venv/", rel_path))
 
 
-def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict) -> str:
+def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pathlib.Path) -> str:
     """Inject some charm configurations into the correct yaml file in a packed charm file."""
     config_dict = charm_dict.get("config", {})
     action_dict = charm_dict.get("actions", {})
@@ -63,9 +64,10 @@ def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict) -> str:
                     data = file.read()
                 new_charm_zip.writestr(item, data)
     charm_zip.close()
+    charm = (tmp_dir / f"{uuid.uuid4()}.charm").absolute()
     with open(charm, "wb") as new_charm_file:
         new_charm_file.write(new_charm.getvalue())
-
+    return str(charm)
 
 def get_traces(tempo_host: str, service_name: str):
     """Get traces directly from Tempo REST API."""

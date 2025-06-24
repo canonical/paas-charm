@@ -68,6 +68,7 @@ async def build_charm_fixture(charm_file: str, tmp_path_factory) -> str:
                 }
             }
         },
+        tmp_path_factory.mktemp("flask"),
     )
 
 

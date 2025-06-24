@@ -63,6 +63,7 @@ async def charm_file_fixture(
                 }
             }
         },
+        tmp_path_factory.mktemp("django"),
     )
 
 

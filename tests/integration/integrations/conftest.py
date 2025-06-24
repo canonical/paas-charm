@@ -197,12 +197,13 @@ def mysql_app_name_fixture() -> str:
 @pytest.fixture(scope="module", name="mysql_app")
 def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
     """Deploy and set up Redis."""
-    juju.deploy(
-        mysql_app_name,
-        channel="8.0/stable",
-        revision=140,
-        trust=True,
-    )
+    if not juju.status().apps.get(mysql_app_name):
+        juju.deploy(
+            mysql_app_name,
+            channel="8.0/stable",
+            revision=140,
+            trust=True,
+        )
 
     return App(mysql_app_name)
 
