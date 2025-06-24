@@ -130,7 +130,6 @@ def fixture_spring_boot_app_image(pytestconfig: Config):
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
-    tmp_path_factory,
     charm_dict: dict = None,
     charm_location: pathlib.Path = None,
 ) -> str:
@@ -172,7 +171,6 @@ def build_charm_file(
         inject_charm_config(
             charm_file,
             charm_dict,
-            tmp_path_factory.mktemp(framework),
         )
     return pathlib.Path(charm_file).absolute()
 
@@ -182,7 +180,6 @@ async def flask_app_fixture(
     pytestconfig: pytest.Config,
     model: Model,
     test_flask_image: str,
-    tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-flask image."""
     app_name = "flask-k8s"
@@ -193,7 +190,6 @@ async def flask_app_fixture(
     charm_file = build_charm_file(
         pytestconfig,
         "flask",
-        tmp_path_factory,
     )
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
@@ -266,7 +262,6 @@ async def flask_blocked_app_fixture(
     pytestconfig: pytest.Config,
     model: Model,
     test_flask_image: str,
-    tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-flask image."""
     app_name = "flask-k8s"
@@ -274,9 +269,7 @@ async def flask_blocked_app_fixture(
     resources = {
         "flask-app-image": test_flask_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "flask", charm_dict=NON_OPTIONAL_CONFIGS)
     app = await model.deploy(
         charm_file, resources=resources, application_name=app_name, series="jammy"
     )
@@ -290,7 +283,6 @@ async def django_app_fixture(
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
-    tmp_path_factory,
 ):
     """Build and deploy the Django charm with django-app image."""
     app_name = "django-k8s"
@@ -298,7 +290,7 @@ async def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "django")
 
     app = await model.deploy(
         charm_file,
@@ -318,7 +310,6 @@ async def django_blocked_app_fixture(
     model: Model,
     django_app_image: str,
     postgresql_k8s: Application,
-    tmp_path_factory,
 ):
     """Build and deploy the Django charm with django-app image."""
     app_name = "django-k8s"
@@ -326,9 +317,7 @@ async def django_blocked_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "django", charm_dict=NON_OPTIONAL_CONFIGS)
 
     app = await model.deploy(
         charm_file,
@@ -372,7 +361,6 @@ async def fastapi_app_fixture(
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
-    tmp_path_factory,
 ):
     """Build and deploy the FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
@@ -380,7 +368,7 @@ async def fastapi_app_fixture(
     resources = {
         "app-image": fastapi_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "fastapi")
     app = await model.deploy(
         charm_file,
         resources=resources,
@@ -398,15 +386,12 @@ async def fastapi_blocked_app_fixture(
     model: Model,
     fastapi_app_image: str,
     postgresql_k8s: Application,
-    tmp_path_factory,
 ):
     """Build and deploy the FastAPI charm with fastapi-app image."""
     app_name = "fastapi-k8s"
 
     resources = {"app-image": fastapi_app_image}
-    charm_file = build_charm_file(
-        pytestconfig, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "fastapi", charm_dict=NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -442,7 +427,6 @@ async def go_app_fixture(
     model: Model,
     go_app_image: str,
     postgresql_k8s,
-    tmp_path_factory,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "go-k8s"
@@ -450,7 +434,7 @@ async def go_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "go")
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
@@ -463,7 +447,6 @@ async def go_blocked_app_fixture(
     model: Model,
     go_app_image: str,
     postgresql_k8s,
-    tmp_path_factory,
 ):
     """Build and deploy the Go charm with go-app image."""
     app_name = "go-k8s"
@@ -471,9 +454,7 @@ async def go_blocked_app_fixture(
     resources = {
         "app-image": go_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "go", charm_dict=NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -506,7 +487,6 @@ def go_non_root_app_fixture(
 def expressjs_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    tmp_path_factory,
 ):
     """ExpressJS charm used for integration testing.
     Builds the charm and deploys it and the relations it depends on.
@@ -533,7 +513,7 @@ def expressjs_app_fixture(
     resources = {
         "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
-    charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
+    charm_file = build_charm_file(pytestconfig, "expressjs")
     juju.deploy(
         charm=charm_file,
         resources=resources,
@@ -555,7 +535,6 @@ async def expressjs_blocked_app_fixture(
     model: Model,
     expressjs_app_image: str,
     postgresql_k8s,
-    tmp_path_factory,
 ):
     """Build and deploy the ExpressJS charm with expressjs-app image."""
     app_name = "expressjs-k8s"
@@ -563,9 +542,7 @@ async def expressjs_blocked_app_fixture(
     resources = {
         "app-image": expressjs_app_image,
     }
-    charm_file = build_charm_file(
-        pytestconfig, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
+    charm_file = build_charm_file(pytestconfig, "expressjs", charm_dict=NON_OPTIONAL_CONFIGS)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
@@ -598,7 +575,6 @@ def expressjs_non_root_app_fixture(
 def spring_boot_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    tmp_path_factory,
     spring_boot_app_image: str,
 ):
     """Build and deploy the Go charm with go-app image."""
@@ -627,7 +603,6 @@ def spring_boot_app_fixture(
     charm_file = build_charm_file(
         pytestconfig,
         "spring-boot",
-        tmp_path_factory,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
     try:
@@ -656,7 +631,6 @@ def spring_boot_app_fixture(
 def spring_boot_mysql_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
-    tmp_path_factory,
     spring_boot_app_image: str,
 ):
     """Build and deploy the Go charm with go-app image."""
@@ -690,7 +664,6 @@ def spring_boot_mysql_app_fixture(
     charm_file = build_charm_file(
         pytestconfig,
         "spring-boot",
-        tmp_path_factory,
         charm_dict=updated_dict,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
@@ -847,7 +820,6 @@ def generate_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
     framework: str,
-    tmp_path_factory,
     image_name: str = "",
     use_postgres: bool = True,
     config: dict[str, str] | None = None,
@@ -865,7 +837,7 @@ def generate_app_fixture(
         resources = {
             "app-image": pytestconfig.getoption(f"--{image_name}"),
         }
-    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory, charm_dict=charm_dict)
+    charm_file = build_charm_file(pytestconfig, framework, charm_dict=charm_dict)
     try:
         juju.deploy(
             charm=charm_file,
