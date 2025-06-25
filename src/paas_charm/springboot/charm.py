@@ -34,8 +34,8 @@ class SpringBootConfig(FrameworkConfig):
     """Represent Spring Boot builtin configuration values.
 
     Attrs:
-        port: port where the application is listening
-        metrics_port: port where the metrics are collected
+        server_port: port where the application is listening
+        management_server_port: port where the metrics are collected
         metrics_path: path where the metrics are collected
         secret_key: a secret key that will be used for securely signing the session cookie
             and can be used for any other security related needs by your Flask application.
@@ -61,12 +61,15 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
     Returns:
         Default Prometheus environment mappings.
     """
-    metrics_path_list = [part for part in workload_config.metrics_path.split('/') if part]
+    if not workload_config.metrics_path:
+        return {}
+    metrics_path_list = [part for part in workload_config.metrics_path.split("/") if part]
     return {
-        "management.endpoints.web.exposure.include":"prometheus",
+        "management.endpoints.web.exposure.include": "prometheus",
         "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
         "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
     }
+
 
 def generate_db_env(
     database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
@@ -274,6 +277,7 @@ class SpringBootApp(App):
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
+        generate_prometheus_env: Maps Prometheus connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)

@@ -275,6 +275,10 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
         if v is not None
     }
 
+
+# No need to create specific environment variables in most of the
+# frameworks so the default function needs to return {}.
+# pylint: disable=unused-argument
 def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
     """Generate environment variable from WorkloadConfig.
 
@@ -285,6 +289,7 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
         Default Prometheus environment mappings.
     """
     return {}
+
 
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
