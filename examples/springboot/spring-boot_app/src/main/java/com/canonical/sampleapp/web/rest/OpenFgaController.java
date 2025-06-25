@@ -1,7 +1,13 @@
+/*
+* Copyright 2025 Canonical Ltd.
+* See LICENSE file for licensing details.
+*/
+
 package com.canonical.sampleapp.web.rest;
 
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +17,7 @@ import dev.openfga.sdk.api.client.OpenFgaClient;
 import dev.openfga.sdk.api.model.AuthorizationModel;
 
 @RestController
+@ConditionalOnProperty(name = "openfga.api-url")
 @RequestMapping("/openfga")
 public class OpenFgaController {
 
@@ -19,6 +26,7 @@ public class OpenFgaController {
     public OpenFgaController(OpenFgaClient openFgaClient) {
         this.openFgaClient = openFgaClient;
     }
+
     @GetMapping("/list-authorization-models")
     public ResponseEntity<String> listAuthorizationModels() {
         try {

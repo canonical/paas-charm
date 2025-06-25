@@ -607,10 +607,7 @@ def spring_boot_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
-
-    if juju.status().apps.get("postgresql-k8s"):
-        logger.info("postgresql-k8s is already deployed")
-    else:
+    try:
         juju.deploy(
             "postgresql-k8s",
             channel="14/stable",
@@ -623,71 +620,14 @@ def spring_boot_app_fixture(
                 "plugin_pg_trgm_enable": "true",
             },
         )
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
 
     charm_file = build_charm_file(
         pytestconfig,
         "spring-boot",
         tmp_path_factory,
-        charm_location=PROJECT_ROOT / "examples/springboot/charm",
-    )
-
-    if juju.status().apps.get(app_name):
-        juju.refresh(app_name, path=charm_file, resources=resources)
-    else:
-        juju.deploy(
-            charm=charm_file,
-            app=app_name,
-            resources=resources,
-        )
-    # Add required relations
-    if not juju.status().apps.get(app_name).relations.get("postgresql"):
-        juju.integrate(app_name, "postgresql-k8s:database")
-
-    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
-
-    return App(app_name)
-
-
-@pytest.fixture(scope="module", name="spring_boot_mysql_app")
-def spring_boot_mysql_app_fixture(
-    juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
-    spring_boot_app_image: str,
-    tmp_path_factory,
-):
-    """Build and deploy the Go charm with go-app image."""
-    app_name = "spring-boot-k8s"
-
-    resources = {
-        "app-image": spring_boot_app_image,
-    }
-    file = str(PROJECT_ROOT / "examples/springboot/charm/charmcraft.yaml")
-
-    f = open(file, "r")
-    content = f.read()
-    charm_metadata = yaml.safe_load(content)
-    f.close()
-    updated_dict = {
-        "requires": {
-            **charm_metadata["requires"],
-            "mysql": {
-                "interface": "mysql_client",
-                "optional": False,
-                "limit": 1,
-            },
-            "postgresql": {
-                "interface": "postgresql_client",
-                "optional": True,
-                "limit": 1,
-            },
-        }
-    }
-
-    charm_file = build_charm_file(
-        pytestconfig,
-        "spring-boot",
-        tmp_path_factory,
-        charm_dict=updated_dict,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
     try:
@@ -701,6 +641,13 @@ def spring_boot_mysql_app_fixture(
             juju.refresh(app_name, path=charm_file, resources=resources)
         else:
             raise err
+    # Add required relations
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
 
     return App(app_name)
 
