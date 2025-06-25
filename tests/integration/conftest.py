@@ -665,12 +665,9 @@ def spring_boot_mysql_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
-    file = str(PROJECT_ROOT / "examples/springboot/charm/charmcraft.yaml")
+    file = PROJECT_ROOT / "examples/springboot/charm/charmcraft.yaml"
 
-    f = open(file, "r")
-    content = f.read()
-    charm_metadata = yaml.safe_load(content)
-    f.close()
+    charm_metadata = yaml.safe_load(file.read_text())
     updated_dict = {
         "requires": {
             **charm_metadata["requires"],
