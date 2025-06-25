@@ -44,7 +44,7 @@ def test_with_mysql(
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    @retry(tries=3, delay=5)
+    @retry(tries=4, backoff=2, delay=5)
     def check_mysql():
         response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
         assert response.status_code == 200
