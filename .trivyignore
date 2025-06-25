@@ -39,7 +39,5 @@ CVE-2025-24813
 CVE-2025-22235
 # org.postgresql:postgresql (spring-boot-0.0.1.jar)
 CVE-2025-49146
-# com.mysql:mysql-connector-j (spring-boot-0.0.1.jar)
-CVE-2023-22102 
 # usr/local/bin/go-app (gobinary)
 CVE-2025-22874

@@ -8,7 +8,6 @@ import logging
 import jubilant
 import pytest
 import requests
-from retry import retry
 
 from tests.integration.types import App
 
@@ -39,15 +38,11 @@ def test_with_mysql(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, mysql_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, mysql_app.name), timeout=2000)
+    juju.wait(lambda status: jubilant.all_active(status, app.name, mysql_app.name), timeout=60*30)
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    @retry(tries=4, backoff=2, delay=5)
-    def check_mysql():
-        response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
-        assert response.status_code == 200
-        assert "SUCCESS" in response.text, f"Response: {response.text}"
-
-    check_mysql()
+    response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
+    assert response.status_code == 200
+    assert "SUCCESS" in response.text, f"Response: {response.text}"

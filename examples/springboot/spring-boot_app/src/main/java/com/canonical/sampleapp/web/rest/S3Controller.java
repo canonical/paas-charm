@@ -13,6 +13,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -89,6 +90,6 @@ public class S3Controller {
         if (service.checkConnection()) {
             return ResponseEntity.ok().body("SUCCESS");
         }
-        return ResponseEntity.status(503).build(); // Service Unavailable
+        return new ResponseEntity<>("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR); // Service Unavailable
     }
 }

@@ -7,11 +7,13 @@ package com.canonical.sampleapp.web.rest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.dao.DataAccessException;
+
 import com.canonical.sampleapp.service.UserService;
 
 @RestController
@@ -34,6 +36,6 @@ public class SQLController {
         } catch (DataAccessException e) {
             log.error("Database access error connecting to the database " + dbApp, e);
         }
-        return ResponseEntity.ok().body("FAILURE");
+        return new ResponseEntity<>("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR); // Service Unavailable
     }
 }
