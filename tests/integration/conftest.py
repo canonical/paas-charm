@@ -705,6 +705,60 @@ def spring_boot_mysql_app_fixture(
     return App(app_name)
 
 
+@pytest.fixture(scope="module", name="spring_boot_mysql_app")
+def spring_boot_mysql_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    spring_boot_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Go charm with go-app image."""
+    app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+    file = PROJECT_ROOT / "examples/springboot/charm/charmcraft.yaml"
+
+    charm_metadata = yaml.safe_load(file.read_text())
+    updated_dict = {
+        "requires": {
+            **charm_metadata["requires"],
+            "mysql": {
+                "interface": "mysql_client",
+                "optional": False,
+                "limit": 1,
+            },
+            "postgresql": {
+                "interface": "postgresql_client",
+                "optional": True,
+                "limit": 1,
+            },
+        }
+    }
+
+    charm_file = build_charm_file(
+        pytestconfig,
+        "spring-boot",
+        tmp_path_factory,
+        charm_dict=updated_dict,
+        charm_location=PROJECT_ROOT / "examples/springboot/charm",
+    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            app=app_name,
+            resources=resources,
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+
+    return App(app_name)
+
+
 @pytest_asyncio.fixture(scope="module", name="get_unit_ips")
 async def fixture_get_unit_ips(ops_test: OpsTest):
     """Return an async function to retrieve unit ip addresses of a certain application."""

@@ -14,9 +14,7 @@ import pika
 import psycopg
 import pymongo
 import pymongo.database
-import pymongo.errors
 import pymysql
-import pymysql.cursors
 import redis
 import urllib3
 from celery import Celery, Task
@@ -347,7 +345,7 @@ def mysql_status():
             cursor.execute(sql)
             cursor.fetchone()
             return "SUCCESS"
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/s3/status")
@@ -357,7 +355,7 @@ def s3_status():
         bucket_name = os.environ["S3_BUCKET"]
         objectsresponse = client.list_objects(Bucket=bucket_name)
         return "SUCCESS"
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/postgresql/status")
@@ -369,7 +367,7 @@ def postgresql_status():
             cursor.execute(sql)
             cursor.fetchone()
             return "SUCCESS"
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/mongodb/status")
@@ -378,7 +376,7 @@ def mongodb_status():
     if (database := get_mongodb_database()) is not None:
         database.list_collection_names()
         return "SUCCESS"
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/redis/status")
@@ -390,7 +388,7 @@ def redis_status():
             return "SUCCESS"
         except redis.exceptions.RedisError:
             logging.exception("Error querying redis")
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/redis/clear_celery_stats")
@@ -427,7 +425,7 @@ def rabbitmq_send():
         channel.queue_declare(queue="charm")
         channel.basic_publish(exchange="", routing_key="charm", body="SUCCESS")
         return "SUCCESS"
-    return "FAIL"
+    return "FAIL", 500
 
 
 @app.route("/rabbitmq/receive")

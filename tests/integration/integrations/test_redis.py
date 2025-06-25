@@ -38,7 +38,9 @@ def test_with_redis(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, redis_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, redis_app.name), timeout=2000)
+    juju.wait(
+        lambda status: jubilant.all_active(status, app.name, redis_app.name), timeout=60 * 30
+    )
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address

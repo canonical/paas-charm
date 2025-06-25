@@ -60,3 +60,49 @@ def base_state_fixture(postgresql_relation):
         },
         "model": testing.Model(name="test-model"),
     }
+
+
+@pytest.fixture(name="mysql_relation")
+def mysql_relation_fixture():
+    """MySQL relation fixture."""
+    relation_data = {
+        "database": "spring-boot-k8s",
+        "endpoints": "test-mysql:3306",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    yield testing.Relation(
+        endpoint="mysql",
+        interface="mysql_client",
+        remote_app_data=relation_data,
+    )
+
+
+@pytest.fixture(scope="function", name="mysql_base_state")
+def base_state_fixture_with_mysql(mysql_relation):
+    """State with container and config file set."""
+    yield {
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+            ),
+            mysql_relation,
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
+                _base_plan={
+                    "services": {
+                        "spring-boot": {
+                            "startup": "enabled",
+                            "override": "replace",
+                            "command": 'bash -c "java -jar *.jar"',
+                        }
+                    }
+                },
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }

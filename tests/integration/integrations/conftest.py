@@ -150,7 +150,7 @@ def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
         trust=True,
     )
 
-    juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=2000)
+    juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=60 * 30)
     return App(minio_app_name)
 
 

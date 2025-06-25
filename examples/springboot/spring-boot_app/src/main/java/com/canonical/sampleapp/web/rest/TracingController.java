@@ -1,3 +1,9 @@
+
+/*
+* Copyright 2025 Canonical Ltd.
+* See LICENSE file for licensing details.
+*/
+
 package com.canonical.sampleapp.web.rest;
 
 import org.springframework.web.bind.annotation.GetMapping;
