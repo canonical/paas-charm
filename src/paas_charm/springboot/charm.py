@@ -42,8 +42,8 @@ class SpringBootConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    port: int = Field(alias="app-port", default=8080, gt=0)
-    metrics_port: int | None = Field(alias="metrics-port", default=8080, gt=0)
+    server_port: int = Field(alias="app-port", default=8080, gt=0)
+    management_server_port: int | None = Field(alias="metrics-port", default=8080, gt=0)
     metrics_path: str | None = Field(
         alias="metrics-path", default="/actuator/prometheus", min_length=1
     )
@@ -51,6 +51,22 @@ class SpringBootConfig(FrameworkConfig):
 
     model_config = ConfigDict(extra="ignore")
 
+
+def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
+    """Generate environment variable from WorkloadConfig.
+
+    Args:
+        workload_config: The charm workload config.
+
+    Returns:
+        Default Prometheus environment mappings.
+    """
+    metrics_path_list = [part for part in workload_config.metrics_path.split('/') if part]
+    return {
+        "management.endpoints.web.exposure.include":"prometheus",
+        "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
+        "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
+    }
 
 def generate_db_env(
     database_name: str, relation_data: "PaaSDatabaseRelationData | None" = None
@@ -267,6 +283,7 @@ class SpringBootApp(App):
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
+    generate_prometheus_env = staticmethod(generate_prometheus_env)
 
 
 class Charm(PaasCharm):
@@ -297,14 +314,14 @@ class Charm(PaasCharm):
         return WorkloadConfig(
             framework=framework_name,
             container_name=WORKLOAD_CONTAINER_NAME,
-            port=framework_config.port,
+            port=framework_config.server_port,
             base_dir=base_dir,
             app_dir=base_dir,
             state_dir=state_dir,
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,
-            metrics_target=f"*:{framework_config.metrics_port}",
+            metrics_target=f"*:{framework_config.management_server_port}",
             metrics_path=framework_config.metrics_path,
         )
 
@@ -326,5 +343,5 @@ class Charm(PaasCharm):
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
-            framework_config_prefix="SERVER_",
+            framework_config_prefix="",
         )

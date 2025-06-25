@@ -275,6 +275,16 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
         if v is not None
     }
 
+def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
+    """Generate environment variable from WorkloadConfig.
+
+    Args:
+        workload_config: The charm workload config.
+
+    Returns:
+        Default Prometheus environment mappings.
+    """
+    return {}
 
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
@@ -290,6 +300,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps tempo tracing connection information to environment variables.
+        generate_prometheus_env: Maps prometheus connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)
@@ -300,6 +311,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
+    generate_prometheus_env = staticmethod(generate_prometheus_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -425,6 +437,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
         env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
+        env.update(self.generate_prometheus_env(self._workload_config))
         return {prefix + k: v for (k, v) in env.items()}
 
     @property

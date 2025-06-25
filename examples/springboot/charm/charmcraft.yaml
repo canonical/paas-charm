@@ -59,7 +59,7 @@ config:
     metrics-path:
       type: string
       description: Path where the prometheus metrics will be scraped.
-      default: /metrics
+      default: /actuator/prometheus
     app-secret-key:
       type: string
       description: Long secret you can use for sessions, csrf or any other thing where
