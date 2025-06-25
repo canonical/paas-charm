@@ -38,7 +38,9 @@ def test_with_mysql(
     app = request.getfixturevalue(app_fixture)
 
     juju.integrate(app.name, mysql_app.name)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, mysql_app.name), timeout=60*30)
+    juju.wait(
+        lambda status: jubilant.all_active(status, app.name, mysql_app.name), timeout=60 * 30
+    )
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
