@@ -259,6 +259,7 @@ def test_mysql_integration(
     assert environment["spring.jpa.hibernate.ddl-auto"] == "none"
     assert environment["MYSQL_DB_NAME"] == "spring-boot-k8s"
 
+
 def test_openfga_integration(
     base_state,
 ) -> None:
