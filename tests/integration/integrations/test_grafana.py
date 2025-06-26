@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
+        ("spring_boot_app", "Spring Boot Operator"),
         ("expressjs_app", "ExpressJS Operator"),
         ("go_app", "Go Operator"),
         ("flask_app", "Flask Operator"),
@@ -34,6 +35,7 @@ def test_grafana_integration(
     dashboard_name: str,
     juju: jubilant.Juju,
     cos_apps: dict[str:App],
+    http: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -42,6 +44,8 @@ def test_grafana_integration(
     """
     app = request.getfixturevalue(app_fixture)
 
+    juju.integrate(app.name, cos_apps["loki_app"].name)
+    juju.integrate(app.name, cos_apps["prometheus_app"].name)
     juju.integrate(app.name, cos_apps["grafana_app"].name)
 
     juju.wait(lambda status: jubilant.all_active(status, app.name, cos_apps["grafana_app"].name))
@@ -53,13 +57,12 @@ def test_grafana_integration(
         .units[f"{cos_apps['grafana_app'].name}/0"]
         .address
     )
-    with requests.session() as sess:
-        sess.post(
-            f"http://{grafana_ip}:3000/login",
-            json={
-                "user": "admin",
-                "password": password,
-            },
-        ).raise_for_status()
-        check_grafana_datasource_types_patiently(sess, grafana_ip, ["prometheus", "loki"])
-        check_grafana_dashboards_patiently(sess, grafana_ip, dashboard_name)
+    http.post(
+        f"http://{grafana_ip}:3000/login",
+        json={
+            "user": "admin",
+            "password": password,
+        },
+    ).raise_for_status()
+    check_grafana_datasource_types_patiently(http, grafana_ip, ["prometheus", "loki"])
+    check_grafana_dashboards_patiently(http, grafana_ip, dashboard_name)

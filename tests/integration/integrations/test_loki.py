@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
+        ("spring_boot_app", 8080),
         ("expressjs_app", 8080),
         ("go_app", 8080),
         ("fastapi_app", 8080),
@@ -32,6 +33,7 @@ def test_loki_integration(
     port: int,
     juju: jubilant.Juju,
     loki_app: App,
+    http: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -49,10 +51,10 @@ def test_loki_integration(
     app_ip = status.apps[app.name].units[f"{app.name}/0"].address
     # populate the access log
     for _ in range(120):
-        requests.get(f"http://{app_ip}:{port}", timeout=10)
+        http.get(f"http://{app_ip}:{port}", timeout=10)
         time.sleep(1)
     loki_ip = status.apps[loki_app.name].units[f"{loki_app.name}/0"].address
-    log_query = requests.get(
+    log_query = http.get(
         f"http://{loki_ip}:3100/loki/api/v1/query_range",
         timeout=10,
         params={"query": f'{{juju_application="{app.name}"}}'},

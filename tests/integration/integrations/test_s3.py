@@ -7,6 +7,7 @@ import logging
 
 import jubilant
 import pytest
+import requests
 
 from tests.integration.types import App
 
@@ -28,7 +29,7 @@ def test_s3_integration(
     s3_integrator_app: App,
     s3_credentials,
     s3_configuration,
-    http,
+    http: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.

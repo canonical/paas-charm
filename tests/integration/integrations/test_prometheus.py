@@ -7,6 +7,7 @@ import logging
 
 import jubilant
 import pytest
+import requests
 
 from tests.integration.types import App
 
@@ -31,7 +32,7 @@ def test_prometheus_integration(
     metrics_path: str,
     juju: jubilant.Juju,
     prometheus_app: App,
-    http,
+    http: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
