@@ -265,11 +265,7 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
         dictionary otherwise.
     """
     if not relation_data:
-        return {
-            "OTEL_TRACES_EXPORTER": "none",
-            "OTEL_METRICS_EXPORTER": "none",
-            "OTEL_LOGS_EXPORTER": "none",
-        }
+        return {}
     return {
         k: v
         for k, v in (

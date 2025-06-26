@@ -24,6 +24,7 @@ if typing.TYPE_CHECKING:
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
+    from paas_charm.tracing import PaaSTracingRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +267,32 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
+def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from TempoRelationData.
+
+    Args:
+        relation_data: The charm Tempo integration relation data.
+
+    Returns:
+        Default Tempo tracing environment mappings if TempoRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {
+            "OTEL_TRACES_EXPORTER": "none",
+            "OTEL_METRICS_EXPORTER": "none",
+            "OTEL_LOGS_EXPORTER": "none",
+        }
+    return {
+        k: v
+        for k, v in (
+            ("OTEL_SERVICE_NAME", relation_data.service_name),
+            ("OTEL_EXPORTER_OTLP_ENDPOINT", str(relation_data.endpoint)),
+        )
+        if v is not None
+    }
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -277,6 +304,7 @@ class SpringBootApp(App):
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
+        generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
     """
 
@@ -287,6 +315,7 @@ class SpringBootApp(App):
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
+    generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
 
 
