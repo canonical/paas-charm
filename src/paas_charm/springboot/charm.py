@@ -349,3 +349,11 @@ class Charm(PaasCharm):
             database_migration=self._database_migration,
             framework_config_prefix="",
         )
+
+    def get_cos_dir(self) -> str:
+        """Return the directory with COS related files.
+
+        Returns:
+            Return the directory with COS related files.
+        """
+        return str((pathlib.Path(__file__).parent / "cos").absolute())
