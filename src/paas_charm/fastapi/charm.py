@@ -2,16 +2,23 @@
 # See LICENSE file for licensing details.
 
 """FastAPI Charm service."""
-
+import logging
 import pathlib
 import typing
 
 import ops
+from charms.certificate_transfer_interface.v0.certificate_transfer import (
+    CertificateAvailableEvent,
+    CertificateRemovedEvent,
+    CertificateTransferRequires,
+)
 from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
+
+logger = logging.getLogger(__name__)
 
 
 class FastAPIConfig(FrameworkConfig):
@@ -58,6 +65,34 @@ class Charm(PaasCharm):
             framework: operator framework.
         """
         super().__init__(framework=framework, framework_name="fastapi")
+        self.trusted_cert_transfer = CertificateTransferRequires(self, "receive-ca-cert")
+        self.framework.observe(
+            self.trusted_cert_transfer.on.certificate_available, self._on_certificate_available
+        )
+        self.framework.observe(
+            self.trusted_cert_transfer.on.certificate_removed, self._on_certificate_removed
+        )
+        rel_name = self.trusted_cert_transfer.relationship_name
+        _cert_relation = self.model.get_relation(relation_name=rel_name)
+        try:
+            if self.trusted_cert_transfer.is_ready(_cert_relation):
+                for relation in self.model.relations.get(rel_name, []):
+                    # For some reason, relation.units includes our unit and app. Need to exclude them.
+                    for unit in set(relation.units).difference([self.app, self.unit]):
+                        # Note: this nested loop handles the case of multi-unit CA, each unit providing
+                        # a different ca cert, but that is not currently supported by the lib itself.
+                        if cert := relation.data[unit].get("ca"):
+                            self._container.push("/app/ca.crt", cert)
+        except:
+            logger.warning("TLS RELATION EMPTY?")
+
+    def _on_certificate_available(self, event: CertificateAvailableEvent):
+        logger.warning(f"{event.certificate=}")
+        logger.warning(f"{event.ca=}")
+        self._container.push("/app/ca.crt", event.ca)
+
+    def _on_certificate_removed(self, event: CertificateRemovedEvent):
+        logger.warning(event.relation_id)
 
     @property
     def _workload_config(self) -> WorkloadConfig:

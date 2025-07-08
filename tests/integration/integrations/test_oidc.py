@@ -97,7 +97,7 @@ def test_oidc_integrations(
         page.locator("#\\:r1\\:").fill("test@example.com")
         page.locator("#\\:r4\\:").fill("Testing1")
         page.get_by_role("button", name="Sign in").click()
-        expect(page).to_have_url(re.compile(f"^{app_url}.*"))
+        expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
 
     # Cleanup
     juju.run("kratos/0", "delete-identity", {"email": "test@example.com"})

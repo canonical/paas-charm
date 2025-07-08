@@ -306,28 +306,51 @@ def generate_oauth_env(
     """
     if not relation_data:
         return {}
-    return {
-        k: v
-        for k, v in (
-            (f"{framework.upper()}_OIDC_CLIENT_ID", relation_data.client_id),
-            (f"{framework.upper()}_OIDC_CLIENT_SECRET", relation_data.client_secret),
-            (f"{framework.upper()}_OIDC_API_BASE_URL", relation_data.issuer_url),
-            (f"{framework.upper()}_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
-            (f"{framework.upper()}_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
-            (f"{framework.upper()}_OIDC_USER_URL", relation_data.userinfo_endpoint),
-            (
-                f"{framework.upper()}_OIDC_CLIENT_KWARGS",
-                '{"scope": "openid profile email"}',
-            ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
-            (
-                f"{framework.upper()}_OIDC_JWKS_URL",
-                relation_data.jwks_endpoint,
-            ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
-            ("REQUESTS_CA_BUNDLE", f"/{framework}/app/ca.crt"),
-            ("SSL_CERT_FILE", f"/{framework}/app/ca.crt"),
-        )
-        if v is not None
-    }
+    if framework in ["flask", "django"]:
+        return {
+            k: v
+            for k, v in (
+                (f"{framework.upper()}_OIDC_CLIENT_ID", relation_data.client_id),
+                (f"{framework.upper()}_OIDC_CLIENT_SECRET", relation_data.client_secret),
+                (f"{framework.upper()}_OIDC_API_BASE_URL", relation_data.issuer_url),
+                (f"{framework.upper()}_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
+                (f"{framework.upper()}_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
+                (f"{framework.upper()}_OIDC_USER_URL", relation_data.userinfo_endpoint),
+                (
+                    f"{framework.upper()}_OIDC_CLIENT_KWARGS",
+                    '{"scope": "openid profile email"}',
+                ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
+                (
+                    f"{framework.upper()}_OIDC_JWKS_URL",
+                    relation_data.jwks_endpoint,
+                ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
+                ("REQUESTS_CA_BUNDLE", f"/{framework}/app/ca.crt"),
+                ("SSL_CERT_FILE", f"/{framework}/app/ca.crt"),
+            )
+            if v is not None
+        }
+    
+    else:
+        return {
+            k: v
+            for k, v in (
+                (f"APP_OIDC_CLIENT_ID", relation_data.client_id),
+                (f"APP_OIDC_CLIENT_SECRET", relation_data.client_secret),
+                (f"APP_OIDC_API_BASE_URL", relation_data.issuer_url),
+                (f"APP_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
+                (f"APP_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
+                (f"APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
+                (
+                    f"APP_OIDC_CLIENT_KWARGS",
+                    '{"scope": "openid profile email"}',
+                ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
+                (f"APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
+                ("REQUESTS_CA_BUNDLE", "/app/ca.crt"),
+                ("SSL_CERT_FILE", "/app/ca.crt"),
+            )
+            if v is not None
+        }
+
 
 
 # too-many-instance-attributes is disabled because this class
