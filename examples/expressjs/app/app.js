@@ -10,7 +10,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const promBundle = require("express-prom-bundle");
 const session = require('express-session');
-const passport = require('./auth'); // Your new auth configuration
+const { auth, requiresAuth } = require('express-openid-connect');
 
 // Add the options to the prometheus middleware most option are for http_request_duration_seconds histogram metric
 const metricsMiddleware = promBundle({
@@ -22,7 +22,6 @@ var tableRouter = require("./routes/table");
 var usersRouter = require("./routes/users");
 var mailRouter = require("./routes/send_mail");
 var envRouter = require("./routes/env");
-var profileRouter = require("./routes/profile");
 
 require("./instrumentation");
 
@@ -40,37 +39,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(session({
-  secret: 'your secret', // Choose a strong secret
-  resave: false,
-  saveUninitialized: false,
-}));
-app.use(passport.authenticate('session'));
-
+app.use(session({secret: process.env.SECRET,
+                 resave: false,
+                 saveUninitialized: true,}));
+if (process.env.CLIENT_ID != undefined){
+app.use(
+  auth({
+    authRequired: false,
+    authorizationParams: {
+        response_type: 'code',
+	  scope: process.env.APP_OIDC_SCOPE,
+    },
+    routes: {
+	    login: false,
+    },
+  })
+);
+}
 
 app.use("/users", usersRouter);
 app.use("/table", tableRouter);
 app.use("/send_mail", mailRouter);
 app.use("/env", envRouter);
-app.use('/profile', profileRouter);
 app.use("/", indexRouter);
 
-// Authentication routes
-app.get('/login', passport.authenticate('openidconnect'));
-
-app.get('/oauth/callback',
-  passport.authenticate('openidconnect', { failureRedirect: '/login' }),
-  function(req, res) {
-    res.redirect('/profile');
-  }
+app.get('/profile', requiresAuth(), (req, res) =>
+  res.send(`hello ${req.oidc.user.email}`)
 );
 
-app.get('/logout', function(req, res, next){
-  req.logout(function(err) {
-    if (err) { return next(err); }
-    res.redirect('/');
-  });
-});
+app.get('/login', (req, res) =>
+  res.oidc.login({
+    returnTo: 'profile',
+  })
+);
 
 
 // catch 404 and forward to error handler

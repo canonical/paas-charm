@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     "app_fixture, port, endpoint",
     [
         # ("spring_boot_app", 8080),
-        # ("expressjs_app", 8080),
+        ("expressjs_app", 8080, "login"),
         ("fastapi_app", 8080, "login"),
         # ("go_app", 8080),
         ("flask_app", 8000, "login"),
