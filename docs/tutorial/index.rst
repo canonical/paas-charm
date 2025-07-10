@@ -13,10 +13,11 @@ or a fully deployed and integrated web app (Charmcraft).
 
 .. list-table::
   :header-rows: 1
+  :widths: 27 33 50
 
   * - Web app framework
     - Create a container image
-    - Create and deploy a web app
+    - Create a software operator and deploy
   * - Django
     - `Build a rock for a Django application <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/django/>`_
     - `Write your first Kubernetes charm for a Django app <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-django/>`_
