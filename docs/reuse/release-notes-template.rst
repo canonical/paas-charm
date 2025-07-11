@@ -34,15 +34,15 @@ Updates
 ``paas-charm``
 ~~~~~~~~~~~~~~
 <List of new major and minor features in the Python library and ``paas-charm``
-repo. Include links to PRs or commits.>
+repo. Include links to pull requests or commits.>
 
 Rockcraft
 ~~~~~~~~~
-<List of new major and minor features in the Rockcraft support. Include links to PRs or commits.>
+<List of new major and minor features in the Rockcraft support. Include links to pull requests or commits.>
 
 Charmcraft
 ~~~~~~~~~~
-<List of new major and minor features in the Charmcraft support. Include links to PRs or commits.>
+<List of new major and minor features in the Charmcraft support. Include links to pull requests or commits.>
 
 Backwards-incompatible changes
 ------------------------------
@@ -52,15 +52,16 @@ The following are breaking changes introduced in ``paas-charm``, Rockcraft, and 
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of breaking changes in the Python library and ``paas-charm`` repo. Include links to PRs or commits.>
+<List of breaking changes in the Python library and ``paas-charm`` repo.
+Include links to pull requests or commits.>
 
 Rockcraft
 ~~~~~~~~~
-<List of breaking changes in Rockcraft support. Include links to PRs or commits.>
+<List of breaking changes in Rockcraft support. Include links to pull requests or commits.>
 
 Charmcraft
 ~~~~~~~~~~
-<List of breaking changes in Charmcraft support. Include links to PRs or commits.>
+<List of breaking changes in Charmcraft support. Include links to pull requests or commits.>
 
 Bug fixes
 ---------
@@ -70,15 +71,16 @@ The following are bug fixes in ``paas-charm``, Rockcraft, and Charmcraft.
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of bug fixes in the Python library and ``paas-charm`` repo. Include links to PRs or commits.>
+<List of bug fixes in the Python library and ``paas-charm`` repository.
+Include links to pull requests or commits.>
 
 Rockcraft
 ~~~~~~~~~~
-<List of relevant bug fixes in the Rockcraft support. Include links to PRs or commits.>
+<List of relevant bug fixes in the Rockcraft support. Include links to pull requests or commits.>
 
 Charmcraft
 ~~~~~~~~~~
-<List of relevant bug fixes in Charmcraft support. Include links to PRs or commits.>
+<List of relevant bug fixes in Charmcraft support. Include links to pull requests or commits.>
 
 Deprecated features
 -------------------
@@ -88,20 +90,20 @@ The following features and interfaces will be removed.
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of deprecated features. Include links to PRs or commits.>
+<List of deprecated features. Include links to pull requests or commits.>
 
 Charmcraft
 ~~~~~~~~~~
-<List of deprecated features. Include links to PRs or commits.>
+<List of deprecated features. Include links to pull requests or commits.>
 
 Rockcraft
 ~~~~~~~~~
-<List of deprecated features. Include links to PRs or commits.>
+<List of deprecated features. Include links to pull requests or commits.>
 
 Known issues in ``paas-charm``
 ------------------------------
 
-<List of unresolved issues in the ``paas-charm`` repo that are currently being worked
+<List of unresolved issues in the ``paas-charm`` repository that are currently being worked
 on or are considered important. We don't need to list all of the issues in the
 repository here – limit to 3-5 issues. If there are no known issues, then write
 "No known issues to report.">
