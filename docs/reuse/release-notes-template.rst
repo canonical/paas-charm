@@ -114,7 +114,3 @@ Thanks to our contributors
 <List the contributors who worked on ``paas-charm``>
 
 
-
-
-
-
