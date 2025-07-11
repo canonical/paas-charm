@@ -18,3 +18,4 @@ This site contains step-by-step instructions for developing and maintaining a fr
    :maxdepth: 1
 
    Contribute <contributing>
+   Upgrade <upgrade>
