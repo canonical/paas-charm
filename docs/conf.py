@@ -250,6 +250,7 @@ extensions = [
 
 exclude_patterns = [
     "doc-cheat-sheet*",
+    "reuse/release-notes-template.rst"
 ]
 
 # Adds custom CSS files, located under 'html_static_path'

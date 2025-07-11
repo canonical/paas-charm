@@ -105,4 +105,4 @@ to share your use case and get started!
    How to <how-to/index>
    Reference <reference/index>
    Explanation <explanation/index>
-   Changelog <changelog.md>
+   Release notes <release-notes/index>
