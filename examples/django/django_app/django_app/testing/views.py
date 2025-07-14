@@ -26,7 +26,7 @@ from django.urls import reverse
 CONF_URL = f'{os.getenv("DJANGO_OIDC_API_BASE_URL")}/.well-known/openid-configuration'
 oauth = OAuth()
 oauth.register(
-    name="oidc", server_metadata_url=CONF_URL, client_kwargs={"scope": "openid email profile"}
+    name="oidc", server_metadata_url=CONF_URL, client_kwargs={"scope": "openid email profile", "verify": False}
 )
 
 

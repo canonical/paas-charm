@@ -318,14 +318,12 @@ def generate_oauth_env(
                 (f"{framework.upper()}_OIDC_USER_URL", relation_data.userinfo_endpoint),
                 (
                     f"{framework.upper()}_OIDC_CLIENT_KWARGS",
-                    '{"scope": "openid profile email"}',
+                    json.dumps({"scope": "openid profile email", "verify": False}),
                 ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
                 (
                     f"{framework.upper()}_OIDC_JWKS_URL",
                     relation_data.jwks_endpoint,
                 ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
-                ("REQUESTS_CA_BUNDLE", f"/{framework}/app/ca.crt"),
-                ("SSL_CERT_FILE", f"/{framework}/app/ca.crt"),
             )
             if v is not None
         }
@@ -342,11 +340,15 @@ def generate_oauth_env(
                 (f"APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
                 (
                     f"APP_OIDC_CLIENT_KWARGS",
-                    '{"scope": "openid profile email"}',
+                    json.dumps({"scope": "openid profile email", "verify": False}),
+                ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
+                (
+                    "APP_OIDC_SCOPE",
+                    "openid profile email",
                 ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
                 (f"APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
-                ("REQUESTS_CA_BUNDLE", "/app/ca.crt"),
-                ("SSL_CERT_FILE", "/app/ca.crt"),
+                # ("REQUESTS_CA_BUNDLE", "/app/ca.crt"),
+                # ("SSL_CERT_FILE", "/app/ca.crt"),
             )
             if v is not None
         }

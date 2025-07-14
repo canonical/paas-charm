@@ -49,9 +49,7 @@ def generate_oauth_env(
                 '{"scope": "openid profile email"}',
             ),  # FLASK_OIDC_CLIENT_KWARGS_SCOPE
             (f"APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
-            ("REQUESTS_CA_BUNDLE", "/app/ca.crt"),
-            ("SSL_CERT_FILE", "/app/ca.crt"),
-            ("NODE_EXTRA_CA_CERTS", "/app/ca.crt"),
+            ("NODE_TLS_REJECT_UNAUTHORIZED",0),
         )
         if v is not None
     }

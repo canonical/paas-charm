@@ -554,7 +554,9 @@ def external_idp_service_fixture():
 @pytest.fixture(scope="module", name="identity_bundle")
 def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     """Deploy rabbitmq-k8s app."""
-
+    if juju.status().apps.get("hydra"):
+        logger.info("identity-platform is already deployed")
+        return
     juju.deploy("identity-platform", channel="latest/edge", trust=True)
     juju.remove_application("kratos-external-idp-integrator")
     # juju.config("hydra",{"dev": True}) # lets us use non-https

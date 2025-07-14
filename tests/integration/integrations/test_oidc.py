@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
         # ("spring_boot_app", 8080),
         ("expressjs_app", 8080, "login"),
         ("fastapi_app", 8080, "login"),
-        # ("go_app", 8080),
+        ("go_app", 8080, "login"),
         ("flask_app", 8000, "login"),
         ("django_app", 8000, "auth_login"),
     ],
@@ -53,22 +53,34 @@ def test_oidc_integrations(
     assert: the Penpot charm becomes active.
     """
     app = request.getfixturevalue(app_fixture)
-    juju.integrate(f"{app.name}", "traefik-public")
-    juju.integrate(f"{app.name}:receive-ca-cert", "self-signed-certificates:send-ca-cert")
+    status = juju.status()
+    if not status.apps.get(app.name).relations.get("ingress"):
+        juju.integrate(f"{app.name}", "traefik-public")
     juju.wait(
         jubilant.all_active,
         timeout=30 * 60,
     )
-    juju.integrate(f"{app.name}:oauth", "hydra")
+    if not status.apps.get(app.name).relations.get("oauth"):
+        juju.integrate(f"{app.name}:oauth", "hydra")
     juju.wait(
         jubilant.all_active,
         timeout=30 * 60,
     )
-    juju.run(
-        "kratos/0",
-        "create-admin-account",
-        {"email": "test@example.com", "password": "Testing1", "username": "admin"},
-    ).results
+    def admin_identity_exists():
+        """Check if the admin identity exists in Kratos."""
+        try:
+            res = juju.run("kratos/0", "get-identity", {"email": "test@example.com"})
+            return res.status == "completed"
+        except jubilant.TaskError as e:
+            logger.info(f"Error checking admin identity: {e}")
+            return False
+
+    if not admin_identity_exists():
+        juju.run(
+            "kratos/0",
+            "create-admin-account",
+            {"email": "test@example.com", "password": "Testing1", "username": "admin"},
+        )
     # add secret password
     password_name = str(uuid4())
     secret_id = juju.add_secret(password_name, {"password": "Testing1"})

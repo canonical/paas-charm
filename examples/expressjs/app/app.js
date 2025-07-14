@@ -39,22 +39,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(session({secret: process.env.SECRET,
-                 resave: false,
-                 saveUninitialized: true,}));
+app.use(session({secret: process.env.APP_SECRET_KEY,
+                resave: false,
+                saveUninitialized: true,}));
 if (process.env.CLIENT_ID != undefined){
-app.use(
-  auth({
-    authRequired: false,
-    authorizationParams: {
-        response_type: 'code',
-	  scope: process.env.APP_OIDC_SCOPE,
-    },
-    routes: {
-	    login: false,
-    },
-  })
-);
+  app.use(
+    auth({
+      authRequired: false,
+      authorizationParams: {
+          response_type: 'code',
+      scope: process.env.APP_OIDC_SCOPE,
+      },
+      routes: {
+        login: false,
+      },
+    })
+  );
 }
 
 app.use("/users", usersRouter);
