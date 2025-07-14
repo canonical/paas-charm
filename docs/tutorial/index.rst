@@ -4,20 +4,37 @@
 Tutorials
 =========
 
-For creating your first container image with the framework support tooling:
+Rockcraft and Charmcraft have comprehensive getting started tutorials teaching
+you to containerize a web app into an OCI-compliant image, create a
+software operator around the container image, and set up a Kubernetes environment
+with ingress and a database. Each tutorial starts with building a basic
+"Hello, world" app and ends with either a functional container image (Rockcraft)
+or a fully deployed and integrated web app (Charmcraft).
 
-* `Build a rock for a Flask application <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_
-* `Build a rock for a Django application <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/django/>`_
-* `Build a rock for a FastAPI application <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/fastapi/>`_
-* `Build a rock for a Go application <http://documentation.ubuntu.com/rockcraft/en/latest/tutorial/go/>`_
-* `Build a rock for an ExpressJS application <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/expressjs/>`_
+.. list-table::
+  :header-rows: 1
+  :widths: 27 33 50
 
-For creating and deploying your first web app on Juju:
+  * - Web app framework
+    - Create a container image
+    - Create a software operator and deploy
+  * - Django
+    - `Build a Django app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/django/>`_
+    - `Write a Django app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-django/>`_
+  * - Express
+    - `Build an Express app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/expressjs/>`_
+    - `Write an Express app charm <https://canonical-charmcraft.readthedocs-hosted.com/latest/tutorial/kubernetes-charm-express/>`_
+  * - FastAPI
+    - `Build a FastAPI app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/fastapi/>`_
+    - `Write a FastAPI app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-fastapi/>`_
+  * - Flask
+    - `Build a Flask app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask/>`_
+    - `Write a Flask app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-flask/>`_
+  * - Go
+    - `Build a Go app rock <http://documentation.ubuntu.com/rockcraft/en/latest/tutorial/go/>`_
+    - `Write a Go app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-go/>`_
+  * - Spring Boot
+    - `Build a Spring Boot app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/springboot/>`_
+    - Coming soon: Write a Spring Boot app charm
 
-* `Write your first Kubernetes charm for a Django app <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-django/>`_
-* `Write your first Kubernetes charm for a FastAPI app <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-fastapi/>`_
-* `Write your first Kubernetes charm for a Flask app <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-flask/>`_
-* `Write your first Kubernetes charm for a Go app <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-go/>`_
-
-Eventually, this project will contain developer tutorials for the tooling.
 
