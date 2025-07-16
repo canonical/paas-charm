@@ -10,6 +10,7 @@ import typing
 
 import ops
 import yaml
+from ops import RelationMeta
 from pydantic import ValidationError
 
 
@@ -141,3 +142,22 @@ def config_get_with_secret(
     if secret_id is None:
         return None
     return charm.model.get_secret(id=typing.cast(str, secret_id))
+
+
+def get_relations_by_interface(
+    requires: dict[str, RelationMeta], interface_name: str
+) -> list[tuple[str, RelationMeta]]:
+    """Get the relation names for a given interface name.
+
+    Args:
+        requires: relation requires dictionary from metadata
+        interface_name: the interface name to filter relations
+
+    Returns:
+        A list of relation names that match the given interface name.
+    """
+    return [
+        (endpoint_name, interface)
+        for endpoint_name, interface in requires.items()
+        if interface.interface_name == interface_name
+    ]

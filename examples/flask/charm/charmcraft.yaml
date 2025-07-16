@@ -31,6 +31,8 @@ charm-libs:
   version: '0'
 - lib: tempo-coordinator-k8s.tracing
   version: '0'
+- lib: hydra.oauth
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -114,6 +116,15 @@ config:
     secret-test:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
+    oidc_redirect_path:
+      type: string
+      description: The path that the user will be redirected upon completing login.
+      default: /callback
+    oidc_scopes:
+      type: string
+      description: A list of scopes with spaces in between.
+      default: "openid profile email"
+
 containers:
   flask-app:
     resource: flask-app-image
@@ -171,6 +182,11 @@ requires:
     interface: openfga
     optional: True
     limit: 1
+  oidc:
+    interface: oauth
+    optional: True
+    limit: 1
+
 resources:
   flask-app-image:
     description: flask application image.

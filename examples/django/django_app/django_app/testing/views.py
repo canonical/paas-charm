@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import json
 import os
 import time
 
@@ -16,8 +17,57 @@ from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
 
+from authlib.integrations.django_client import OAuth
 from django.conf import settings
 from django.core.mail import EmailMessage, get_connection
+from django.shortcuts import redirect
+from django.urls import reverse
+
+CONF_URL = f'{os.getenv("DJANGO_OIDC_API_BASE_URL")}/.well-known/openid-configuration'
+oauth = OAuth()
+oauth.register(
+    name="oidc",
+    server_metadata_url=CONF_URL,
+    client_kwargs={**json.loads(os.getenv("DJANGO_OIDC_CLIENT_KWARGS", "{}")), "verify": False},
+)
+
+
+def profile(request):
+    user = request.session.get("user")
+    uri = reverse("logout")
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Welcome, {user.get('email')}!</h1>
+    <p>Here is your user information:</p>
+    <pre>{user}</pre>
+    <p><a href="/{uri}">Logout</a></p>
+</body>
+</html>
+    
+"""
+    return HttpResponse(html)
+
+
+def auth_login(request):
+    redirect_uri = request.build_absolute_uri(reverse("callback")).rstrip("/")
+    print(f"{redirect_uri=}")
+    return oauth.oidc.authorize_redirect(request, redirect_uri)
+
+
+def callback(request):
+    token = oauth.oidc.authorize_access_token(request)
+    request.session["user"] = token["userinfo"]
+    return redirect(reverse("profile"))
+
+
+def logout(request):
+    request.session.pop("user", None)
+    return redirect("/")
 
 
 def send_mail(request):

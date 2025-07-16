@@ -37,6 +37,7 @@ from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
     FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
+    OAUTH_RELATION_DATA_EXAMPLE,
     OPENFGA_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
@@ -899,3 +900,83 @@ def test_secret_storage_relation_departed_hook(
     harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
 
     harness.charm.restart.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "app_harness, framework, container_name",
+    [
+        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
+        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param(
+            "fastapi_harness",
+            "fastapi",
+            FASTAPI_CONTAINER_NAME,
+            id="fastapi",
+        ),
+        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
+    ],
+)
+def test_oauth_relation(
+    app_harness: str,
+    framework: str,
+    container_name: str,
+    request: pytest.FixtureRequest,
+):
+    """
+    arrange: Integrate the charm with the hydra charm.
+    act: Run all initial hooks.
+    assert: The app service should have the environment variables related to openfga.
+    """
+    harness = request.getfixturevalue(app_harness)
+    secret = harness.add_user_secret(
+        {"secret": "testing-client-secret"},
+    )
+    endpoint_name = "oidc"
+    harness.add_relation(
+        endpoint_name,
+        "oauth",
+        app_data={
+            **OAUTH_RELATION_DATA_EXAMPLE,
+            "client_secret_id": secret,
+        },
+    )
+    harness.grant_secret(secret, f"{framework}-k8s")
+    container = harness.model.unit.get_container(container_name)
+
+    harness.begin_with_initial_hooks()
+
+    assert harness.model.unit.status == ActiveStatus()
+    service_env = container.get_plan().services[framework].environment
+    env_var_prefix = f"{framework.upper()}_{endpoint_name.upper()}"
+    if framework not in ["flask", "django"]:
+        env_var_prefix = f"APP_{endpoint_name.upper()}"
+    assert (
+        service_env[f"{env_var_prefix}_REDIRECT_PATH"]
+        == OAUTH_RELATION_DATA_EXAMPLE["redirect_path"]
+    )
+    assert service_env[f"{env_var_prefix}_CLIENT_ID"] == OAUTH_RELATION_DATA_EXAMPLE["client_id"]
+    assert service_env[f"{env_var_prefix}_CLIENT_SECRET"] == "testing-client-secret"
+    assert (
+        str(service_env[f"{env_var_prefix}_API_BASE_URL"])
+        == OAUTH_RELATION_DATA_EXAMPLE["issuer_url"]
+    )
+    assert (
+        str(service_env[f"{env_var_prefix}_AUTHORIZE_URL"])
+        == OAUTH_RELATION_DATA_EXAMPLE["authorization_endpoint"]
+    )
+    assert (
+        str(service_env[f"{env_var_prefix}_ACCESS_TOKEN_URL"])
+        == OAUTH_RELATION_DATA_EXAMPLE["token_endpoint"]
+    )
+    assert (
+        str(service_env[f"{env_var_prefix}_USER_URL"])
+        == OAUTH_RELATION_DATA_EXAMPLE["userinfo_endpoint"]
+    )
+    assert (
+        json.loads(service_env[f"{env_var_prefix}_CLIENT_KWARGS"])["scope"]
+        == OAUTH_RELATION_DATA_EXAMPLE["scope"]
+    )
+    assert (
+        str(service_env[f"{env_var_prefix}_JWKS_URL"])
+        == OAUTH_RELATION_DATA_EXAMPLE["jwks_endpoint"]
+    )

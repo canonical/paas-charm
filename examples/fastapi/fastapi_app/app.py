@@ -1,8 +1,11 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
+import json
 import os
+from urllib.parse import urlparse
 
 import urllib3
+from authlib.integrations.starlette_client import OAuth
 from fastapi import FastAPI, HTTPException
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi_mail.errors import ConnectionErrors
@@ -19,7 +22,10 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from starlette.responses import JSONResponse
+from starlette.config import Config
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 conf = ConnectionConfig(
     MAIL_USERNAME=f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}',
@@ -36,8 +42,12 @@ conf = ConnectionConfig(
     ),
 )
 
-
-app = FastAPI()
+base_url = os.getenv("APP_BASE_URL", "")
+parsed_url = urlparse(base_url)
+# Ensure root_path is either "" or starts with a single slash and has no trailing slash
+root_path = f"/{parsed_url.path.strip('/')}" if parsed_url.path else ""
+app = FastAPI(root_path=root_path)
+app.add_middleware(SessionMiddleware, secret_key=os.environ.get("APP_SECRET_KEY"))
 
 set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
@@ -54,6 +64,17 @@ engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
 Session = scoped_session(sessionmaker(bind=engine))
 
 Base = declarative_base()
+config = Config(env_prefix="APP_")
+oauth = OAuth(config)
+
+oauth.register(
+    name="oidc",
+    # We are doing this to avoid SSL verification issues in tests.
+    # If you don't need to disable SSL verification, no need to set `client_kwargs`,
+    # It will be read from APP_OIDC_CLIENT_KWARGS env argument automatically.
+    client_kwargs={**json.loads(os.getenv("APP_OIDC_CLIENT_KWARGS", "{}")), "verify": False},
+    jwks_uri=os.getenv("APP_OIDC_JWKS_URL"),
+)
 
 
 class User(Base):
@@ -62,6 +83,38 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(80), unique=True, nullable=False)
     password = Column(String(256), nullable=False)
+
+
+@app.get("/profile")
+async def homepage(request: Request):
+    user = request.session.get("user")
+    if user:
+        data = json.dumps(user)
+        html = f"<pre>{data}</pre>" '<a href="/logout">logout</a>'
+        return HTMLResponse(html)
+    return HTMLResponse('<a href="/login">login</a>')
+
+
+@app.get("/login")
+async def login(request: Request):
+    redirect_uri = request.url_for("callback").replace(scheme="https")
+    print(f"Redirect URI: {redirect_uri}")
+    return await oauth.oidc.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/callback")
+async def callback(request: Request):
+    token = await oauth.oidc.authorize_access_token(request)
+    user = token.get("userinfo")
+    if user:
+        request.session["user"] = user
+    return RedirectResponse(url="profile")
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.pop("user", None)
+    return RedirectResponse(url="/")
 
 
 @app.get("/")

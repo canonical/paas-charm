@@ -33,6 +33,17 @@ import (
 
 	. "github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
+
+	"github.com/gorilla/sessions"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/openidConnect"
+)
+
+// OIDC-specific constants for the session store
+const (
+	maxAge = 86400 * 30 // 30 days
+	isProd = false      // Set to true when serving over https
 )
 
 type mainHandler struct {
@@ -163,7 +174,6 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Sent")
-
 }
 
 func (h mainHandler) serveUserDefinedConfig(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +200,35 @@ func (h mainHandler) servePostgresql(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h mainHandler) serveAuthCallback(w http.ResponseWriter, r *http.Request) {
+	user, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+	gothic.StoreInSession("user_email", user.Email, r, w)
+	baseURL := os.Getenv("APP_BASE_URL")
+	if baseURL == "" {
+		baseURL = "/"
+	}
+	http.Redirect(w, r, baseURL+"/profile", http.StatusFound)
+}
+
+func (h mainHandler) serveProfile(w http.ResponseWriter, r *http.Request) {
+	user_email, err := gothic.GetFromSession("user_email", r)
+	if err != nil {
+		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		return
+	}
+	w.Write([]byte("User Email: " + user_email))
+}
+
+func (h mainHandler) serveLogout(w http.ResponseWriter, r *http.Request) {
+	gothic.Logout(w, r)
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
 var tp *sdktrace.TracerProvider
 
 // initTracer creates and registers trace provider instance.
@@ -208,6 +247,39 @@ func initTracer(ctx context.Context) error {
 }
 
 func main() {
+	key, _ := os.LookupEnv("APP_SECRET_KEY")
+	store := sessions.NewCookieStore([]byte(key))
+	store.MaxAge(maxAge)
+	store.Options.Path = "/"
+	store.Options.HttpOnly = true // HttpOnly should always be enabled
+	store.Options.Secure = isProd
+	gothic.Store = store
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	api_base_url, found := os.LookupEnv("APP_OIDC_API_BASE_URL")
+	if !found {
+		log.Println("APP_OIDC_API_BASE_URL environment variable is not set")
+	}
+
+	log.Println(api_base_url)
+
+	config_url := api_base_url + "/.well-known/openid-configuration"
+
+	oidcProvider, err := openidConnect.New(
+		os.Getenv("APP_OIDC_CLIENT_ID"),
+		os.Getenv("APP_OIDC_CLIENT_SECRET"),
+		os.Getenv("APP_BASE_URL")+"/callback",
+		config_url,
+		os.Getenv("APP_OIDC_SCOPE"),
+	)
+
+	if oidcProvider != nil {
+		goth.UseProviders(oidcProvider)
+		log.Println(oidcProvider.Name())
+	}
+	if err != nil {
+		log.Printf(err.Error())
+	}
+
 	ctx := context.Background()
 	// initialize trace provider.
 	if err := initTracer(ctx); err != nil {
@@ -250,11 +322,31 @@ func main() {
 		counter: requestCounter,
 		service: service.Service{PostgresqlURL: postgresqlURL},
 	}
-	mux.HandleFunc("/{$}", mainHandler.serveHelloWorld)
+	mux.HandleFunc("/", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
 	mux.HandleFunc("/openfga/list-authorization-models", mainHandler.serveOpenFgaListAuthorizationModels)
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
+
+	mux.HandleFunc("/callback", mainHandler.serveAuthCallback)
+	mux.HandleFunc("/profile", mainHandler.serveProfile)
+	mux.HandleFunc("/logout", mainHandler.serveLogout)
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		baseURL := os.Getenv("APP_BASE_URL")
+		if baseURL == "" {
+			baseURL = "/"
+		}
+		http.Redirect(w, r, baseURL+"/login/openid-connect", http.StatusFound)
+	})
+	mux.HandleFunc("/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
+		// try to get the user without re-authenticating
+		if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(gothUser)
+		} else {
+			gothic.BeginAuthHandler(w, r)
+		}
+	})
 
 	if metricsPort != port {
 		prometheus.MustRegister(requestCounter)
