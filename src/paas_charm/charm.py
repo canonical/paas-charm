@@ -374,9 +374,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if not oauth_integrations:
             return None
         endpoint_name = oauth_integrations[0][0]
-        if not self._ingress:
-            logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
-            self.update_app_and_unit_status(ops.BlockedStatus(msg))
 
         try:
             _oauth = PaaSOAuthRequirer(
@@ -613,6 +610,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
         if self._oauth:
+            if self._oauth.is_client_created() and not self._ingress.is_ready():
+                logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
+                self.update_app_and_unit_status(ops.BlockedStatus(msg))
+                return
             self._oauth.update_client()
         self.update_app_and_unit_status(ops.ActiveStatus())
 

@@ -13,7 +13,6 @@ from playwright.sync_api import expect, sync_playwright
 
 logger = logging.getLogger(__name__)
 
-pytest_plugins = ["oauth_tools.fixtures"]
 import logging
 
 import jubilant
@@ -49,19 +48,16 @@ def test_outh_integrations(
     """
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
-    if not status.apps.get(app.name).relations.get("ingress"):
-        juju.integrate(f"{app.name}", "traefik-public")
-    # juju.wait(
-    #     jubilant.all_active,
-    #     timeout=30 * 60,
-    # )
+
     if not status.apps.get(app.name).relations.get("oidc"):
         juju.integrate(f"{app.name}", "hydra")
+
+    if not status.apps.get(app.name).relations.get("ingress"):
+        juju.integrate(f"{app.name}", "traefik-public")
     juju.wait(
         jubilant.all_active,
         timeout=30 * 60,
     )
-
     def admin_identity_exists():
         """Check if the admin identity exists in Kratos."""
         try:

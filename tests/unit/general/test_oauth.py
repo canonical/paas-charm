@@ -32,7 +32,7 @@ from examples.flask.charm.src.charm import FlaskCharm
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "FLASK_OIDC_SCOPES": "openid profile email phone",
                 "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
-                "FLASK_BASE_URL": "http://flask-k8s.test-model:8000",
+                "FLASK_BASE_URL": "http://juju.test/",
                 "FLASK_SECRET_KEY": "test",
                 "FLASK_PEER_FQDNS": "flask-k8s-0.flask-k8s-endpoints.test-model.svc.cluster.local",
                 "FLASK_OIDC_CLIENT_ID": "test-client-id",
@@ -53,8 +53,8 @@ def test_oauth_config(
 ) -> None:
     """
     arrange: set the workload charm config.
-    act: start the workload charm and set app container to be ready.
-    assert: workload charm should submit the correct workload pebble layer to pebble.
+    act: start the workload charm and integrate with oauth.
+    assert: workload charm should be blocked before the ingress integration and active after.
     """
     base_state = request.getfixturevalue(base_state)
     base_state["config"] = config
@@ -74,8 +74,18 @@ def test_oauth_config(
     )
     out = context.run(context.on.config_changed(), state)
 
-    assert out.unit_status == testing.ActiveStatus()
+    assert out.unit_status == testing.BlockedStatus("Ingress relation is required for OIDC to work correctly!")
 
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="ingress",
+            interface="ingress",
+            remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
+        )
+    )
+    state = testing.State(**base_state)
+    out = context.run(context.on.config_changed(), state)
+    assert out.unit_status == testing.ActiveStatus()
     service_layer = list(out.containers)[0].plan.services[framework].to_dict()
     assert service_layer == {
         "environment": env,
