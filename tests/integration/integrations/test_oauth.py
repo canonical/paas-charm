@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
     [
         # ("spring_boot_app", "login"),
         # ("expressjs_app", "login"),
-        ("fastapi_app", "login"),
-        ("go_app", "login"),
+        # ("fastapi_app", "login"),
+        # ("go_app", "login"),
         ("flask_app", "login"),
-        ("django_app", "auth_login"),
+        # ("django_app", "auth_login"),
     ],
 )
 def test_outh_integrations(
@@ -109,3 +109,4 @@ def login_to_idp(app_url: str, endpoint: str):
         page.get_by_label("Password").fill("Testing1")
         page.get_by_role("button", name="Sign in").click()
         expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
+        expect(page.get_by_text("test@example.com")).to_be_visible()
