@@ -53,6 +53,7 @@ class InvalidOAuthRelationDataError(InvalidRelationDataError):
 
 class PaaSOAuthRequirer(OAuthRequirer):
     """Wrapper around OAuthRequirer."""
+
     _base_url: str
     _relation_name: str
     _charm_config: ConfigData
@@ -141,8 +142,7 @@ class PaaSOAuthRequirer(OAuthRequirer):
         )
 
     def update_client(self) -> None:
-        """Update the OAuth client configuration.
-        """
-        self.update_client_config(self._get_oauth_client_config(
-            self._relation_name, self._charm_config, self._base_url
-        ))
+        """Update the OAuth client configuration."""
+        self.update_client_config(
+            self._get_oauth_client_config(self._relation_name, self._charm_config, self._base_url)
+        )

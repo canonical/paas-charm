@@ -80,6 +80,7 @@ def init_smtp(app: Flask) -> bool:
         return True
     return False
 
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
@@ -151,12 +152,12 @@ def send_mail():
 @app.route("/profile")
 def profile():
     user = session.get("user")
-    return render_template('profile.html', user=user)
+    return render_template("profile.html", user=user)
 
 
 @app.route("/login")
 def login():
-    return oauth.oidc.authorize_redirect(url_for('callback', _external=True))
+    return oauth.oidc.authorize_redirect(url_for("callback", _external=True))
 
 
 @app.route("/callback")
@@ -166,13 +167,13 @@ def callback():
     # Store the user information and the id_token for logout
     session["user"] = token.get("userinfo")
     session["id_token"] = token.get("id_token")
-    return redirect(url_for('profile'))
+    return redirect(url_for("profile"))
 
 
 @app.route("/logout")
 def logout():
     session.pop("user", None)
-    return redirect(url_for('hello_world'))
+    return redirect(url_for("hello_world"))
 
 
 @app.route("/openfga/list-authorization-models")

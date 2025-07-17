@@ -75,6 +75,8 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     flask_layer = plan.to_dict()["services"]["flask"]
     assert flask_layer == {
         "environment": {
+            "FLASK_OIDC_REDIRECT_PATH": "/callback",
+            "FLASK_OIDC_SCOPES": "openid profile email",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
             "FLASK_SECRET_KEY": "0000000000000000",
         },

@@ -366,16 +366,16 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         _oauth = None
         oauth_integrations = get_relations_by_interface(requires, "oauth")
         if len(oauth_integrations) > 1:
-            logger.error(
-                "Multiple OAuth relations are not supported at the moment"
+            logger.error("Multiple OAuth relations are not supported at the moment")
+            self.update_app_and_unit_status(
+                ops.BlockedStatus("Multiple OAuth relations are not supported at the moment")
             )
-            self.update_app_and_unit_status(ops.BlockedStatus("Multiple OAuth relations are not supported at the moment"))
             return None
         if not oauth_integrations:
             return None
         endpoint_name = oauth_integrations[0][0]
         if not self._ingress:
-            logger.warning(msg:="Ingress relation is required for OIDC to work correctly!")
+            logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
             self.update_app_and_unit_status(ops.BlockedStatus(msg))
 
         try:
@@ -612,7 +612,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
-        self._oauth.update_client()
+        if self._oauth:
+            self._oauth.update_client()
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:

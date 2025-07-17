@@ -110,20 +110,6 @@ OPENFGA_RELATION_DATA_EXAMPLE = {
     "http_api_url": "localhost:8080",
 }
 
-OAUTH_RELATION_DATA_EXAMPLE = {
-    "authorization_endpoint": "https://traefik_ip/model_name-hydra/oauth2/auth",
-    "introspection_endpoint": "http://hydra.model_name.svc.cluster.local:4445/admin/oauth2/introspect",
-    "issuer_url": "https://traefik_ip/model_name-hydra",
-    "jwks_endpoint": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-    "jwt_access_token": "True",
-    "scope": "openid profile email",
-    "token_endpoint": "https://traefik_ip/model_name-hydra/oauth2/token",
-    "userinfo_endpoint": "https://traefik_ip/model_name-hydra/userinfo",
-    "client_id": "test-client-id",
-    "client_secret_id": "test-client-secret-id",
-    "provider_name": "oidc",
-    "redirect_path": "/callback",
-}
 
 INTEGRATIONS_RELATION_DATA = {
     "postgresql": {
