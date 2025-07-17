@@ -417,7 +417,7 @@ def redis_celery_stats():
     return "FAIL", 500
 
 
-@app.route("/rabbitmq/send")
+@app.route("/rabbitmq/send", methods=["POST"])
 def rabbitmq_send():
     """Send a message to "charm" queue."""
     if connection := get_rabbitmq_connection():

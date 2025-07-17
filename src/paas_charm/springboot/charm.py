@@ -12,6 +12,7 @@ import ops
 from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
+from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
@@ -85,29 +86,22 @@ def generate_db_env(
         Default database environment mappings if DatabaseRelationData is available, empty
         dictionary otherwise.
     """
+    envvars = base_generate_db_env(database_name, relation_data)
     if not relation_data:
-        return {}
+        return envvars
     uri = relation_data.uris.split(",")[0]
     parsed = urlparse(uri)
     if database_name in ("mysql", "postgresql"):
-        envvars = {
-            "spring.datasource.url": f"jdbc:{parsed.scheme}://{parsed.hostname}:{parsed.port}{parsed.path}",
-            "spring.jpa.hibernate.ddl-auto": "none",
-        }
+        envvars.update(
+            {
+                "spring.datasource.url": f"jdbc:{parsed.scheme}://{parsed.hostname}:{parsed.port}{parsed.path}",
+                "spring.jpa.hibernate.ddl-auto": "none",
+            }
+        )
         if parsed.username:
             envvars["spring.datasource.username"] = parsed.username
-            # used for migrate.sh
-            envvars[f"{database_name.upper()}_DB_USERNAME"] = parsed.username
         if parsed.password:
             envvars["spring.datasource.password"] = parsed.password
-            # used for migrate.sh
-            envvars[f"{database_name.upper()}_DB_PASSWORD"] = parsed.password
-        if parsed.hostname:
-            # used for migrate.sh
-            envvars[f"{database_name.upper()}_DB_HOSTNAME"] = parsed.hostname
-        db_name = parsed.path.removeprefix("/") if parsed.path else None
-        if db_name is not None:
-            envvars[f"{database_name.upper()}_DB_NAME"] = db_name
         return envvars
     if database_name == "mongodb":
         return {"spring.data.mongodb.uri": uri}
@@ -155,7 +149,13 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    return {}
+    return {
+        "spring.rabbitmq.virtual-host": relation_data.vhost,
+        "spring.rabbitmq.username": relation_data.username,
+        "spring.rabbitmq.password": relation_data.password,
+        "spring.rabbitmq.host": relation_data.hostname,
+        "spring.rabbitmq.port": str(relation_data.port),
+    }
 
 
 def generate_redis_env(

@@ -190,7 +190,7 @@ class RabbitMQRequires(Object):
         """The RabbitMQ hostname, password."""
         if not self._rabbitmq_rel:
             return None
-        for unit in self._rabbitmq_rel.units:
+        for unit in self._rabbitmq_rel.data:
             unit_data = self._rabbitmq_rel.data[unit]
             # All of the passwords should be equal. If it is
             # in the unit data, get it and override the password

@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 2025-07-14
+## 2025-07-17
 
 * docs: Added release notes to the project.
+
+## 2025-07-15
+
+* feat: Spring Boot support for RabbitMQ.
+
+## 2025-07-11
+
 * docs: Refactored the RTD tutorial landing page.
 
 ## 1.7.9 - 2025-06-26
