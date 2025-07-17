@@ -14,3 +14,5 @@ opentelemetry-instrumentation-flask
 opentelemetry-sdk
 Flask-Mail
 openfga_sdk
+Authlib>=1.0
+requests

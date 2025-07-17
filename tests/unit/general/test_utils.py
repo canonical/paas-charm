@@ -5,9 +5,10 @@
 from unittest.mock import MagicMock
 
 import pytest
+from ops import RelationMeta, RelationRole
 
 from paas_charm.charm_state import is_user_defined_config
-from paas_charm.utils import build_validation_error_message
+from paas_charm.utils import build_validation_error_message, get_relations_by_interface
 
 
 def _test_build_validation_error_message_parameters():
@@ -218,3 +219,79 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
     """
 
     assert is_user_defined_config(option_name, framework) == expected_result
+
+
+@pytest.mark.parametrize(
+    "requires, interface_name, expected_relation_list",
+    [
+        pytest.param(
+            {},
+            "redis",
+            [],
+            id="0 relation",
+        ),
+        pytest.param(
+            {
+                "db": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="db",
+                    raw={"interface": "postgresql", "limit": 1},
+                ),
+                "cache": (
+                    cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="cache",
+                        raw={"interface": "redis", "limit": 1},
+                    )
+                ),
+                "oauth": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="oauth",
+                    raw={"interface": "oauth", "limit": 1},
+                ),
+            },
+            "redis",
+            [("cache", cache_relation)],
+            id="1 relation",
+        ),
+        pytest.param(
+            {
+                "db": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="db",
+                    raw={"interface": "postgresql", "limit": 1},
+                ),
+                "cache": (
+                    cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="cache",
+                        raw={"interface": "redis", "limit": 1},
+                    )
+                ),
+                "second_cache": (
+                    second_cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="second_cache",
+                        raw={"interface": "redis", "limit": 1},
+                    )
+                ),
+                "oauth": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="oauth",
+                    raw={"interface": "oauth", "limit": 1},
+                ),
+            },
+            "redis",
+            [
+                ("cache", cache_relation),
+                ("second_cache", second_cache_relation),
+            ],
+            id="2 relation",
+        ),
+    ],
+)
+def test_get_relations_by_interface(requires, interface_name, expected_relation_list):
+    """Test the get_relations_by_interface function."""
+
+    result = get_relations_by_interface(requires, interface_name)
+    assert result == expected_relation_list

@@ -1,0 +1,148 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+"""Provide a wrapper around OAuth integration lib."""
+import logging
+
+import ops
+from charms.hydra.v0.oauth import ClientConfig, OAuthRequirer
+from ops import ConfigData
+from pydantic import BaseModel, ValidationError
+
+from paas_charm.exceptions import CharmConfigInvalidError, InvalidRelationDataError
+from paas_charm.utils import build_validation_error_message
+
+logger = logging.getLogger(__name__)
+
+
+class PaaSOAuthRelationData(BaseModel):
+    """Configuration for accessing OAuth.
+
+    Attributes:
+        client_id: The client ID for the OAuth application.
+        client_secret: The client secret for the OAuth application.
+        issuer_url: The URL of the OAuth issuer.
+        authorization_endpoint: The URL for the OAuth authorization endpoint.
+        token_endpoint: The URL for the OAuth token endpoint.
+        userinfo_endpoint: The URL for the OAuth userinfo endpoint.
+        jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
+        scopes: List of scopes to request during the OAuth flow.
+        provider_name: The name of the OAuth provider, if applicable.
+    """
+
+    client_id: str
+    client_secret: str
+    issuer_url: str
+    authorization_endpoint: str
+    token_endpoint: str
+    userinfo_endpoint: str
+    jwks_endpoint: str
+    scopes: str
+    provider_name: str
+
+
+class InvalidOAuthRelationDataError(InvalidRelationDataError):
+    """Represents an error with invalid  OAuth relation data.
+
+    Attributes:
+        relation: The OAuth relation name.
+    """
+
+    relation = "oauth"
+
+
+class PaaSOAuthRequirer(OAuthRequirer):
+    """Wrapper around OAuthRequirer."""
+    _base_url: str
+    _relation_name: str
+    _charm_config: ConfigData
+
+    def __init__(
+        self,
+        charm: ops.CharmBase,
+        base_url: str,
+        charm_config: ConfigData,
+        relation_name: str,
+    ):
+        """Initialize the OAuthRequirer.
+
+        Args:
+            charm: The charm instance.
+            base_url: The base URL for the workload app.
+            relation_name: The name of the relation, if not provided, it will use the default.
+            charm_config: The charm configuration.
+        """
+        self._base_url = base_url
+        self._relation_name = relation_name
+        self._charm_config = charm_config
+        super().__init__(
+            charm=charm,
+            client_config=self._get_oauth_client_config(relation_name, charm_config, base_url),
+            relation_name=relation_name,
+        )
+
+    def to_relation_data(self) -> "PaaSOAuthRelationData | None":
+        """Get OAuth relation data object.
+
+        Raises:
+            InvalidOAuthRelationDataError: If invalid OAuth connection parameters were provided.
+
+        Returns:
+            Data required to integrate with OAuth.
+        """
+        try:
+            if not self.is_client_created():
+                return None
+            prod_info = self.get_provider_info()
+            return PaaSOAuthRelationData.model_validate(
+                {
+                    "client_id": prod_info.client_id,
+                    "client_secret": prod_info.client_secret,
+                    "issuer_url": prod_info.issuer_url,
+                    "authorization_endpoint": prod_info.authorization_endpoint,
+                    "token_endpoint": prod_info.token_endpoint,
+                    "userinfo_endpoint": prod_info.userinfo_endpoint,
+                    "jwks_endpoint": prod_info.jwks_endpoint,
+                    "scopes": self._client_config.scope,
+                    "provider_name": self._relation_name,
+                }
+            )
+        except ValidationError as exc:
+            error_messages = build_validation_error_message(exc, underscore_to_dash=True)
+            logger.error(error_messages.long)
+            raise InvalidOAuthRelationDataError(
+                f"Invalid {PaaSOAuthRelationData.__name__}: {error_messages.short}"
+            ) from exc
+
+    def _get_oauth_client_config(
+        self, endpoint_name: str, charm_config: ConfigData, base_url: str
+    ) -> ClientConfig:
+        """Get the OAuth client configuration for a given endpoint name.
+
+        Args:
+            endpoint_name: the name of the endpoint to get the configuration for.
+            charm_config: the charm configuration.
+            base_url: the base URL for the workload app.
+
+        Returns:
+            A ClientConfig instance with the configuration for the given endpoint.
+        """
+        redirect_path = str(charm_config.get(f"{endpoint_name}_redirect_path", "/callback"))
+        scopes = str(charm_config.get(f"{endpoint_name}_scopes"))
+
+        if "openid" not in scopes:
+            msg = "The 'openid' scope is required for OAuth integration, please add it to the scopes."
+            raise CharmConfigInvalidError(msg)
+
+        return ClientConfig(
+            redirect_uri=f"{base_url}/{redirect_path.strip('/')}",
+            scope=scopes,
+            grant_types=["authorization_code"],
+        )
+
+    def update_client(self) -> None:
+        """Update the OAuth client configuration.
+        """
+        self.update_client_config(self._get_oauth_client_config(
+            self._relation_name, self._charm_config, self._base_url
+        ))

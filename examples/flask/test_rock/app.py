@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import json
 import logging
 import os
 import socket
@@ -17,14 +18,16 @@ import pymongo.database
 import pymysql
 import redis
 import urllib3
+from authlib.integrations.flask_client import OAuth
 from celery import Celery, Task
-from flask import Flask, g, jsonify, request
+from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
 from flask_mail import Mail, Message
 from openfga_sdk import ClientConfiguration
 from openfga_sdk.credentials import CredentialConfiguration, Credentials
 from openfga_sdk.sync import OpenFgaClient
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def hostname():
@@ -77,10 +80,24 @@ def init_smtp(app: Flask) -> bool:
         return True
     return False
 
-
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 app.config.from_prefixed_env()
 mail = Mail(app) if init_smtp(app) else None
+
+# Use the APP_SECRET_KEY from your environment variables
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # <-- Enable this line!
+oauth = OAuth(app)
+
+oauth.register(
+    name="oidc",
+    # We are doing this to avoid SSL verification issues in tests.
+    # If you don't need to disable SSL verification, no need to set `client_kwargs`,
+    # It will be read from FLASK_OIDC_CLIENT_KWARGS env argument automatically.
+    client_kwargs={**json.loads(os.getenv("FLASK_OIDC_CLIENT_KWARGS", "{}")), "verify": False},
+    jwks_uri=os.getenv("FLASK_OIDC_JWKS_URL"),
+)
 
 broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
 # Configure Celery only if Redis is configured
@@ -129,6 +146,33 @@ def send_mail():
         mail.send(msg)
         return "Sent"
     return "Mail not configured correctly"
+
+
+@app.route("/profile")
+def profile():
+    user = session.get("user")
+    return render_template('profile.html', user=user)
+
+
+@app.route("/login")
+def login():
+    return oauth.oidc.authorize_redirect(url_for('callback', _external=True))
+
+
+@app.route("/callback")
+def callback():
+    token = oauth.oidc.authorize_access_token()
+
+    # Store the user information and the id_token for logout
+    session["user"] = token.get("userinfo")
+    session["id_token"] = token.get("id_token")
+    return redirect(url_for('profile'))
+
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for('hello_world'))
 
 
 @app.route("/openfga/list-authorization-models")
