@@ -92,40 +92,44 @@ requires:
     limit: 1
   logging:
     interface: loki_push_api
-  postgresql:
-    interface: postgresql_client
-    optional: True
-    limit: 1
-  tracing:
-    interface: tracing
-    optional: True
-    limit: 1
-  smtp:
-    interface: smtp
-    optional: True
-    limit: 1
-  saml:
-    interface: saml
-    optional: True
-    limit: 1
-  redis:
-    interface: redis
-    optional: True
-    limit: 1
-  openfga:
-    interface: openfga
-    optional: True
-    limit: 1
-  s3:
-    interface: s3
-    optional: True
-    limit: 1
   mongodb:
     interface: mongodb_client
     optional: True
     limit: 1
   mysql:
     interface: mysql_client
+    optional: True
+    limit: 1
+  openfga:
+    interface: openfga
+    optional: True
+    limit: 1
+  postgresql:
+    interface: postgresql_client
+    optional: True
+    limit: 1
+  rabbitmq:
+    interface: rabbitmq
+    optional: True
+    limit: 1
+  redis:
+    interface: redis
+    optional: True
+    limit: 1
+  s3:
+    interface: s3
+    optional: True
+    limit: 1
+  saml:
+    interface: saml
+    optional: True
+    limit: 1
+  smtp:
+    interface: smtp
+    optional: True
+    limit: 1
+  tracing:
+    interface: tracing
     optional: True
     limit: 1
 resources:

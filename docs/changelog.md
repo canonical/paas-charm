@@ -13,6 +13,18 @@ Place any unreleased changes here, that are subject to release in coming version
 
 * feat: Add OIDC support for Flask.
 
+## 2025-07-17
+
+* docs: Added release notes to the project.
+
+## 2025-07-15
+
+* feat: Spring Boot support for RabbitMQ.
+
+## 2025-07-11
+
+* docs: Refactored the RTD tutorial landing page.
+
 ## 1.7.9 - 2025-06-26
 
 * feat: Added Prometheus support for Spring Boot.

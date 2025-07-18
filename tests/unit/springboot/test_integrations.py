@@ -296,3 +296,49 @@ def test_openfga_integration(
     assert environment["openfga.credentials.method"] == "API_TOKEN"
     assert environment["openfga.credentials.config.api-token"] == "test-token"
     assert environment["openfga.api-url"] == "localhost:8080"
+
+
+def test_rabbitmq_integration(
+    base_state,
+) -> None:
+    """
+    arrange: add rabbitmq relation to the base state.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should have the rabbitmq related env variables.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="rabbitmq",
+            interface="rabbitmq",
+            remote_app_data={
+                "hostname": "rabbitmq-k8s-endpoints.testing.svc.cluster.local",
+                "password": "EkKV1iy4mKrj",
+            },
+            remote_units_data={
+                0: {
+                    "egress-subnets": "10.152.183.237/32",
+                    "ingress-address": "10.152.183.237",
+                    "private-address": "10.152.183.237",
+                }
+            },
+        )
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+
+    out = context.run(context.on.config_changed(), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert out.unit_status == testing.ActiveStatus()
+
+    rabbitmq_relation = out.get_relations("rabbitmq")
+    assert len(rabbitmq_relation) == 1
+
+    assert environment["spring.rabbitmq.virtual-host"] == "/"
+    assert environment["spring.rabbitmq.username"] == "spring-boot-k8s"
+    assert environment["spring.rabbitmq.password"] == "EkKV1iy4mKrj"
+    assert (
+        environment["spring.rabbitmq.host"] == "rabbitmq-k8s-endpoints.testing.svc.cluster.local"
+    )
+    assert environment["spring.rabbitmq.port"] == "5672"

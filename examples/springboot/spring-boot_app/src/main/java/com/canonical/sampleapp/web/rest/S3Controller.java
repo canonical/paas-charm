@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -38,7 +37,6 @@ public class S3Controller {
 
     private S3Service service;
 
-    @Autowired
     public S3Controller(S3Service service) {
         this.service = service;
     }

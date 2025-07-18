@@ -17,3 +17,11 @@ The Charmcraft documentation contains in-depth descriptions of the native
 * `Charmcraft Extensions | FastAPI framework extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/fastapi-framework-extension/>`_
 * `Charmcraft Extensions | Flask framework extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/flask-framework-extension/>`_
 * `Charmcraft Extensions | Go framework extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/go-framework-extension/>`_
+
+Contents
+--------
+
+.. toctree::
+    :titlesonly:
+
+    Changelog <../changelog.md>

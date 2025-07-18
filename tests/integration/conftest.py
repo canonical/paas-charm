@@ -568,7 +568,7 @@ async def expressjs_blocked_app_fixture(
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
     await model.integrate(app_name, postgresql_k8s.name)
-    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
+    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=600)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
 
@@ -647,7 +647,7 @@ def spring_boot_app_fixture(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=300)
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=600)
 
     return App(app_name)
 
