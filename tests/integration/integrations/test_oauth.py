@@ -58,6 +58,7 @@ def test_outh_integrations(
         jubilant.all_active,
         timeout=30 * 60,
     )
+
     def admin_identity_exists():
         """Check if the admin identity exists in Kratos."""
         try:

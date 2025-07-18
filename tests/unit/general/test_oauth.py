@@ -74,7 +74,9 @@ def test_oauth_config(
     )
     out = context.run(context.on.config_changed(), state)
 
-    assert out.unit_status == testing.BlockedStatus("Ingress relation is required for OIDC to work correctly!")
+    assert out.unit_status == testing.BlockedStatus(
+        "Ingress relation is required for OIDC to work correctly!"
+    )
 
     base_state["relations"].append(
         testing.Relation(
