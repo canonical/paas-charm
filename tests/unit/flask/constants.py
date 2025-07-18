@@ -110,6 +110,7 @@ OPENFGA_RELATION_DATA_EXAMPLE = {
     "http_api_url": "localhost:8080",
 }
 
+
 INTEGRATIONS_RELATION_DATA = {
     "postgresql": {
         "app_data": {

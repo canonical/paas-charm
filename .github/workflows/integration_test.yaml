@@ -28,6 +28,7 @@ jobs:
           "test_minimal.py",
           "test_non_root_db_migration.py",
           "test_non_root_loki.py",
+          "test_oauth.py",
           "test_openfga.py",
           "test_prometheus.py",
           "test_proxy.py",
@@ -46,3 +47,4 @@ jobs:
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
       test-timeout: 45
+      microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"

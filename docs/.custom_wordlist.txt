@@ -21,6 +21,7 @@ ISD
 md
 natively
 OCI
+OIDC
 PaasCharm
 Postgres
 pypi

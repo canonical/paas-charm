@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
@@ -291,6 +292,52 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
     return {}
 
 
+def generate_oauth_env(
+    framework: str, relation_data: "PaaSOAuthRelationData | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from PaaSOAuthRelationData.
+
+    Args:
+        framework: The charm framework name.
+        relation_data: The charm Oauth integration relation data.
+
+    Returns:
+        Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    provider_name = relation_data.provider_name.upper()
+    if framework not in ("flask", "django"):
+        framework = "app"
+    return {
+        k: v
+        for k, v in (
+            (f"{framework.upper()}_{provider_name}_CLIENT_ID", relation_data.client_id),
+            (f"{framework.upper()}_{provider_name}_CLIENT_SECRET", relation_data.client_secret),
+            (f"{framework.upper()}_{provider_name}_API_BASE_URL", relation_data.issuer_url),
+            (
+                f"{framework.upper()}_{provider_name}_AUTHORIZE_URL",
+                relation_data.authorization_endpoint,
+            ),
+            (
+                f"{framework.upper()}_{provider_name}_ACCESS_TOKEN_URL",
+                relation_data.token_endpoint,
+            ),
+            (f"{framework.upper()}_{provider_name}_USER_URL", relation_data.userinfo_endpoint),
+            (
+                f"{framework.upper()}_{provider_name}_CLIENT_KWARGS",
+                json.dumps({"scope": relation_data.scopes}),
+            ),
+            (
+                f"{framework.upper()}_{provider_name}_JWKS_URL",
+                relation_data.jwks_endpoint,
+            ),
+        )
+        if v is not None
+    }
+
+
 # too-many-instance-attributes is disabled because this class
 # contains 1 more attributes than pylint allows
 class App:  # pylint: disable=too-many-instance-attributes
@@ -306,6 +353,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps tempo tracing connection information to environment variables.
         generate_prometheus_env: Maps prometheus connection information to environment variables.
+        generate_oauth_env: Maps OAuth connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)
@@ -317,6 +365,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
+    generate_oauth_env = staticmethod(generate_oauth_env)
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -443,6 +492,12 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
         env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
         env.update(self.generate_prometheus_env(self._workload_config))
+        env.update(
+            self.generate_oauth_env(
+                framework=self._workload_config.framework,
+                relation_data=self._charm_state.integrations.oauth,
+            )
+        )
         return {prefix + k: v for (k, v) in env.items()}
 
     @property
