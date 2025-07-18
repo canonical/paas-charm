@@ -47,3 +47,4 @@ jobs:
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.29-strict/stable
       test-timeout: 45
+      microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"
