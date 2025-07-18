@@ -87,8 +87,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config.from_prefixed_env()
 mail = Mail(app) if init_smtp(app) else None
 
-# Use the APP_SECRET_KEY from your environment variables
-app.secret_key = os.getenv("FLASK_SECRET_KEY")  # <-- Enable this line!
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 oauth = OAuth(app)
 
 oauth.register(
