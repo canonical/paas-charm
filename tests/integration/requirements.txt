@@ -9,3 +9,4 @@ ops >= 1.5.0
 pytest-operator >= 0.32.0
 tenacity == 9.0.0
 playwright == 1.53.0
+pytest-playwright
