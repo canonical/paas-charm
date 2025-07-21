@@ -24,7 +24,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 oauth = OAuth()
-oauth.register(name="oidc",jwks_uri=os.getenv("DJANGO_OIDC_JWKS_URL"))
+oauth.register(name="oidc", jwks_uri=os.getenv("DJANGO_OIDC_JWKS_URL"))
 
 
 def auth_logout(request):
@@ -34,7 +34,7 @@ def auth_logout(request):
 
 def profile(request):
     user = request.session.get("user")
-    return render(request, 'profile.html', context={'user': user})
+    return render(request, "profile.html", context={"user": user})
 
 
 def auth_login(request):

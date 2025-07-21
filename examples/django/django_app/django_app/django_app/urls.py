@@ -53,5 +53,4 @@ urlpatterns = [
     path("auth_login", auth_login, name="auth_login"),
     path("auth_logout", auth_logout, name="auth_logout"),
     path("callback", callback, name="callback"),
-    
 ]
