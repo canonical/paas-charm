@@ -67,7 +67,6 @@ def expressjs_container_mock():
     container.pull.return_value = io.StringIO(json.dumps(EXPRESSJS_DEFAULT_LAYER["services"]))
     return container
 
-
 def postgresql_relation(db_name):
     """Postgresql relation fixture."""
     relation_data = {
