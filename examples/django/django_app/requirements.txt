@@ -8,3 +8,5 @@ opentelemetry-instrumentation
 opentelemetry-instrumentation-wsgi
 opentelemetry-sdk
 openfga_sdk
+Authlib
+requests

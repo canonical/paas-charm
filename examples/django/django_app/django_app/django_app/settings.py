@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "testing",
 ]
 
 MIDDLEWARE = [
@@ -138,3 +139,14 @@ EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")
 FGA_STORE_ID = os.environ.get("FGA_STORE_ID")
 FGA_TOKEN = os.environ.get("FGA_TOKEN")
 FGA_HTTP_API_URL = os.environ.get("FGA_HTTP_API_URL")
+
+FORCE_SCRIPT_NAME = os.getenv("DJANGO_BASE_URL")
+AUTHLIB_OAUTH_CLIENTS = {
+    "oidc": {
+        "client_id": os.getenv("DJANGO_OIDC_CLIENT_ID"),
+        "client_secret": os.getenv("DJANGO_OIDC_CLIENT_SECRET"),
+        "client_kwargs":{"scope": os.getenv("DJANGO_OIDC_SCOPES"), "verify": False},
+        "access_token_url": os.getenv("DJANGO_OIDC_ACCESS_TOKEN_URL"),
+        "authorize_url":os.getenv("DJANGO_OIDC_AUTHORIZE_URL"),
+    }
+}
