@@ -97,7 +97,7 @@ def test_outh_integrations(
 
 def login_to_idp(app_url: str, endpoint: str):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
         page.goto(f"{app_url}/{endpoint}")
@@ -106,4 +106,4 @@ def login_to_idp(app_url: str, endpoint: str):
         page.get_by_label("Password").fill("Testing1")
         page.get_by_role("button", name="Sign in").click()
         expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
-        expect(page.get_by_text("test@example.com")).to_be_visible()
+        expect(page.get_by_role("heading", name="Welcome, test@example.com!")).to_be_visible()
