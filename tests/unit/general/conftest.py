@@ -17,6 +17,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from src.paas_charm.charm import PaasCharm
+from tests.unit.conftest import postgresql_relation
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
@@ -216,6 +217,44 @@ def flask_base_state_fixture():
                             "startup": "enabled",
                             "override": "replace",
                             "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
+                        }
+                    }
+                },
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }
+
+
+
+@pytest.fixture(scope="function", name="django_base_state")
+def django_base_state_fixture():
+    """State with container and config file set."""
+    os.chdir(PROJECT_ROOT / "examples/django/charm")
+    yield {
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"django_secret_key": "test", "secret": "test"}
+            ),
+            postgresql_relation("django-k8s"),
+        ],
+        "containers": {
+            testing.Container(
+                name="django-app",
+                can_connect=True,
+                mounts={"data": testing.Mount(location="/django/gunicorn.conf.py", source="conf")},
+                execs={
+                    testing.Exec(
+                        command_prefix=["/bin/python3"],
+                        return_code=0,
+                    ),
+                },
+                _base_plan={
+                    "services": {
+                        "django": {
+                            "startup": "enabled",
+                            "override": "replace",
+                            "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
                         }
                     }
                 },
