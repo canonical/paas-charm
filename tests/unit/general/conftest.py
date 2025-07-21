@@ -226,7 +226,6 @@ def flask_base_state_fixture():
     }
 
 
-
 @pytest.fixture(scope="function", name="django_base_state")
 def django_base_state_fixture():
     """State with container and config file set."""
