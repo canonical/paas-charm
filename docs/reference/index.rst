@@ -47,7 +47,7 @@ the relevant Charmcraft documentation for each web app framework:
 
 .. list-table::
   :header-rows: 1
-  :widths: 1 1 1
+  :widths: 15 20 20
 
   * - Web app framework
     - Metrics and tracing
