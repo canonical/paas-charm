@@ -53,20 +53,20 @@ the relevant Charmcraft documentation for each web app framework:
     - Metrics and tracing
     - Supported integrations
   * - Django
-    - `Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#grafana-dashboard-graphs>`_
-    - `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#relations>`_
+    - `Django extension | Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#grafana-dashboard-graphs>`_
+    - `Django extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#relations>`_
   * - Express
-    - `Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#observability>`_
-    - `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#relations>`_
+    - `Express extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#observability>`_
+    - `Express extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#relations>`_
   * - FastAPI
-    - `Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#observability>`_
-    - `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#relations>`_
+    - `FastAPI extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#observability>`_
+    - `FastAPI extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#relations>`_
   * - Flask
-    - `Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#grafana-dashboard-graphs>`_
-    - `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#relations>`_
+    - `Flask extension | Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#grafana-dashboard-graphs>`_
+    - `Flask extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#relations>`_
   * - Go
-    - `Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#observability>`_
-    - `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#relations>`_
+    - `Go extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#observability>`_
+    - `Go extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#relations>`_
   * - Spring Boot
     - Coming soon
     - Coming soon
