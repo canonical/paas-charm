@@ -8,7 +8,7 @@ import pytest
 from ops import RelationMeta, RelationRole
 
 from paas_charm.charm_state import is_user_defined_config
-from paas_charm.utils import build_validation_error_message, get_relations_by_interface
+from paas_charm.utils import build_validation_error_message, get_endpoints_by_interface_name
 
 
 def _test_build_validation_error_message_parameters():
@@ -291,7 +291,6 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
     ],
 )
 def test_get_relations_by_interface(requires, interface_name, expected_relation_list):
-    """Test the get_relations_by_interface function."""
-
-    result = get_relations_by_interface(requires, interface_name)
+    """Test the get_endpoints_by_interface_name function."""
+    result = get_endpoints_by_interface_name(requires, interface_name)
     assert result == expected_relation_list
