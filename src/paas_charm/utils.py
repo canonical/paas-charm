@@ -144,7 +144,7 @@ def config_get_with_secret(
     return charm.model.get_secret(id=typing.cast(str, secret_id))
 
 
-def get_relations_by_interface(
+def get_endpoints_by_interface_name(
     requires: dict[str, RelationMeta], interface_name: str
 ) -> list[tuple[str, RelationMeta]]:
     """Get the relation names for a given interface name.
@@ -154,10 +154,10 @@ def get_relations_by_interface(
         interface_name: the interface name to filter relations
 
     Returns:
-        A list of relation names that match the given interface name.
+        A list of relations that match the given interface name.
     """
     return [
-        (endpoint_name, interface)
-        for endpoint_name, interface in requires.items()
-        if interface.interface_name == interface_name
+        (endpoint_name, endpoint)
+        for endpoint_name, endpoint in requires.items()
+        if endpoint.interface_name == interface_name
     ]

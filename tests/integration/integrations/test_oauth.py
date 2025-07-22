@@ -6,17 +6,10 @@
 import json
 import logging
 import re
-from uuid import uuid4
-
-import pytest
-from playwright.sync_api import expect, sync_playwright
-
-logger = logging.getLogger(__name__)
-
-import logging
 
 import jubilant
 import pytest
+from playwright.sync_api import expect, sync_playwright
 
 from tests.integration.types import App
 
@@ -26,15 +19,11 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, endpoint",
     [
-        # ("spring_boot_app", "login"),
-        # ("expressjs_app", "login"),
-        # ("fastapi_app", "login"),
-        # ("go_app", "login"),
         ("flask_app", "login"),
         ("django_app", "auth_login"),
     ],
 )
-def test_outh_integrations(
+def test_oauth_integrations(
     juju: jubilant.Juju,
     app_fixture: App,
     endpoint,
@@ -46,6 +35,11 @@ def test_outh_integrations(
     act: build and deploy the workload charm with required services.
     assert: the workload charm uses the Kratos charm as the idp.
     """
+    test_email = "test@example.com"
+    test_password = "Testing1"
+    test_username = "admin"
+    test_secret = "secret_password"
+
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
 
@@ -62,7 +56,7 @@ def test_outh_integrations(
     def admin_identity_exists():
         """Check if the admin identity exists in Kratos."""
         try:
-            res = juju.run("kratos/0", "get-identity", {"email": "test@example.com"})
+            res = juju.run("kratos/0", "get-identity", {"email": test_email})
             return res.status == "completed"
         except jubilant.TaskError as e:
             logger.info(f"Error checking admin identity: {e}")
@@ -72,38 +66,38 @@ def test_outh_integrations(
         juju.run(
             "kratos/0",
             "create-admin-account",
-            {"email": "test@example.com", "password": "Testing1", "username": "admin"},
+            {"email": test_email, "password": test_password, "username": test_username},
         )
     # add secret password
-    password_name = str(uuid4())
-    secret_id = juju.add_secret(password_name, {"password": "Testing1"})
+
+    secret_id = juju.add_secret(test_secret, {"password": test_password})
     # grant secret to kratos
     juju.cli("grant-secret", secret_id, "kratos")
     # run kratos action to reset password
     juju.run(
         "kratos/0",
         "reset-password",
-        {"email": "test@example.com", "password-secret-id": secret_id.split(":")[-1]},
+        {"email": test_email, "password-secret-id": secret_id.split(":")[-1]},
     )
 
     res = json.loads(
         juju.run("traefik-public/0", "show-proxied-endpoints").results["proxied-endpoints"]
     )
-    login_to_idp(res[app.name]["url"], endpoint)
+    _login_to_idp(res[app.name]["url"], endpoint, test_email, test_password)
 
     # Cleanup
-    juju.run("kratos/0", "delete-identity", {"email": "test@example.com"})
+    juju.run("kratos/0", "delete-identity", {"email": test_email})
 
 
-def login_to_idp(app_url: str, endpoint: str):
+def _login_to_idp(app_url: str, endpoint: str, test_email: str, test_password: str):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
         page.goto(f"{app_url}/{endpoint}")
         expect(page).not_to_have_title(re.compile("Sign in failed"))
-        page.get_by_label("Email").fill("test@example.com")
-        page.get_by_label("Password").fill("Testing1")
+        page.get_by_label("Email").fill(test_email)
+        page.get_by_label("Password").fill(test_password)
         page.get_by_role("button", name="Sign in").click()
         expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
-        expect(page.get_by_role("heading", name="Welcome, test@example.com!")).to_be_visible()
+        expect(page.get_by_role("heading", name=f"Welcome, {test_email}!")).to_be_visible()

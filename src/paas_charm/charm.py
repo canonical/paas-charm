@@ -29,7 +29,7 @@ from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
-    get_relations_by_interface,
+    get_endpoints_by_interface_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -364,7 +364,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             Returns the OAuth relation or None
         """
         _oauth = None
-        oauth_integrations = get_relations_by_interface(requires, "oauth")
+        oauth_integrations = get_endpoints_by_interface_name(requires, "oauth")
         if len(oauth_integrations) > 1:
             logger.error("Multiple OAuth relations are not supported at the moment")
             self.update_app_and_unit_status(
@@ -387,11 +387,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.exception(
                 "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
             )
-        except CharmConfigInvalidError as e:
-            logger.error(e.msg)
-            self.update_app_and_unit_status(ops.BlockedStatus(e.msg))
-        except AttributeError:
-            logger.error("The charm does not have the required attribute 'base_url'.")
             return None
         return _oauth
 
@@ -511,6 +506,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.BlockedStatus(message))
             return False
 
+        if self._oauth:
+            if self._oauth.is_client_created() and not self._ingress.is_ready():
+                logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
+                self.update_app_and_unit_status(ops.BlockedStatus(msg))
+                return False
+
         return True
 
     def _missing_required_database_integrations(
@@ -609,12 +610,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
-        if self._oauth:
-            if self._oauth.is_client_created() and not self._ingress.is_ready():
-                logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
-                self.update_app_and_unit_status(ops.BlockedStatus(msg))
-                return
-            self._oauth.update_client()
+        self._oauth.update_client()
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:
