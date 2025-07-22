@@ -59,34 +59,32 @@ def test_oauth_config(
     base_state = request.getfixturevalue(base_state)
     base_state["config"] = config
     secret_id = token_hex(16)
-    base_state["relations"].append(
-        testing.Relation(
-            endpoint="oidc",
-            interface="oauth",
-            remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
-        )
+    oauth_relation = testing.Relation(
+        endpoint="oidc",
+        interface="oauth",
+        remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
+    base_state["relations"].append(oauth_relation)
     base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
 
     state = testing.State(**base_state)
     context = testing.Context(
         charm_type=charm,
     )
-    out = context.run(context.on.config_changed(), state)
+    out = context.run(context.on.relation_changed(oauth_relation), state)
 
     assert out.unit_status == testing.BlockedStatus(
         "Ingress relation is required for OIDC to work correctly!"
     )
 
-    base_state["relations"].append(
-        testing.Relation(
-            endpoint="ingress",
-            interface="ingress",
-            remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
-        )
+    ingress_relation = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
     )
+    base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    out = context.run(context.on.config_changed(), state)
+    out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.ActiveStatus()
     service_layer = list(out.containers)[0].plan.services[framework].to_dict()
     assert service_layer == {

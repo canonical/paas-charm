@@ -67,12 +67,16 @@ def test_oauth_integrations(
             "create-admin-account",
             {"email": test_email, "password": test_password, "username": test_username},
         )
-    # add secret password
 
-    secret_id = juju.add_secret(test_secret, {"password": test_password})
-    # grant secret to kratos
+    try:
+        secret_id = juju.add_secret(test_secret, {"password": test_password})
+    except jubilant.CLIError as e:
+        if e.stderr != f'ERROR secret with name "{test_secret}" already exists\n':
+            raise e
+        secrets = json.loads(juju.cli("secrets", "--format", "json"))
+        secret_id = [secret for secret in secrets if secrets[secret].get("name") == test_secret][0]
+
     juju.cli("grant-secret", secret_id, "kratos")
-    # run kratos action to reset password
     juju.run(
         "kratos/0",
         "reset-password",
