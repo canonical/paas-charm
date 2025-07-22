@@ -114,7 +114,6 @@ class PaaSOAuthRequirer(OAuthRequirer):
     def _get_oauth_client_config(self) -> ClientConfig:
         """Get the OAuth client configuration for a given endpoint name.
 
-
         Returns:
             A ClientConfig instance with the configuration for the given endpoint.
         """
