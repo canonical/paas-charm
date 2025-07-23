@@ -27,7 +27,7 @@ class PaaSOAuthRelationData(BaseModel):
         userinfo_endpoint: The URL for the OAuth userinfo endpoint.
         jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
         scopes: List of scopes to request during the OAuth flow.
-        provider_name: The name of the OAuth provider, if applicable.
+        provider_name: The name of the OAuth identity provider.
     """
 
     client_id: str
@@ -66,15 +66,14 @@ class PaaSOAuthRequirer(OAuthRequirer):
         Args:
             charm: The charm instance.
             base_url: The base URL for the workload app.
-            relation_name: The name of the relation, if not provided, it will use the default.
+            relation_name: The name of the relation.
             charm_config: The charm configuration.
         """
         self._base_url = base_url
         self._charm_config = charm_config
-        self._relation_name = relation_name
         super().__init__(
             charm=charm,
-            client_config=self._get_oauth_client_config(),
+            client_config=self._get_oauth_client_config(relation_name),
             relation_name=relation_name,
         )
 
@@ -111,20 +110,14 @@ class PaaSOAuthRequirer(OAuthRequirer):
                 f"Invalid {PaaSOAuthRelationData.__name__}: {error_messages.short}"
             ) from exc
 
-    def _get_oauth_client_config(self) -> ClientConfig:
+    def _get_oauth_client_config(self, relation_name: str) -> ClientConfig:
         """Get the OAuth client configuration for a given endpoint name.
 
         Returns:
             A ClientConfig instance with the configuration for the given endpoint.
         """
-        redirect_path = str(
-            self._charm_config.get(f"{self._relation_name}_redirect_path", "/callback")
-        )
-        scopes = str(self._charm_config.get(f"{self._relation_name}_scopes"))
-
-        if "openid" not in scopes:
-            msg = "The 'openid' scope is required for OAuth integration, please add it to the scopes."
-            raise CharmConfigInvalidError(msg)
+        redirect_path = str(self._charm_config.get(f"{relation_name}_redirect_path", "/callback"))
+        scopes = str(self._charm_config.get(f"{relation_name}_scopes"))
 
         return ClientConfig(
             redirect_uri=f"{self._base_url}/{redirect_path.strip('/')}",
@@ -133,5 +126,15 @@ class PaaSOAuthRequirer(OAuthRequirer):
         )
 
     def update_client(self) -> None:
-        """Update the OAuth client configuration."""
-        self.update_client_config(self._get_oauth_client_config())
+        """Update the OAuth client configuration.
+
+        Raises:
+            CharmConfigInvalidError: If the scope doesn't include `openid`.
+        """
+        config = self._get_oauth_client_config(self._relation_name)
+
+        if "openid" not in config.scope:
+            msg = "The 'openid' scope is required for OAuth integration, please add it to the scopes."
+            raise CharmConfigInvalidError(msg)
+
+        self.update_client_config(config)

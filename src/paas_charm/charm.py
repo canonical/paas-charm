@@ -602,6 +602,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._database_migration.set_status_to_pending()
 
         try:
+            if self._oauth:
+                self._oauth.update_client()
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
         except CharmConfigInvalidError as exc:
@@ -609,10 +611,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
-        logger.warning(f"########### {self._oauth=}")
-        if self._oauth:
-            logger.warning("########### UPDATING CLIENT ############")
-            self._oauth.update_client()
+
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:

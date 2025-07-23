@@ -159,7 +159,7 @@ def login():
     return oauth.oidc.authorize_redirect(url_for("callback", _external=True))
 
 
-@app.route("/callback")
+@app.route(os.getenv("FLASK_OIDC_REDIRECT_PATH", "/callback"))
 def callback():
     token = oauth.oidc.authorize_access_token()
 

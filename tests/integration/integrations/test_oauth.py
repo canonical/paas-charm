@@ -30,8 +30,8 @@ def test_oauth_integrations(
     identity_bundle,
 ):
     """
-    arrange: set up the test Juju model.
-    act: build and deploy the workload charm with required services.
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
     assert: the workload charm uses the Kratos charm as the idp.
     """
     test_email = "test@example.com"
@@ -47,21 +47,13 @@ def test_oauth_integrations(
 
     if not status.apps.get(app.name).relations.get("ingress"):
         juju.integrate(f"{app.name}", "traefik-public")
+
     juju.wait(
         jubilant.all_active,
         timeout=30 * 60,
     )
 
-    def admin_identity_exists():
-        """Check if the admin identity exists in Kratos."""
-        try:
-            res = juju.run("kratos/0", "get-identity", {"email": test_email})
-            return res.status == "completed"
-        except jubilant.TaskError as e:
-            logger.info(f"Error checking admin identity: {e}")
-            return False
-
-    if not admin_identity_exists():
+    if not admin_identity_exists(juju, test_email):
         juju.run(
             "kratos/0",
             "create-admin-account",
@@ -88,8 +80,15 @@ def test_oauth_integrations(
     )
     _login_to_idp(res[app.name]["url"], endpoint, test_email, test_password)
 
-    # Cleanup
-    juju.run("kratos/0", "delete-identity", {"email": test_email})
+
+def admin_identity_exists(juju, test_email):
+    """Check if the admin identity exists in Kratos."""
+    try:
+        res = juju.run("kratos/0", "get-identity", {"email": test_email})
+        return res.status == "completed"
+    except jubilant.TaskError as e:
+        logger.info(f"Error checking admin identity: {e}")
+        return False
 
 
 def _login_to_idp(app_url: str, endpoint: str, test_email: str, test_password: str):
