@@ -4,10 +4,12 @@
 
 import os
 import pathlib
+import shutil
 import typing
 
 import ops
 import pytest
+import yaml
 from ops import testing
 from ops.testing import Harness
 
@@ -224,6 +226,30 @@ def flask_base_state_fixture():
         },
         "model": testing.Model(name="test-model"),
     }
+
+
+@pytest.fixture(scope="function", name="multiple_oauth_integrations")
+def multiple_oauth_integrations_fixture(request):
+    os.chdir(PROJECT_ROOT / f"examples/{request.param.get('framework')}/charm")
+    shutil.copy("charmcraft.yaml", "org_charmcraft.yaml")
+    charmcraft_yaml = yaml.safe_load(open("charmcraft.yaml", "r").read())
+    charmcraft_yaml["requires"]["google"] = {"interface": "oauth", "optional": True, "limit": 1}
+    charmcraft_yaml["config"]["options"]["google_redirect_path"] = {
+        "default": "/callback",
+        "description": "The path that the user will be redirected upon completing login.",
+        "type": "string",
+    }
+    charmcraft_yaml["config"]["options"]["google_scopes"] = {
+        "default": "openid profile email",
+        "description": "A list of scopes with spaces in between.",
+        "type": "string",
+    }
+    yaml.safe_dump(charmcraft_yaml, open("charmcraft.yaml", "w"))
+
+    yield
+
+    shutil.copyfile("org_charmcraft.yaml", "charmcraft.yaml")
+    os.remove("org_charmcraft.yaml")
 
 
 @pytest.fixture(scope="function", name="django_base_state")

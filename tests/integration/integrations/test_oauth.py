@@ -54,7 +54,7 @@ def test_oauth_integrations(
         timeout=30 * 60,
     )
 
-    if not admin_identity_exists(juju, test_email):
+    if not _admin_identity_exists(juju, test_email):
         juju.run(
             "kratos/0",
             "create-admin-account",
@@ -82,8 +82,7 @@ def test_oauth_integrations(
     _login_to_idp(res[app.name]["url"], endpoint, test_email, test_password)
 
 
-def admin_identity_exists(juju, test_email):
-    """Check if the admin identity exists in Kratos."""
+def _admin_identity_exists(juju, test_email):
     try:
         res = juju.run("kratos/0", "get-identity", {"email": test_email})
         return res.status == "completed"

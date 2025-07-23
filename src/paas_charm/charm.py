@@ -365,13 +365,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _oauth = None
         oauth_integrations = get_endpoints_by_interface_name(requires, "oauth")
-        if len(oauth_integrations) > 1:
-            logger.error("Multiple OAuth relations are not supported at the moment")
-            self.update_app_and_unit_status(
-                ops.BlockedStatus("Multiple OAuth relations are not supported at the moment")
-            )
-            return None
-        if not oauth_integrations:
+        if len(oauth_integrations) != 1:
             return None
         endpoint_name = oauth_integrations[0][0]
         try:
@@ -500,8 +494,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if missing_integrations:
             self._create_app().stop_all_services()
             self._database_migration.set_status_to_pending()
-            message = f"missing integrations: {', '.join(missing_integrations)}"
-            logger.info(message)
+            logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
             self.update_app_and_unit_status(ops.BlockedStatus(message))
             return False
 
@@ -511,6 +504,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 self.update_app_and_unit_status(ops.BlockedStatus(msg))
                 return False
 
+        oauth_integrations = get_endpoints_by_interface_name(self.framework.meta.requires, "oauth")
+        if len(oauth_integrations) > 1:
+            logger.error(msg := "Multiple OAuth relations are not supported at the moment")
+            self.update_app_and_unit_status(ops.BlockedStatus(msg))
+            return False
         return True
 
     def _missing_required_database_integrations(
