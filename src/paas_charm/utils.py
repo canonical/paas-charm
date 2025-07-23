@@ -147,14 +147,14 @@ def config_get_with_secret(
 def get_endpoints_by_interface_name(
     requires: dict[str, RelationMeta], interface_name: str
 ) -> list[tuple[str, RelationMeta]]:
-    """Get the relation names for a given interface name.
+    """Get the endpoints for a given interface name.
 
     Args:
         requires: relation requires dictionary from metadata
-        interface_name: the interface name to filter relations
+        interface_name: the interface name to filter endpoints
 
     Returns:
-        A list of relations that match the given interface name.
+        A list of endpoints that match the given interface name.
     """
     return [
         (endpoint_name, endpoint)
