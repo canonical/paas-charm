@@ -20,6 +20,7 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
+    from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
     from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
     from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
@@ -172,6 +173,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.tracing
                     else None
                 ),
+                oauth=(
+                    integration_requirers.oauth.to_relation_data()
+                    if integration_requirers.oauth
+                    else None
+                ),
             )
         except InvalidRelationDataError as exc:
             raise CharmConfigInvalidError(f"Invalid {exc.relation} relation data.") from exc
@@ -270,6 +276,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         tracing: TracingEndpointRequire object.
         smtp: Smtp requirer object.
         openfga: OpenFGA requirer object.
+        oauth: PaaSOAuthRequirer object.
     """
 
     databases: dict[str, "PaaSDatabaseRequires"]
@@ -280,6 +287,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     saml: "PaaSSAMLRequirer | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
+    oauth: "PaaSOAuthRequirer | None" = None
 
 
 @dataclass
@@ -297,6 +305,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         saml: SAML parameters.
         smtp: SMTP parameters.
         tracing: Tracing relation data.
+        oauth: OAuth relation data.
     """
 
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
@@ -307,6 +316,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None
     tracing: "PaaSTracingRelationData | None" = None
+    oauth: "PaaSOAuthRelationData | None" = None
 
 
 class ProxyConfig(BaseModel):

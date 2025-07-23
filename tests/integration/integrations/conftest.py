@@ -544,3 +544,14 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
         timeout=10 * 60,
     )
     return rabbitmq_k8s
+
+
+@pytest.fixture(scope="module", name="identity_bundle")
+def deploy_identity_bundle_fixture(juju: jubilant.Juju):
+    """Deploy Canonical identity bundle."""
+    if juju.status().apps.get("hydra"):
+        logger.info("identity-platform is already deployed")
+        return
+    juju.deploy("identity-platform", channel="latest/edge", trust=True)
+    juju.remove_application("kratos-external-idp-integrator")
+    juju.config("kratos", {"enforce_mfa": False})
