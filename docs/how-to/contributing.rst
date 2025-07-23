@@ -1,6 +1,6 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
-.. _how-to-contribute:
+.. _how_to_contribute:
 
 .. TODO: Update all sections containing TODOs; make sure no TODOs are left
 

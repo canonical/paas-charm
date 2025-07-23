@@ -89,7 +89,7 @@ suggestions, fixes and constructive feedback.
 * `Code of conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
 * `Get support <https://discourse.charmhub.io/>`_
 * `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
-* :ref:`Contribute <how-to-contribute>`
+* :ref:`Contribute <how_to_contribute>`
 
 Get in touch
 ~~~~~~~~~~~~
