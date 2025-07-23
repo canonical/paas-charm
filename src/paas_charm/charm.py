@@ -374,8 +374,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if not oauth_integrations:
             return None
         endpoint_name = oauth_integrations[0][0]
-        if  not self._ingress.is_ready():
-            return None
         try:
             _oauth = PaaSOAuthRequirer(
                 charm=self,
