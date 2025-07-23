@@ -17,5 +17,6 @@ This site contains step-by-step instructions for developing and maintaining a fr
 .. toctree::
    :maxdepth: 1
 
+   Add a new framework <add-new-framework>
    Contribute <contributing>
    Upgrade <upgrade>
