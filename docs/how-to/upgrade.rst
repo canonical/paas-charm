@@ -3,7 +3,7 @@
 How to upgrade
 ==============
 
-If you update the ``requirements.txt`` file for your project,
+If you update any files in your project (for instance, ``requirements.txt``),
 you must repack the rock using ``rockcraft pack``. Update the ``version`` in
 your ``rockcraft.yaml`` to avoid issues with pulling the updated rock version
 from the Kubernetes registry.

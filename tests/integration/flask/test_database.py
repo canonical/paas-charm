@@ -48,19 +48,17 @@ async def test_with_database(
         deploy_cmd.extend(["--trust"])
     await ops_test.juju(*deploy_cmd)
 
-    # mypy doesn't see that ActiveStatus has a name
-    await model.wait_for_idle(status=ops.ActiveStatus.name)  # type: ignore
+    await model.wait_for_idle(status=ops.ActiveStatus.name)
 
     await model.add_relation(flask_app.name, db_name)
 
-    # mypy doesn't see that ActiveStatus has a name
-    await model.wait_for_idle(status=ops.ActiveStatus.name)  # type: ignore
+    await model.wait_for_idle(status=ops.ActiveStatus.name)
 
     for unit_ip in await get_unit_ips(flask_app.name):
         for _ in range(10):
             response = requests.get(f"http://{unit_ip}:8000/{endpoint}", timeout=5)
-            assert response.status_code == 200
             if "SUCCESS" == response.text:
                 return
             await asyncio.sleep(60)
+        assert response.status_code == 200
         assert "SUCCESS" == response.text
