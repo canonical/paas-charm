@@ -397,7 +397,7 @@ def s3_status():
     """S3 status endpoint."""
     if client := get_boto3_client():
         bucket_name = os.environ["S3_BUCKET"]
-        objectsresponse = client.list_objects(Bucket=bucket_name)
+        _ = client.list_objects(Bucket=bucket_name)
         return "SUCCESS"
     return "FAIL", 500
 

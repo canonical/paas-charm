@@ -41,3 +41,5 @@ CVE-2025-22235
 CVE-2025-49146
 # usr/local/bin/go-app (gobinary)
 CVE-2025-22874
+# usr/bin/statsd_exporter (gobinary)
+CVE-2025-22868
