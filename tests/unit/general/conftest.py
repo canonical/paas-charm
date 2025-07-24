@@ -289,43 +289,6 @@ def django_base_state_fixture():
     }
 
 
-@pytest.fixture(scope="function", name="django_base_state")
-def django_base_state_fixture():
-    """State with container and config file set."""
-    os.chdir(PROJECT_ROOT / "examples/django/charm")
-    yield {
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"django_secret_key": "test", "secret": "test"}
-            ),
-            postgresql_relation("django-k8s"),
-        ],
-        "containers": {
-            testing.Container(
-                name="django-app",
-                can_connect=True,
-                mounts={"data": testing.Mount(location="/django/gunicorn.conf.py", source="conf")},
-                execs={
-                    testing.Exec(
-                        command_prefix=["/bin/python3"],
-                        return_code=0,
-                    ),
-                },
-                _base_plan={
-                    "services": {
-                        "django": {
-                            "startup": "enabled",
-                            "override": "replace",
-                            "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
-                        }
-                    }
-                },
-            )
-        },
-        "model": testing.Model(name="test-model"),
-    }
-
-
 OAUTH_RELATION_DATA_EXAMPLE = {
     "authorization_endpoint": "https://traefik_ip/model_name-hydra/oauth2/auth",
     "introspection_endpoint": "http://hydra.model_name.svc.cluster.local:4445/admin/oauth2/introspect",

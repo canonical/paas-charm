@@ -1,5 +1,5 @@
 cosl
 Jinja2 == 3.1.6
-jsonschema >=4.24,<4.25
+jsonschema >=4.25,<4.26
 ops >= 2.6
 pydantic==2.11.7
