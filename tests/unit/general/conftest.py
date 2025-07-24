@@ -251,6 +251,7 @@ def multiple_oauth_integrations_fixture(request):
     shutil.copyfile("org_charmcraft.yaml", "charmcraft.yaml")
     os.remove("org_charmcraft.yaml")
 
+
 @pytest.fixture(scope="function", name="django_base_state")
 def django_base_state_fixture():
     """State with container and config file set."""
