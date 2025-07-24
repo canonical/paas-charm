@@ -6,6 +6,8 @@ Changelog
 changelog
 Charmcraft
 config
+Customizable
+customizable
 entrypoint
 ExpressJS
 FastAPI

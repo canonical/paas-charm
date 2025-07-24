@@ -12,6 +12,7 @@ Place any unreleased changes here, that are subject to release in coming version
 ## 1.8.0 - 2025-07-24
 
 * feat: Add OIDC support for Flask.
+* docs: Added "Supported customizable features and capabilities".
 
 ## 2025-07-23
 
