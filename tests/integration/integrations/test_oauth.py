@@ -90,7 +90,8 @@ def _admin_identity_exists(juju, test_email):
         return False
 
 
-def _login_to_idp(app_url: str, endpoint: str, test_email: str, test_password: str):
+def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test_password: str):
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(ignore_https_errors=True)
