@@ -233,12 +233,12 @@ def multiple_oauth_integrations_fixture(request):
     shutil.copy("charmcraft.yaml", "org_charmcraft.yaml")
     charmcraft_yaml = yaml.safe_load(open("charmcraft.yaml", "r").read())
     charmcraft_yaml["requires"]["google"] = {"interface": "oauth", "optional": True, "limit": 1}
-    charmcraft_yaml["config"]["options"]["google_redirect_path"] = {
+    charmcraft_yaml["config"]["options"]["google-redirect-path"] = {
         "default": "/callback",
         "description": "The path that the user will be redirected upon completing login.",
         "type": "string",
     }
-    charmcraft_yaml["config"]["options"]["google_scopes"] = {
+    charmcraft_yaml["config"]["options"]["google-scopes"] = {
         "default": "openid profile email",
         "description": "A list of scopes with spaces in between.",
         "type": "string",
