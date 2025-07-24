@@ -78,7 +78,7 @@ def test_oauth_integrations(
     res = json.loads(
         juju.run("traefik-public/0", "show-proxied-endpoints").results["proxied-endpoints"]
     )
-    _login_to_idp(res[app.name]["url"], endpoint, test_email, test_password)
+    _assert_idp_login_success(res[app.name]["url"], endpoint, test_email, test_password)
 
 
 def _admin_identity_exists(juju, test_email):
