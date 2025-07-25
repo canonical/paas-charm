@@ -14,17 +14,12 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @ConditionalOnMissingBean(SecurityFilterChain.class)
-@ConditionalOnProperty(
-    name = "spring.security.saml2.relyingparty.registration.testentity.entity-id",
-    matchIfMissing = true,
-    havingValue = "false"
-)
+@ConditionalOnProperty(name = "spring.security.saml2.relyingparty.registration.testentity.entity-id", matchIfMissing = true, havingValue = "false")
+@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.oidc.client-id", matchIfMissing = true, havingValue = "false")
 public class NoSecurityConfiguration {
-    @Bean
-    public SecurityFilterChain permitAllSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable());
-        return http.build();
-    }
+	@Bean
+	public SecurityFilterChain permitAllSecurityFilterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll()).csrf(csrf -> csrf.disable());
+		return http.build();
+	}
 }

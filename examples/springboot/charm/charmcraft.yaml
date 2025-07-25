@@ -37,6 +37,8 @@ charm-libs:
   version: '0'
 - lib: tempo-coordinator-k8s.tracing
   version: '0'
+- lib: hydra.oauth
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -72,6 +74,19 @@ config:
         To create the secret, run the following command:
         `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key go-k8s`,
         and use the outputted secret ID to configure this option.
+    oidc-redirect-path:
+      type: string
+      description: The path that the user will be redirected upon completing login.
+      default: /login/oauth2/code/oidc
+    oidc-scopes:
+      type: string
+      description: A list of scopes with spaces in between.
+      default: "openid profile email"
+    oidc-user-name-attribute:
+      type: string
+      description: The name of the attribute returned in the UserInfo Response that references the Name
+          or Identifier of the end-user.
+      default: sub
     user-defined-config:
       type: string
       description: Example of a user defined configuration.
@@ -102,6 +117,10 @@ requires:
     limit: 1
   openfga:
     interface: openfga
+    optional: True
+    limit: 1
+  oidc:
+    interface: oauth
     optional: True
     limit: 1
   postgresql:
