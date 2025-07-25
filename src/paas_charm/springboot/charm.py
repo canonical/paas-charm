@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
@@ -71,6 +72,55 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
         "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
         "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
     }
+
+
+def generate_oauth_env(
+    framework: str,  # pylint: disable=unused-argument
+    relation_data: "PaaSOAuthRelationData | None" = None,
+) -> dict[str, str]:
+    """Generate environment variable from PaaSOAuthRelationData.
+
+    Args:
+        framework: The charm framework name.
+        relation_data: The charm Oauth integration relation data.
+
+    Returns:
+        Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    env = {}
+    # JAVI TODO
+    # https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-initial-setupclientAuthenticationMethod
+    env["spring.security.oauth2.client.registration.hydra.client-id"] = relation_data.client_id
+    env["spring.security.oauth2.client.registration.hydra.client-secret"] = (
+        relation_data.client_secret
+    )
+    # env["spring.security.oauth2.client.registration.hydra.provider"] = "hydra"
+    env["spring.security.oauth2.client.registration.hydra.scope"] = ",".join(
+        relation_data.scopes.split()
+    )
+    env["spring.security.oauth2.client.registration.hydra.authorization-grant-type"] = (
+        "authorization_code"
+    )
+    env["spring.security.oauth2.client.registration.hydra.redirect-uri"] = (
+        relation_data.redirect_uri
+    )
+    env["spring.security.oauth2.client.provider.hydra.authorization-uri"] = (
+        relation_data.authorization_endpoint
+    )
+    env["spring.security.oauth2.client.provider.hydra.token-uri"] = relation_data.token_endpoint
+    env["spring.security.oauth2.client.registration.hydra.user-name-attribute"] = "sub"
+    # to use the userinfo endpoint
+    env["spring.security.oauth2.client.provider.hydra.user-name-attribute"] = "sub"
+    env["spring.security.oauth2.client.provider.hydra.user-info-uri"] = (
+        relation_data.userinfo_endpoint
+    )
+
+    env["spring.security.oauth2.client.provider.hydra.jwk-set-uri"] = relation_data.jwks_endpoint
+    env["spring.security.oauth2.client.provider.hydra.issuer-uri"] = relation_data.issuer_url
+    return env
 
 
 def generate_db_env(
@@ -306,6 +356,7 @@ class SpringBootApp(App):
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
+        generate_oauth_env: Maps Oauth connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)
@@ -317,6 +368,19 @@ class SpringBootApp(App):
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
+    generate_oauth_env = staticmethod(generate_oauth_env)
+
+    def gen_environment(self) -> dict[str, str]:
+        """TODO PENDING TO MAYBE PUT THIS IN ANOTHER PLACE.
+
+        Returns:
+            A dictionary representing the application environment variables.
+        """
+        env = super().gen_environment()
+        # env["logging.level.org.springframework.security"] = "DEBUG"
+        # env["LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY"] = "DEBUG"
+        env["server.forward-headers-strategy"] = "framework"
+        return env
 
 
 class Charm(PaasCharm):

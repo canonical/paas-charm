@@ -249,15 +249,3 @@ def multiple_oauth_integrations_fixture(request):
 
     shutil.copyfile("org_charmcraft.yaml", "charmcraft.yaml")
     os.remove("org_charmcraft.yaml")
-
-
-OAUTH_RELATION_DATA_EXAMPLE = {
-    "authorization_endpoint": "https://traefik_ip/model_name-hydra/oauth2/auth",
-    "introspection_endpoint": "http://hydra.model_name.svc.cluster.local:4445/admin/oauth2/introspect",
-    "issuer_url": "https://traefik_ip/model_name-hydra",
-    "jwks_endpoint": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-    "scope": "openid profile email",
-    "token_endpoint": "https://traefik_ip/model_name-hydra/oauth2/token",
-    "userinfo_endpoint": "https://traefik_ip/model_name-hydra/userinfo",
-    "client_id": "test-client-id",
-}

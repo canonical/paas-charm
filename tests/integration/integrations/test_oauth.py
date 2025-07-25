@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, endpoint",
     [
+        ("spring_boot_app", "login"),
         ("flask_app", "login"),
     ],
 )

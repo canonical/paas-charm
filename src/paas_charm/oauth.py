@@ -28,6 +28,7 @@ class PaaSOAuthRelationData(BaseModel):
         jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
         scopes: List of scopes to request during the OAuth flow.
         provider_name: The name of the OAuth identity provider.
+        redirect_uri: Redirection URI to which the response will be sent.
     """
 
     client_id: str
@@ -39,6 +40,7 @@ class PaaSOAuthRelationData(BaseModel):
     jwks_endpoint: str
     scopes: str
     provider_name: str
+    redirect_uri: str
 
 
 class InvalidOAuthRelationDataError(InvalidRelationDataError):
@@ -101,6 +103,7 @@ class PaaSOAuthRequirer(OAuthRequirer):
                     "jwks_endpoint": prod_info.jwks_endpoint,
                     "scopes": self._client_config.scope,
                     "provider_name": self._relation_name,
+                    "redirect_uri": self._client_config.redirect_uri,
                 }
             )
         except ValidationError as exc:

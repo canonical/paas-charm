@@ -6,9 +6,12 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
+from secrets import token_hex
+
 from ops import testing
 
 from examples.springboot.charm.src.charm import SpringBootCharm
+from tests.unit.conftest import OAUTH_RELATION_DATA_EXAMPLE
 
 
 def test_smtp_integration(
@@ -342,3 +345,80 @@ def test_rabbitmq_integration(
         environment["spring.rabbitmq.host"] == "rabbitmq-k8s-endpoints.testing.svc.cluster.local"
     )
     assert environment["spring.rabbitmq.port"] == "5672"
+
+
+def test_oauth_integration(base_state: dict) -> None:
+    """
+    arrange: TODO
+    act: TODO
+    assert: TODO
+    """
+
+    secret_id = token_hex(16)
+    ingress_relation = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
+    )
+    base_state["relations"].append(ingress_relation)
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=SpringBootCharm,
+    )
+    out = context.run(context.on.relation_changed(ingress_relation), state)
+    assert out.unit_status == testing.ActiveStatus()
+
+    oauth_relation = testing.Relation(
+        endpoint="oidc",
+        interface="oauth",
+        remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
+    )
+    base_state["relations"].append(oauth_relation)
+    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+
+    state = testing.State(**base_state)
+    out = context.run(context.on.relation_changed(oauth_relation), state)
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert (
+        environment["spring.security.oauth2.client.registration.hydra.client-id"]
+        == "test-client-id"
+    )
+    assert environment["spring.security.oauth2.client.registration.hydra.client-secret"] == "abc"
+    assert (
+        environment["spring.security.oauth2.client.registration.hydra.scope"]
+        == "openid,profile,email"
+    )
+    assert (
+        environment["spring.security.oauth2.client.registration.hydra.authorization-grant-type"]
+        == "authorization_code"
+    )
+    assert (
+        environment["spring.security.oauth2.client.registration.hydra.redirect-uri"]
+        == "http://juju.test//login/oauth2/code/oidc"
+    )
+    assert (
+        environment["spring.security.oauth2.client.provider.hydra.authorization-uri"]
+        == "https://traefik_ip/model_name-hydra/oauth2/auth"
+    )
+    assert (
+        environment["spring.security.oauth2.client.provider.hydra.token-uri"]
+        == "https://traefik_ip/model_name-hydra/oauth2/token"
+    )
+    assert (
+        environment["spring.security.oauth2.client.registration.hydra.user-name-attribute"]
+        == "sub"
+    )
+    assert environment["spring.security.oauth2.client.provider.hydra.user-name-attribute"] == "sub"
+    assert (
+        environment["spring.security.oauth2.client.provider.hydra.user-info-uri"]
+        == "https://traefik_ip/model_name-hydra/userinfo"
+    )
+    assert (
+        environment["spring.security.oauth2.client.provider.hydra.jwk-set-uri"]
+        == "https://traefik_ip/model_name-hydra/.well-known/jwks.json"
+    )
+    assert (
+        environment["spring.security.oauth2.client.provider.hydra.issuer-uri"]
+        == "https://traefik_ip/model_name-hydra"
+    )
+    assert environment["server.forward-headers-strategy"] == "framework"

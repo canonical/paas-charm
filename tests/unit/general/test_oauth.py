@@ -11,11 +11,11 @@ from secrets import token_hex
 from unittest.mock import patch
 
 import pytest
-from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm.utils import config_metadata
+from tests.unit.conftest import OAUTH_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
