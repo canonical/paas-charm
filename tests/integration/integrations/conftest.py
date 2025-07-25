@@ -566,10 +566,10 @@ def browser_context_manager():
     """
     try:
         subprocess.run(
-            ["python", "-m","playwright", "install", "chromium"],
+            ["python", "-m", "playwright", "install", "chromium"],
             check=True,
             capture_output=True,
-            text=True
+            text=True,
         )
         print("Chromium installation complete.")
     except subprocess.CalledProcessError as e:
