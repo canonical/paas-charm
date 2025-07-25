@@ -227,6 +227,53 @@ def flask_base_state_fixture():
     }
 
 
+@pytest.fixture(name="postgresql_relation")
+def postgresql_relation_fixture():
+    """Postgresql relation fixture."""
+    relation_data = {
+        "database": "spring-boot-k8s",
+        "endpoints": "test-postgresql:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    yield testing.Relation(
+        endpoint="postgresql",
+        interface="postgresql_client",
+        remote_app_data=relation_data,
+    )
+
+
+@pytest.fixture(scope="function", name="spring_boot_base_state")
+def spring_boot_state_fixture(postgresql_relation):
+    """State with container and config file set."""
+    os.chdir(PROJECT_ROOT / "examples/springboot/charm")
+    yield {
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+            ),
+            postgresql_relation,
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
+                _base_plan={
+                    "services": {
+                        "spring-boot": {
+                            "startup": "enabled",
+                            "override": "replace",
+                            "command": 'bash -c "java -jar *.jar"',
+                        }
+                    }
+                },
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }
+
+
 @pytest.fixture(scope="function", name="multiple_oauth_integrations")
 def multiple_oauth_integrations_fixture(request):
     os.chdir(PROJECT_ROOT / f"examples/{request.param.get('framework')}/charm")
@@ -249,3 +296,15 @@ def multiple_oauth_integrations_fixture(request):
 
     shutil.copyfile("org_charmcraft.yaml", "charmcraft.yaml")
     os.remove("org_charmcraft.yaml")
+
+
+OAUTH_RELATION_DATA_EXAMPLE = {
+    "authorization_endpoint": "https://traefik_ip/model_name-hydra/oauth2/auth",
+    "introspection_endpoint": "http://hydra.model_name.svc.cluster.local:4445/admin/oauth2/introspect",
+    "issuer_url": "https://traefik_ip/model_name-hydra",
+    "jwks_endpoint": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+    "scope": "openid profile email",
+    "token_endpoint": "https://traefik_ip/model_name-hydra/oauth2/token",
+    "userinfo_endpoint": "https://traefik_ip/model_name-hydra/userinfo",
+    "client_id": "test-client-id",
+}

@@ -11,11 +11,12 @@ from secrets import token_hex
 from unittest.mock import patch
 
 import pytest
+from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.flask.charm.src.charm import FlaskCharm
+from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.utils import config_metadata
-from tests.unit.conftest import OAUTH_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
@@ -126,6 +127,65 @@ def test_oauth_config_wrong_relation_order(
                 "FLASK_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
             },
             id="flask-oidc",
+        ),
+        pytest.param(
+            "spring_boot_base_state",
+            SpringBootCharm,
+            "spring-boot",
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+                "oidc-user-name-attribute": "email",
+            },
+            'bash -c "java -jar *.jar"',
+            {
+                "APP_BASE_URL": "http://juju.test/",
+                "APP_METRICS_PORT": "8080",
+                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "APP_OIDC_SCOPES": "openid profile email phone",
+                "APP_OIDC_USER_NAME_ATTRIBUTE": "email",
+                "APP_PEER_FQDNS": "spring-boot-k8s-0.spring-boot-k8s-endpoints.test-model.svc.cluster.local",
+                "APP_SECRET_KEY": "test",
+                "MANAGEMENT_SERVER_PORT": "8080",
+                "METRICS_PATH": "/actuator/prometheus",
+                "OTEL_LOGS_EXPORTER": "none",
+                "OTEL_METRICS_EXPORTER": "none",
+                "OTEL_TRACES_EXPORTER": "none",
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/spring-boot-k8s",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "spring-boot-k8s",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/spring-boot-k8s",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+                "SERVER_PORT": "8080",
+                "management.endpoints.web.base-path": "/actuator",
+                "management.endpoints.web.exposure.include": "prometheus",
+                "management.endpoints.web.path-mapping.prometheus": "prometheus",
+                "server.forward-headers-strategy": "framework",
+                "spring.datasource.password": "test-password",
+                "spring.datasource.url": "jdbc:postgresql://test-postgresql:5432/spring-boot-k8s",
+                "spring.datasource.username": "test-username",
+                "spring.jpa.hibernate.ddl-auto": "none",
+                "spring.security.oauth2.client.provider.oidc.authorization-uri": "https://traefik_ip/model_name-hydra/oauth2/auth",
+                "spring.security.oauth2.client.provider.oidc.issuer-uri": "https://traefik_ip/model_name-hydra",
+                "spring.security.oauth2.client.provider.oidc.jwk-set-uri": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+                "spring.security.oauth2.client.provider.oidc.token-uri": "https://traefik_ip/model_name-hydra/oauth2/token",
+                "spring.security.oauth2.client.provider.oidc.user-info-uri": "https://traefik_ip/model_name-hydra/userinfo",
+                "spring.security.oauth2.client.provider.oidc.user-name-attribute": "email",
+                "spring.security.oauth2.client.registration.oidc.authorization-grant-type": "authorization_code",
+                "spring.security.oauth2.client.registration.oidc.client-id": "test-client-id",
+                "spring.security.oauth2.client.registration.oidc.client-secret": "abc",
+                "spring.security.oauth2.client.registration.oidc.redirect-uri": "http://juju.test//oauth/callback",
+                "spring.security.oauth2.client.registration.oidc.scope": "openid,profile,email,phone",
+                "spring.security.oauth2.client.registration.oidc.user-name-attribute": "email",
+            },
+            id="spring-boot-oidc",
         ),
     ],
 )

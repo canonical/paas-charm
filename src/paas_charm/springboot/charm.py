@@ -90,46 +90,24 @@ def generate_oauth_env(
     """
     if not relation_data:
         return {}
-    env = {}
-    # JAVI TODO
-    provider_name = relation_data.provider_name
-    # https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-initial-setupclientAuthenticationMethod
-    env[f"spring.security.oauth2.client.registration.{provider_name}.client-id"] = (
-        relation_data.client_id
-    )
-    env[f"spring.security.oauth2.client.registration.{provider_name}.client-secret"] = (
-        relation_data.client_secret
-    )
-    # env[f"spring.security.oauth2.client.registration.{provider_name}.provider"] = provider_name
-    env[f"spring.security.oauth2.client.registration.{provider_name}.scope"] = ",".join(
-        relation_data.scopes.split()
-    )
-    env[f"spring.security.oauth2.client.registration.{provider_name}.authorization-grant-type"] = (
-        "authorization_code"
-    )
-    env[f"spring.security.oauth2.client.registration.{provider_name}.redirect-uri"] = (
-        relation_data.redirect_uri
-    )
-    env[f"spring.security.oauth2.client.provider.{provider_name}.authorization-uri"] = (
-        relation_data.authorization_endpoint
-    )
-    env[f"spring.security.oauth2.client.provider.{provider_name}.token-uri"] = (
-        relation_data.token_endpoint
-    )
-    env[f"spring.security.oauth2.client.registration.{provider_name}.user-name-attribute"] = "sub"
-    # to use the userinfo endpoint
-    env[f"spring.security.oauth2.client.provider.{provider_name}.user-name-attribute"] = "sub"
-    env[f"spring.security.oauth2.client.provider.{provider_name}.user-info-uri"] = (
-        relation_data.userinfo_endpoint
-    )
 
-    env[f"spring.security.oauth2.client.provider.{provider_name}.jwk-set-uri"] = (
-        relation_data.jwks_endpoint
-    )
-    env[f"spring.security.oauth2.client.provider.{provider_name}.issuer-uri"] = (
-        relation_data.issuer_url
-    )
-    return env
+    provider_name = relation_data.provider_name
+    return {
+        f"spring.security.oauth2.client.registration.{provider_name}.client-id": relation_data.client_id,
+        f"spring.security.oauth2.client.registration.{provider_name}.client-secret": relation_data.client_secret,
+        f"spring.security.oauth2.client.registration.{provider_name}.redirect-uri": relation_data.redirect_uri,
+        f"spring.security.oauth2.client.registration.{provider_name}.scope": ",".join(
+            relation_data.scopes.split()
+        ),
+        f"spring.security.oauth2.client.registration.{provider_name}.user-name-attribute": relation_data.user_name_attribute,
+        f"spring.security.oauth2.client.provider.{provider_name}.authorization-uri": relation_data.authorization_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.issuer-uri": relation_data.issuer_url,
+        f"spring.security.oauth2.client.provider.{provider_name}.jwk-set-uri": relation_data.jwks_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.token-uri": relation_data.token_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.user-info-uri": relation_data.userinfo_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.user-name-attribute": relation_data.user_name_attribute,
+        f"spring.security.oauth2.client.registration.{provider_name}.authorization-grant-type": "authorization_code",
+    }
 
 
 def generate_db_env(
@@ -380,14 +358,15 @@ class SpringBootApp(App):
     generate_oauth_env = staticmethod(generate_oauth_env)
 
     def gen_environment(self) -> dict[str, str]:
-        """TODO PENDING TO MAYBE PUT THIS IN ANOTHER PLACE.
+        """Generate a environment dictionary from the charm configurations.
+
+        Adds to the base environment variables specific ones for the Spring Boot framework.
 
         Returns:
             A dictionary representing the application environment variables.
         """
         env = super().gen_environment()
-        # env["logging.level.org.springframework.security"] = "DEBUG"
-        # env["LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY"] = "DEBUG"
+        # Required because of the strip prefix in the ingress configuration.
         env["server.forward-headers-strategy"] = "framework"
         return env
 
