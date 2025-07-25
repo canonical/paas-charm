@@ -92,34 +92,43 @@ def generate_oauth_env(
         return {}
     env = {}
     # JAVI TODO
+    provider_name = relation_data.provider_name
     # https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-initial-setupclientAuthenticationMethod
-    env["spring.security.oauth2.client.registration.hydra.client-id"] = relation_data.client_id
-    env["spring.security.oauth2.client.registration.hydra.client-secret"] = (
+    env[f"spring.security.oauth2.client.registration.{provider_name}.client-id"] = (
+        relation_data.client_id
+    )
+    env[f"spring.security.oauth2.client.registration.{provider_name}.client-secret"] = (
         relation_data.client_secret
     )
-    # env["spring.security.oauth2.client.registration.hydra.provider"] = "hydra"
-    env["spring.security.oauth2.client.registration.hydra.scope"] = ",".join(
+    # env[f"spring.security.oauth2.client.registration.{provider_name}.provider"] = provider_name
+    env[f"spring.security.oauth2.client.registration.{provider_name}.scope"] = ",".join(
         relation_data.scopes.split()
     )
-    env["spring.security.oauth2.client.registration.hydra.authorization-grant-type"] = (
+    env[f"spring.security.oauth2.client.registration.{provider_name}.authorization-grant-type"] = (
         "authorization_code"
     )
-    env["spring.security.oauth2.client.registration.hydra.redirect-uri"] = (
+    env[f"spring.security.oauth2.client.registration.{provider_name}.redirect-uri"] = (
         relation_data.redirect_uri
     )
-    env["spring.security.oauth2.client.provider.hydra.authorization-uri"] = (
+    env[f"spring.security.oauth2.client.provider.{provider_name}.authorization-uri"] = (
         relation_data.authorization_endpoint
     )
-    env["spring.security.oauth2.client.provider.hydra.token-uri"] = relation_data.token_endpoint
-    env["spring.security.oauth2.client.registration.hydra.user-name-attribute"] = "sub"
+    env[f"spring.security.oauth2.client.provider.{provider_name}.token-uri"] = (
+        relation_data.token_endpoint
+    )
+    env[f"spring.security.oauth2.client.registration.{provider_name}.user-name-attribute"] = "sub"
     # to use the userinfo endpoint
-    env["spring.security.oauth2.client.provider.hydra.user-name-attribute"] = "sub"
-    env["spring.security.oauth2.client.provider.hydra.user-info-uri"] = (
+    env[f"spring.security.oauth2.client.provider.{provider_name}.user-name-attribute"] = "sub"
+    env[f"spring.security.oauth2.client.provider.{provider_name}.user-info-uri"] = (
         relation_data.userinfo_endpoint
     )
 
-    env["spring.security.oauth2.client.provider.hydra.jwk-set-uri"] = relation_data.jwks_endpoint
-    env["spring.security.oauth2.client.provider.hydra.issuer-uri"] = relation_data.issuer_url
+    env[f"spring.security.oauth2.client.provider.{provider_name}.jwk-set-uri"] = (
+        relation_data.jwks_endpoint
+    )
+    env[f"spring.security.oauth2.client.provider.{provider_name}.issuer-uri"] = (
+        relation_data.issuer_url
+    )
     return env
 
 

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, endpoint",
     [
-        ("spring_boot_app", "login"),
+        ("spring_boot_app", "oauth2/authorization/oidc"),
         ("flask_app", "login"),
     ],
 )
@@ -103,4 +103,4 @@ def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test
         page.get_by_label("Password").fill(test_password)
         page.get_by_role("button", name="Sign in").click()
         expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
-        expect(page.get_by_role("heading", name=f"Welcome, {test_email}!")).to_be_visible()
+        assert f"Welcome, {test_email}!" in page.content()

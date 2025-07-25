@@ -379,46 +379,46 @@ def test_oauth_integration(base_state: dict) -> None:
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    # import pdb; pdb.set_trace()
     assert (
-        environment["spring.security.oauth2.client.registration.hydra.client-id"]
+        environment["spring.security.oauth2.client.registration.oidc.client-id"]
         == "test-client-id"
     )
-    assert environment["spring.security.oauth2.client.registration.hydra.client-secret"] == "abc"
+    assert environment["spring.security.oauth2.client.registration.oidc.client-secret"] == "abc"
     assert (
-        environment["spring.security.oauth2.client.registration.hydra.scope"]
+        environment["spring.security.oauth2.client.registration.oidc.scope"]
         == "openid,profile,email"
     )
     assert (
-        environment["spring.security.oauth2.client.registration.hydra.authorization-grant-type"]
+        environment["spring.security.oauth2.client.registration.oidc.authorization-grant-type"]
         == "authorization_code"
     )
     assert (
-        environment["spring.security.oauth2.client.registration.hydra.redirect-uri"]
+        environment["spring.security.oauth2.client.registration.oidc.redirect-uri"]
         == "http://juju.test//login/oauth2/code/oidc"
     )
     assert (
-        environment["spring.security.oauth2.client.provider.hydra.authorization-uri"]
+        environment["spring.security.oauth2.client.provider.oidc.authorization-uri"]
         == "https://traefik_ip/model_name-hydra/oauth2/auth"
     )
     assert (
-        environment["spring.security.oauth2.client.provider.hydra.token-uri"]
+        environment["spring.security.oauth2.client.provider.oidc.token-uri"]
         == "https://traefik_ip/model_name-hydra/oauth2/token"
     )
     assert (
-        environment["spring.security.oauth2.client.registration.hydra.user-name-attribute"]
-        == "sub"
+        environment["spring.security.oauth2.client.registration.oidc.user-name-attribute"] == "sub"
     )
-    assert environment["spring.security.oauth2.client.provider.hydra.user-name-attribute"] == "sub"
+    assert environment["spring.security.oauth2.client.provider.oidc.user-name-attribute"] == "sub"
     assert (
-        environment["spring.security.oauth2.client.provider.hydra.user-info-uri"]
+        environment["spring.security.oauth2.client.provider.oidc.user-info-uri"]
         == "https://traefik_ip/model_name-hydra/userinfo"
     )
     assert (
-        environment["spring.security.oauth2.client.provider.hydra.jwk-set-uri"]
+        environment["spring.security.oauth2.client.provider.oidc.jwk-set-uri"]
         == "https://traefik_ip/model_name-hydra/.well-known/jwks.json"
     )
     assert (
-        environment["spring.security.oauth2.client.provider.hydra.issuer-uri"]
+        environment["spring.security.oauth2.client.provider.oidc.issuer-uri"]
         == "https://traefik_ip/model_name-hydra"
     )
     assert environment["server.forward-headers-strategy"] == "framework"
