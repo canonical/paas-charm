@@ -79,4 +79,5 @@ All contents
     :titlesonly:
 
     juju-events
+    Customizable features <supported-customization>
     Changelog <../changelog.md>
