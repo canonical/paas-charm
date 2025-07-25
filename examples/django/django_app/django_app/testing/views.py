@@ -24,6 +24,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 oauth = OAuth()
+# When I define `jwks_uri` in `settings.py` it doesn't accept it.
+# Acts like it has not been defined.
 oauth.register(name="oidc", jwks_uri=os.getenv("DJANGO_OIDC_JWKS_URL"))
 
 
