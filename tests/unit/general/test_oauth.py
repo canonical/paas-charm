@@ -27,8 +27,8 @@ from paas_charm.utils import config_metadata
             FlaskCharm,
             "flask",
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
             {
@@ -54,8 +54,8 @@ from paas_charm.utils import config_metadata
             DjangoCharm,
             "django",
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
@@ -145,8 +145,8 @@ def test_oauth_config_wrong_relation_order(
             FlaskCharm,
             "flask",
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
             {
@@ -172,8 +172,8 @@ def test_oauth_config_wrong_relation_order(
             DjangoCharm,
             "django",
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
@@ -258,8 +258,8 @@ def test_oauth_config_correct_relation_order(
             "flask_base_state",
             FlaskCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             id="flask-oidc",
         ),
@@ -267,8 +267,8 @@ def test_oauth_config_correct_relation_order(
             "django_base_state",
             DjangoCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             id="django-oidc",
         ),
@@ -324,8 +324,8 @@ def test_oauth_config_remove_ingress_integration_should_block(
             "flask_base_state",
             FlaskCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             id="flask-oidc",
         ),
@@ -333,8 +333,8 @@ def test_oauth_config_remove_ingress_integration_should_block(
             "django_base_state",
             DjangoCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
             },
             id="django-oidc",
         ),
@@ -388,8 +388,8 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
             "flask_base_state",
             FlaskCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "profile email phone",
             },
             id="flask-oidc-fail",
         ),
@@ -397,8 +397,8 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
             "django_base_state",
             DjangoCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "profile email phone",
             },
             id="django-oidc",
         ),
@@ -443,10 +443,10 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
             "flask_base_state",
             FlaskCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
-                "google_redirect_path": "/oauth/callback",
-                "google_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+                "google-redirect-path": "/oauth/callback",
+                "google-scopes": "openid profile email phone",
             },
             {"framework": "flask"},
             id="flask-oidc-fail",
@@ -455,10 +455,10 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
             "django_base_state",
             DjangoCharm,
             {
-                "oidc_redirect_path": "/oauth/callback",
-                "oidc_scopes": "openid profile email phone",
-                "google_redirect_path": "/oauth/callback",
-                "google_scopes": "openid profile email phone",
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+                "google-redirect-path": "/oauth/callback",
+                "google-scopes": "openid profile email phone",
             },
             {"framework": "django"},
             id="django-oidc",

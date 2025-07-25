@@ -100,11 +100,11 @@ config:
     webserver-worker-class:
       description: The method of webserver worker processes for handling requests. Can be either 'gevent' or 'sync'.
       type: string
-    oidc_redirect_path:
+    oidc-redirect-path:
       type: string
       description: The path that the user will be redirected upon completing login.
       default: /callback
-    oidc_scopes:
+    oidc-scopes:
       type: string
       description: A list of scopes with spaces in between.
       default: "openid profile email"
