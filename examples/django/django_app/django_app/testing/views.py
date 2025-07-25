@@ -16,8 +16,37 @@ from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
 
+
+from authlib.integrations.django_client import OAuth
 from django.conf import settings
 from django.core.mail import EmailMessage, get_connection
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+oauth = OAuth()
+# When I define `jwks_uri` in `settings.py` it doesn't accept it.
+# Acts like it has not been defined.
+oauth.register(name="oidc", jwks_uri=os.getenv("DJANGO_OIDC_JWKS_URL"))
+
+
+def auth_logout(request):
+    request.session.pop("user", None)
+    return redirect("/")
+
+
+def profile(request):
+    user = request.session.get("user")
+    return render(request, "profile.html", context={"user": user})
+
+
+def auth_login(request):
+    return oauth.oidc.authorize_redirect(request, reverse("callback"))
+
+
+def callback(request):
+    token = oauth.oidc.authorize_access_token(request)
+    request.session["user"] = token["userinfo"]
+    return redirect(reverse("profile"))
 
 
 def send_mail(request):

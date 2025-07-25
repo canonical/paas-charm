@@ -19,6 +19,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from src.paas_charm.charm import PaasCharm
+from tests.unit.conftest import postgresql_relation
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.django.constants import DJANGO_CONTAINER_NAME
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
@@ -233,12 +234,12 @@ def multiple_oauth_integrations_fixture(request):
     shutil.copy("charmcraft.yaml", "org_charmcraft.yaml")
     charmcraft_yaml = yaml.safe_load(open("charmcraft.yaml", "r").read())
     charmcraft_yaml["requires"]["google"] = {"interface": "oauth", "optional": True, "limit": 1}
-    charmcraft_yaml["config"]["options"]["google_redirect_path"] = {
+    charmcraft_yaml["config"]["options"]["google-redirect-path"] = {
         "default": "/callback",
         "description": "The path that the user will be redirected upon completing login.",
         "type": "string",
     }
-    charmcraft_yaml["config"]["options"]["google_scopes"] = {
+    charmcraft_yaml["config"]["options"]["google-scopes"] = {
         "default": "openid profile email",
         "description": "A list of scopes with spaces in between.",
         "type": "string",
@@ -249,6 +250,43 @@ def multiple_oauth_integrations_fixture(request):
 
     shutil.copyfile("org_charmcraft.yaml", "charmcraft.yaml")
     os.remove("org_charmcraft.yaml")
+
+
+@pytest.fixture(scope="function", name="django_base_state")
+def django_base_state_fixture():
+    """State with container and config file set."""
+    os.chdir(PROJECT_ROOT / "examples/django/charm")
+    yield {
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"django_secret_key": "test", "secret": "test"}
+            ),
+            postgresql_relation("django-k8s"),
+        ],
+        "containers": {
+            testing.Container(
+                name="django-app",
+                can_connect=True,
+                mounts={"data": testing.Mount(location="/django/gunicorn.conf.py", source="conf")},
+                execs={
+                    testing.Exec(
+                        command_prefix=["/bin/python3"],
+                        return_code=0,
+                    ),
+                },
+                _base_plan={
+                    "services": {
+                        "django": {
+                            "startup": "enabled",
+                            "override": "replace",
+                            "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
+                        }
+                    }
+                },
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }
 
 
 OAUTH_RELATION_DATA_EXAMPLE = {

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
     "app_fixture, endpoint",
     [
         ("flask_app", "login"),
+        ("django_app", "auth_login"),
     ],
 )
 def test_oauth_integrations(
@@ -28,6 +29,7 @@ def test_oauth_integrations(
     endpoint,
     request: pytest.FixtureRequest,
     identity_bundle,
+    browser_context_manager,
 ):
     """
     arrange: set up the test Juju model and deploy the workload charm.
@@ -44,6 +46,8 @@ def test_oauth_integrations(
 
     if not status.apps.get(app.name).relations.get("oidc"):
         juju.integrate(f"{app.name}", "hydra")
+
+    juju.wait(lambda status: status.apps[app.name].is_blocked, timeout=60 * 30)
 
     if not status.apps.get(app.name).relations.get("ingress"):
         juju.integrate(f"{app.name}", "traefik-public")
@@ -91,7 +95,6 @@ def _admin_identity_exists(juju, test_email):
 
 
 def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test_password: str):
-
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(ignore_https_errors=True)

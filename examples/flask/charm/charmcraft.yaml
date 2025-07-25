@@ -116,11 +116,11 @@ config:
     secret-test:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
-    oidc_redirect_path:
+    oidc-redirect-path:
       type: string
       description: The path that the user will be redirected upon completing login.
       default: /callback
-    oidc_scopes:
+    oidc-scopes:
       type: string
       description: A list of scopes with spaces in between.
       default: "openid profile email"

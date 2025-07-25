@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 
 import ops
 import pytest
+from ops import testing
 
 from paas_charm.database_migration import DatabaseMigrationStatus
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
@@ -65,3 +66,18 @@ def expressjs_container_mock():
     container = MagicMock(spec=ops.Container)
     container.pull.return_value = io.StringIO(json.dumps(EXPRESSJS_DEFAULT_LAYER["services"]))
     return container
+
+
+def postgresql_relation(db_name):
+    """Postgresql relation fixture."""
+    relation_data = {
+        "database": db_name,
+        "endpoints": "test-postgresql:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    return testing.Relation(
+        endpoint="postgresql",
+        interface="postgresql_client",
+        remote_app_data=relation_data,
+    )

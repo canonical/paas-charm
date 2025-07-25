@@ -22,17 +22,29 @@ from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {},
-        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]'},
+        {
+            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
+            "DJANGO_OIDC_SCOPES": "openid profile email",
+            "DJANGO_SECRET_KEY": "test",
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+        },
         id="default",
     ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
-        {"DJANGO_SECRET_KEY": "test", "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]'},
+        {
+            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
+            "DJANGO_OIDC_SCOPES": "openid profile email",
+            "DJANGO_SECRET_KEY": "test",
+            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
+        },
         id="allowed-hosts",
     ),
     pytest.param(
         {"django-debug": True},
         {
+            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
+            "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
             "DJANGO_DEBUG": "true",
@@ -42,6 +54,8 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {"django-secret-key": "foobar"},
         {
+            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
+            "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "foobar",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
         },

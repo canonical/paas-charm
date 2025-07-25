@@ -21,11 +21,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from testing.views import (
+    auth_login,
+    auth_logout,
+    callback,
     environ,
     get_settings,
     hello_world,
     list_authorization_models,
     login,
+    profile,
     send_mail,
     sleep,
     user_count,
@@ -45,4 +49,8 @@ urlpatterns = [
         name="list_authorization_models",
     ),
     path("login", login, name="login"),
+    path("profile", profile, name="profile"),
+    path("auth_login", auth_login, name="auth_login"),
+    path("auth_logout", auth_logout, name="auth_logout"),
+    path("callback", callback, name="callback"),
 ]

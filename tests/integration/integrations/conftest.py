@@ -6,6 +6,7 @@
 import collections
 import logging
 import pathlib
+import subprocess
 import time
 from secrets import token_hex
 from typing import cast
@@ -555,3 +556,23 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     juju.deploy("identity-platform", channel="latest/edge", trust=True)
     juju.remove_application("kratos-external-idp-integrator")
     juju.config("kratos", {"enforce_mfa": False})
+
+
+@pytest.fixture(scope="session")
+def browser_context_manager():
+    """
+    A session-scoped fixture that installs the Playwright browser
+    and yields. This ensures the browser is installed only for oauth test.
+    """
+    try:
+        subprocess.run(
+            ["python", "-m", "playwright", "install", "chromium"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        print("Chromium installation complete.")
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to install Playwright browser: {e.stderr}")
+
+    yield

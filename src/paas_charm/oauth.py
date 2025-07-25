@@ -116,8 +116,8 @@ class PaaSOAuthRequirer(OAuthRequirer):
         Returns:
             A ClientConfig instance with the configuration for the given endpoint.
         """
-        redirect_path = str(self._charm_config.get(f"{relation_name}_redirect_path", "/callback"))
-        scopes = str(self._charm_config.get(f"{relation_name}_scopes"))
+        redirect_path = str(self._charm_config.get(f"{relation_name}-redirect-path", "/callback"))
+        scopes = str(self._charm_config.get(f"{relation_name}-scopes"))
 
         return ClientConfig(
             redirect_uri=f"{self._base_url}/{redirect_path.strip('/')}",
