@@ -29,6 +29,7 @@ def test_oauth_integrations(
     endpoint,
     request: pytest.FixtureRequest,
     identity_bundle,
+    browser_context_manager,
 ):
     """
     arrange: set up the test Juju model and deploy the workload charm.
