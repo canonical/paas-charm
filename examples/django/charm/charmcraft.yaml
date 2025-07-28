@@ -40,6 +40,8 @@ charm-libs:
   version: '0'
 - lib: tempo-coordinator-k8s.tracing
   version: '0'
+- lib: hydra.oauth
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -98,6 +100,15 @@ config:
     webserver-worker-class:
       description: The method of webserver worker processes for handling requests. Can be either 'gevent' or 'sync'.
       type: string
+    oidc-redirect-path:
+      type: string
+      description: The path that the user will be redirected upon completing login.
+      default: /callback
+    oidc-scopes:
+      type: string
+      description: A list of scopes with spaces in between.
+      default: "openid profile email"
+
 containers:
   django-app:
     resource: django-app-image
@@ -131,6 +142,11 @@ requires:
     interface: openfga
     optional: True
     limit: 1
+  oidc:
+    interface: oauth
+    optional: True
+    limit: 1
+
 resources:
   django-app-image:
     description: django application image.

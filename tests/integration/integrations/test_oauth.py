@@ -9,6 +9,7 @@ import re
 
 import jubilant
 import pytest
+import requests
 from playwright.sync_api import expect, sync_playwright
 
 from tests.integration.types import App
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
     [
         ("spring_boot_app", "oauth2/authorization/oidc"),
         ("flask_app", "login"),
+        ("django_app", "auth_login"),
     ],
 )
 def test_oauth_integrations(
@@ -29,6 +31,8 @@ def test_oauth_integrations(
     endpoint,
     request: pytest.FixtureRequest,
     identity_bundle,
+    browser_context_manager,
+    http: requests.Session,
 ):
     """
     arrange: set up the test Juju model and deploy the workload charm.
@@ -89,6 +93,10 @@ def test_oauth_integrations(
     )
     logger.info("result show-proxied %s", res)
 
+    # make sure the app is alive
+    response = http.get(res[app.name]["url"], timeout=5, verify=False)
+    assert response.status_code == 200
+
     _assert_idp_login_success(res[app.name]["url"], endpoint, test_email, test_password)
 
 
@@ -102,7 +110,6 @@ def _admin_identity_exists(juju, test_email):
 
 
 def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test_password: str):
-
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(ignore_https_errors=True)

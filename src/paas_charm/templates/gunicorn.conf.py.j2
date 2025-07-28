@@ -14,6 +14,7 @@ statsd_host = '{{ statsd_host }}'
 {{ key }} = {{ value }}
 {%- endfor -%}
 {%- if enable_tracing %}
+access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %({x-request-id}o)s'
 
 
 def post_fork(server, worker):

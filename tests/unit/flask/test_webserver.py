@@ -67,6 +67,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
+                access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %({x-request-id}o)s'
 
 
                 def post_fork(server, worker):
