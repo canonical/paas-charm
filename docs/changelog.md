@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 1.8.1 - 2025-07-25
+## 1.8.2 - 2025-07-28
 
 * feat: Add OIDC support for Django.
+
+## 1.8.1 - 2025-07-25
+
+* feat: add X-Request-ID header to Gunicorn logs if present in response.
 
 ## 1.8.0 - 2025-07-24
 
