@@ -54,7 +54,15 @@ def test_oauth_integrations(
 
     juju.wait(
         jubilant.all_active,
-        timeout=30 * 60,
+        timeout=10 * 60,
+    )
+    
+    if not status.apps.get(app.name).relations.get("oidc"):
+        juju.integrate(f"{app.name}", "hydra")
+
+    juju.wait(
+        jubilant.all_active,
+        timeout=10 * 60,
     )
 
     if not _admin_identity_exists(juju, test_email):
