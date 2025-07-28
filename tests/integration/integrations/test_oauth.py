@@ -53,13 +53,6 @@ def test_oauth_integrations(
         jubilant.all_active,
         timeout=10 * 60,
     )
-    if not status.apps.get(app.name).relations.get("oidc"):
-        juju.integrate(f"{app.name}", "hydra")
-
-    juju.wait(
-        jubilant.all_active,
-        timeout=10 * 60,
-    )
 
     if not status.apps.get(app.name).relations.get("oidc"):
         juju.integrate(f"{app.name}", "hydra")
