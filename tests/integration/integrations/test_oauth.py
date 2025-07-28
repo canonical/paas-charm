@@ -49,6 +49,10 @@ def test_oauth_integrations(
     if not status.apps.get(app.name).relations.get("ingress"):
         juju.integrate(f"{app.name}", "traefik-public")
 
+    juju.wait(
+        jubilant.all_active,
+        timeout=10 * 60,
+    )
     if not status.apps.get(app.name).relations.get("oidc"):
         juju.integrate(f"{app.name}", "hydra")
 
@@ -56,7 +60,7 @@ def test_oauth_integrations(
         jubilant.all_active,
         timeout=10 * 60,
     )
-    
+
     if not status.apps.get(app.name).relations.get("oidc"):
         juju.integrate(f"{app.name}", "hydra")
 

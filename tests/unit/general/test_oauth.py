@@ -469,10 +469,7 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
     base_state["config"] = config
     secret_id = token_hex(16)
     oauth_relation = testing.Relation(
-        endpoint="oidc",
-        interface="oauth",
-        remote_app_data={},
-        remote_app_name="OIDC_CHARM"
+        endpoint="oidc", interface="oauth", remote_app_data={}, remote_app_name="OIDC_CHARM"
     )
     base_state["relations"].append(oauth_relation)
     base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
@@ -487,7 +484,7 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
         charm_type=charm,
     )
     out = context.run(context.on.relation_changed(ingress_relation), state)
-    assert out.unit_status == testing.BlockedStatus('Please check OIDC_CHARM charm!')
+    assert out.unit_status == testing.BlockedStatus("Please check OIDC_CHARM charm!")
 
 
 @pytest.mark.parametrize(
