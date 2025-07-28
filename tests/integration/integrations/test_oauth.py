@@ -9,6 +9,7 @@ import re
 
 import jubilant
 import pytest
+import requests
 from playwright.sync_api import expect, sync_playwright
 
 from tests.integration.types import App
@@ -30,6 +31,7 @@ def test_oauth_integrations(
     request: pytest.FixtureRequest,
     identity_bundle,
     browser_context_manager,
+    http: requests.Session,
 ):
     """
     arrange: set up the test Juju model and deploy the workload charm.
@@ -82,6 +84,11 @@ def test_oauth_integrations(
     res = json.loads(
         juju.run("traefik-public/0", "show-proxied-endpoints").results["proxied-endpoints"]
     )
+
+    # make sure the app is alive
+    response = http.get(res[app.name]["url"], timeout=5, verify=False)
+    assert response.status_code == 200
+
     _assert_idp_login_success(res[app.name]["url"], endpoint, test_email, test_password)
 
 

@@ -146,6 +146,7 @@ AUTHLIB_OAUTH_CLIENTS = {
         "client_id": os.getenv("DJANGO_OIDC_CLIENT_ID"),
         "client_secret": os.getenv("DJANGO_OIDC_CLIENT_SECRET"),
         # We are adding the verify=False to disable SSL verification
+        # This should not be done in Production environment!
         "client_kwargs": {"scope": os.getenv("DJANGO_OIDC_SCOPES"), "verify": False},
         "access_token_url": os.getenv("DJANGO_OIDC_ACCESS_TOKEN_URL"),
         "authorize_url": os.getenv("DJANGO_OIDC_AUTHORIZE_URL"),

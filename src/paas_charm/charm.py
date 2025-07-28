@@ -376,6 +376,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 charm_config=self.config,
             )
             self.framework.observe(_oauth.on.oauth_info_changed, self._on_oauth_info_changed)
+            self.framework.observe(_oauth.on.oauth_info_removed, self._on_oauth_info_removed)
         except NameError:
             logger.exception(
                 "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
@@ -477,7 +478,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             True if the charm is ready to start the workload application.
         """
         charm_state = self._create_charm_state()
-
         if not self._container.can_connect():
             logger.info(
                 "pebble client in the %s container is not ready",
@@ -498,8 +498,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.BlockedStatus(message))
             return False
 
-        if self._oauth:
-            if self._oauth.is_client_created() and not self._ingress.is_ready():
+        if self._oauth and self._oauth.model.relations.get("oidc"):
+            if  not self._oauth.is_client_created():
+                logger.warning(msg := f"Please check {self._oauth.model.relations.get('oidc')[0].app.name} charm!")
+                self.update_app_and_unit_status(ops.BlockedStatus(msg))
+                return False
+
+            if not self._ingress.is_ready():
                 logger.warning(msg := "Ingress relation is required for OIDC to work correctly!")
                 self.update_app_and_unit_status(ops.BlockedStatus(msg))
                 return False
@@ -793,4 +798,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_config
     def _on_oauth_info_changed(self, _: ops.HookEvent) -> None:
         """Handle the OAuth info changed event."""
+        self.restart()
+
+    @block_if_invalid_config
+    def _on_oauth_info_removed(self, _: ops.HookEvent) -> None:
+        """Handle the OAuth info removed event."""
         self.restart()

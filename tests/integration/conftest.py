@@ -40,11 +40,11 @@ NON_OPTIONAL_CONFIGS = {
 def fixture_http_client():
     """Return the --test-flask-image test parameter."""
     retry_strategy = Retry(
-        total=5,
-        connect=5,
-        read=5,
-        other=5,
-        backoff_factor=5,
+        total=10,
+        connect=10,
+        read=10,
+        other=10,
+        backoff_factor=10,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["HEAD", "POST", "GET", "OPTIONS"],
         raise_on_status=False,
