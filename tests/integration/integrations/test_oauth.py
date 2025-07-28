@@ -46,13 +46,11 @@ def test_oauth_integrations(
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
 
-    if not status.apps.get(app.name).relations.get("oidc"):
-        juju.integrate(f"{app.name}", "hydra")
-
-    juju.wait(lambda status: status.apps[app.name].is_blocked, timeout=60 * 30)
-
     if not status.apps.get(app.name).relations.get("ingress"):
         juju.integrate(f"{app.name}", "traefik-public")
+
+    if not status.apps.get(app.name).relations.get("oidc"):
+        juju.integrate(f"{app.name}", "hydra")
 
     juju.wait(
         jubilant.all_active,

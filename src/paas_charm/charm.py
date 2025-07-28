@@ -471,6 +471,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self.unit.is_leader():
             self.app.status = status
 
+    # pylint: disable=too-many-return-statements
     def is_ready(self) -> bool:
         """Check if the charm is ready to start the workload application.
 
@@ -499,8 +500,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return False
 
         if self._oauth and self._oauth.model.relations.get("oidc"):
-            if  not self._oauth.is_client_created():
-                logger.warning(msg := f"Please check {self._oauth.model.relations.get('oidc')[0].app.name} charm!")
+            if not self._oauth.is_client_created():
+                logger.warning(
+                    msg := f"Please check {self._oauth.model.relations.get('oidc')[0].app.name} charm!"
+                )
                 self.update_app_and_unit_status(ops.BlockedStatus(msg))
                 return False
 

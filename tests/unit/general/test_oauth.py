@@ -437,6 +437,60 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
 
 
 @pytest.mark.parametrize(
+    "base_state, charm, config",
+    [
+        pytest.param(
+            "flask_base_state",
+            FlaskCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="flask-oidc",
+        ),
+        pytest.param(
+            "django_base_state",
+            DjangoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="django-oidc",
+        ),
+    ],
+)
+def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict, request) -> None:
+    """
+    arrange: set the workload charm config.
+    act: start the workload charm and integrate with oauth and ingress using wrong scope.
+    assert: workload charm should be blocked.
+    """
+    base_state = request.getfixturevalue(base_state)
+    base_state["config"] = config
+    secret_id = token_hex(16)
+    oauth_relation = testing.Relation(
+        endpoint="oidc",
+        interface="oauth",
+        remote_app_data={},
+        remote_app_name="OIDC_CHARM"
+    )
+    base_state["relations"].append(oauth_relation)
+    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    ingress_relation = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
+    )
+    base_state["relations"].append(ingress_relation)
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=charm,
+    )
+    out = context.run(context.on.relation_changed(ingress_relation), state)
+    assert out.unit_status == testing.BlockedStatus('Please check OIDC_CHARM charm!')
+
+
+@pytest.mark.parametrize(
     "base_state, charm, config, multiple_oauth_integrations",
     [
         pytest.param(
