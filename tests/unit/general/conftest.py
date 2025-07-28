@@ -228,24 +228,8 @@ def flask_base_state_fixture():
     }
 
 
-@pytest.fixture(name="postgresql_relation")
-def postgresql_relation_fixture():
-    """Postgresql relation fixture."""
-    relation_data = {
-        "database": "spring-boot-k8s",
-        "endpoints": "test-postgresql:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    yield testing.Relation(
-        endpoint="postgresql",
-        interface="postgresql_client",
-        remote_app_data=relation_data,
-    )
-
-
 @pytest.fixture(scope="function", name="spring_boot_base_state")
-def spring_boot_state_fixture(postgresql_relation):
+def spring_boot_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/springboot/charm")
     yield {
@@ -253,7 +237,7 @@ def spring_boot_state_fixture(postgresql_relation):
             testing.PeerRelation(
                 "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
             ),
-            postgresql_relation,
+            postgresql_relation("spring-boot-k8s"),
         ],
         "containers": {
             testing.Container(
@@ -289,6 +273,11 @@ def multiple_oauth_integrations_fixture(request):
     charmcraft_yaml["config"]["options"]["google-scopes"] = {
         "default": "openid profile email",
         "description": "A list of scopes with spaces in between.",
+        "type": "string",
+    }
+    charmcraft_yaml["config"]["options"]["google-user-name-attribute"] = {
+        "default": "email",
+        "description": "The name of the attribute returned in the UserInfo Response that references the Name or Identifier of the end-user.",
         "type": "string",
     }
     yaml.safe_dump(charmcraft_yaml, open("charmcraft.yaml", "w"))
