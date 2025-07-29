@@ -4,7 +4,7 @@
 name: fastapi-app
 summary: Example FastAPI application image.
 description: Example FastAPI application image.
-version: "0.3"
+version: "0.1"
 base: ubuntu@24.04
 
 platforms:
