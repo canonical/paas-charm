@@ -27,6 +27,7 @@ from starlette.config import Config
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 conf = ConnectionConfig(
     MAIL_USERNAME=f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}',
@@ -48,6 +49,7 @@ parsed_url = urlparse(os.getenv("APP_BASE_URL", ""))
 root_path = f"/{parsed_url.path.strip('/')}" if parsed_url.path else ""
 app = FastAPI(root_path=root_path)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("APP_SECRET_KEY"))
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
@@ -93,7 +95,7 @@ async def homepage(request: Request):
 
 @app.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for("callback")  # .replace(scheme="https")
+    redirect_uri = request.url_for("callback")
     return await oauth.oidc.authorize_redirect(request, redirect_uri)
 
 
