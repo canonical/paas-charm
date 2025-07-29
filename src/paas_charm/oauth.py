@@ -28,6 +28,8 @@ class PaaSOAuthRelationData(BaseModel):
         jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
         scopes: List of scopes to request during the OAuth flow.
         provider_name: The name of the OAuth identity provider.
+        redirect_uri: Redirection URI to which the response will be sent.
+        user_name_attribute: Claim that identifies the user in the workload system.
     """
 
     client_id: str
@@ -39,6 +41,8 @@ class PaaSOAuthRelationData(BaseModel):
     jwks_endpoint: str
     scopes: str
     provider_name: str
+    redirect_uri: str
+    user_name_attribute: str
 
 
 class InvalidOAuthRelationDataError(InvalidRelationDataError):
@@ -90,6 +94,9 @@ class PaaSOAuthRequirer(OAuthRequirer):
             if not self.is_client_created():
                 return None
             prod_info = self.get_provider_info()
+            user_name_attribute = str(
+                self._charm_config.get(f"{self._relation_name}-user-name-attribute", "sub")
+            )
             return PaaSOAuthRelationData.model_validate(
                 {
                     "client_id": prod_info.client_id,
@@ -101,6 +108,8 @@ class PaaSOAuthRequirer(OAuthRequirer):
                     "jwks_endpoint": prod_info.jwks_endpoint,
                     "scopes": self._client_config.scope,
                     "provider_name": self._relation_name,
+                    "redirect_uri": self._client_config.redirect_uri,
+                    "user_name_attribute": user_name_attribute,
                 }
             )
         except ValidationError as exc:

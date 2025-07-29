@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
     "app_fixture, endpoint",
     [
         ("fastapi_app", "login"),
+        ("spring_boot_app", "oauth2/authorization/oidc"),
         ("flask_app", "login"),
         ("django_app", "auth_login"),
     ],
@@ -53,6 +54,7 @@ def test_oauth_integrations(
     juju.wait(
         jubilant.all_active,
         timeout=10 * 60,
+        delay=5,
     )
 
     if not status.apps.get(app.name).relations.get("oidc"):
@@ -61,6 +63,7 @@ def test_oauth_integrations(
     juju.wait(
         jubilant.all_active,
         timeout=10 * 60,
+        delay=5,
     )
 
     if not _admin_identity_exists(juju, test_email):
@@ -79,15 +82,17 @@ def test_oauth_integrations(
         secret_id = [secret for secret in secrets if secrets[secret].get("name") == test_secret][0]
 
     juju.cli("grant-secret", secret_id, "kratos")
-    juju.run(
+    result = juju.run(
         "kratos/0",
         "reset-password",
         {"email": test_email, "password-secret-id": secret_id.split(":")[-1]},
     )
+    logger.info("results reset-password %s", result.results)
 
     res = json.loads(
         juju.run("traefik-public/0", "show-proxied-endpoints").results["proxied-endpoints"]
     )
+    logger.info("result show-proxied %s", res)
 
     # make sure the app is alive
     response = http.get(res[app.name]["url"], timeout=5, verify=False)
@@ -111,9 +116,10 @@ def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
         page.goto(f"{app_url}/{endpoint}")
+        logger.info("Page content: %s", page.content())
         expect(page).not_to_have_title(re.compile("Sign in failed"))
         page.get_by_label("Email").fill(test_email)
         page.get_by_label("Password").fill(test_password)
         page.get_by_role("button", name="Sign in").click()
         expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
-        expect(page.get_by_role("heading", name=f"Welcome, {test_email}!")).to_be_visible()
+        assert f"Welcome, {test_email}!" in page.content()

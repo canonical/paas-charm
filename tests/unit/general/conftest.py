@@ -228,6 +228,37 @@ def flask_base_state_fixture():
     }
 
 
+@pytest.fixture(scope="function", name="spring_boot_base_state")
+def spring_boot_state_fixture():
+    """State with container and config file set."""
+    os.chdir(PROJECT_ROOT / "examples/springboot/charm")
+    yield {
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+            ),
+            postgresql_relation("spring-boot-k8s"),
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
+                _base_plan={
+                    "services": {
+                        "spring-boot": {
+                            "startup": "enabled",
+                            "override": "replace",
+                            "command": 'bash -c "java -jar *.jar"',
+                        }
+                    }
+                },
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }
+
+
 @pytest.fixture(scope="function", name="multiple_oauth_integrations")
 def multiple_oauth_integrations_fixture(request):
     os.chdir(PROJECT_ROOT / f"examples/{request.param.get('framework')}/charm")
@@ -242,6 +273,11 @@ def multiple_oauth_integrations_fixture(request):
     charmcraft_yaml["config"]["options"]["google-scopes"] = {
         "default": "openid profile email",
         "description": "A list of scopes with spaces in between.",
+        "type": "string",
+    }
+    charmcraft_yaml["config"]["options"]["google-user-name-attribute"] = {
+        "default": "email",
+        "description": "The name of the attribute returned in the UserInfo Response that references the Name or Identifier of the end-user.",
         "type": "string",
     }
     yaml.safe_dump(charmcraft_yaml, open("charmcraft.yaml", "w"))
