@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
+    from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
@@ -70,6 +71,42 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
         "management.endpoints.web.exposure.include": "prometheus",
         "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
         "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
+    }
+
+
+def generate_oauth_env(
+    framework: str,  # pylint: disable=unused-argument
+    relation_data: "PaaSOAuthRelationData | None" = None,
+) -> dict[str, str]:
+    """Generate environment variable from PaaSOAuthRelationData.
+
+    Args:
+        framework: The charm framework name.
+        relation_data: The charm Oauth integration relation data.
+
+    Returns:
+        Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+
+    provider_name = relation_data.provider_name
+    return {
+        f"spring.security.oauth2.client.registration.{provider_name}.client-id": relation_data.client_id,
+        f"spring.security.oauth2.client.registration.{provider_name}.client-secret": relation_data.client_secret,
+        f"spring.security.oauth2.client.registration.{provider_name}.redirect-uri": relation_data.redirect_uri,
+        f"spring.security.oauth2.client.registration.{provider_name}.scope": ",".join(
+            relation_data.scopes.split()
+        ),
+        f"spring.security.oauth2.client.registration.{provider_name}.user-name-attribute": relation_data.user_name_attribute,
+        f"spring.security.oauth2.client.provider.{provider_name}.authorization-uri": relation_data.authorization_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.issuer-uri": relation_data.issuer_url,
+        f"spring.security.oauth2.client.provider.{provider_name}.jwk-set-uri": relation_data.jwks_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.token-uri": relation_data.token_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.user-info-uri": relation_data.userinfo_endpoint,
+        f"spring.security.oauth2.client.provider.{provider_name}.user-name-attribute": relation_data.user_name_attribute,
+        f"spring.security.oauth2.client.registration.{provider_name}.authorization-grant-type": "authorization_code",
     }
 
 
@@ -306,6 +343,7 @@ class SpringBootApp(App):
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
+        generate_oauth_env: Maps Oauth connection information to environment variables.
     """
 
     generate_db_env = staticmethod(generate_db_env)
@@ -317,6 +355,20 @@ class SpringBootApp(App):
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
+    generate_oauth_env = staticmethod(generate_oauth_env)
+
+    def gen_environment(self) -> dict[str, str]:
+        """Generate a environment dictionary from the charm configurations.
+
+        Adds to the base environment variables specific ones for the Spring Boot framework.
+
+        Returns:
+            A dictionary representing the application environment variables.
+        """
+        env = super().gen_environment()
+        # Required because of the strip prefix in the ingress configuration.
+        env["server.forward-headers-strategy"] = "framework"
+        return env
 
 
 class Charm(PaasCharm):

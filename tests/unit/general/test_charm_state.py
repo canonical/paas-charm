@@ -3,6 +3,7 @@
 
 """Charm state unit tests."""
 
+import pathlib
 from unittest.mock import MagicMock
 
 import pytest
@@ -12,6 +13,8 @@ from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
 from paas_charm.redis import InvalidRedisRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
 from paas_charm.saml import InvalidSAMLRelationDataError
+
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent.parent
 
 
 @pytest.mark.parametrize(

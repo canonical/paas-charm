@@ -28,6 +28,8 @@ class PaaSOAuthRelationData(BaseModel):
         jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
         scopes: List of scopes to request during the OAuth flow.
         provider_name: The name of the OAuth identity provider.
+        redirect_uri: Redirection URI to which the response will be sent.
+        user_name_attribute: Claim that identifies the user in the workload system.
     """
 
     client_id: str
@@ -39,6 +41,8 @@ class PaaSOAuthRelationData(BaseModel):
     jwks_endpoint: str
     scopes: str
     provider_name: str
+    redirect_uri: str
+    user_name_attribute: str
 
 
 class InvalidOAuthRelationDataError(InvalidRelationDataError):
@@ -90,6 +94,9 @@ class PaaSOAuthRequirer(OAuthRequirer):
             if not self.is_client_created():
                 return None
             prod_info = self.get_provider_info()
+            user_name_attribute = str(
+                self._charm_config.get(f"{self._relation_name}-user-name-attribute", "sub")
+            )
             return PaaSOAuthRelationData.model_validate(
                 {
                     "client_id": prod_info.client_id,
@@ -101,6 +108,8 @@ class PaaSOAuthRequirer(OAuthRequirer):
                     "jwks_endpoint": prod_info.jwks_endpoint,
                     "scopes": self._client_config.scope,
                     "provider_name": self._relation_name,
+                    "redirect_uri": self._client_config.redirect_uri,
+                    "user_name_attribute": user_name_attribute,
                 }
             )
         except ValidationError as exc:
@@ -116,8 +125,8 @@ class PaaSOAuthRequirer(OAuthRequirer):
         Returns:
             A ClientConfig instance with the configuration for the given endpoint.
         """
-        redirect_path = str(self._charm_config.get(f"{relation_name}_redirect_path", "/callback"))
-        scopes = str(self._charm_config.get(f"{relation_name}_scopes"))
+        redirect_path = str(self._charm_config.get(f"{relation_name}-redirect-path", "/callback"))
+        scopes = str(self._charm_config.get(f"{relation_name}-scopes"))
 
         return ClientConfig(
             redirect_uri=f"{self._base_url}/{redirect_path.strip('/')}",
@@ -138,3 +147,19 @@ class PaaSOAuthRequirer(OAuthRequirer):
             raise CharmConfigInvalidError(msg)
 
         self.update_client_config(config)
+
+    def is_related(self) -> bool:
+        """Check if the charm is related to an Oauth provider charm.
+
+        Returns:
+            True if the charm is related to an Oauth provider charm.
+        """
+        return bool(self.model.relations.get(self._relation_name))
+
+    def get_related_app_name(self) -> str:
+        """Return the related Oauth provider charm's name.
+
+        Returns:
+            Name of the Oauth provider charm.
+        """
+        return self.model.relations.get(self._relation_name)[0].app.name
