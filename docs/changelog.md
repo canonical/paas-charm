@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.8.4 - 2025-07-29
+
+* feat: Add OIDC support for FastAPI.
+
+## 1.8.3 - 2025-07-29
+
+* feat: Add OIDC support for Spring Boot.
+
 ## 1.8.2 - 2025-07-28
 
 * feat: Add OIDC support for Django.
