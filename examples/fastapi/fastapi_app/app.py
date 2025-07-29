@@ -44,9 +44,7 @@ conf = ConnectionConfig(
 )
 
 templates = Jinja2Templates(directory="templates")
-base_url = os.getenv("APP_BASE_URL", "")
-parsed_url = urlparse(base_url)
-# Ensure root_path is either "" or starts with a single slash and has no trailing slash
+parsed_url = urlparse(os.getenv("APP_BASE_URL", ""))
 root_path = f"/{parsed_url.path.strip('/')}" if parsed_url.path else ""
 app = FastAPI(root_path=root_path)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("APP_SECRET_KEY"))
