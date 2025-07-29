@@ -10,3 +10,7 @@ opentelemetry-exporter-otlp-proto-http
 fastapi-mail
 openfga_sdk
 prometheus-fastapi-instrumentator
+Authlib>=1.0
+httpx
+itsdangerous
+jinja2

@@ -1,0 +1,16 @@
+<!--
+  ~ Copyright 2025 Canonical Ltd.
+  ~ See LICENSE file for licensing details.
+-->
+
+{% if user %}
+  <h1>Welcome, {{ user.email }}!</h1>
+  {# This displays the user data, useful for debugging #}
+  <pre>{{ user | tojson(indent=2) }}</pre>
+  
+  {# Use url_for() to generate the correct link to the 'logout' function #}
+  <a href="{{ url_for('logout') }}">Logout</a>
+{% else %}
+  {# Use url_for() to generate the correct link to the 'login' function #}
+  <a href="{{ url_for('login') }}">Login</a>
+{% endif %}

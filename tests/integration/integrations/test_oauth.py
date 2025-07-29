@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, endpoint",
     [
+        ("fastapi_app", "login"),
         ("flask_app", "login"),
         ("django_app", "auth_login"),
     ],
@@ -106,7 +107,7 @@ def _admin_identity_exists(juju, test_email):
 
 def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test_password: str):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
         page.goto(f"{app_url}/{endpoint}")

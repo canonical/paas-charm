@@ -553,9 +553,39 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     if juju.status().apps.get("hydra"):
         logger.info("identity-platform is already deployed")
         return
-    juju.deploy("identity-platform", channel="latest/edge", trust=True)
-    juju.remove_application("kratos-external-idp-integrator")
-    juju.config("kratos", {"enforce_mfa": False})
+    juju.deploy("kratos", channel="latest/edge", trust=True, config={"enforce_mfa": False})
+    juju.deploy("hydra", channel="latest/edge", trust=True)
+    juju.deploy("identity-platform-login-ui-operator", channel="latest/edge", trust=True)
+    juju.deploy(
+        "postgresql-k8s",
+        channel="14/stable",
+        trust=True,
+        config={"plugin_pg_trgm_enable": True, "plugin_btree_gin_enable": True},
+    )
+    juju.deploy("self-signed-certificates", channel="latest/edge")
+    juju.deploy("traefik-k8s", "traefik-admin", channel="latest/edge", trust=True)
+    juju.deploy("traefik-k8s", "traefik-public", channel="latest/edge", trust=True)
+
+    juju.integrate("hydra:pg-database", "postgresql-k8s:database")
+    juju.integrate("kratos:pg-database", "postgresql-k8s:database")
+    juju.integrate("kratos:hydra-endpoint-info", "hydra:hydra-endpoint-info")
+    juju.integrate("hydra:admin-ingress", "traefik-admin:ingress")
+    juju.integrate("hydra:public-ingress", "traefik-public:ingress")
+    juju.integrate("kratos:admin-ingress", "traefik-admin:ingress")
+    juju.integrate("kratos:public-ingress", "traefik-public:ingress")
+    juju.integrate("identity-platform-login-ui-operator:ingress", "traefik-public:ingress")
+    juju.integrate(
+        "identity-platform-login-ui-operator:hydra-endpoint-info", "hydra:hydra-endpoint-info"
+    )
+    juju.integrate(
+        "identity-platform-login-ui-operator:ui-endpoint-info", "hydra:ui-endpoint-info"
+    )
+    juju.integrate(
+        "identity-platform-login-ui-operator:ui-endpoint-info", "kratos:ui-endpoint-info"
+    )
+    juju.integrate("identity-platform-login-ui-operator:kratos-info", "kratos:kratos-info")
+    juju.integrate("traefik-admin:certificates", "self-signed-certificates:certificates")
+    juju.integrate("traefik-public:certificates", "self-signed-certificates:certificates")
 
 
 @pytest.fixture(scope="session")
