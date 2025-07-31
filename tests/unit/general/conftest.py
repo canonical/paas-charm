@@ -376,7 +376,6 @@ def go_base_state_fixture():
             testing.Container(
                 name="app",
                 can_connect=True,
-                # mounts={"data": testing.Mount(location="/flask/gunicorn.conf.py", source="conf")},
                 execs={
                     testing.Exec(
                         command_prefix=["go-app"],

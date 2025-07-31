@@ -122,5 +122,5 @@ def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test
         page.get_by_label("Email").fill(test_email)
         page.get_by_label("Password").fill(test_password)
         page.get_by_role("button", name="Sign in").click()
-        expect(page).to_have_url(re.compile(f"^{app_url}.*"))
+        expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
         assert f"Welcome, {test_email}!" in page.content()
