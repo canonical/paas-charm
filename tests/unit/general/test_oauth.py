@@ -17,6 +17,7 @@ from ops import testing
 from examples.django.charm.src.charm import DjangoCharm
 from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.utils import config_metadata
 
@@ -49,7 +50,7 @@ from paas_charm.utils import config_metadata
                 "FLASK_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "FLASK_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
             },
-            id="flask-oidc",
+            id="flask",
         ),
         pytest.param(
             "django_base_state",
@@ -88,7 +89,7 @@ from paas_charm.utils import config_metadata
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -134,7 +135,7 @@ from paas_charm.utils import config_metadata
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
             },
-            id="fastapi-oidc",
+            id="fastapi",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -193,7 +194,48 @@ from paas_charm.utils import config_metadata
                 "spring.security.oauth2.client.registration.oidc.scope": "openid,profile,email,phone",
                 "spring.security.oauth2.client.registration.oidc.user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            "go",
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            "go-app",
+            {
+                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "APP_OIDC_SCOPES": "openid profile email phone",
+                "APP_BASE_URL": "http://juju.test/",
+                "APP_SECRET_KEY": "test",
+                "APP_PEER_FQDNS": "go-k8s-0.go-k8s-endpoints.test-model.svc.cluster.local",
+                "APP_OIDC_CLIENT_ID": "test-client-id",
+                "APP_OIDC_CLIENT_SECRET": "abc",
+                "APP_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
+                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
+                "APP_OIDC_ACCESS_TOKEN_URL": "https://traefik_ip/model_name-hydra/oauth2/token",
+                "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
+                "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
+                "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+                "APP_METRICS_PATH": "/metrics",
+                "APP_METRICS_PORT": "8080",
+                "APP_PORT": "8080",
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/go-k8s",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "go-k8s",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/go-k8s",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+            },
+            id="go",
         ),
     ],
 )
@@ -272,7 +314,7 @@ def test_oauth_config_wrong_relation_order(
                 "FLASK_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "FLASK_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
             },
-            id="flask-oidc",
+            id="flask",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -331,7 +373,7 @@ def test_oauth_config_wrong_relation_order(
                 "spring.security.oauth2.client.registration.oidc.scope": "openid,profile,email,phone",
                 "spring.security.oauth2.client.registration.oidc.user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
         ),
         pytest.param(
             "django_base_state",
@@ -370,7 +412,7 @@ def test_oauth_config_wrong_relation_order(
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -416,7 +458,48 @@ def test_oauth_config_wrong_relation_order(
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
             },
-            id="fastapi-oidc",
+            id="fastapi",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            "go",
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            "go-app",
+            {
+                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "APP_OIDC_SCOPES": "openid profile email phone",
+                "APP_BASE_URL": "http://juju.test/",
+                "APP_SECRET_KEY": "test",
+                "APP_PEER_FQDNS": "go-k8s-0.go-k8s-endpoints.test-model.svc.cluster.local",
+                "APP_OIDC_CLIENT_ID": "test-client-id",
+                "APP_OIDC_CLIENT_SECRET": "abc",
+                "APP_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
+                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
+                "APP_OIDC_ACCESS_TOKEN_URL": "https://traefik_ip/model_name-hydra/oauth2/token",
+                "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
+                "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
+                "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+                "APP_METRICS_PATH": "/metrics",
+                "APP_METRICS_PORT": "8080",
+                "APP_PORT": "8080",
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/go-k8s",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "go-k8s",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/go-k8s",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+            },
+            id="go",
         ),
     ],
 )
@@ -473,7 +556,7 @@ def test_oauth_config_correct_relation_order(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="flask-oidc",
+            id="flask",
         ),
         pytest.param(
             "django_base_state",
@@ -482,7 +565,7 @@ def test_oauth_config_correct_relation_order(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -492,7 +575,7 @@ def test_oauth_config_correct_relation_order(
                 "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
-            id="fastapi-oidc",
+            id="fastapi",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -502,7 +585,16 @@ def test_oauth_config_correct_relation_order(
                 "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="go",
         ),
     ],
 )
@@ -559,7 +651,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="flask-oidc",
+            id="flask",
         ),
         pytest.param(
             "django_base_state",
@@ -568,7 +660,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -578,7 +670,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
                 "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
-            id="fastapi-oidc",
+            id="fastapi",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -588,7 +680,16 @@ def test_oauth_config_remove_ingress_integration_should_block(
                 "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="go",
         ),
     ],
 )
@@ -643,7 +744,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "profile email phone",
             },
-            id="flask-oidc-fail",
+            id="flask",
         ),
         pytest.param(
             "django_base_state",
@@ -652,7 +753,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "profile email phone",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -662,7 +763,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
                 "oidc-scopes": "profile email phone",
                 "non-optional-string": "test",
             },
-            id="fastapi-oidc",
+            id="fastapi",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -672,7 +773,16 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
                 "oidc-scopes": "profile email phone",
                 "oidc-user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "profile email phone",
+            },
+            id="go",
         ),
     ],
 )
@@ -718,7 +828,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="flask-oidc",
+            id="flask",
         ),
         pytest.param(
             "django_base_state",
@@ -727,7 +837,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            id="django-oidc",
+            id="django",
         ),
         pytest.param(
             "fastapi_base_state",
@@ -737,7 +847,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
                 "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
-            id="fastapi-oidc",
+            id="fastapi",
         ),
         pytest.param(
             "spring_boot_base_state",
@@ -747,7 +857,16 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
                 "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
-            id="spring-boot-oidc",
+            id="spring-boot",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="go",
         ),
     ],
 )
@@ -831,7 +950,19 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
                 "google-scopes": "openid profile email phone",
             },
             {"framework": "fastapi"},
-            id="fastapi-oidc",
+            id="fastapi",
+        ),
+        pytest.param(
+            "go_base_state",
+            GoCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+                "google-redirect-path": "/oauth/callback",
+                "google-scopes": "openid profile email phone",
+            },
+            {"framework": "go"},
+            id="go",
         ),
     ],
     indirect=["multiple_oauth_integrations"],
