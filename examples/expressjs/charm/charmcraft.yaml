@@ -37,6 +37,8 @@ charm-libs:
   version: '0'
 - lib: tempo-coordinator-k8s.tracing
   version: '0'
+- lib: hydra.oauth
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -79,6 +81,15 @@ config:
     user-defined-config:
       type: string
       description: Example of a user defined configuration.
+    oidc-redirect-path:
+      type: string
+      description: The path that the user will be redirected upon completing login.
+      default: /callback
+    oidc-scopes:
+      type: string
+      description: A list of scopes with spaces in between.
+      default: "openid profile email"
+
 containers:
   app:
     resource: app-image
@@ -112,6 +123,11 @@ requires:
     interface: openfga
     optional: True
     limit: 1
+  oidc:
+    interface: oauth
+    optional: True
+    limit: 1
+
 resources:
   app-image:
     description: ExpressJS application image.

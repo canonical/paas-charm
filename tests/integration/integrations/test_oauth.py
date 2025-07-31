@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, endpoint",
     [
+        ("expressjs_app", "login"),
         ("go_app", "login/openid-connect"),
         ("fastapi_app", "login"),
         ("spring_boot_app", "oauth2/authorization/oidc"),

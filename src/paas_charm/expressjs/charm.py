@@ -14,6 +14,35 @@ from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
 
+def generate_oauth_env(
+    framework: str, relation_data: "OauthProviderConfig | None" = None
+) -> dict[str, str]:
+    """Generate environment variable from OauthProviderConfig.
+
+    Args:
+        relation_data: The charm Oauth integration relation data.
+
+    Returns:
+        Default Oauth environment mappings if OauthProviderConfig is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    return {
+        k: v
+        for k, v in (
+            ("CLIENT_ID", relation_data.client_id),
+            ("CLIENT_SECRET", relation_data.client_secret),
+            ("ISSUER_BASE_URL", relation_data.issuer_url),
+            ("APP_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
+            ("APP_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
+            ("APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
+            ("APP_OIDC_SCOPES", relation_data.scopes),
+            ("APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
+            ("NODE_TLS_REJECT_UNAUTHORIZED",0),
+        )
+        if v is not None
+    }
 class ExpressJSConfig(FrameworkConfig):
     """Represent ExpressJS builtin configuration values.
 
@@ -36,6 +65,13 @@ class ExpressJSConfig(FrameworkConfig):
 
     model_config = ConfigDict(extra="ignore")
 
+class ExpressJSApp(App):
+    """ExpressJS App service.
+
+    Attrs:
+        oauth_env: environment variables for Oauth integration.
+    """
+    generate_oauth_env = staticmethod(generate_oauth_env)
 
 class Charm(PaasCharm):
     """ExpressJS Charm service.
@@ -79,7 +115,7 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        return App(
+        return ExpressJSApp(
             container=self._container,
             charm_state=charm_state,
             workload_config=self._workload_config,
