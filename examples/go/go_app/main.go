@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -110,26 +109,8 @@ type mainHandler struct {
 // serveHelloWorld now acts as the main landing page with a login link.
 func (h mainHandler) serveHelloWorld(w http.ResponseWriter, r *http.Request) {
 	h.counter.Inc()
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	fmt.Fprintf(w, `<!DOCTYPE html>
-<html>
-<head>
-    <title>Go OIDC App</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; text-align: center; background-color: #f9f9f9; }
-        h1 { color: #333; }
-        p { color: #555; }
-        a { font-size: 1.2em; padding: 0.5em 1.5em; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 1em; }
-        a:hover { background-color: #0056b3; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to the Application</h1>
-    <p>Please log in to view your profile.</p>
-    <a href="%s">Log In with OIDC</a>
-</body>
-</html>`, h.config.LoginURL)
+	log.Printf("Counter %#v\n", h.counter)
+	fmt.Fprintf(w, "Hello, World!")
 }
 
 func handleError(w http.ResponseWriter, error_message error) {
@@ -344,9 +325,6 @@ func initTracer(ctx context.Context) error {
 }
 
 func main() {
-	// Register the goth.User type with the gob package so it can be stored in the session.
-	gob.Register(goth.User{})
-
 	// Load all configuration from environment variables at startup.
 	config, err := NewConfig()
 	if err != nil {
@@ -364,10 +342,12 @@ func main() {
 	store.Options.HttpOnly = true
 	store.Options.Secure = true
 	store.Options.SameSite = http.SameSiteNoneMode
+	gothic.Store = store
 
 	log.Printf("Session cookie configured with Path: %s and Secure: %t and SameSite: %d", store.Options.Path, store.Options.Secure, store.Options.SameSite)
 
-	gothic.Store = store
+	// Do not do this in production!
+	// This disables SSL verification.
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// Construct the full redirect URL.
