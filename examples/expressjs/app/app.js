@@ -2,6 +2,8 @@
  * Copyright 2025 Canonical Ltd.
  * See LICENSE file for licensing details.
  */
+// Do not use this in production. This disables TLS certificate check.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 var createError = require("http-errors");
 var express = require("express");
