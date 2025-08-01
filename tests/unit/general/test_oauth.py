@@ -249,6 +249,7 @@ from paas_charm.utils import config_metadata
             "npm start",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "SCOPE": "openid profile email phone",
                 "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_BASE_URL": "http://juju.test/",
                 "APP_PEER_FQDNS": "expressjs-k8s-0.expressjs-k8s-endpoints.test-model.svc.cluster.local",
@@ -555,6 +556,7 @@ def test_oauth_config_wrong_relation_order(
             "npm start",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "SCOPE": "openid profile email phone",
                 "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_BASE_URL": "http://juju.test/",
                 "APP_PEER_FQDNS": "expressjs-k8s-0.expressjs-k8s-endpoints.test-model.svc.cluster.local",
