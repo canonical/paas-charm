@@ -125,7 +125,6 @@ func handleError(w http.ResponseWriter, error_message error) {
 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
 	}
 	w.Write(jsonResp)
-	return
 }
 
 func (h mainHandler) serveOpenFgaListAuthorizationModels(w http.ResponseWriter, r *http.Request) {
@@ -158,8 +157,8 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
 
-	from := mail.Address{"", "tester@example.com"}
-	to := mail.Address{"", "test@example.com"}
+	from := mail.Address{Name: "", Address: "tester@example.com"}
+	to := mail.Address{Name: "", Address: "test@example.com"}
 	subj := "hello"
 	body := "Hello world!"
 
@@ -298,6 +297,20 @@ func (h mainHandler) serveAuthCallback(w http.ResponseWriter, r *http.Request) {
 // OIDC-specific: logout handler
 func (h mainHandler) serveLogout(w http.ResponseWriter, r *http.Request) {
 	gothic.Logout(w, r)
+	session, err := h.store.New(r, SessionName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set MaxAge to -1. This effectively deletes the cookie.
+	session.Options.MaxAge = -1
+	err = h.store.Save(r, w, session)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	homeURL := h.config.BaseURL
 	if homeURL == "" {
 		homeURL = "/"
@@ -306,8 +319,12 @@ func (h mainHandler) serveLogout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h mainHandler) serverProfile(w http.ResponseWriter, r *http.Request) {
+func (h mainHandler) serveProfile(w http.ResponseWriter, r *http.Request) {
 	session, err := h.store.Get(r, SessionName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	userData, ok := session.Values["user"]
 	if !ok {
 		http.Error(w, "User not authenticated.", http.StatusForbidden)
@@ -457,12 +474,12 @@ func main() {
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
 
 	// OIDC-specific: Add OIDC routes
-	mux.HandleFunc(fmt.Sprintf("/auth/{provider}/callback"), mainHandler.serveAuthCallback)
+	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)
 	mux.HandleFunc("/logout/{provider}", mainHandler.serveLogout)
 	mux.HandleFunc("/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		gothic.BeginAuthHandler(w, r)
 	})
-	mux.HandleFunc("/profile", mainHandler.serverProfile)
+	mux.HandleFunc("/profile", mainHandler.serveProfile)
 
 	if config.MetricsPort != config.Port {
 		prometheus.MustRegister(requestCounter)
