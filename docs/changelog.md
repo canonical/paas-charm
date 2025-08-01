@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.8.5 - 2025-08-01
+
+* feat: Add OIDC support for Go.
+* docs: Refactor how-to landing page.
+
 ## 1.8.4 - 2025-07-29
 
 * feat: Add OIDC support for FastAPI.
@@ -20,7 +25,7 @@ Place any unreleased changes here, that are subject to release in coming version
 ## 1.8.2 - 2025-07-28
 
 * feat: Add OIDC support for Django.
-* * docs: Added "Supported customizable features and capabilities".
+* docs: Added "Supported customizable features and capabilities".
 
 ## 1.8.1 - 2025-07-25
 

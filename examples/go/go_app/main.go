@@ -43,7 +43,8 @@ import (
 
 // OIDC-specific constants for the session store
 const (
-	maxAge = 86400 * 30 // 30 days
+	maxAge      = 86400 * 30 // 30 days
+	SessionName = "_user_session"
 )
 
 // Config holds all application configuration, read once from the environment.
@@ -58,15 +59,15 @@ type Config struct {
 }
 
 // NewConfig creates a new Config struct from environment variables.
-func NewConfig() (*Config, error) {
+func NewConfig() (Config, error) {
 	baseURLStr := os.Getenv("APP_BASE_URL")
 	if baseURLStr == "" {
-		return nil, errors.New("APP_BASE_URL environment variable must be set")
+		return Config{}, errors.New("APP_BASE_URL environment variable must be set")
 	}
 
 	baseURL, err := url.Parse(baseURLStr)
 	if err != nil {
-		return nil, fmt.Errorf("invalid APP_BASE_URL: %w", err)
+		return Config{}, fmt.Errorf("invalid APP_BASE_URL: %w", err)
 	}
 
 	basePath := baseURL.Path
@@ -89,7 +90,7 @@ func NewConfig() (*Config, error) {
 		metricsPath = "/metrics"
 	}
 
-	return &Config{
+	return Config{
 		BaseURL:     strings.TrimSuffix(baseURLStr, "/"),
 		BasePath:    basePath,
 		Provider:    provider,
@@ -103,7 +104,8 @@ func NewConfig() (*Config, error) {
 type mainHandler struct {
 	counter prometheus.Counter
 	service service.Service
-	config  *Config
+	config  Config
+	store   sessions.Store
 }
 
 // serveHelloWorld now acts as the main landing page with a login link.
@@ -123,7 +125,6 @@ func handleError(w http.ResponseWriter, error_message error) {
 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
 	}
 	w.Write(jsonResp)
-	return
 }
 
 func (h mainHandler) serveOpenFgaListAuthorizationModels(w http.ResponseWriter, r *http.Request) {
@@ -156,8 +157,8 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
 
-	from := mail.Address{"", "tester@example.com"}
-	to := mail.Address{"", "test@example.com"}
+	from := mail.Address{Name: "", Address: "tester@example.com"}
+	to := mail.Address{Name: "", Address: "test@example.com"}
 	subj := "hello"
 	body := "Hello world!"
 
@@ -260,20 +261,91 @@ func (h mainHandler) servePostgresql(w http.ResponseWriter, r *http.Request) {
 func (h mainHandler) serveAuthCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		log.Printf("Error completing user auth: %v", err)
-		fmt.Fprintln(w, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session, err := h.store.New(r, SessionName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userMap := map[string]string{
+		"email":    user.Email,
+		"provider": user.Provider,
+	}
+
+	userData, err := json.Marshal(userMap)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session.Values["user"] = userData
+	err = h.store.Save(r, w, session)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	profileURL := h.config.BaseURL + "/profile"
+	w.Header().Set("Location", profileURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+// OIDC-specific: logout handler
+func (h mainHandler) serveLogout(w http.ResponseWriter, r *http.Request) {
+	gothic.Logout(w, r)
+	session, err := h.store.New(r, SessionName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set MaxAge to -1. This effectively deletes the cookie.
+	session.Options.MaxAge = -1
+	err = h.store.Save(r, w, session)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	homeURL := h.config.BaseURL
+	if homeURL == "" {
+		homeURL = "/"
+	}
+	w.Header().Set("Location", homeURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (h mainHandler) serveProfile(w http.ResponseWriter, r *http.Request) {
+	session, err := h.store.Get(r, SessionName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userData, ok := session.Values["user"]
+	if !ok {
+		http.Error(w, "User not authenticated.", http.StatusForbidden)
+		return
+	}
+
+	userDataBytes, ok := userData.([]byte)
+	if !ok {
+		http.Error(w, "User data in session is of unexpected type", http.StatusInternalServerError)
+		return
+	}
+
+	var userMap map[string]interface{}
+	err = json.Unmarshal(userDataBytes, &userMap)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	userData, err := json.MarshalIndent(user, "", "  ")
-	if err != nil {
-		http.Error(w, "Failed to process user data.", http.StatusInternalServerError)
-		return
-	}
-
-	logoutURL := fmt.Sprintf("%s/logout/%s", h.config.BaseURL, user.Provider)
+	logoutURL := fmt.Sprintf("%s/logout/%s", h.config.BaseURL, userMap["provider"])
 
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html>
@@ -293,18 +365,7 @@ func (h mainHandler) serveAuthCallback(w http.ResponseWriter, r *http.Request) {
     <h2>Your OIDC Data:</h2>
     <pre>%s</pre>
 </body>
-</html>`, user.Email, logoutURL, string(userData))
-}
-
-// OIDC-specific: logout handler
-func (h mainHandler) serveLogout(w http.ResponseWriter, r *http.Request) {
-	gothic.Logout(w, r)
-	homeURL := h.config.BaseURL
-	if homeURL == "" {
-		homeURL = "/"
-	}
-	w.Header().Set("Location", homeURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+</html>`, userMap["email"].(string), logoutURL, userMap)
 }
 
 var tp *sdktrace.TracerProvider
@@ -340,8 +401,6 @@ func main() {
 	store.MaxAge(maxAge)
 	store.Options.Path = config.BasePath
 	store.Options.HttpOnly = true
-	store.Options.Secure = true
-	store.Options.SameSite = http.SameSiteNoneMode
 	gothic.Store = store
 
 	log.Printf("Session cookie configured with Path: %s and Secure: %t and SameSite: %d", store.Options.Path, store.Options.Secure, store.Options.SameSite)
@@ -406,6 +465,7 @@ func main() {
 		counter: requestCounter,
 		service: service.Service{PostgresqlURL: postgresqlURL},
 		config:  config,
+		store:   store,
 	}
 	mux.HandleFunc("/{$}", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
@@ -414,11 +474,12 @@ func main() {
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
 
 	// OIDC-specific: Add OIDC routes
-	mux.HandleFunc(fmt.Sprintf("/auth/{provider}/callback"), mainHandler.serveAuthCallback)
+	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)
 	mux.HandleFunc("/logout/{provider}", mainHandler.serveLogout)
 	mux.HandleFunc("/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		gothic.BeginAuthHandler(w, r)
 	})
+	mux.HandleFunc("/profile", mainHandler.serveProfile)
 
 	if config.MetricsPort != config.Port {
 		prometheus.MustRegister(requestCounter)

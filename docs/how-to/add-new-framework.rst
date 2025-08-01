@@ -53,6 +53,6 @@ Add more features
 If you require additional features in the framework, determine whether the features
 need to be added to ``pass-charm``, Rockcraft, or Charmcraft.
 Follow the :ref:`contributing guide <how_to_contribute>` for ``paas-charm`` or the contributing
-guides in `Rockcraft <https://github.com/canonical/rockcraft/blob/main/CONTRIBUTING.rst>`_
+guides in `Rockcraft <https://github.com/canonical/rockcraft/blob/main/CONTRIBUTING.md>`_
 and `Charmcraft <https://github.com/canonical/charmcraft/blob/main/CONTRIBUTING.md>`_.
 
