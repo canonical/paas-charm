@@ -21,6 +21,7 @@ def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju, http: reque
     act: call the endpoint.
     assert: the charm should respond with 200 OK.
     """
+    juju.wait(lambda status: jubilant.all_active(status, spring_boot_app.name, "postgresql-k8s"))
     status = juju.status()
     assert status.apps[spring_boot_app.name].units[spring_boot_app.name + "/0"].is_active
     for unit in status.apps[spring_boot_app.name].units.values():
