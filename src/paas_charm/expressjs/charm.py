@@ -45,7 +45,7 @@ def generate_oauth_env(
             ("APP_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
             ("APP_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
             ("APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
-            ("APP_OIDC_SCOPES", relation_data.scopes),
+            ("SCOPE", relation_data.scopes),
             ("APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
             ("NODE_TLS_REJECT_UNAUTHORIZED", "0"),
         )

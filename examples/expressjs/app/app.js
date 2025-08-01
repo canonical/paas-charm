@@ -51,7 +51,6 @@ if (process.env.CLIENT_ID != undefined){
       baseURL: process.env.APP_BASE_URL,
       authorizationParams: {
           response_type: 'code',
-      scope: process.env.APP_OIDC_SCOPES,
       },
       routes: {
         login: false,
