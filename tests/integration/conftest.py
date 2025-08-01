@@ -521,7 +521,7 @@ def expressjs_app_fixture(
     }
     charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
 
-    if juju.status().apps.get(app_name):
+    if not juju.status().apps.get(app_name):
         juju.deploy(
             charm=charm_file,
             resources=resources,
@@ -605,15 +605,14 @@ def spring_boot_app_fixture(
 
     if status.apps.get(app_name):
         juju.refresh(app_name, path=charm_file, resources=resources)
+        if not status.apps.get(app_name).relations.get("postgresql"):
+            juju.integrate(app_name, "postgresql-k8s:database")
     else:
         juju.deploy(
             charm=charm_file,
             app=app_name,
             resources=resources,
         )
-
-    # Add required relations
-    if not status.apps.get(app_name).relations.get("postgresql"):
         juju.integrate(app_name, "postgresql-k8s:database")
 
     return App(app_name)
@@ -829,7 +828,7 @@ def generate_app_fixture(
         }
     charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory, charm_dict=charm_dict)
 
-    if juju.status().apps.get(app_name):
+    if not juju.status().apps.get(app_name):
         juju.deploy(
             charm=charm_file,
             resources=resources,
