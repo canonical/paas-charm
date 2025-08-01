@@ -210,10 +210,7 @@ def deploy_loki_fixture(
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
         juju.deploy(loki_app_name, channel="1/stable", trust=True)
-    juju.wait(
-        lambda status: status.apps[loki_app_name].is_active,
-        error=jubilant.any_blocked,
-    )
+
     return App(loki_app_name)
 
 
@@ -517,34 +514,22 @@ def expressjs_app_fixture(
     if use_existing:
         return App(app_name)
 
-    juju.deploy(
-        "postgresql-k8s",
-        channel="14/stable",
-        base="ubuntu@22.04",
-        revision=300,
-        trust=True,
-        config={
-            "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
+    deploy_postgresql(juju)
 
     resources = {
         "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
     charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
-    juju.deploy(
-        charm=charm_file,
-        resources=resources,
-    )
+
+    if juju.status().apps.get(app_name):
+        juju.deploy(
+            charm=charm_file,
+            resources=resources,
+        )
 
     # Add required relations
-    juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(
-        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
-        timeout=300,
-    )
+    if not juju.status().apps.get(app_name).relations.get("postgresql"):
+        juju.integrate(app_name, "postgresql-k8s:database")
 
     return App(app_name)
 
@@ -607,22 +592,7 @@ def spring_boot_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
-    try:
-        juju.deploy(
-            "postgresql-k8s",
-            channel="14/stable",
-            base="ubuntu@22.04",
-            revision=300,
-            trust=True,
-            config={
-                "profile": "testing",
-                "plugin_hstore_enable": "true",
-                "plugin_pg_trgm_enable": "true",
-            },
-        )
-    except jubilant.CLIError as err:
-        if "application already exists" not in err.stderr:
-            raise err
+    deploy_postgresql(juju)
 
     charm_file = build_charm_file(
         pytestconfig,
@@ -630,24 +600,21 @@ def spring_boot_app_fixture(
         tmp_path_factory,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
-    try:
+
+    status = juju.status()
+
+    if status.apps.get(app_name):
+        juju.refresh(app_name, path=charm_file, resources=resources)
+    else:
         juju.deploy(
             charm=charm_file,
             app=app_name,
             resources=resources,
         )
-    except jubilant.CLIError as err:
-        if "application already exists" in err.stderr:
-            juju.refresh(app_name, path=charm_file, resources=resources)
-        else:
-            raise err
+
     # Add required relations
-    try:
+    if not status.apps.get(app_name).relations.get("postgresql"):
         juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"), timeout=600)
 
     return App(app_name)
 
@@ -691,17 +658,15 @@ def spring_boot_mysql_app_fixture(
         charm_dict=updated_dict,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
-    try:
+
+    if juju.status().apps.get(app_name):
+        juju.refresh(app_name, path=charm_file, resources=resources)
+    else:
         juju.deploy(
             charm=charm_file,
             app=app_name,
             resources=resources,
         )
-    except jubilant.CLIError as err:
-        if "application already exists" in err.stderr:
-            juju.refresh(app_name, path=charm_file, resources=resources)
-        else:
-            raise err
 
     return App(app_name)
 
@@ -863,27 +828,22 @@ def generate_app_fixture(
             "app-image": pytestconfig.getoption(f"--{image_name}"),
         }
     charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory, charm_dict=charm_dict)
-    try:
+
+    if juju.status().apps.get(app_name):
         juju.deploy(
             charm=charm_file,
             resources=resources,
             config=config,
         )
-    except jubilant.CLIError as err:
-        if "application already exists" not in err.stderr:
-            raise err
 
     # Add required relations
     apps_to_wait_for = [app_name]
     if use_postgres:
         deploy_postgresql(juju)
-        try:
+        if not juju.status().apps.get(app_name).relations.get("postgresql"):
             juju.integrate(app_name, "postgresql-k8s:database")
-        except jubilant.CLIError as err:
-            if "already exists" not in err.stderr:
-                raise err
         apps_to_wait_for.append("postgresql-k8s")
-    juju.wait(lambda status: jubilant.all_active(status, *apps_to_wait_for), timeout=10 * 60)
+
     yield App(app_name)
 
 

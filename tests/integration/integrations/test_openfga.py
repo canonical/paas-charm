@@ -30,7 +30,6 @@ def test_openfga_integrations(
     port,
     request: pytest.FixtureRequest,
     openfga_server_app: App,
-    postgresql_k8s: App,
 ):
     """
     arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
@@ -38,14 +37,9 @@ def test_openfga_integrations(
     assert: The request succeeds.
     """
     app = request.getfixturevalue(app_fixture)
-    juju.wait(lambda status: jubilant.all_active(status, app.name, openfga_server_app.name))
 
     juju.integrate(app.name, f"{openfga_server_app.name}:openfga")
-    juju.wait(
-        lambda status: jubilant.all_active(
-            status, app.name, openfga_server_app.name, postgresql_k8s.name
-        )
-    )
+    juju.wait(lambda status: jubilant.all_active(status, app.name, openfga_server_app.name))
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
