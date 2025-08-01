@@ -5,6 +5,7 @@
 
 import pathlib
 import typing
+from typing import TYPE_CHECKING
 
 import ops
 from pydantic import ConfigDict, Field
@@ -13,17 +14,24 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
+if TYPE_CHECKING:
+    from paas_charm.oauth import PaaSOAuthRelationData
 
+
+# The abstract function has the `framework` so
+# pylint: disable=unused-argument
 def generate_oauth_env(
-    framework: str, relation_data: "OauthProviderConfig | None" = None
+    framework: str,
+    relation_data: "PaaSOAuthRelationData | None" = None,
 ) -> dict[str, str]:
-    """Generate environment variable from OauthProviderConfig.
+    """Generate environment variable from PaaSOAuthRelationData.
 
     Args:
+        framework: The charm framework name.
         relation_data: The charm Oauth integration relation data.
 
     Returns:
-        Default Oauth environment mappings if OauthProviderConfig is available, empty
+        Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -39,10 +47,12 @@ def generate_oauth_env(
             ("APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
             ("APP_OIDC_SCOPES", relation_data.scopes),
             ("APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
-            ("NODE_TLS_REJECT_UNAUTHORIZED",0),
+            ("NODE_TLS_REJECT_UNAUTHORIZED", "0"),
         )
         if v is not None
     }
+
+
 class ExpressJSConfig(FrameworkConfig):
     """Represent ExpressJS builtin configuration values.
 
@@ -65,13 +75,16 @@ class ExpressJSConfig(FrameworkConfig):
 
     model_config = ConfigDict(extra="ignore")
 
+
 class ExpressJSApp(App):
     """ExpressJS App service.
 
     Attrs:
-        oauth_env: environment variables for Oauth integration.
+        generate_oauth_env: Maps OAuth connection information to environment variables.
     """
+
     generate_oauth_env = staticmethod(generate_oauth_env)
+
 
 class Charm(PaasCharm):
     """ExpressJS Charm service.
