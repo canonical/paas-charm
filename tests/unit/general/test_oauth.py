@@ -15,6 +15,7 @@ from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
 from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
@@ -236,6 +237,47 @@ from paas_charm.utils import config_metadata
                 "POSTGRESQL_DB_USERNAME": "test-username",
             },
             id="go",
+        ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            "expressjs",
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            "npm start",
+            {
+                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "APP_OIDC_SCOPES": "openid profile email phone",
+                "APP_BASE_URL": "http://juju.test/",
+                "APP_PEER_FQDNS": "expressjs-k8s-0.expressjs-k8s-endpoints.test-model.svc.cluster.local",
+                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
+                "APP_OIDC_ACCESS_TOKEN_URL": "https://traefik_ip/model_name-hydra/oauth2/token",
+                "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
+                "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+                "CLIENT_ID": "test-client-id",
+                "CLIENT_SECRET": "abc",
+                "ISSUER_BASE_URL": "https://traefik_ip/model_name-hydra",
+                "METRICS_PATH": "/metrics",
+                "METRICS_PORT": "8080",
+                "NODE_ENV": "production",
+                "APP_SECRET_KEY": "test",
+                "PORT": "8080",
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/expressjs-k8s",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "expressjs-k8s",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/expressjs-k8s",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+            },
+            id="expressjs",
         ),
     ],
 )
@@ -501,6 +543,47 @@ def test_oauth_config_wrong_relation_order(
             },
             id="go",
         ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            "expressjs",
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            "npm start",
+            {
+                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
+                "APP_OIDC_SCOPES": "openid profile email phone",
+                "APP_BASE_URL": "http://juju.test/",
+                "APP_PEER_FQDNS": "expressjs-k8s-0.expressjs-k8s-endpoints.test-model.svc.cluster.local",
+                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
+                "APP_OIDC_ACCESS_TOKEN_URL": "https://traefik_ip/model_name-hydra/oauth2/token",
+                "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
+                "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
+                "CLIENT_ID": "test-client-id",
+                "CLIENT_SECRET": "abc",
+                "ISSUER_BASE_URL": "https://traefik_ip/model_name-hydra",
+                "METRICS_PATH": "/metrics",
+                "METRICS_PORT": "8080",
+                "NODE_ENV": "production",
+                "APP_SECRET_KEY": "test",
+                "PORT": "8080",
+                "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/expressjs-k8s",
+                "POSTGRESQL_DB_FRAGMENT": "",
+                "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+                "POSTGRESQL_DB_NAME": "expressjs-k8s",
+                "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+                "POSTGRESQL_DB_PARAMS": "",
+                "POSTGRESQL_DB_PASSWORD": "test-password",
+                "POSTGRESQL_DB_PATH": "/expressjs-k8s",
+                "POSTGRESQL_DB_PORT": "5432",
+                "POSTGRESQL_DB_QUERY": "",
+                "POSTGRESQL_DB_SCHEME": "postgresql",
+                "POSTGRESQL_DB_USERNAME": "test-username",
+            },
+            id="expressjs",
+        ),
     ],
 )
 def test_oauth_config_correct_relation_order(
@@ -595,6 +678,15 @@ def test_oauth_config_correct_relation_order(
                 "oidc-scopes": "openid profile email phone",
             },
             id="go",
+        ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="expressjs",
         ),
     ],
 )
@@ -691,6 +783,15 @@ def test_oauth_config_remove_ingress_integration_should_block(
             },
             id="go",
         ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="expressjs",
+        ),
     ],
 )
 def test_oauth_config_remove_oauth_integration_should_not_block(
@@ -784,6 +885,15 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
             },
             id="go",
         ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "profile email phone",
+            },
+            id="expressjs",
+        ),
     ],
 )
 def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request) -> None:
@@ -867,6 +977,15 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
                 "oidc-scopes": "openid profile email phone",
             },
             id="go",
+        ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+            },
+            id="expressjs",
         ),
     ],
 )
@@ -963,6 +1082,18 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
             },
             {"framework": "go"},
             id="go",
+        ),
+        pytest.param(
+            "expressjs_base_state",
+            ExpressJSCharm,
+            {
+                "oidc-redirect-path": "/oauth/callback",
+                "oidc-scopes": "openid profile email phone",
+                "google-redirect-path": "/oauth/callback",
+                "google-scopes": "openid profile email phone",
+            },
+            {"framework": "expressjs"},
+            id="expressjs",
         ),
     ],
     indirect=["multiple_oauth_integrations"],

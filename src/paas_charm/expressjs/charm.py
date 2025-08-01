@@ -39,10 +39,11 @@ def generate_oauth_env(
             ("APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
             ("APP_OIDC_SCOPES", relation_data.scopes),
             ("APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
-            ("NODE_TLS_REJECT_UNAUTHORIZED",0),
         )
         if v is not None
     }
+
+
 class ExpressJSConfig(FrameworkConfig):
     """Represent ExpressJS builtin configuration values.
 
@@ -65,13 +66,16 @@ class ExpressJSConfig(FrameworkConfig):
 
     model_config = ConfigDict(extra="ignore")
 
+
 class ExpressJSApp(App):
     """ExpressJS App service.
 
     Attrs:
         oauth_env: environment variables for Oauth integration.
     """
+
     generate_oauth_env = staticmethod(generate_oauth_env)
+
 
 class Charm(PaasCharm):
     """ExpressJS Charm service.
