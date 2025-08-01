@@ -365,7 +365,7 @@ func (h mainHandler) serveProfile(w http.ResponseWriter, r *http.Request) {
     <h2>Your OIDC Data:</h2>
     <pre>%s</pre>
 </body>
-</html>`, userMap["email"], logoutURL, userMap)
+</html>`, userMap["email"].(string), logoutURL, userMap)
 }
 
 var tp *sdktrace.TracerProvider
