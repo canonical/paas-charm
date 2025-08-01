@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.8.5 - 2025-08-01
+
+* feat: Add OIDC support for Go.
+
 ## 1.8.4 - 2025-07-29
 
 * feat: Add OIDC support for FastAPI.
