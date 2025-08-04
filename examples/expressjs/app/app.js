@@ -45,14 +45,18 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(session({secret: process.env.APP_SECRET_KEY,
                 resave: false,
                 saveUninitialized: true,}));
-if (process.env.CLIENT_ID != undefined){
+if (process.env.APP_OIDC_CLIENT_ID != undefined){
   app.use(
     auth({
       secret: process.env.APP_SECRET_KEY,
       authRequired: false,
       baseURL: process.env.APP_BASE_URL,
+      clientID: process.env.APP_OIDC_CLIENT_ID,
+      clientSecret: process.env.APP_OIDC_CLIENT_SECRET,
+      issuerBaseURL: process.env.APP_OIDC_API_BASE_URL,
       authorizationParams: {
           response_type: 'code',
+          scope: process.env.APP_OIDC_SCOPES,
       },
       routes: {
         login: false,

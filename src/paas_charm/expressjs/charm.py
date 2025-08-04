@@ -5,7 +5,6 @@
 
 import pathlib
 import typing
-from typing import TYPE_CHECKING
 
 import ops
 from pydantic import ConfigDict, Field
@@ -13,43 +12,6 @@ from pydantic import ConfigDict, Field
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
-
-if TYPE_CHECKING:
-    from paas_charm.oauth import PaaSOAuthRelationData
-
-
-# The abstract function has the `framework` so
-# pylint: disable=unused-argument
-def generate_oauth_env(
-    framework: str,
-    relation_data: "PaaSOAuthRelationData | None" = None,
-) -> dict[str, str]:
-    """Generate environment variable from PaaSOAuthRelationData.
-
-    Args:
-        framework: The charm framework name.
-        relation_data: The charm Oauth integration relation data.
-
-    Returns:
-        Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return {
-        k: v
-        for k, v in (
-            ("CLIENT_ID", relation_data.client_id),
-            ("CLIENT_SECRET", relation_data.client_secret),
-            ("ISSUER_BASE_URL", relation_data.issuer_url),
-            ("APP_OIDC_AUTHORIZE_URL", relation_data.authorization_endpoint),
-            ("APP_OIDC_ACCESS_TOKEN_URL", relation_data.token_endpoint),
-            ("APP_OIDC_USER_URL", relation_data.userinfo_endpoint),
-            ("SCOPE", relation_data.scopes),
-            ("APP_OIDC_JWKS_URL", relation_data.jwks_endpoint),
-        )
-        if v is not None
-    }
 
 
 class ExpressJSConfig(FrameworkConfig):
@@ -73,16 +35,6 @@ class ExpressJSConfig(FrameworkConfig):
     app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
-
-
-class ExpressJSApp(App):
-    """ExpressJS App service.
-
-    Attrs:
-        generate_oauth_env: Maps OAuth connection information to environment variables.
-    """
-
-    generate_oauth_env = staticmethod(generate_oauth_env)
 
 
 class Charm(PaasCharm):
@@ -127,7 +79,7 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        return ExpressJSApp(
+        return App(
             container=self._container,
             charm_state=charm_state,
             workload_config=self._workload_config,
