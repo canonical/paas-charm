@@ -330,10 +330,6 @@ def generate_oauth_env(
                 json.dumps({"scope": relation_data.scopes}),
             ),
             (
-                f"{framework.upper()}_{provider_name}_SCOPES",
-                relation_data.scopes,
-            ),
-            (
                 f"{framework.upper()}_{provider_name}_JWKS_URL",
                 relation_data.jwks_endpoint,
             ),
