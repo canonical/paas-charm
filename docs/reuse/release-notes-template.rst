@@ -91,12 +91,12 @@ The following features and interfaces will be removed.
 ~~~~~~~~~~~~~~
 <List of deprecated features. Include links to pull requests or commits.>
 
-Charmcraft
-~~~~~~~~~~
-<List of deprecated features. Include links to pull requests or commits.>
-
 Rockcraft
 ~~~~~~~~~
+<List of deprecated features. Include links to pull requests or commits.>
+
+Charmcraft
+~~~~~~~~~~
 <List of deprecated features. Include links to pull requests or commits.>
 
 Known issues in ``paas-charm``

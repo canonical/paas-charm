@@ -27,12 +27,6 @@ Using ``paas-charm`` requires the following software:
 For development and testing purposes, a machine or VM with a minimum of 4GB RAM is required.
 In production, at least 8GB RAM is recommended per instance.
 
-Upgrade instructions
-~~~~~~~~~~~~~~~~~~~~
-
-<detail how to upgrade to this version of ``paas-charm``. If there are no specific
-considerations, remove this subsection.>
-
 Updates
 -------
 
@@ -45,31 +39,52 @@ Enhanced support for the Spring Boot extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Spring Boot extension now has additional support for
-SMTP,
-SAML,
-Redis,
-S3,
-MongoDB,
-MySQL,
-Tracing,
-OpenFGA,
-Prometheus,
-and RabbitMQ.
+`SMTP <https://github.com/canonical/paas-charm/pull/101>`_,
+`SAML <https://github.com/canonical/paas-charm/pull/103>`_,
+`Redis <https://github.com/canonical/paas-charm/pull/109>`_,
+`S3 <https://github.com/canonical/paas-charm/pull/110>`,
+`MongoDB <https://github.com/canonical/paas-charm/pull/111>`_,
+`MySQL <https://github.com/canonical/paas-charm/pull/112>`_,
+`Tracing <https://github.com/canonical/paas-charm/pull/113>`_,
+`OpenFGA <https://github.com/canonical/paas-charm/pull/114>`_,
+`Observability <https://github.com/canonical/paas-charm/pull/115>`_,
+and `RabbitMQ <https://github.com/canonical/paas-charm/pull/119>`_.
+
+These updates align Spring Boot with the other extensions and provide
+out-of-the-box integrations with more charms in the Juju ecosystem.
 
 Improved output in Gunicorn logs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* add X-Request-ID header to Gunicorn logs if present in response.
+If you've enabled tracing for your web app, now the Gunicorn logs
+include the X-Request-ID header to identify a request from the client.
 
-Added OIDC support
-^^^^^^^^^^^^^^^^^^
+Relevant links:
 
-* Add OIDC support for Flask.
-* Add OIDC support for Django.
-* Add OIDC support for Spring Boot.
-* Add OIDC support for FastAPI.
-* Add OIDC support for Go.
-* Add OIDC support for Express.
+* `Pull request <https://github.com/canonical/paas-charm/pull/121>`_
+
+Added OpenID Connect support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All the extensions now have a predefined integration with OpenID Connect (OIDC).
+
+Relevant links:
+
+* `OIDC support for Flask <https://github.com/canonical/paas-charm/pull/122>`_
+* `OIDC support for Django <https://github.com/canonical/paas-charm/pull/124>`_
+* `OIDC support for Spring Boot <https://github.com/canonical/paas-charm/pull/131>`_
+* `OIDC support for FastAPI <https://github.com/canonical/paas-charm/pull/134>`_
+* `OIDC support for Go <https://github.com/canonical/paas-charm/pull/136>`_
+* `OIDC support for Express <https://github.com/canonical/paas-charm/pull/137>`_
+
+Updated integration tests
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The integration tests have been migrated to Jubilant. Why??
+
+Relevant links:
+
+* `Pull request <https://github.com/canonical/paas-charm/pull/104>`_
 
 Rockcraft
 ~~~~~~~~~
@@ -79,7 +94,6 @@ Rockcraft
 
 Charmcraft
 ~~~~~~~~~~
-<List of new major and minor features in the Charmcraft support. Include links to pull requests or commits.>
 
 Coming soon
 
@@ -91,16 +105,15 @@ The following are breaking changes introduced in ``paas-charm``, Rockcraft, and 
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of breaking changes in the Python library and ``paas-charm`` repo.
-Include links to pull requests or commits.>
+No breaking changes.
 
 Rockcraft
 ~~~~~~~~~
-<List of breaking changes in Rockcraft support. Include links to pull requests or commits.>
+No breaking changes.
 
 Charmcraft
 ~~~~~~~~~~
-<List of breaking changes in Charmcraft support. Include links to pull requests or commits.>
+Coming soon
 
 Bug fixes
 ---------
@@ -112,44 +125,45 @@ The following are bug fixes in ``paas-charm``, Rockcraft, and Charmcraft.
 ~~~~~~~~~~~~~~
 <List of bug fixes in the Python library and ``paas-charm`` repository.
 Include links to pull requests or commits.>
+* Metrics for the Go framework were corrected (`PR <https://github.com/canonical/paas-charm/pull/104>`_).
+* Trivy errors were fixed for integration tests to pass (`PR <https://github.com/canonical/paas-charm/pull/127>`_).
 
 Rockcraft
 ~~~~~~~~~~
-<List of relevant bug fixes in the Rockcraft support. Include links to pull requests or commits.>
+No bug fixes.
 
 Charmcraft
 ~~~~~~~~~~
-<List of relevant bug fixes in Charmcraft support. Include links to pull requests or commits.>
+Coming soon
 
 Deprecated features
 -------------------
 
 The following features and interfaces will be removed.
-<If there are no deprecated features in this release, then write "No deprecated features.">
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of deprecated features. Include links to pull requests or commits.>
-
-Charmcraft
-~~~~~~~~~~
-<List of deprecated features. Include links to pull requests or commits.>
+No deprecated features.
 
 Rockcraft
 ~~~~~~~~~
-<List of deprecated features. Include links to pull requests or commits.>
+No deprecated features.
+
+Charmcraft
+~~~~~~~~~~
+Coming soon
 
 Known issues in ``paas-charm``
 ------------------------------
 
-<List of unresolved issues in the ``paas-charm`` repository that are currently being worked
-on or are considered important. We don't need to list all of the issues in the
-repository here – limit to 3-5 issues. If there are no known issues, then write
-"No known issues to report.">
+* `Packing a rock with a restrictive umask <https://github.com/canonical/paas-charm/issues/63>`_
+* `Fastapi charm errors out and in loop <https://github.com/canonical/paas-charm/issues/75>`_
+* `Per Route Metrics <https://github.com/canonical/paas-charm/issues/98>`_
+* `Please encourage using Charmcraft's fetch-libs command instead <https://github.com/canonical/paas-charm/issues/116>`_
 
 Thanks to our contributors
 --------------------------
 
-<List the contributors who worked on ``paas-charm``>
+``@alithethird``, ``@javierdelapuente``, ``@erinecon``, ``@M7mdisk``
 
 
