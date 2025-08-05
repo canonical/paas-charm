@@ -32,8 +32,6 @@ Updates
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of new major and minor features in the Python library and ``paas-charm``
-repo. Include links to pull requests or commits.>
 
 Enhanced support for the Spring Boot extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -42,7 +40,7 @@ The Spring Boot extension now has additional support for
 `SMTP <https://github.com/canonical/paas-charm/pull/101>`_,
 `SAML <https://github.com/canonical/paas-charm/pull/103>`_,
 `Redis <https://github.com/canonical/paas-charm/pull/109>`_,
-`S3 <https://github.com/canonical/paas-charm/pull/110>`,
+`S3 <https://github.com/canonical/paas-charm/pull/110>`_,
 `MongoDB <https://github.com/canonical/paas-charm/pull/111>`_,
 `MySQL <https://github.com/canonical/paas-charm/pull/112>`_,
 `Tracing <https://github.com/canonical/paas-charm/pull/113>`_,
@@ -61,12 +59,12 @@ include the X-Request-ID header to identify a request from the client.
 
 Relevant links:
 
-* `Pull request <https://github.com/canonical/paas-charm/pull/121>`_
+* `Pull request #121 <https://github.com/canonical/paas-charm/pull/121>`_
 
-Added OpenID Connect support
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Added OIDC support
+^^^^^^^^^^^^^^^^^^
 
-All the extensions now have a predefined integration with OpenID Connect (OIDC).
+All the extensions now have a predefined integration with OIDC.
 
 Relevant links:
 
@@ -84,11 +82,10 @@ The integration tests have been migrated to Jubilant. Why??
 
 Relevant links:
 
-* `Pull request <https://github.com/canonical/paas-charm/pull/104>`_
+* `Pull request #104 <https://github.com/canonical/paas-charm/pull/104>`_
 
 Rockcraft
 ~~~~~~~~~
-<List of new major and minor features in the Rockcraft support. Include links to pull requests or commits.>
 
 * `Documentation changes in the tutorial and reference pages <https://documentation.ubuntu.com/rockcraft/latest/release-notes/rockcraft-1-13/#improved-documentation-for-12-factor-app-extensions>`_
 
@@ -101,7 +98,6 @@ Backwards-incompatible changes
 ------------------------------
 
 The following are breaking changes introduced in ``paas-charm``, Rockcraft, and Charmcraft.
-<If there are no breaking changes in this release, then write "No breaking changes.">
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
@@ -119,14 +115,12 @@ Bug fixes
 ---------
 
 The following are bug fixes in ``paas-charm``, Rockcraft, and Charmcraft.
-<If there are no bug fixes to report in this release, then write "No bug fixes to report.">
 
 ``paas-charm``
 ~~~~~~~~~~~~~~
-<List of bug fixes in the Python library and ``paas-charm`` repository.
-Include links to pull requests or commits.>
-* Metrics for the Go framework were corrected (`PR <https://github.com/canonical/paas-charm/pull/104>`_).
-* Trivy errors were fixed for integration tests to pass (`PR <https://github.com/canonical/paas-charm/pull/127>`_).
+
+* Metrics for the Go framework were corrected (`PR #104 <https://github.com/canonical/paas-charm/pull/104>`_).
+* Trivy errors were fixed for integration tests to pass (`PR #127 <https://github.com/canonical/paas-charm/pull/127>`_).
 
 Rockcraft
 ~~~~~~~~~~
@@ -157,7 +151,7 @@ Known issues in ``paas-charm``
 ------------------------------
 
 * `Packing a rock with a restrictive umask <https://github.com/canonical/paas-charm/issues/63>`_
-* `Fastapi charm errors out and in loop <https://github.com/canonical/paas-charm/issues/75>`_
+* `FastAPI charm errors out and in loop <https://github.com/canonical/paas-charm/issues/75>`_
 * `Per Route Metrics <https://github.com/canonical/paas-charm/issues/98>`_
 * `Please encourage using Charmcraft's fetch-libs command instead <https://github.com/canonical/paas-charm/issues/116>`_
 

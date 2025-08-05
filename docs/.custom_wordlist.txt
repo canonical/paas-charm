@@ -5,6 +5,7 @@ CHANGELOG
 Changelog
 changelog
 Charmcraft
+Charmcraft's
 config
 Customizable
 customizable
@@ -20,10 +21,13 @@ lifecycle
 Integrations
 integrations
 ISD
+libs
 md
 natively
 OCI
 OIDC
+OpenFGA
+openfga
 PaasCharm
 Postgres
 pypi
@@ -37,5 +41,6 @@ smtp
 SMTP
 src
 tox
-OpenFGA
-openfga
+Trivy
+umask
+

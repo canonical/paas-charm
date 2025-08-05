@@ -28,3 +28,4 @@ Releases
 .. toctree::
     :titlesonly:
 
+    release-notes-1.8
