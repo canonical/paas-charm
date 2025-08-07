@@ -27,6 +27,7 @@ def test_saml_integration(
     juju: jubilant.Juju,
     s3_configuration,
     s3_credentials,
+    http: requests.Session,
 ):
     """
     arrange: Integrate the Charm with saml-integrator, with a real SP.
@@ -73,7 +74,7 @@ def test_saml_integration(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = requests.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    response = http.get(f"http://{unit_ip}:{port}/env", timeout=5)
     assert response.status_code == 200
     env = response.json()
     assert env["SAML_ENTITY_ID"] == saml_helper.entity_id

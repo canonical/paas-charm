@@ -151,7 +151,6 @@ def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
         trust=True,
     )
 
-    juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=60 * 30)
     return App(minio_app_name)
 
 
@@ -366,11 +365,7 @@ def deploy_prometheus_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
-    juju.wait(
-        lambda status: status.apps[prometheus_app_name].is_active,
-        error=jubilant.any_blocked,
-        timeout=6 * 60,
-    )
+
     return App(prometheus_app_name)
 
 
@@ -382,10 +377,7 @@ def deploy_loki_fixture(
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
         juju.deploy(loki_app_name, channel="1/stable", trust=True)
-    juju.wait(
-        lambda status: status.apps[loki_app_name].is_active,
-        error=jubilant.any_blocked,
-    )
+
     return App(loki_app_name)
 
 
@@ -436,10 +428,7 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
     juju.integrate(openfga_server_app.name, "postgresql-k8s")
-    juju.wait(
-        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
-        timeout=6 * 60,
-    )
+
     return openfga_server_app
 
 
@@ -540,10 +529,7 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
         channel="3.12/edge",
         trust=True,
     )
-    juju.wait(
-        lambda status: jubilant.all_active(status, rabbitmq_k8s.name),
-        timeout=10 * 60,
-    )
+
     return rabbitmq_k8s
 
 

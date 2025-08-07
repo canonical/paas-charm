@@ -25,6 +25,7 @@ def test_rabbitmq_server_integration(
     rabbitmq_app_fixture: str,
     port: int,
     request: pytest.FixtureRequest,
+    http: requests.Session,
 ):
     """
     arrange: The app and rabbitmq deployed
@@ -44,11 +45,11 @@ def test_rabbitmq_server_integration(
         status = juju.status()
         unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-        response = requests.post(f"http://{unit_ip}:{port}/rabbitmq/send", timeout=5)
+        response = http.post(f"http://{unit_ip}:{port}/rabbitmq/send", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" == response.text
 
-        response = requests.get(f"http://{unit_ip}:{port}/rabbitmq/receive", timeout=5)
+        response = http.get(f"http://{unit_ip}:{port}/rabbitmq/receive", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" == response.text
     finally:
