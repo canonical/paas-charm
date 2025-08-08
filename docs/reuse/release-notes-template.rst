@@ -2,7 +2,6 @@
 ================================
 
 date of release
----------------
 
 These release notes cover new features and changes in ``paas-charm``
 version X.X and its extended support into Charmcraft and Rockcraft.
@@ -19,8 +18,10 @@ Requirements and compatibility
 
 <List requirements to use ``paas-charm`` here, e.g., Python minimum version.>
 
-For development and testing purposes, a machine or VM with a minimum of 4GB RAM is required.
-In production, at least <#GB> RAM is recommended per instance.
+The ``paas-charm`` library is used with Juju charms and runs on a Kubernetes cloud.
+For development and testing purposes, a machine or VM with a minimum of 4 CPUs, 4GB RAM,
+and a 20GB disk is required.
+In production, at least 16GB RAM and 3 high-availability nodes are recommended.
 
 Upgrade instructions
 ~~~~~~~~~~~~~~~~~~~~
@@ -92,12 +93,12 @@ The following features and interfaces will be removed.
 ~~~~~~~~~~~~~~
 <List of deprecated features. Include links to pull requests or commits.>
 
-Charmcraft
-~~~~~~~~~~
-<List of deprecated features. Include links to pull requests or commits.>
-
 Rockcraft
 ~~~~~~~~~
+<List of deprecated features. Include links to pull requests or commits.>
+
+Charmcraft
+~~~~~~~~~~
 <List of deprecated features. Include links to pull requests or commits.>
 
 Known issues in ``paas-charm``
