@@ -9,6 +9,7 @@ Charmcraft's
 codebase
 Codebase
 config
+CPUs
 Customizable
 customizable
 deployable
@@ -43,10 +44,12 @@ rabbitmq
 RabbitMQ
 redis
 Rockcraft
+runtime
 Terraform
 saml
 SAML
 scalable
+scalability
 smtp
 SMTP
 src

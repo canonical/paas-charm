@@ -80,8 +80,9 @@ Relevant links:
 Updated integration tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The integration tests have been migrated to Jubilant due to
-`the deprecation of python-libjuju <https://discourse.charmhub.io/t/python-libjuju-3-6-1-3-mind-your-ps-and-qs/18248>`_.
+The integration tests have been migrated to Jubilant due to the
+`deprecation <https://discourse.charmhub.io/t/python-libjuju-3-6-1-3-mind-your-ps-and-qs/18248>`_
+of ``python-libjuju``.
 Now our integration tests take advantage of enhanced writing and
 debugging, and our tests align closer to the Juju CLI experience.
 
