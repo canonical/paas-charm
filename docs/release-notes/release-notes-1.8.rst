@@ -56,8 +56,9 @@ out-of-the-box integrations with more charms in the Juju ecosystem.
 Improved output in Gunicorn logs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you've enabled tracing for your web app, now the Gunicorn logs
-include the X-Request-ID header to identify a request from the client.
+If you've enabled tracing for your web app and you use the 
+X-Request-ID header in your reponse headers, the Gunicorn access logs
+will log the X-Request-ID header to identify a request from the client.
 
 Relevant links:
 
