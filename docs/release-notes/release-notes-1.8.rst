@@ -57,7 +57,7 @@ Improved output in Gunicorn logs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you've enabled tracing for your web app and you use the 
-X-Request-ID header in your reponse headers, the Gunicorn access logs
+X-Request-ID header in your response headers, the Gunicorn access logs
 will log the X-Request-ID header to identify a request from the client.
 
 Relevant links:
