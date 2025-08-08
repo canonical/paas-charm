@@ -16,6 +16,10 @@ following Canonical products:
 - `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_ is a
   tool to create rocks – a new generation of secure, stable and OCI-compliant
   container images, based on Ubuntu.
+- A `rock <https://documentation.ubuntu.com/rockcraft/latest/explanation/rocks/>`_
+  is an Ubuntu LTS-based container image. The official entrypoint for the
+  image is `Pebble <https://documentation.ubuntu.com/rockcraft/latest/explanation/pebble/#pebble-explanation-page>`_,
+  a service manager that enhances container experience.
 
 A Rockcraft framework is initially used to facilitate the creation of a well
 structured, minimal and hardened container image, called a rock. A Charmcraft
