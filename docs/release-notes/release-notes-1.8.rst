@@ -24,8 +24,10 @@ Using ``paas-charm`` requires the following software:
 *  ``ops`` 2.6 or greater
 * ``pydantic`` 2.11.7
 
-For development and testing purposes, a machine or VM with a minimum of 4GB RAM is required.
-In production, at least 8GB RAM is recommended per instance.
+The ``paas-charm`` library is used with Juju charms and runs on a Kubernetes cloud.
+For development and testing purposes, a machine or VM with a minimum of 4 CPUs, 4GB RAM,
+and a 20GB disk is required.
+In production, at least 16GB RAM and 3 high-availability nodes are recommended.
 
 Updates
 -------
