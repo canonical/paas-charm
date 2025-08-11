@@ -15,6 +15,10 @@ Place any unreleased changes here, that are subject to release in coming version
 
 * docs: Update RTD project to latest version of the starter pack.
 
+## 2025-08-05
+
+* docs: Add release notes for `paas-charm v1.8`.
+
 ## 1.8.6 - 2025-08-01
 
 * feat: Add OIDC support for Express.
