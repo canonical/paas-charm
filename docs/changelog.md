@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-08-11
+
+* docs: Update RTD project to latest version of the starter pack.
+
 ## 1.8.6 - 2025-08-01
 
 * feat: Add OIDC support for Express.
