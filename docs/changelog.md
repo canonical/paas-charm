@@ -1,3 +1,4 @@
+<!-- vale Canonical.007-Headings-sentence-case = NO -->
 # Changelog
 
 All notable changes to this project will be documented in this file.

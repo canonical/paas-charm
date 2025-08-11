@@ -2,7 +2,6 @@
 ================================
 
 date of release
----------------
 
 These release notes cover new features and changes in ``paas-charm``
 version X.X and its extended support into Charmcraft and Rockcraft.

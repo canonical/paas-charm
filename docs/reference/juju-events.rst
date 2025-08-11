@@ -15,40 +15,40 @@ For a web app charm, the following events are observed:
   * - `\<container name\>_pebble_ready <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#container-pebble-ready>`_
     - Fired on Kubernetes charms when the requested container is ready.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `config_changed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#config-changed>`_
+  * - ``config_changed```
     - Usually fired in response to a configuration change using the CLI.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `secret_storage_relation_created <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-created>`_
+  * - ``secret_storage_relation_created``
     - Fired when the relation is first created.
     - Generate a new secret and store it in the relation data.
-  * - `secret_storage_relation_changed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-changed>`_
+  * - ``secret_storage_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `secret_storage_relation_departed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-departed>`_
+  * - ``secret_storage_relation_departed``
     - Fired when a unit departs from an existing relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `update_status <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#update-status>`_
+  * - ``update_status``
     - Fired at regular intervals.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `secret_changed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#secret-changed>`_
+  * - ``secret_changed``
     - Fired when the secret owner publishes a new secret revision.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `database_created <https://github.com/canonical/data-platform-libs>`_
+  * - ``database_created``
     - Fired when a new database is created.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `endpoints_changed <https://github.com/canonical/data-platform-libs>`_
+  * - ``endpoints_changed``
     - Fired when the database endpoints change.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `database_relation_broken <https://github.com/canonical/data-platform-libs>`_
+  * - ``database_relation_broken``
     - Fired when a unit participating in a non-peer relation is removed.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `ingress_ready <https://github.com/canonical/traefik-k8s-operator>`_
+  * - ``ingress_ready``
     - Fired when the ingress for the web app is ready.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `ingress_revoked <https://github.com/canonical/traefik-k8s-operator>`_
+  * - ``ingress_revoked``
     - Fired when the ingress for the web app is not ready anymore.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `redis_relation_updated <https://github.com/canonical/redis-k8s-operator>`_
+  * - ``redis_relation_updated``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the configuration, run pending migrations and restart the workload.
   * - `s3_credentials_changed <https://github.com/canonical/data-platform-libs>`_
@@ -57,37 +57,37 @@ For a web app charm, the following events are observed:
   * - `s3_credentials_gone <https://github.com/canonical/data-platform-libs>`_
     - Fired when the S3 credentials are removed.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `saml_data_available <https://github.com/canonical/saml-integrator-operator>`_
+  * - ``saml_data_available``
     - Fired when new SAML data is present in the relation.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `rabbitmq_ready <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_
+  * - ``rabbitmq_ready``
     - Fired after a ``rabbitmq_cjoined`` event.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `rabbitmq_connected <https://github.com/openstack-charmers/charm-rabbitmq-k8s>`_
+  * - ``rabbitmq_connected``
     - Fired after a ``rabbitmq_changed`` or ``rabbitmq_broken`` event.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - `rabbitmq_joined <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-joined>`_
+  * - ``rabbitmq_joined``
     - Fired when a new unit joins in an existing relation.
     - Request access to the RabbitMQ server and emit a connected event.
-  * - `rabbitmq_changed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-changed>`_
+  * - ``rabbitmq_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Request access to the RabbitMQ server and emit a ready event.
-  * - `rabbitmq_broken <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-broken>`_
+  * - ``rabbitmq_broken``
     - Fired when a unit participating in a non-peer relation is removed. 
     - Emit a ready event.
-  * - `rabbitmq_departed <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#endpoint-relation-departed>`_
+  * - ``rabbitmq_departed``
     - Fired when a related unit is no longer related.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `tracing_endpoint_changed <https://github.com/canonical/tempo-coordinator-k8s-operator>`_
+  * - ``tracing_endpoint_changed``
     - Fired when one of the receiver endpoints changes.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `tracing_endpoint_removed <https://github.com/canonical/tempo-coordinator-k8s-operator>`_
+  * - ``tracing_endpoint_removed``
     - Fired when one of the receiver endpoints is removed.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `smtp_data_available <https://github.com/canonical/smtp-integrator-operator>`_
+  * - ``smtp_data_available``
     - Fired when new SMTP data is present in the relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - `rotate_secret_key <https://documentation.ubuntu.com/juju/3.6/user/reference/action/>`_
+  * - ``rotate_secret_key``
     - Fired when ``secret-rotate`` is executed.
     - Generate a new secret token for the application.
 
