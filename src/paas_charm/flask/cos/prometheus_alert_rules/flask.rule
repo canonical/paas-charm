@@ -1,6 +1,6 @@
 alert: FlaskTargetMissing
 expr: up == 0
-for: 0m
+for: 2m
 labels:
   severity: critical
 annotations:
