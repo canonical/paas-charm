@@ -50,8 +50,6 @@ def test_smtp_integrations(
     if not juju.status().apps.get(smtp_integrator_app):
         juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
 
-    juju.wait(lambda status: jubilant.all_active(status, app.name, smtp_integrator_app))
-
     juju.integrate(app.name, f"{smtp_integrator_app}:smtp")
     juju.wait(lambda status: jubilant.all_active(status, app.name, smtp_integrator_app))
 

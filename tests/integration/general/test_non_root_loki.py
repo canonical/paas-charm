@@ -43,7 +43,7 @@ def test_non_root_loki_integration(
     try:
         juju.integrate(loki_app.name, non_root_app.name)
         juju.wait(
-            lambda status: jubilant.all_active(status, non_root_app.name, loki_app.name), delay=10
+            lambda status: jubilant.all_active(status, non_root_app.name, loki_app.name)
         )
         status = juju.status()
         unit_ip = status.apps[non_root_app.name].units[non_root_app.name + "/0"].address
