@@ -1,13 +1,15 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
+.. _explanation:
+
 Explanation
 ===========
 
 The following explanations provide context and clarification on key topics related to the use and
 configuration of web app frameworks.
 
-12-Factor app principles
+12-factor app principles
 ------------------------
 
 The native 12-factor framework support in Rockcraft and Charmcraft provides an
