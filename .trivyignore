@@ -40,6 +40,8 @@ CVE-2025-24813
 CVE-2025-22235
 # org.postgresql:postgresql (spring-boot-0.0.1.jar)
 CVE-2025-49146
+# io.netty:netty-codec-http2 (spring-boot-0.0.1.jar)
+CVE-2025-55163
 # usr/local/bin/go-app (gobinary)
 CVE-2025-22874
 # usr/bin/statsd_exporter (gobinary)
