@@ -35,6 +35,6 @@ or a fully deployed and integrated web app (Charmcraft).
     - `Write a Go app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-go/>`_
   * - Spring Boot
     - `Build a Spring Boot app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/springboot/>`_
-    - Coming soon: Write a Spring Boot app charm
+    - `Write a Spring Boot app charm <https://documentation.ubuntu.com/charmcraft/latest/tutorial/kubernetes-charm-spring-boot/>`_
 
 

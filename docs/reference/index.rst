@@ -31,7 +31,7 @@ specific topics such as proxies, background tasks, and secrets.
     - `Charmcraft Go extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/go-framework-extension/>`_
   * - Spring Boot
     - `Rockcraft Spring Boot extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/spring-boot-framework/>`_
-    - Coming soon
+    - `Charmcraft Spring Boot extension <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/>`_
 
 Juju
 ----
@@ -68,8 +68,8 @@ the relevant Charmcraft documentation for each web app framework:
     - `Go extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#observability>`_
     - `Go extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#relations>`_
   * - Spring Boot
-    - Coming soon
-    - Coming soon
+    - `Spring Boot extension | Observability <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#observability>`_
+    - `Spring Boot extension | Relations <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#relations>`_
 
 
 All contents

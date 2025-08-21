@@ -9,8 +9,8 @@ to deploy and operate 12-Factor web applications.**
 
 This support makes it easy to utilize existing Canonical products,
 such as databases, ingress and observability, in web applications.
-Flask, Django, FastAPI and Go are currently supported with additional
-frameworks coming soon.
+Flask, Django, FastAPI, Go, Express, and Spring Boot are currently
+supported with additional frameworks coming soon.
 
 With a few simple commands, you can set up a fully integrated and observable
 Kubernetes environment for your web application. These commands create
