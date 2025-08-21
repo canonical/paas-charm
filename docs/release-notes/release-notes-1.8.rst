@@ -35,8 +35,12 @@ Updates
 ``paas-charm``
 ~~~~~~~~~~~~~~
 
+.. vale Canonical.007-Headings-sentence-case = NO
+
 Enhanced support for the Spring Boot extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. vale Canonical.007-Headings-sentence-case = YES
 
 The Spring Boot extension now has additional support for
 `SMTP <https://github.com/canonical/paas-charm/pull/101>`_,
