@@ -1,3 +1,5 @@
+.. _explanation_full_lifecycle:
+
 How everything connects (source to production)
 ==============================================
 

@@ -1,35 +1,9 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
-.. _charm-architecture:
+.. _explanation_charm_architecture:
 
 Charm architecture
 ==================
-
-Web app support in Charmcraft and Rockcraft is a framework to easily deploy and operate your Flask, Django, FastAPI or Go workloads and associated infrastructure, such
-as databases and ingress, using open source tooling.
-
-The resulting charm design leverages the `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_ pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_ running as the workload container’s entrypoint.
-
-Pebble is a lightweight, API-driven process supervisor that is responsible for configuring processes to run in a container and controlling those processes throughout the workload lifecycle.
-
-Pebble `services` are configured through `layers <https://github.com/canonical/pebble#layer-specification>`_, and the following containers represent each one a layer forming the effective Pebble configuration, or `plan`:
-
-1. An :code:`app` container, which contains the workload to run in any of the supported web frameworks.
-
-
-As a result, if you run a :code:`kubectl get pods` on a namespace named for the Juju model you've deployed the web app charm into, you'll see something like the following:
-
-.. code-block:: text
-
-   NAME                          READY   STATUS    RESTARTS   AGE
-   web-app-0                     2/2     Running   0          6h4m
-
-This shows there are 2 containers - the named above, as well as a container for the charm code itself.
-
-And if you run :code:`kubectl describe pod web-app-0`, all the containers will have as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the processes startup as explained above.
-
-Charm architecture diagram
---------------------------
 
 .. mermaid::
 
@@ -44,6 +18,40 @@ Charm architecture diagram
    }
    Rel(charm_logic, workload, "Supervises<br>process")
 
+Web app support in Charmcraft and Rockcraft is a framework to easily deploy and
+operate your web app workloads and associated infrastructure, such
+as databases and ingress, using open source tooling.
+
+The resulting charm design leverages the
+`sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_
+pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_
+running as the workload container’s entrypoint.
+
+Pebble is a lightweight, API-driven process supervisor that is responsible for
+configuring processes to run in a container and controlling those processes
+throughout the workload lifecycle.
+
+Pebble `services` are configured through `layers <https://github.com/canonical/pebble#layer-specification>`_,
+and the following containers represent each one a layer forming the effective
+Pebble configuration, or `plan`:
+
+1. An :code:`app` container, which contains the workload to run in any of the supported web frameworks.
+
+
+As a result, if you run a :code:`kubectl get pods` on a namespace named for the Juju model
+you've deployed the web app charm into, you'll see something like the following:
+
+.. code-block:: text
+
+   NAME                          READY   STATUS    RESTARTS   AGE
+   web-app-0                     2/2     Running   0          6h4m
+
+This shows there are 2 containers - the named above, as well as a container for the charm code itself.
+
+And if you run :code:`kubectl describe pod web-app-0`, all the containers will have
+as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the
+processes startup.
+
 OCI images
 ----------
 
@@ -55,27 +63,16 @@ We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/
    
    `Build a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>`_
 
-
-Metrics
--------
-The provided support for metrics and tracing depends on the enabled extension.
-
-.. seealso:: 
-
-   `Charmcraft reference | Extensions <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
-
-Integrations
-------------
-The available integrations, including those that are already pre-populated, varies between extensions.
-
-.. seealso::
-
-   `Charmcraft reference | Extensions <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/>`_.
-
 Juju events
 -----------
 
-See :ref:`ref_juju_events`.
+Juju handles updates or changes to the charm and system through hooks, or events.
+These notifications provides the charm information that the system has changed
+and thus prompts a reaction from the charm to respond to the change, taking
+into account the charm's configuration.
+
+For more information on the events observed by 12-factor app charms, see
+:ref:`ref_juju_events`.
 
 Charm code overview
 -------------------
