@@ -46,7 +46,7 @@ you've deployed the web app charm into, you'll see something like the following:
    NAME                          READY   STATUS    RESTARTS   AGE
    web-app-0                     2/2     Running   0          6h4m
 
-This shows there are 2 containers - the named above, as well as a container for the charm code itself.
+This shows there are two containers - the named above, as well as a container for the charm code itself.
 
 And if you run :code:`kubectl describe pod web-app-0`, all the containers will have
 as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the
