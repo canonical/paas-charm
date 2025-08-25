@@ -43,6 +43,8 @@ CVE-2025-22235
 CVE-2025-49146
 # io.netty:netty-codec-http2 (spring-boot-0.0.1.jar)
 CVE-2025-55163
+# org.apache.tomcat.embed:tomcat-embed-core
+CVE-2025-48989
 # usr/local/bin/go-app (gobinary)
 CVE-2025-22874
 # usr/bin/statsd_exporter (gobinary)
