@@ -47,7 +47,7 @@ to focus on their core competences instead of a complex software stack.
 * :ref:`Web app framework <explanation_web_app_frameworks>`: More details about the
   supported web app frameworks.
 
-12-Factor app charm
+12-factor app charm
 -------------------
 
 The software operator built with Charmcraft containerizes the web app workload so that
