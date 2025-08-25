@@ -1,3 +1,5 @@
+.. _explanation_12_factor_principles_applied:
+
 How 12-Factor app principles are applied in rocks and charms
 ============================================================
 

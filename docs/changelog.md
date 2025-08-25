@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-08-25
+
+* docs: Refactor explanation documentation in the RTD site.
+
 ## 2025-08-21
 
 * docs: Add links to Spring Boot documentation.

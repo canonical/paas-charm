@@ -1,3 +1,5 @@
+.. _explanation_foundations:
+
 The foundations: Juju, charms and rocks
 =======================================
 
