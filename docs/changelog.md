@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-08-21
+
+* docs: Add links to Spring Boot documentation.
+
 ## 2025-08-11
 
 * docs: Update RTD project to latest version of the starter pack.

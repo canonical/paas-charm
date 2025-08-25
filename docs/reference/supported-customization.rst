@@ -37,4 +37,4 @@ in a 12-factor app rock and charm:
 
         .. group-tab:: Spring Boot
 
-            Coming soon
+            `Charmcraft Spring Boot extension | Background tasks <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#background-tasks>`_
