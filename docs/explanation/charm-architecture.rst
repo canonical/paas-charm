@@ -20,19 +20,18 @@ Charm architecture
 
 Web app support in Charmcraft and Rockcraft is a framework to easily deploy and
 operate your web app workloads and associated infrastructure, such
-as databases and ingress, using open source tooling.
+as databases and ingress, using open source tooling. 
 
-The resulting charm design leverages the
+The charm design leverages the
 `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_
 pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_
 running as the workload container’s entrypoint.
-
 Pebble is a lightweight, API-driven process supervisor that is responsible for
 configuring processes to run in a container and controlling those processes
 throughout the workload lifecycle.
 
 Pebble `services` are configured through `layers <https://github.com/canonical/pebble#layer-specification>`_,
-and the following containers represent each one a layer forming the effective
+and the following container represents a layer forming the effective
 Pebble configuration, or `plan`:
 
 1. An :code:`app` container, which contains the workload to run in any of the supported web frameworks.
@@ -47,9 +46,10 @@ you've deployed the web app charm into, you'll see something like the following:
    web-app-0                     2/2     Running   0          6h4m
 
 This shows there are two containers - the named above, as well as a container for the charm code itself.
+The charm container logic is determined by the ``paas-charm`` library.
 
 And if you run :code:`kubectl describe pod web-app-0`, all the containers will have
-as Command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the
+the command :code:`/charm/bin/pebble`. That's because Pebble is responsible for the
 processes startup.
 
 OCI images
