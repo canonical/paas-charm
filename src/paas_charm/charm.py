@@ -685,6 +685,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle the update-status event."""
         if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED:
             self.restart()
+        # Sometimes the ingress library doesn't properly handle pod
+        # restarts,which can cause the IP field inside the ingress
+        # relation data to become stale, resulting in ingress failures.
+        # As a workaround, force refresh the ingress relation data
+        # (especially the ip field) on every update status.
+        self._ingress._publish_auto_data()
 
     @block_if_invalid_config
     def _on_mysql_database_database_created(self, _: DatabaseRequiresEvent) -> None:
