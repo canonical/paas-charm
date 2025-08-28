@@ -25,18 +25,13 @@ as databases and ingress, using open source tooling.
 The charm design leverages the
 `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_
 pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_
-running as the workload container’s entrypoint.
+running as the containers' entrypoint.
 Pebble is a lightweight, API-driven process supervisor that is responsible for
 configuring processes to run in a container and controlling those processes
 throughout the workload lifecycle.
 
-Pebble `services` are configured through `layers <https://github.com/canonical/pebble#layer-specification>`_,
-and the following container represents a layer forming the effective
-Pebble configuration, or `plan`:
-
-1. An :code:`app` container, which contains the workload to run in any of the supported web frameworks.
-
-
+The charm consists of an ``app`` container which contains the workload
+to run in any of the supported web frameworks.
 As a result, if you run a :code:`kubectl get pods` on a namespace named for the Juju model
 you've deployed the web app charm into, you'll see something like the following:
 
