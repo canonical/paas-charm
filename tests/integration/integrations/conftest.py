@@ -255,8 +255,8 @@ def tempo_app_fixture(
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
     worker_app = "tempo-worker"
-    tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "edge"
-    tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "edge"
+    tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "2/edge"
+    tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "2/edge"
     juju.deploy(
         tempo_worker_charm_url,
         app=worker_app,
