@@ -22,7 +22,7 @@ jobs:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           fetch-depth: 0
           path: base
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - name: Build docs
         run: |
           for dir in compare base; do
