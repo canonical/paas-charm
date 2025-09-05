@@ -1,3 +1,5 @@
+.. _ref_supported_customization:
+
 Supported customizable features and capabilities
 ================================================
 
