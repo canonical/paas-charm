@@ -45,16 +45,17 @@ RabbitMQ
 redis
 Rockcraft
 runtime
-Terraform
 saml
 SAML
 scalable
 scalability
 smtp
 SMTP
+Spring Boot
 src
 SSL
 SSO
+Terraform
 tox
 Trivy
 umask

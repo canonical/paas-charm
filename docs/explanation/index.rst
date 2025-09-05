@@ -48,7 +48,7 @@ to focus on their core competences instead of a complex software stack.
   supported web app frameworks.
 * :ref:`Opinionated nature of the 12-factor tooling <explanation_opinionated_nature>`:
   Description of how the 12-factor tooling is opinionated and when those opinions can be
-  overriden by users.
+  overridden by users.
 
 12-factor app charm
 -------------------
