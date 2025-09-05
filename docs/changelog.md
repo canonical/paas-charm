@@ -15,6 +15,10 @@ Place any unreleased changes here, that are subject to release in coming version
   using the nginx-integrator charm, the IP field is not updated correctly.
   As a workaround, refresh the ingress relation data on every update-status hook.
 
+## 2025-09-05
+
+* docs: Add explanation document describing the opinionated nature of the 12-factor tooling.
+
 ## 2025-08-25
 
 * docs: Refactor explanation documentation in the RTD site.
