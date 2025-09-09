@@ -112,10 +112,9 @@ same directory as this file.
 When ``rockcraft init`` is run, Rockcraft searches for this file. The initialization will
 fail if Rockcraft does not find the file.
 
-Rockcraft expects to find a binary with the same name as the Go project. If the binary meets
-this expectation, then ``rockcraft pack`` will work out of the box. Otherwise, you can override
-this expectation using the ``services`` parameter of the app's ``rockcraft.yaml`` file and pass
-a different binary name.
+When ``rockcraft pack`` is run, Rockcraft builds a binary with the same name as the Go project. 
+You can override the binary name by updating the ``services`` parameter of the app's
+``rockcraft.yaml`` file to pass a different name.
 
 Spring Boot
 ~~~~~~~~~~~
@@ -167,8 +166,8 @@ Opinions related to the base
 Depending on the Ubuntu base specified in the ``rockcraft.yaml`` file, opinions are imposed
 about the Python version used:
 
-* Specifying ``base: ubuntu@22.04`` will use Python 3.10 
-* Specifying ``base: ubuntu@24.04`` will use Python 3.12 
+* Specifying ``base: ubuntu@22.04`` (or ``base: bare`` and ``build-base: ubuntu@22.04``) will use Python 3.10 
+* Specifying ``base: ubuntu@24.04`` (or ``base: bare`` and ``build-base: ubuntu@24.04``) will use Python 3.12 
 
 For the Spring Boot framework, the base determines the default JDK version. This is a weak
 opinion that can be overriden by specifying the preferred version in the ``rockcraft.yaml``
@@ -209,10 +208,8 @@ Available charm features
 Some features of the charm are forbidden to add or modify, meaning that ``charmcraft pack``
 will fail if those features were changed. 
 
-For instance, storage cannot be added to a 12-factor app charm. It is required that the
-charm is stateless, meaning that any reusable files created by the app cannot be shared
-between other charms with which it is integrated in the Juju ecosystem. Juju doesn't
-support a shared file system.
-
-
+For instance, while Juju supports storage management
+(see `How to manage storage <https://documentation.ubuntu.com/juju/3.6/howto/manage-storage/>`_),
+the 12-factor tooling does not offer this support. If your app requires additional
+storage or volumes, you will not be able to use the 12-factor support in Charmcraft.
 
