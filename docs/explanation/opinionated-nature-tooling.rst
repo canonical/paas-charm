@@ -123,10 +123,15 @@ The Spring Boot project must contain either a ``pom.xml`` or ``build.gradle`` fi
 The rock must be initialized in the same directory as this file. The project must not
 contain both files, otherwise the rock initialization will fail.
 
-If you define the Spring Boot project using a ``pom.xml`` file, there must also exist
-an ``mvnw`` executable file in the same directory.
-If you use a ``build.gradle`` file, there must also exist a ``gradlew`` executable file
-in the same directory.
+If you define the Spring Boot project using a ``pom.xml`` file, Rockcraft will install
+the Maven plugin and check whether an ``mvnw`` executable file exists in the same directory.
+If the executable file doesn't exist, Rockcraft will create the file. 
+
+If you use a ``build.gradle`` file, Rockcraft will install the Gradle plugin and check
+whether an ``gradlew`` executable file exists in the same directory. If the executable
+file doesn't exist, Rockcraft will create the file.
+
+The ``mvnw`` or ``gradlew`` file must be executable, or the rock initialization will fail.
 The project must not contain both executable files, otherwise the rock initialization
 will fail.
 
