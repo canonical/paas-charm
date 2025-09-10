@@ -143,27 +143,9 @@ executable file, or if it finds both files or both executable files.
 Minimum supported versions of the frameworks
 --------------------------------------------
 
-Not all versions of the web app frameworks are supported. The following table outlines
-the minimum versions that are expected to work with the 12-factor tooling.
-
-.. list-table::
-  :header-rows: 1
-  :widths: 1 1
-
-  * - Web app framework
-    - Minimum supported version
-  * - Django
-    - ???
-  * - Express
-    - ???
-  * - FastAPI
-    - ???
-  * - Flask
-    - ???
-  * - Go
-    - ???
-  * - Spring Boot
-    - ???
+Not all versions of the web app frameworks are supported. Check with us on the
+`Matrix channel <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_ if you have
+questions about supported web app framework versions for the 12-factor tooling.
 
 Opinions related to the base
 ----------------------------
