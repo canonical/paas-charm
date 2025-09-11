@@ -200,3 +200,7 @@ For instance, while Juju supports storage management
 the 12-factor tooling does not offer this support. If your app requires additional
 storage or volumes, you will not be able to use the 12-factor support in Charmcraft.
 
+12-factor app charms are "stateless" by design and have no persistent storage. Their Juju units
+are ephermeral, meaning that the container files are not persistent in case of the unit's
+restart or deletion.
+
