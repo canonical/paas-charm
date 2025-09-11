@@ -11,29 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-* fix: The ingress library doesn't properly handle pod restarts, and in some cases
-  using the nginx-integrator charm, the IP field is not updated correctly.
-  As a workaround, refresh the ingress relation data on every update-status hook.
-
-## 2025-09-05
+## 2025-09-11
 
 * docs: Add explanation document describing the opinionated nature of the 12-factor tooling.
 
-## 2025-08-25
+## 1.8.7 - 2025-09-10
 
+* fix: Unintentional removal of trailing `/` character from redirect-path is fixed.
 * docs: Refactor explanation documentation in the RTD site.
-
-## 2025-08-21
-
 * docs: Add links to Spring Boot documentation.
-
-## 2025-08-11
-
 * docs: Update RTD project to latest version of the starter pack.
-
-## 2025-08-05
-
 * docs: Add release notes for `paas-charm v1.8`.
+* fix: The ingress library doesn't properly handle pod restarts, and in some cases
+  using the nginx-integrator charm, the IP field is not updated correctly.
+  As a workaround, refresh the ingress relation data on every update-status hook.
 
 ## 1.8.6 - 2025-08-01
 

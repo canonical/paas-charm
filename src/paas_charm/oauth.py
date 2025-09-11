@@ -129,7 +129,7 @@ class PaaSOAuthRequirer(OAuthRequirer):
         scopes = str(self._charm_config.get(f"{relation_name}-scopes"))
 
         return ClientConfig(
-            redirect_uri=f"{self._base_url}/{redirect_path.strip('/')}",
+            redirect_uri=f"{self._base_url}/{redirect_path.lstrip('/')}",
             scope=scopes,
             grant_types=["authorization_code"],
         )
