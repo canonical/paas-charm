@@ -46,6 +46,8 @@ to focus on their core competences instead of a complex software stack.
   various components come together to form the 12-factor ecosystem.
 * :ref:`Web app framework <explanation_web_app_frameworks>`: More details about the
   supported web app frameworks.
+* :ref:`Why use the 12-factor support <explanation_why_use_12_factor>`: A summary of the
+  advantages of using the native support in Charmcraft and Rockcraft.
 * :ref:`Opinionated nature of the 12-factor tooling <explanation_opinionated_nature>`:
   Description of how the 12-factor tooling is opinionated and when those opinions can be
   overridden by users.
@@ -68,5 +70,6 @@ page provides an overview of the architecture, components, and source code.
    How the 12-factor principles are applied in rocks and charms <how-are-12-factor-principles-applied>
    The 12-factor ecosystem <full-lifecycle>
    Web app framework <web-app-framework>
+   Why use 12-factor? <why-12-factor>
    Opinionated nature of the tooling <opinionated-nature-tooling>
    Charm architecture <charm-architecture>

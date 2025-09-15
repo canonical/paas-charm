@@ -12,12 +12,15 @@ such as databases, ingress and observability, in web applications.
 Flask, Django, FastAPI, Go, Express, and Spring Boot are currently
 supported with additional frameworks coming soon.
 
-With a few simple commands, you can set up a fully integrated and observable
+With a few commands, you can set up a fully integrated and observable
 Kubernetes environment for your web application. These commands create
 production-ready container images for your web application compliant with
 the Open Container Initiative (OCI), along with software operators wrapped around
-the container images. From there, you can deploy your web application,
-connect it to a database, add ingress and observability and much more.
+the container images. From there, you can deploy your web application using Juju,
+connect it to a database, add ingress and observability and much more. 
+Using the built-in support means you don't need prior knowledge 
+of Canonical products to get your application up and running --
+the support simplifies your source to deployment journey.
 
 The solution is aimed at developers who create applications based on the
 `12-factor methodology. <https://12factor.net/>`_ Web developers and operators
