@@ -24,3 +24,4 @@ The main advantages of the support are as follows:
 * The 12-factor tooling is updated with the latest Juju and Rockcraft features and
   best practices. By using the tooling, you're guaranteed to follow best practices while
   taking advantage of all the most up-to-date features available.
+
