@@ -21,7 +21,3 @@ The main advantages of the support are as follows:
 * By using the native support, your application comes out of the box with built-in integrations
   with observability, ingress, databases, and much more, saving you time and effort to
   set them up yourself.
-* Portability: You can use the rock for your web application with Docker, meaning you're not
-  locked into the Juju ecosystem.
-* Scalability: Juju comes with the ability to add or modify the amount of resources for
-  your deployment, meaning that you can achieve high availability (HA) for your app.
