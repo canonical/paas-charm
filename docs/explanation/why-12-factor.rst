@@ -19,5 +19,8 @@ The main advantages of the support are as follows:
   commands, you can fully set up a Kubernetes environment for your web application without
   needing to build the rock or charm from scratch.
 * By using the native support, your application comes out of the box with built-in integrations
-  with observability, ingress, databases, and much more, saving you time and effort to
-  set them up yourself.
+  with observability, ingress, databases, and much more, saving you time and effort from
+  setting them up yourself.
+* The 12-factor tooling is updated with the latest Juju and Rockcraft features and
+  best practices. By using the tooling, you're guaranteed to follow best practices while
+  taking advantage of all the most up-to-date features available.
