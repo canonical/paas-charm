@@ -157,7 +157,7 @@ about the Python version used:
 * Specifying ``base: ubuntu@24.04`` (or ``base: bare`` and ``build-base: ubuntu@24.04``) will use Python 3.12 
 
 For the Spring Boot framework, the base determines the default JDK version. This is a weak
-opinion that can be overriden by specifying the preferred version in the ``rockcraft.yaml``
+opinion that can be overridden by specifying the preferred version in the ``rockcraft.yaml``
 file under ``extensions > spring-boot-framework/install-app: > build-packages``.
 
 The JDK version has forward-compatibility but not backward-compatibility. For instance,
