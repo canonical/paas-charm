@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-09-15
+
+* docs: Add explanation document describing the value proposition of the tooling.
+
 ## 2025-09-11
 
 * docs: Add explanation document describing the opinionated nature of the 12-factor tooling.
