@@ -3,5 +3,6 @@
   "automerge": true,
   "extends": [
     "config:recommended"
+    "group:allNonMajor"
   ]
 }
