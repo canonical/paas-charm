@@ -9,7 +9,7 @@ version 1.8 and its extended support into Charmcraft and Rockcraft.
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
 
 * `Release notes - Rockcraft 1.13 <https://documentation.ubuntu.com/rockcraft/latest/release-notes/rockcraft-1-13/#release-1-13>`_
-* Charmcraft support coming soon
+* `Release notes - Charmcraft 4.0 <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/>`_
 
 See our :ref:`Release policy and schedule <release_policy_schedule>`.
 
@@ -104,7 +104,27 @@ No feature updates in this release.
 Charmcraft
 ~~~~~~~~~~
 
-Coming soon
+Added OIDC support
+^^^^^^^^^^^^^^^^^^
+
+OpenID Connect is not available in all the 12-factor extensions.
+
+Relevant links:
+
+* `OpenID Connect integration - Charmcraft 4.0 release notes <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/#openid-connect-integration>`_
+
+Spring Boot framework extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A new extension for the Spring Boot framework is now available in Charmcraft.
+Along with the extension, the Charmcraft documentation includes a dedicated
+tutorial and reference page for the extension.
+
+Relevant links:
+
+* `Spring Boot framework extension - Charmcraft 4.0 release notes <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/#spring-boot-framework-extension>`_
+* `Write your first Kubernetes charm for a Spring Boot app <https://documentation.ubuntu.com/charmcraft/latest/tutorial/kubernetes-charm-spring-boot/>`_
+* `Spring Boot framework extension - Charmcraft reference documentation <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/>`_
 
 Backwards-incompatible changes
 ------------------------------
@@ -121,7 +141,7 @@ No breaking changes.
 
 Charmcraft
 ~~~~~~~~~~
-Coming soon
+No breaking changes.
 
 Bug fixes
 ---------
@@ -140,7 +160,7 @@ No bug fixes.
 
 Charmcraft
 ~~~~~~~~~~
-Coming soon
+No bug fixes.
 
 Deprecated features
 -------------------
@@ -157,7 +177,7 @@ No deprecated features.
 
 Charmcraft
 ~~~~~~~~~~
-Coming soon
+No deprecated features.
 
 Known issues in ``paas-charm``
 ------------------------------
