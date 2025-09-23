@@ -19,24 +19,24 @@ in a 12-factor app rock and charm:
 
         .. group-tab:: Django
 
-            `Charmcraft Django extension | Background tasks <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#background-tasks>`_
+            `Charmcraft Django extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/django-framework-extension/#worker-and-scheduler-services>`_
 
         .. group-tab:: Express
 
-            `Charmcraft Express extension | Background tasks <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#background-tasks>`_
+            `Charmcraft Express extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/express-framework-extension/#worker-and-scheduler-services>`_
 
         .. group-tab:: FastAPI
 
-            `Charmcraft FastAPI extension | Background tasks <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#background-tasks>`_
+            `Charmcraft FastAPI extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/fastapi-framework-extension/#worker-and-scheduler-services>`_
 
         .. group-tab:: Flask
 
-            `Charmcraft Flask extension | Background tasks <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#background-tasks>`_
+            `Charmcraft Flask extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/flask-framework-extension/#worker-and-scheduler-services>`_
 
         .. group-tab:: Go
 
-            `Charmcraft Go extension | Background tasks <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#background-tasks>`_
+            `Charmcraft Go extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/go-framework-extension/#worker-and-scheduler-services>`_
 
         .. group-tab:: Spring Boot
 
-            `Charmcraft Spring Boot extension | Background tasks <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#background-tasks>`_
+            `Charmcraft Spring Boot extension | Worker and Scheduler Services <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#worker-and-scheduler-services>`_
