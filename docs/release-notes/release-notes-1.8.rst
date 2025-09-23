@@ -107,7 +107,7 @@ Charmcraft
 Added OIDC support
 ^^^^^^^^^^^^^^^^^^
 
-OpenID Connect is not available in all the 12-factor extensions.
+OpenID Connect is now available in all the 12-factor extensions.
 
 Relevant links:
 
