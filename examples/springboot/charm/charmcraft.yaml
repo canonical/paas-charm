@@ -54,6 +54,9 @@ config:
       type: int
       description: Default port where the application will listen
       default: 8080
+    app-profiles:
+      type: string
+      description: Comma-separated list of Spring Boot active profiles.
     metrics-port:
       type: int
       description: Port where the prometheus metrics will be scraped.

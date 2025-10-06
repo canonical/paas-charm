@@ -60,6 +60,7 @@ from examples.springboot.charm.src.charm import SpringBootCharm
                 "app-port": 9000,
                 "metrics-port": 9001,
                 "metrics-path": "/othermetrics",
+                "app-profiles": "dev,postgresql",
             },
             {
                 "SERVER_PORT": "9000",
@@ -95,6 +96,8 @@ from examples.springboot.charm.src.charm import SpringBootCharm
                 "OTEL_METRICS_EXPORTER": "none",
                 "OTEL_TRACES_EXPORTER": "none",
                 "server.forward-headers-strategy": "framework",
+                "APP_PROFILES": "dev,postgresql",
+                "spring.profiles.active": "dev,postgresql",
             },
             id="custom config",
         ),
