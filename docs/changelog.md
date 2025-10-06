@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+* fix: Fix bug in rabbitmq relation. When an application with units integrate with
+       rabbitmq-server it can fail with RelationDataAccessError.
+
 ## 2025-10-01
 
 * docs: Add link to Matrix channel in README.
