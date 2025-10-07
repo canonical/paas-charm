@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -101,8 +102,40 @@ func NewConfig() (Config, error) {
 	}, nil
 }
 
+// responseWriterInterceptor is a wrapper for http.ResponseWriter to capture the status code.
+type responseWriterInterceptor struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// newResponseWriterInterceptor creates a new responseWriterInterceptor.
+func newResponseWriterInterceptor(w http.ResponseWriter) *responseWriterInterceptor {
+	// Default to 200 OK if WriteHeader is not called.
+	return &responseWriterInterceptor{w, http.StatusOK}
+}
+
+// WriteHeader captures the status code before writing it to the actual response.
+func (w *responseWriterInterceptor) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+// metricsMiddleware wraps an http.Handler to record the request count with a status code.
+func metricsMiddleware(next http.Handler, counter *prometheus.CounterVec) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Create the interceptor to capture the status code.
+		interceptor := newResponseWriterInterceptor(w)
+
+		// Call the original handler.
+		next.ServeHTTP(interceptor, r)
+
+		// After the handler has finished, increment the counter with the captured status code.
+		counter.WithLabelValues(strconv.Itoa(interceptor.statusCode)).Inc()
+	})
+}
+
 type mainHandler struct {
-	counter prometheus.Counter
+	counter *prometheus.CounterVec
 	service service.Service
 	config  Config
 	store   sessions.Store
@@ -110,7 +143,6 @@ type mainHandler struct {
 
 // serveHelloWorld now acts as the main landing page with a login link.
 func (h mainHandler) serveHelloWorld(w http.ResponseWriter, r *http.Request) {
-	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
 	fmt.Fprintf(w, "Hello, World!")
 }
@@ -128,7 +160,6 @@ func handleError(w http.ResponseWriter, error_message error) {
 }
 
 func (h mainHandler) serveOpenFgaListAuthorizationModels(w http.ResponseWriter, r *http.Request) {
-	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
 
 	fgaClient, err := NewSdkClient(&ClientConfiguration{
@@ -154,7 +185,6 @@ func (h mainHandler) serveOpenFgaListAuthorizationModels(w http.ResponseWriter, 
 }
 
 func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
-	h.counter.Inc()
 	log.Printf("Counter %#v\n", h.counter)
 
 	from := mail.Address{Name: "", Address: "tester@example.com"}
@@ -234,7 +264,6 @@ func (h mainHandler) serveMail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h mainHandler) serveUserDefinedConfig(w http.ResponseWriter, r *http.Request) {
-	h.counter.Inc()
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -453,11 +482,13 @@ func main() {
 		panic(err)
 	}
 
-	requestCounter := prometheus.NewCounter(
+	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "request_count",
-			Help: "No of request handled",
-		})
+			Help: "No of request handled, partitioned by status code.",
+		},
+		[]string{"code"}, // Add the "code" label
+	)
 	postgresqlURL := os.Getenv("POSTGRESQL_DB_CONNECT_STRING")
 
 	mux := http.NewServeMux()
@@ -480,10 +511,10 @@ func main() {
 		gothic.BeginAuthHandler(w, r)
 	})
 	mux.HandleFunc("/profile", mainHandler.serveProfile)
+	prometheus.MustRegister(requestCounter)
 
+	// Then, handle the port logic.
 	if config.MetricsPort != config.Port {
-		prometheus.MustRegister(requestCounter)
-
 		prometheusMux := http.NewServeMux()
 		prometheusMux.Handle(config.MetricsPath, promhttp.Handler())
 		prometheusServer := &http.Server{
@@ -502,8 +533,9 @@ func main() {
 
 	server := &http.Server{
 		Addr:    ":" + config.Port,
-		Handler: mux,
+		Handler: metricsMiddleware(mux, requestCounter),
 	}
+
 	go func() {
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
