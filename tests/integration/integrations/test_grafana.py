@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
         ("go_app", "Go Operator"),
         ("flask_app", "Flask Operator"),
         ("django_app", "Django Operator"),
+        ("fastapi_app", "FastAPI Operator"),
     ],
 )
 def test_grafana_integration(
