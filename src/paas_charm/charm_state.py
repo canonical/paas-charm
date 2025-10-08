@@ -8,9 +8,14 @@ import pathlib
 import typing
 from dataclasses import dataclass, field
 
+from charms.squid_forward_proxy.v0.http_proxy import HTTPProxyUnavailableError
 from pydantic import BaseModel, Field, ValidationError, create_model
 
-from paas_charm.exceptions import CharmConfigInvalidError, InvalidRelationDataError
+from paas_charm.exceptions import (
+    CharmConfigInvalidError,
+    InvalidRelationDataError,
+    RelationDataUnavailableError,
+)
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -18,6 +23,7 @@ from paas_charm.utils import build_validation_error_message, config_metadata
 if typing.TYPE_CHECKING:  # pragma: nocover
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
+    from charms.squid_forward_proxy.v0.http_proxy import HttpProxyRequirer, ProxyConfig
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
@@ -101,6 +107,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Raises:
             CharmConfigInvalidError: If some parameter in invalid.
+            RelationDataUnavailableError: If some relation data is unavailable.
         """
         user_defined_config = {
             k.replace("-", "_"): v
@@ -178,9 +185,20 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.oauth
                     else None
                 ),
+                http_proxy=(
+                    integration_requirers.http_proxy.fetch_proxies()
+                    if (
+                        integration_requirers.http_proxy
+                        and integration_requirers.http_proxy.model.get_relation("http-proxy")
+                    )
+                    else None
+                ),
             )
         except InvalidRelationDataError as exc:
             raise CharmConfigInvalidError(f"Invalid {exc.relation} relation data.") from exc
+        except HTTPProxyUnavailableError as exc:
+            logger.exception("HTTP Proxy relation data unavailable. Proxy status: %s", exc.status)
+            raise RelationDataUnavailableError("HTTP Proxy relation data unavailable.") from exc
         peer_fqdns = None
         if secret_storage.is_initialized and (
             peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
@@ -203,16 +221,20 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         )
 
     @property
-    def proxy(self) -> "ProxyConfig":
+    def proxy(self) -> "PaasProxyConfig":
         """Get charm proxy information from juju charm environment.
 
         Returns:
-            charm proxy information in the form of `ProxyConfig`.
+            charm proxy information in the form of `PaasProxyConfig`.
         """
-        http_proxy = os.environ.get("JUJU_CHARM_HTTP_PROXY")
-        https_proxy = os.environ.get("JUJU_CHARM_HTTPS_PROXY")
+        if self.integrations.http_proxy:
+            http_proxy = self.integrations.http_proxy.http_proxy
+            https_proxy = self.integrations.http_proxy.https_proxy
+        else:
+            http_proxy = os.environ.get("JUJU_CHARM_HTTP_PROXY")
+            https_proxy = os.environ.get("JUJU_CHARM_HTTPS_PROXY")
         no_proxy = os.environ.get("JUJU_CHARM_NO_PROXY")
-        return ProxyConfig(
+        return PaasProxyConfig(
             http_proxy=http_proxy if http_proxy else None,
             https_proxy=https_proxy if https_proxy else None,
             no_proxy=no_proxy,
@@ -277,6 +299,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         smtp: Smtp requirer object.
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
+        http_proxy: HttpProxyRequirer object.
     """
 
     databases: dict[str, "PaaSDatabaseRequires"]
@@ -288,6 +311,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
+    http_proxy: "HttpProxyRequirer | None" = None
 
 
 @dataclass
@@ -306,6 +330,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         smtp: SMTP parameters.
         tracing: Tracing relation data.
         oauth: OAuth relation data.
+        http_proxy: HTTP proxy relation data.
     """
 
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
@@ -317,9 +342,10 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     smtp: "SmtpRelationData | None" = None
     tracing: "PaaSTracingRelationData | None" = None
     oauth: "PaaSOAuthRelationData | None" = None
+    http_proxy: "ProxyConfig | None" = None
 
 
-class ProxyConfig(BaseModel):
+class PaasProxyConfig(BaseModel):
     """Configuration for network access through proxy.
 
     Attributes:
@@ -328,8 +354,8 @@ class ProxyConfig(BaseModel):
         no_proxy: Comma separated list of hostnames to bypass proxy.
     """
 
-    http_proxy: str | None = Field(default=None, pattern="https?://.+")
-    https_proxy: str | None = Field(default=None, pattern="https?://.+")
+    http_proxy: str | None = Field(default=None)
+    https_proxy: str | None = Field(default=None)
     no_proxy: typing.Optional[str] = None
 
 

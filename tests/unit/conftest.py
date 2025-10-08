@@ -5,10 +5,16 @@
 
 import io
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import ops
 import pytest
+from charms.squid_forward_proxy.v0.http_proxy import (
+    AUTH_METHOD_NONE,
+    PROXY_STATUS_READY,
+    HttpProxyResponse,
+    _HttpProxyResponseListReader,
+)
 from ops import testing
 
 from paas_charm.database_migration import DatabaseMigrationStatus
@@ -17,6 +23,7 @@ from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LA
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
+from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 
 
 @pytest.fixture
@@ -68,6 +75,14 @@ def expressjs_container_mock():
     return container
 
 
+@pytest.fixture
+def springboot_container_mock():
+    """Create a mock instance for the Container."""
+    container = MagicMock(spec=ops.Container)
+    container.pull.return_value = io.StringIO(json.dumps(SPRINGBOOT_DEFAULT_LAYER["services"]))
+    return container
+
+
 def postgresql_relation(db_name):
     """Postgresql relation fixture."""
     relation_data = {
@@ -81,3 +96,22 @@ def postgresql_relation(db_name):
         interface="postgresql_client",
         remote_app_data=relation_data,
     )
+
+
+@pytest.fixture(autouse=True)
+def http_proxy_response_patch(request):
+    """Automatically patch the HttpProxyResponseListReader.get for all tests."""
+    if "skip_http_proxy_response_patch" in request.keywords:
+        yield
+        return
+    response = HttpProxyResponse(
+        http_proxy="http://squid.internal:3128",
+        https_proxy="http://squid.internal:3128",
+        auth=AUTH_METHOD_NONE,
+        status=PROXY_STATUS_READY,
+        group=0,
+        id="fb0c52a7-1c2c-4958-9d02-8ee893d29491",
+    )
+
+    with patch.object(_HttpProxyResponseListReader, "get", return_value=response):
+        yield

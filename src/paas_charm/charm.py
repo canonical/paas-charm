@@ -10,6 +10,7 @@ import typing
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
+from charms.squid_forward_proxy.v0.http_proxy import HttpProxyRequirer
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -136,6 +137,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._tracing = self._init_tracing(requires)
         self._smtp = self._init_smtp(requires)
         self._openfga = self._init_openfga(requires)
+        self._http_proxy = self._init_http_proxy(requires)
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -213,6 +215,27 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _redis
+
+    def _init_http_proxy(self, requires: dict[str, RelationMeta]) -> "HttpProxyRequirer | None":
+        """Initialize the Redis relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the Redis relation or None
+        """
+        _http_proxy = None
+        if "http-proxy" in requires and requires["http-proxy"].interface_name == "http_proxy":
+            try:
+                _http_proxy = HttpProxyRequirer(self)
+            except NameError:
+                logger.exception(
+                    "Missing charm library,                               "
+                    "please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
+                )
+
+        return _http_proxy
 
     def _init_s3(self, requires: dict[str, RelationMeta]) -> "PaaSS3Requirer | None":
         """Initialize the S3 relation if its required.
@@ -665,6 +688,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 smtp=self._smtp,
                 openfga=self._openfga,
                 oauth=self._oauth,
+                http_proxy=self._http_proxy,
             ),
             base_url=self._base_url,
         )

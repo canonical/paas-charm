@@ -79,6 +79,10 @@ requires:
     interface: tracing
     optional: True
     limit: 1
+  http-proxy:
+    interface: http_proxy
+    optional: True
+    limit: 1
 resources:
   test-app-image:
     description: testomg application image.

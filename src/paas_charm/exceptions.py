@@ -36,3 +36,7 @@ class InvalidRelationDataError(Exception):
     """
 
     relation: str
+
+
+class RelationDataUnavailableError(Exception):
+    """Raised when relation data is unavailable."""
