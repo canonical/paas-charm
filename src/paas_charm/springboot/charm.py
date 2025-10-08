@@ -38,6 +38,7 @@ class SpringBootConfig(FrameworkConfig):
 
     Attrs:
         server_port: port where the application is listening
+        app_profiles: active profiles for the Spring Boot app
         management_server_port: port where the metrics are collected
         metrics_path: path where the metrics are collected
         secret_key: a secret key that will be used for securely signing the session cookie
@@ -46,6 +47,7 @@ class SpringBootConfig(FrameworkConfig):
     """
 
     server_port: int = Field(alias="app-port", default=8080, gt=0)
+    app_profiles: str | None = Field(alias="app-profiles", default=None, min_length=1)
     management_server_port: int | None = Field(alias="metrics-port", default=8080, gt=0)
     metrics_path: str | None = Field(
         alias="metrics-path", default="/actuator/prometheus", min_length=1
@@ -366,6 +368,10 @@ class SpringBootApp(App):
             A dictionary representing the application environment variables.
         """
         env = super().gen_environment()
+        # Name of the profiles field in SpringBootConfig
+        profiles_field = "app_profiles"
+        if profiles_field in self._charm_state.framework_config:
+            env["spring.profiles.active"] = str(self._charm_state.framework_config[profiles_field])
         # Required because of the strip prefix in the ingress configuration.
         env["server.forward-headers-strategy"] = "framework"
         return env
