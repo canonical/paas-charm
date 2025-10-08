@@ -77,6 +77,9 @@ cd docs
 make run
 ```
 
+If you have any documentation-related comments, issues, or suggestions, please open an issue or
+pull request in this repository, or reach out to us on [Matrix](https://matrix.to/#/#12-factor-charms:ubuntu.com).
+
 Additional resources:
 
 * [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/en/latest/)
@@ -89,3 +92,6 @@ Additional resources:
 
 Is there something missing from the 12-Factor app support framework? We
 welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+Reach out to us on [Matrix](https://matrix.to/#/#12-factor-charms:ubuntu.com) with your questions
+and use cases.
