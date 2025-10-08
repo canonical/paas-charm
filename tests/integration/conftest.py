@@ -519,8 +519,9 @@ def expressjs_app_fixture(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="14/stable",
         base="ubuntu@22.04",
+        revision=300,
         trust=True,
         config={
             "profile": "testing",
@@ -609,8 +610,9 @@ def spring_boot_app_fixture(
     try:
         juju.deploy(
             "postgresql-k8s",
-            channel="14/edge",
+            channel="14/stable",
             base="ubuntu@22.04",
+            revision=300,
             trust=True,
             config={
                 "profile": "testing",
@@ -762,7 +764,12 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
     _, status, _ = await ops_test.juju("status", "--format", "json")
     version = json.loads(status)["model"]["version"]
     try:
-        return await model.deploy("postgresql-k8s", channel="14/edge", trust=True)
+        if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
+            return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
+        else:
+            return await model.deploy(
+                "postgresql-k8s", channel="14/stable", revision=300, trust=True
+            )
     except JujuError as e:
         if 'cannot add application "postgresql-k8s": application already exists' in e.message:
             logger.info("Application 'postgresql-k8s' already exists")
@@ -891,8 +898,9 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="14/stable",
         base="ubuntu@22.04",
+        revision=300,
         trust=True,
         config={
             "profile": "testing",
