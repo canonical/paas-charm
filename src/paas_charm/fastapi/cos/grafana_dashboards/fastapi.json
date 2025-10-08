@@ -787,8 +787,8 @@
       {
         "current": {
           "selected": false,
-          "text": "juju_jubilant-ac027df9_c15a5a73-0a70-4312-840e-308bf3685235_prometheus-k8s_0",
-          "value": "juju_jubilant-ac027df9_c15a5a73-0a70-4312-840e-308bf3685235_prometheus-k8s_0"
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
@@ -809,8 +809,8 @@
       {
         "current": {
           "selected": false,
-          "text": "juju_jubilant-ac027df9_c15a5a73-0a70-4312-840e-308bf3685235_loki-k8s_0",
-          "value": "juju_jubilant-ac027df9_c15a5a73-0a70-4312-840e-308bf3685235_loki-k8s_0"
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "loki",
