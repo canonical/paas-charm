@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-10-08
+
+* feat: Add `http-proxy` integration to Paas-charm.
+
 ## 1.9.0 - 2025-10-07
 
 * feat: Add profiles configuration option to Spring Boot.
