@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "endpoint,db_name, db_channel, revision, trust",
     [
-        ("postgresql/status", "postgresql-k8s", "14/stable", "300", True),
+        ("postgresql/status", "postgresql-k8s", "14/edge", "675", True),
     ],
 )
 async def test_with_database(
