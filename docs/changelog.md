@@ -13,7 +13,7 @@ Place any unreleased changes here, that are subject to release in coming version
 
 ## 2025-10-08
 
-* feat: Add `http-proxy` integration to Paas-charm.
+* feat: Add `http-proxy` integration support for all frameworks.
 
 ## 1.9.0 - 2025-10-07
 
