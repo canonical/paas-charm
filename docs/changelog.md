@@ -23,7 +23,6 @@ Place any unreleased changes here, that are subject to release in coming version
 * docs: Add explanation document describing the value proposition of the tooling.
 * docs: Add explanation document describing the opinionated nature of the 12-factor tooling.
 
-
 ## 1.8.7 - 2025-09-10
 
 * fix: Unintentional removal of trailing `/` character from redirect-path is fixed.
