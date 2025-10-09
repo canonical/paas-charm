@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+* docs: Add extension to open links in a new tab.
+
 ## 1.9.0 - 2025-10-07
 
 * feat: Add profiles configuration option to Spring Boot.
@@ -20,6 +22,7 @@ Place any unreleased changes here, that are subject to release in coming version
 * docs: Update `paas-charm` v1.8 release notes to include Charmcraft updates.
 * docs: Add explanation document describing the value proposition of the tooling.
 * docs: Add explanation document describing the opinionated nature of the 12-factor tooling.
+
 
 ## 1.8.7 - 2025-09-10
 
