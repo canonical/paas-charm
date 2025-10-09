@@ -18,7 +18,6 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
-from charms.squid_forward_proxy.v0.http_proxy import HttpProxyRequirer, _BaseHttpProxyRequirer
 from ops import ActiveStatus, RelationMeta, RelationRole
 
 import paas_charm
@@ -28,6 +27,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.databases import PaaSDatabaseRelationData
+from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
@@ -513,7 +513,7 @@ def test_init_smtp(requires, expected_type):
                     raw={"interface": "http_proxy", "limit": 1},
                 )
             },
-            HttpProxyRequirer,
+            PaaSHttpProxyRequirer,
             id="http_proxy",
         ),
     ],
@@ -522,10 +522,10 @@ def test_init_http_proxy(requires, expected_type):
     """
     arrange: Get the mock requires.
     act: Run the _init_http_proxy function.
-    assert: It should return HttpProxyRequirer when there is http_proxy integration, none otherwise.
+    assert: It should return PaaSHttpProxyRequirer when there is http_proxy integration, none otherwise.
     """
     test_uuid = str(uuid.uuid4())
-    with patch.object(_BaseHttpProxyRequirer, "_get_requirer_id", return_value=test_uuid):
+    with patch.object(PaaSHttpProxyRequirer, "_get_requirer_id", return_value=test_uuid):
         charm = unittest.mock.MagicMock()
         result = paas_charm.charm.PaasCharm._init_http_proxy(self=charm, requires=requires)
         assert isinstance(result, expected_type)

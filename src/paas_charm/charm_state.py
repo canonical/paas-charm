@@ -8,13 +8,12 @@ import pathlib
 import typing
 from dataclasses import dataclass, field
 
-from charms.squid_forward_proxy.v0.http_proxy import HTTPProxyUnavailableError
 from pydantic import BaseModel, Field, ValidationError, create_model
 
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
     InvalidRelationDataError,
-    RelationDataUnavailableError,
+    RelationDataError,
 )
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
@@ -23,9 +22,10 @@ from paas_charm.utils import build_validation_error_message, config_metadata
 if typing.TYPE_CHECKING:  # pragma: nocover
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
-    from charms.squid_forward_proxy.v0.http_proxy import HttpProxyRequirer, ProxyConfig
+    from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
+    from paas_charm.http_proxy import PaaSHttpProxyRequirer
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
     from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
@@ -107,7 +107,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Raises:
             CharmConfigInvalidError: If some parameter in invalid.
-            RelationDataUnavailableError: If some relation data is unavailable.
         """
         user_defined_config = {
             k.replace("-", "_"): v
@@ -196,9 +195,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             )
         except InvalidRelationDataError as exc:
             raise CharmConfigInvalidError(f"Invalid {exc.relation} relation data.") from exc
-        except HTTPProxyUnavailableError as exc:
-            logger.exception("HTTP Proxy relation data unavailable. Proxy status: %s", exc.status)
-            raise RelationDataUnavailableError("HTTP Proxy relation data unavailable.") from exc
+        except RelationDataError as exc:
+            raise CharmConfigInvalidError(
+                f"{exc.relation} relation data is either unavailable, invalid or not usable."
+            ) from exc
         peer_fqdns = None
         if secret_storage.is_initialized and (
             peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
@@ -299,7 +299,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         smtp: Smtp requirer object.
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
-        http_proxy: HttpProxyRequirer object.
+        http_proxy: PaaSHttpProxyRequirer object.
     """
 
     databases: dict[str, "PaaSDatabaseRequires"]
@@ -311,7 +311,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
-    http_proxy: "HttpProxyRequirer | None" = None
+    http_proxy: "PaaSHttpProxyRequirer | None" = None
 
 
 @dataclass

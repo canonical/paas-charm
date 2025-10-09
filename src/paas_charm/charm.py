@@ -10,7 +10,6 @@ import typing
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
-from charms.squid_forward_proxy.v0.http_proxy import HttpProxyRequirer
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -21,7 +20,8 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_config
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
+from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.rabbitmq import RabbitMQRequires
@@ -216,23 +216,25 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         return _redis
 
-    def _init_http_proxy(self, requires: dict[str, RelationMeta]) -> "HttpProxyRequirer | None":
-        """Initialize the Redis relation if its required.
+    def _init_http_proxy(
+        self, requires: dict[str, RelationMeta]
+    ) -> "PaaSHttpProxyRequirer | None":
+        """Initialize the http-proxy relation if its required.
 
         Args:
             requires: relation requires dictionary from metadata
 
         Returns:
-            Returns the Redis relation or None
+            Returns the http-proxy relation or None
         """
         _http_proxy = None
         if "http-proxy" in requires and requires["http-proxy"].interface_name == "http_proxy":
             try:
-                _http_proxy = HttpProxyRequirer(self)
+                _http_proxy = PaaSHttpProxyRequirer(self)
             except NameError:
                 logger.exception(
                     "Missing charm library,                               "
-                    "please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
+                    "please run `charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
                 )
 
         return _http_proxy
@@ -501,7 +503,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             True if the charm is ready to start the workload application.
         """
-        charm_state = self._create_charm_state()
+        try:
+            charm_state = self._create_charm_state()
+        except RelationDataError as exc:
+            logger.exception(
+                "%s relation data is either invalid, missing or unusable.", exc.relation
+            )
+            self.update_app_and_unit_status(ops.BlockedStatus(str(exc)))
+            return False
         if not self._container.can_connect():
             logger.info(
                 "pebble client in the %s container is not ready",

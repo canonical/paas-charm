@@ -28,7 +28,17 @@ class MissingCharmLibraryError(Exception):
     """Raised when a required charm library is missing."""
 
 
-class InvalidRelationDataError(Exception):
+class RelationDataError(Exception):
+    """Raised when relation data is either unavailable, invalid or not usable.
+
+    Attributes:
+        relation: The name of the relation with error.
+    """
+
+    relation: str
+
+
+class InvalidRelationDataError(RelationDataError):
     """Represents an invalid relation data.
 
     Attributes:
@@ -36,7 +46,3 @@ class InvalidRelationDataError(Exception):
     """
 
     relation: str
-
-
-class RelationDataUnavailableError(Exception):
-    """Raised when relation data is unavailable."""

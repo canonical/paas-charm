@@ -9,7 +9,7 @@ from functools import wraps
 import ops
 
 from paas_charm.charm_state import CharmState
-from paas_charm.exceptions import CharmConfigInvalidError, RelationDataUnavailableError
+from paas_charm.exceptions import CharmConfigInvalidError
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +61,6 @@ def block_if_invalid_config(
         except CharmConfigInvalidError as exc:
             logger.exception("Wrong Charm Configuration")
             instance.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
-            return None
-        except RelationDataUnavailableError as exc:
-            logger.exception("Relation data unavailable.")
-            instance.update_app_and_unit_status(ops.BlockedStatus(str(exc)))
             return None
 
     return wrapper

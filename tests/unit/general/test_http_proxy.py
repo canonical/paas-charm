@@ -6,7 +6,7 @@
 import pathlib
 
 import pytest
-from charms.squid_forward_proxy.v0.http_proxy import HTTPProxyUnavailableError, ProxyConfig
+from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
@@ -174,4 +174,6 @@ def test_blocked_status_when_proxy_unavailable(
     )
     out = context.run(context.on.config_changed(), state)
 
-    assert out.unit_status == testing.BlockedStatus("HTTP Proxy relation data unavailable.")
+    assert out.unit_status == testing.BlockedStatus(
+        "http-proxy relation data is either unavailable, invalid or not usable."
+    )
