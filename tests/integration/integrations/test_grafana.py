@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, dashboard_name",
     [
+        ("flask_app", "Flask Operator"),
+        ("django_app", "Django Operator"),
         ("spring_boot_app", "Spring Boot Operator"),
         ("expressjs_app", "ExpressJS Operator"),
         ("go_app", "Go Operator"),
-        ("flask_app", "Flask Operator"),
-        ("django_app", "Django Operator"),
     ],
 )
 def test_grafana_integration(
