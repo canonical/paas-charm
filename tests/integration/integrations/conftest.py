@@ -308,7 +308,12 @@ def mailcatcher(load_kube_config, juju):
             ],
         ),
     )
-    v1.create_namespaced_pod(namespace=namespace, body=pod)
+    # try:
+    #     v1.create_namespaced_pod(namespace=namespace, body=pod)
+    # except kubernetes.client.ApiException as e:
+    #     if e.status != 409:
+    #         raise
+    #     logger.info("mailcatcher pod already exists")
     service = kubernetes.client.V1Service(
         api_version="v1",
         kind="Service",
@@ -322,7 +327,13 @@ def mailcatcher(load_kube_config, juju):
             selector={"app.kubernetes.io/name": "mailcatcher"},
         ),
     )
-    v1.create_namespaced_service(namespace=namespace, body=service)
+    try:
+        v1.create_namespaced_pod(namespace=namespace, body=pod)
+        v1.create_namespaced_service(namespace=namespace, body=service)
+    except kubernetes.client.ApiException as e:
+        if e.status != 409:
+            raise
+        logger.info("mailcatcher pod already exists")
     deadline = time.time() + 300
     pod_ip = None
     while True:

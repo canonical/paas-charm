@@ -4,6 +4,7 @@
 """Integration tests for SMTP Integration."""
 
 import logging
+import subprocess
 
 import jubilant
 import pytest
@@ -57,7 +58,47 @@ def test_smtp_integrations(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = http.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
+    try: 
+        response = http.get(f"http://{unit_ip}:{port}/s", timeout=5)
+    except requests.exceptions.ConnectionError:
+        proc = subprocess.run(
+            [
+                "kubectl",
+                "exec",
+                "-ti",
+                "-n",
+                juju.status().model.name,
+                "-c",
+                "app",
+                f"{app.name}-0",
+                "--",
+                "pebble",
+                "logs",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        logger.warning(f'kubectl exec output:\n{proc.stdout or proc.stderr}')
+    if response.status_code != 200:
+        proc = subprocess.run(
+            [
+                "kubectl",
+                "exec",
+                "-ti",
+                "-n",
+                juju.status().model.name,
+                "-c",
+                "app",
+                f"{app.name}-0",
+                "--",
+                "pebble",
+                "logs",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        logger.warning(f'kubectl exec output:\n{proc.stdout or proc.stderr}')
+
     assert response.status_code == 200
     assert "Sent" in response.text
 
