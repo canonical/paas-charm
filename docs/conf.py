@@ -1,8 +1,8 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import datetime
 import ast
+import datetime
 
 # Configuration for the Sphinx documentation builder.
 # All configuration specific to your project should be done in this file.
@@ -243,6 +243,7 @@ extensions = [
     "sphinxcontrib.cairosvgconverter",
     "sphinxcontrib.mermaid",
     "sphinx_last_updated_by_git",
+    "sphinx_new_tab_link",
 ]
 
 
