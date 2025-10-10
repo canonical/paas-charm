@@ -50,7 +50,7 @@ async def test_with_database(
 
     await model.wait_for_idle(status=ops.ActiveStatus.name)
 
-    await model.add_relation(flask_app.name, db_name)
+    await model.add_relation(flask_app.name, f"{db_name}:database")
 
     await model.wait_for_idle(status=ops.ActiveStatus.name)
 
