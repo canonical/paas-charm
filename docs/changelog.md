@@ -13,6 +13,7 @@ Place any unreleased changes here, that are subject to release in coming version
 
 * docs: Added release notes for `paas-charm v1.9`.
 * fix: Fixed FastAPI example and changed to use edge PostgreSQL for integration tests.
+* feat: Add grafana dashboard for FastAPI.
 * docs: Add extension to open links in a new tab.
 
 ## 1.9.0 - 2025-10-07
