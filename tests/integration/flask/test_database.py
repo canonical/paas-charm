@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "endpoint,db_name, db_channel, revision, trust",
     [
-        ("postgresql/status", "postgresql-k8s", "14/stable", "300", True),
+        ("postgresql/status", "postgresql-k8s", "14/edge", None, True),
     ],
 )
 async def test_with_database(
@@ -50,7 +50,7 @@ async def test_with_database(
 
     await model.wait_for_idle(status=ops.ActiveStatus.name)
 
-    await model.add_relation(flask_app.name, db_name)
+    await model.add_relation(flask_app.name, f"{db_name}:database")
 
     await model.wait_for_idle(status=ops.ActiveStatus.name)
 

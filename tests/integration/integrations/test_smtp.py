@@ -4,6 +4,7 @@
 """Integration tests for SMTP Integration."""
 
 import logging
+import subprocess
 
 import jubilant
 import pytest
@@ -18,12 +19,12 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
+        ("flask_app", 8000),
+        ("django_app", 8000),
         ("spring_boot_app", 8080),
         ("expressjs_app", 8080),
         ("fastapi_app", 8080),
         ("go_app", 8080),
-        ("flask_app", 8000),
-        ("django_app", 8000),
     ],
 )
 def test_smtp_integrations(
@@ -57,7 +58,34 @@ def test_smtp_integrations(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = http.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
+
+    def get_pebble_logs(juju, app):
+        proc = subprocess.run(
+            [
+                "kubectl",
+                "exec",
+                "-ti",
+                "-n",
+                juju.status().model.name,
+                "-c",
+                "app",
+                f"{app.name}-0",
+                "--",
+                "pebble",
+                "logs",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        return proc.stdout or proc.stderr
+
+    try:
+        response = http.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
+    except requests.exceptions.ConnectionError:
+        logger.warning(f"kubectl exec output:\n{get_pebble_logs(juju, app)}")
+    if response.status_code != 200:
+        logger.warning(f"kubectl exec output:\n{get_pebble_logs(juju, app)}")
+
     assert response.status_code == 200
     assert "Sent" in response.text
 

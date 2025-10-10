@@ -307,7 +307,7 @@ async def django_app_fixture(
         application_name=app_name,
         series="jammy",
     )
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
@@ -337,7 +337,7 @@ async def django_blocked_app_fixture(
         application_name=app_name,
         series="jammy",
     )
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
@@ -387,7 +387,7 @@ async def fastapi_app_fixture(
         application_name=app_name,
         config={"non-optional-string": "non-optional-value"},
     )
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
@@ -408,7 +408,7 @@ async def fastapi_blocked_app_fixture(
         pytestconfig, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
@@ -452,7 +452,7 @@ async def go_app_fixture(
     }
     charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
     return app
 
@@ -475,7 +475,7 @@ async def go_blocked_app_fixture(
         pytestconfig, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
@@ -519,9 +519,8 @@ def expressjs_app_fixture(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/stable",
+        channel="14/edge",
         base="ubuntu@22.04",
-        revision=300,
         trust=True,
         config={
             "profile": "testing",
@@ -567,7 +566,7 @@ async def expressjs_blocked_app_fixture(
         pytestconfig, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, postgresql_k8s.name)
+    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
     await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=600)
     await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
     return app
@@ -610,9 +609,8 @@ def spring_boot_app_fixture(
     try:
         juju.deploy(
             "postgresql-k8s",
-            channel="14/stable",
+            channel="14/edge",
             base="ubuntu@22.04",
-            revision=300,
             trust=True,
             config={
                 "profile": "testing",
@@ -764,12 +762,7 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
     _, status, _ = await ops_test.juju("status", "--format", "json")
     version = json.loads(status)["model"]["version"]
     try:
-        if tuple(map(int, (version.split(".")))) >= (3, 4, 0):
-            return await model.deploy("postgresql-k8s", channel="14/stable", trust=True)
-        else:
-            return await model.deploy(
-                "postgresql-k8s", channel="14/stable", revision=300, trust=True
-            )
+        return await model.deploy("postgresql-k8s", channel="14/edge", trust=True)
     except JujuError as e:
         if 'cannot add application "postgresql-k8s": application already exists' in e.message:
             logger.info("Application 'postgresql-k8s' already exists")
@@ -898,9 +891,8 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/stable",
+        channel="14/edge",
         base="ubuntu@22.04",
-        revision=300,
         trust=True,
         config={
             "profile": "testing",
