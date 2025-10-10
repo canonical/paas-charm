@@ -21,7 +21,6 @@ from paas_charm.charm_utils import block_if_invalid_config
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
-from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.rabbitmq import RabbitMQRequires
@@ -85,6 +84,15 @@ try:
 except ImportError:
     logger.warning(
         "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
+    )
+
+try:
+    # pylint: disable=ungrouped-imports
+    from paas_charm.http_proxy import PaaSHttpProxyRequirer
+except ImportError:
+    logger.warning(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
     )
 
 
