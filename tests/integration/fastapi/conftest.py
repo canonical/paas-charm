@@ -62,6 +62,6 @@ async def fastapi_app_fixture(
         resources=resources,
         config={"non-optional-string": "non-optional-value"},
     )
-    await model.integrate(app_name, "postgresql-k8s")
+    await model.integrate(app_name, "postgresql-k8s:database")
     await model.wait_for_idle(status="active")
     return app

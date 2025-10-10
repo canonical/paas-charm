@@ -35,7 +35,7 @@ async def test_blocking_and_restarting_on_required_integration(
     assert "postgresql" in unit.workload_status_message
 
     # add integration again and check that the service is running
-    await model.integrate(django_app.name, "postgresql-k8s")
+    await model.integrate(django_app.name, "postgresql-k8s:database")
     await model.wait_for_idle(status="active")
 
     unit_ip = (await get_unit_ips(django_app.name))[0]
