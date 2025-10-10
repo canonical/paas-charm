@@ -58,10 +58,3 @@ except ImportError as import_error:
     raise exceptions.MissingCharmLibraryError(
         "Missing charm library, please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
     ) from import_error
-try:
-    import charms.squid_forward_proxy.v0.http_proxy  # noqa: F401
-except ImportError as import_error:
-    raise exceptions.MissingCharmLibraryError(
-        "Missing charm library, please run `charmcraft fetch-lib "
-        "charms.squid_forward_proxy.v0.http_proxy`"
-    ) from import_error

@@ -99,7 +99,9 @@ class DatabaseMigration:
             DatabaseMigrationStatus.FAILED,
         ):
             return
-        logger.info("execute database migration command: %s", command)
+        logger.info(
+            "execute database migration command: %s, environment: %s", command, environment
+        )
         try:
             stdout, stderr = self._container.exec(
                 command,
