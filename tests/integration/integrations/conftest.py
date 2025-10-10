@@ -308,7 +308,7 @@ def mailcatcher(load_kube_config, juju):
             ],
         ),
     )
-    v1.create_namespaced_pod(namespace=namespace, body=pod)
+
     service = kubernetes.client.V1Service(
         api_version="v1",
         kind="Service",
@@ -322,7 +322,13 @@ def mailcatcher(load_kube_config, juju):
             selector={"app.kubernetes.io/name": "mailcatcher"},
         ),
     )
-    v1.create_namespaced_service(namespace=namespace, body=service)
+    try:
+        v1.create_namespaced_pod(namespace=namespace, body=pod)
+        v1.create_namespaced_service(namespace=namespace, body=service)
+    except kubernetes.client.ApiException as e:
+        if e.status != 409:
+            raise
+        logger.info("mailcatcher pod already exists")
     deadline = time.time() + 300
     pod_ip = None
     while True:
@@ -435,7 +441,7 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
 
     deploy_postgresql(juju)
     juju.deploy(openfga_server_app.name, channel="latest/stable")
-    juju.integrate(openfga_server_app.name, "postgresql-k8s")
+    juju.integrate(openfga_server_app.name, "postgresql-k8s:database")
     juju.wait(
         lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
         timeout=6 * 60,

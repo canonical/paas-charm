@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture,metrics_port,metrics_path",
     [
+        ("flask_app", 9102, "/metrics"),
+        ("django_app", 9102, "/metrics"),
         ("spring_boot_app", 8080, "/actuator/prometheus"),
         ("expressjs_app", 8080, "/metrics"),
         ("go_app", 8081, "/metrics"),
         ("fastapi_app", 8080, "/metrics"),
-        ("flask_app", 9102, "/metrics"),
-        ("django_app", 9102, "/metrics"),
     ],
 )
 def test_prometheus_integration(

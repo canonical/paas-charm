@@ -14,3 +14,4 @@ Authlib>=1.0
 httpx
 itsdangerous
 jinja2
+pydantic==2.11.10

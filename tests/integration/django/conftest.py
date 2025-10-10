@@ -82,7 +82,7 @@ async def django_app_fixture(charm_file: str, model: Model, django_app_image: st
         resources=resources,
         series="jammy",
     )
-    await model.integrate(app_name, "postgresql-k8s")
+    await model.integrate(app_name, "postgresql-k8s:database")
     await model.wait_for_idle(status="active")
     return app
 
@@ -104,7 +104,7 @@ async def django_async_app_fixture(
         resources=resources,
         series="jammy",
     )
-    await model.integrate(app_name, "postgresql-k8s")
+    await model.integrate(app_name, "postgresql-k8s:database")
     await model.wait_for_idle(status="active")
     return app
 
