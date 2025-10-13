@@ -107,7 +107,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Raises:
             CharmConfigInvalidError: If some parameter in invalid.
-        """
+            RelationDataError: When relation data is either unavailable, invalid or not usable.
+        """  # noqa: DCO053,DCO054
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
@@ -194,11 +195,15 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 ),
             )
         except InvalidRelationDataError as exc:
-            raise CharmConfigInvalidError(f"Invalid {exc.relation} relation data.") from exc
+            new_exc = RelationDataError(f"Invalid {exc.relation} relation data.")
+            new_exc.relation = exc.relation
+            raise new_exc from exc  # noqa: DCO053
         except RelationDataError as exc:
-            raise CharmConfigInvalidError(
+            new_exc = RelationDataError(
                 f"{exc.relation} relation data is either unavailable, invalid or not usable."
-            ) from exc
+            )
+            new_exc.relation = exc.relation
+            raise new_exc from exc  # noqa: DCO053
         peer_fqdns = None
         if secret_storage.is_initialized and (
             peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
