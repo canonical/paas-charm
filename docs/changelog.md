@@ -16,6 +16,7 @@ Place any unreleased changes here, that are subject to release in coming version
 * feat: Add `http-proxy` integration support for all frameworks.
 * docs: Added release notes for `paas-charm v1.9`.
 * fix: Fixed FastAPI example and changed to use edge PostgreSQL for integration tests.
+* feat: Add grafana dashboard for FastAPI.
 
 ## 1.9.0 - 2025-10-07
 
