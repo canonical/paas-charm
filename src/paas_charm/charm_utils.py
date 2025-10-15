@@ -35,7 +35,7 @@ E = typing.TypeVar("E", bound=ops.EventBase)
 def block_if_invalid_data(
     method: typing.Callable[[C, E], None],
 ) -> typing.Callable[[C, E], None]:
-    """Create a decorator that puts the blocks the charm if the config or relation data is wrong.
+    """Create a decorator that blocks the charm if the config or relation data is wrong.
 
     Args:
         method: observer method to wrap.
