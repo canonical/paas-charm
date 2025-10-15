@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         juju-version: [ 3.6/stable ]
-    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
+    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@fix/trivy-non-used
     secrets: inherit
     with:
       extra-arguments: '-x --log-format="%(asctime)s %(levelname)s %(message)s"'
