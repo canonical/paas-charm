@@ -131,7 +131,6 @@ def test_http_proxy(
     assert env == expected
 
 
-@pytest.mark.skip_http_proxy_response_patch
 @pytest.mark.parametrize(
     "base_state, charm, config",
     [

@@ -96,22 +96,3 @@ def postgresql_relation(db_name):
         interface="postgresql_client",
         remote_app_data=relation_data,
     )
-
-
-@pytest.fixture(autouse=True)
-def http_proxy_response_patch(request):
-    """Automatically patch the HttpProxyResponseListReader.get for all tests."""
-    if "skip_http_proxy_response_patch" in request.keywords:
-        yield
-        return
-    response = HttpProxyResponse(
-        http_proxy="http://squid.internal:3128",
-        https_proxy="http://squid.internal:3128",
-        auth=AUTH_METHOD_NONE,
-        status=PROXY_STATUS_READY,
-        group=0,
-        id="fb0c52a7-1c2c-4958-9d02-8ee893d29491",
-    )
-
-    with patch.object(_HttpProxyResponseListReader, "get", return_value=response):
-        yield
