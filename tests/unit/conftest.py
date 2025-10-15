@@ -5,16 +5,10 @@
 
 import io
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import ops
 import pytest
-from charms.squid_forward_proxy.v0.http_proxy import (
-    AUTH_METHOD_NONE,
-    PROXY_STATUS_READY,
-    HttpProxyResponse,
-    _HttpProxyResponseListReader,
-)
 from ops import testing
 
 from paas_charm.database_migration import DatabaseMigrationStatus
