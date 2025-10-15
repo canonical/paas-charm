@@ -9,7 +9,7 @@ from functools import wraps
 import ops
 
 from paas_charm.charm_state import CharmState
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +32,10 @@ C = typing.TypeVar("C", bound=PaasCharmBaseProtocol)
 E = typing.TypeVar("E", bound=ops.EventBase)
 
 
-def block_if_invalid_config(
+def block_if_invalid_data(
     method: typing.Callable[[C, E], None],
 ) -> typing.Callable[[C, E], None]:
-    """Create a decorator that puts the charm in blocked state if the config is wrong.
+    """Create a decorator that blocks the charm if the config or relation data is wrong.
 
     Args:
         method: observer method to wrap.
@@ -46,7 +46,7 @@ def block_if_invalid_config(
 
     @wraps(method)
     def wrapper(instance: C, event: E) -> None:
-        """Block the charm if the config is wrong.
+        """Block the charm if the config or relation data is wrong.
 
         Args:
             instance: the instance of the class with the hook method.
@@ -61,6 +61,12 @@ def block_if_invalid_config(
         except CharmConfigInvalidError as exc:
             logger.exception("Wrong Charm Configuration")
             instance.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
+            return None
+        except RelationDataError as exc:
+            logger.exception(
+                "%s relation data is either invalid, missing or unusable.", exc.relation
+            )
+            instance.update_app_and_unit_status(ops.BlockedStatus(str(exc)))
             return None
 
     return wrapper

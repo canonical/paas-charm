@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
         ("spring_boot_app", "Spring Boot Operator"),
         ("expressjs_app", "ExpressJS Operator"),
         ("go_app", "Go Operator"),
+        ("fastapi_app", "FastAPI Operator"),
     ],
 )
 def test_grafana_integration(
