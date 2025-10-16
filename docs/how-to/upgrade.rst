@@ -30,8 +30,8 @@ Once repacked, upload the new rock using an updated
 
    sudo rockcraft.skopeo copy \
    --insecure-policy \
-   oci-archive:myapp_0.1_amd64.rock \
-   docker-daemon:myapp:0.1
+   oci-archive:myapp_0.2_amd64.rock \
+   docker-daemon:myapp:0.2
 
 Refresh the deployed application
 --------------------------------
@@ -41,10 +41,10 @@ Use the ``juju refresh`` command and specify the new rock as a resource:
 
 .. code-block:: bash
     
-    juju refresh myapp --resource app-image=localhost:32000/myapp:0.1
+    juju refresh myapp --resource app-image=localhost:32000/myapp:0.2
 
-Upgrading the charm itself
---------------------------
+Upgrade the charm
+-----------------
 
 If you've made changes to the charm source code, you need to repack the charm:
 
