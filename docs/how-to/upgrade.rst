@@ -17,8 +17,8 @@ or application source code), you must repack the rock using ``rockcraft pack``.
    rockcraft pack
 
 This command creates a new ``.rock`` file in the current directory. Before packing, make sure
-to bump the ``version`` field in your ``rockcraft.yaml`` to ensure that Juju and your container
-registry can distinguish between versions and pull the correct one.
+to bump the ``version`` field in your ``rockcraft.yaml`` to properly track versions of your rock
+and help avoid Kubernetes caching an old version of the image.
 
 Push the rock to the registry
 -----------------------------
@@ -43,8 +43,16 @@ Use the ``juju refresh`` command and specify the new rock as a resource:
     
     juju refresh myapp --resource app-image=localhost:32000/myapp:0.2
 
-Upgrade the charm
------------------
+If your charm was deployed from a local path, you also need to provide the charm path when
+refreshing the application:
+
+.. code-block:: bash
+    
+    juju refresh myapp --resource app-image=localhost:32000/myapp:0.1 \
+    --path ./myapp-22.04-amd64.charm
+
+Upgrading the charm itself
+--------------------------
 
 If you've made changes to the charm source code, you need to repack the charm:
 
