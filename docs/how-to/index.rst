@@ -50,6 +50,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
   enhancements to the 12-factor project
 * :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
   charm, or ``paas-charm`` version. 
+* :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
 
 .. toctree::
    :hidden:
@@ -58,3 +59,4 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Add a new framework <add-new-framework>
    Contribute <contributing>
    Upgrade <upgrade>
+   Get support <get-support>
