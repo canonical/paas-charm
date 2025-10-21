@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, port",
     [
-        ("spring_boot_app", 8080),
-        ("expressjs_app", 8080),
         ("flask_app", 8000),
         ("django_app", 8000),
+        ("spring_boot_app", 8080),
+        ("expressjs_app", 8080),
         ("fastapi_app", 8080),
         ("go_app", 8080),
     ],

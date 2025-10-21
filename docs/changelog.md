@@ -11,7 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-10-08
+
+* docs: Updated "how to upgrade" documentation.
+* feat: Add `http-proxy` integration support for all frameworks.
 * docs: Added release notes for `paas-charm v1.9`.
+* fix: Fixed FastAPI example and changed to use edge PostgreSQL for integration tests.
+* feat: Add grafana dashboard for FastAPI.
+* docs: Add extension to open links in a new tab.
 * docs: Added a how-to guide on getting support.
 * docs: Incorporated feedback from UX session.
 

@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationRequirers
-from paas_charm.charm_utils import block_if_invalid_config
+from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
@@ -86,6 +86,15 @@ except ImportError:
         "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
     )
 
+try:
+    # pylint: disable=ungrouped-imports
+    from paas_charm.http_proxy import PaaSHttpProxyRequirer
+except ImportError:
+    logger.warning(
+        "Missing charm library, please run "
+        "`charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
+    )
+
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -136,6 +145,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._tracing = self._init_tracing(requires)
         self._smtp = self._init_smtp(requires)
         self._openfga = self._init_openfga(requires)
+        self._http_proxy = self._init_http_proxy(requires)
 
         self._database_migration = DatabaseMigration(
             container=self.unit.get_container(self._workload_config.container_name),
@@ -213,6 +223,29 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _redis
+
+    def _init_http_proxy(
+        self, requires: dict[str, RelationMeta]
+    ) -> "PaaSHttpProxyRequirer | None":
+        """Initialize the http-proxy relation if its required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the http-proxy relation or None
+        """
+        _http_proxy = None
+        if "http-proxy" in requires and requires["http-proxy"].interface_name == "http_proxy":
+            try:
+                _http_proxy = PaaSHttpProxyRequirer(self)
+            except NameError:
+                logger.exception(
+                    "Missing charm library,                               "
+                    "please run `charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
+                )
+
+        return _http_proxy
 
     def _init_s3(self, requires: dict[str, RelationMeta]) -> "PaaSS3Requirer | None":
         """Initialize the S3 relation if its required.
@@ -424,17 +457,17 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Return the workload container."""
         return self.unit.get_container(self._workload_config.container_name)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_config_changed(self, _: ops.EventBase) -> None:
         """Configure the application pebble service layer."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_secret_changed(self, _: ops.EventBase) -> None:
         """Configure the application Pebble service layer."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_rotate_secret_key_action(self, event: ops.ActionEvent) -> None:
         """Handle the rotate-secret-key action.
 
@@ -451,12 +484,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         event.set_results({"status": "success"})
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_secret_storage_relation_changed(self, _: ops.RelationEvent) -> None:
         """Handle the secret-storage-relation-changed event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
         """Handle the secret-storage-relation-departed event."""
         self.restart()
@@ -665,6 +698,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 smtp=self._smtp,
                 openfga=self._openfga,
                 oauth=self._oauth,
+                http_proxy=self._http_proxy,
             ),
             base_url=self._base_url,
         )
@@ -680,7 +714,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return self._ingress.url
         return f"http://{self.app.name}.{self.model.name}:{self._workload_config.port}"
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_update_status(self, _: ops.HookEvent) -> None:
         """Handle the update-status event."""
         if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED:
@@ -692,127 +726,127 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         # (especially the ip field) on every update status.
         self._ingress._publish_auto_data()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mysql_database_database_created(self, _: DatabaseRequiresEvent) -> None:
         """Handle mysql's database-created event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mysql_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
         """Handle mysql's endpoints-changed event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mysql_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
         """Handle mysql's relation-broken event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_postgresql_database_database_created(self, _: DatabaseRequiresEvent) -> None:
         """Handle postgresql's database-created event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_postgresql_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
         """Handle mysql's endpoints-changed event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_postgresql_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
         """Handle postgresql's relation-broken event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mongodb_database_database_created(self, _: DatabaseRequiresEvent) -> None:
         """Handle mongodb's database-created event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mongodb_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
         """Handle mysql's endpoints-changed event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_mongodb_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
         """Handle postgresql's relation-broken event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_redis_relation_updated(self, _: DatabaseRequiresEvent) -> None:
         """Handle redis's database-created event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_s3_credential_changed(self, _: ops.HookEvent) -> None:
         """Handle s3 credentials-changed event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_s3_credential_gone(self, _: ops.HookEvent) -> None:
         """Handle s3 credentials-gone event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_saml_data_available(self, _: ops.HookEvent) -> None:
         """Handle saml data available event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_ingress_revoked(self, _: ops.HookEvent) -> None:
         """Handle event for ingress revoked."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_ingress_ready(self, _: ops.HookEvent) -> None:
         """Handle event for ingress ready."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_pebble_ready(self, _: ops.PebbleReadyEvent) -> None:
         """Handle the pebble-ready event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_rabbitmq_connected(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq connected event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_rabbitmq_ready(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq ready event."""
         self.restart(rerun_migrations=True)
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
         """Handle rabbitmq departed event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
         """Handle tracing relation changed event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
         """Handle tracing relation broken event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_smtp_data_available(self, _: ops.HookEvent) -> None:
         """Handle smtp data available event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_openfga_store_created(self, _: ops.HookEvent) -> None:
         """Handle openfga store created event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_oauth_info_changed(self, _: ops.HookEvent) -> None:
         """Handle the OAuth info changed event."""
         self.restart()
 
-    @block_if_invalid_config
+    @block_if_invalid_data
     def _on_oauth_info_removed(self, _: ops.HookEvent) -> None:
         """Handle the OAuth info removed event."""
         self.restart()

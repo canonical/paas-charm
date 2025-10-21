@@ -58,7 +58,7 @@ async def go_app_fixture(charm_file: str, model: Model, go_app_image: str, postg
         application_name=app_name,
         resources=resources,
     )
-    await model.integrate(app_name, "postgresql-k8s")
+    await model.integrate(app_name, "postgresql-k8s:database")
     await model.wait_for_idle(status="active")
     return app
 

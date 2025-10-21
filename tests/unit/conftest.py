@@ -17,6 +17,7 @@ from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LA
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
+from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 
 
 @pytest.fixture
@@ -65,6 +66,14 @@ def expressjs_container_mock():
     """Create a mock instance for the Container."""
     container = MagicMock(spec=ops.Container)
     container.pull.return_value = io.StringIO(json.dumps(EXPRESSJS_DEFAULT_LAYER["services"]))
+    return container
+
+
+@pytest.fixture
+def springboot_container_mock():
+    """Create a mock instance for the Container."""
+    container = MagicMock(spec=ops.Container)
+    container.pull.return_value = io.StringIO(json.dumps(SPRINGBOOT_DEFAULT_LAYER["services"]))
     return container
 
 

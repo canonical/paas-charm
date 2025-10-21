@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.charm_state import CharmConfigInvalidError, CharmState, IntegrationRequirers
+from paas_charm.charm_state import CharmState, IntegrationRequirers, RelationDataError
 from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
 from paas_charm.redis import InvalidRedisRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
@@ -43,7 +43,7 @@ def test_charm_state_integration_state_build_error(error):
     saml_mock = MagicMock()
     saml_mock.to_relation_data.side_effect = error
 
-    with pytest.raises(CharmConfigInvalidError):
+    with pytest.raises(RelationDataError):
         CharmState.from_charm(
             config=MagicMock(),
             framework="test",
