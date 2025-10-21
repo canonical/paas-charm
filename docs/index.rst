@@ -98,7 +98,8 @@ Get in touch
 ~~~~~~~~~~~~
 
 Do you have a project or setup where you want to employ this solution? Reach out
-to share your use case and get started!
+to us on `Matrix <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
+share your use case and get started!
 
 .. toctree::
    :hidden:
