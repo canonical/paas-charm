@@ -1,0 +1,37 @@
+11:44:55 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:44:55 [32mINFO[0m Connecting to existing model github-pr-aadc8-microk8s:testing on unspecified cloud
+11:44:55 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:44:55 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:44:55 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:44:55 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:44:56 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:45:00 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+11:45:04 [32mINFO[0m Deploying local:jammy/django-k8s-0
+11:45:04 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-async-k8s/0 [allocating] waiting: installing agent
+11:45:34 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+11:46:05 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+11:46:34 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] active:
+11:46:54 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-aadc8-microk8s  microk8s/localhost  3.6.11   unsupported  11:46:53Z
+
+App               Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-async-k8s           active      1  django-k8s                 0  10.152.183.236  no       
+postgresql-k8s    14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.154  no       
+
+Unit                 Workload  Agent  Address       Ports  Message
+django-async-k8s/0*  active    idle   10.1.110.138         
+postgresql-k8s/0*    active    idle   10.1.110.140         Primary
+
+11:46:54 [32mINFO[0m Juju error logs:
+
+
+11:46:54 [32mINFO[0m Forgetting model main...

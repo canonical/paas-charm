@@ -1,0 +1,4 @@
+11:57:03 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+11:57:19 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked:         invalid options: flask-permanent-session-lifetime

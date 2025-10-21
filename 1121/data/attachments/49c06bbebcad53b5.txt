@@ -1,0 +1,4 @@
+11:57:37 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+11:57:53 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked:         invalid options: flask-preferred-url-scheme

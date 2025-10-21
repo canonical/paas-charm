@@ -1,0 +1,646 @@
+11:52:12 [32mINFO[0m cli: juju deploy --model testing /home/runner/work/paas-charm/paas-charm/fastapi-k8s_amd64.charm --config non-optional-string=string --resource app-image=ghcr.io/canonical/fastapi-app:f7b47e71f90d3f82b1a733cc68fc7e3a5c2ba2da-_0.1_amd64
+11:52:16 [32mINFO[0m cli: juju status --model testing --format json
+11:52:16 [32mINFO[0m postgresql-k8s already deployed
+11:52:16 [32mINFO[0m cli: juju integrate --model testing fastapi-k8s postgresql-k8s:database
+11:52:16 [32mINFO[0m wait: status changed:
++ .model.name = 'testing'
++ .model.type = 'caas'
++ .model.controller = 'github-pr-aadc8-microk8s'
++ .model.cloud = 'microk8s'
++ .model.version = '3.6.11'
++ .model.region = 'localhost'
++ .model.model_status.current = 'available'
++ .apps['django-k8s'].charm = 'local:django-k8s-0'
++ .apps['django-k8s'].charm_origin = 'local'
++ .apps['django-k8s'].charm_name = 'django-k8s'
++ .apps['django-k8s'].charm_rev = 0
++ .apps['django-k8s'].exposed = False
++ .apps['django-k8s'].base.name = 'ubuntu'
++ .apps['django-k8s'].base.channel = '22.04'
++ .apps['django-k8s'].scale = 1
++ .apps['django-k8s'].provider_id = '47823c3b-effd-48ae-a14a-b0d6f5bba74b'
++ .apps['django-k8s'].address = '10.152.183.139'
++ .apps['django-k8s'].app_status.current = 'active'
++ .apps['django-k8s'].relations['openfga'][0].related_app = 'openfga-k8s'
++ .apps['django-k8s'].relations['openfga'][0].interface = 'openfga'
++ .apps['django-k8s'].relations['openfga'][0].scope = 'global'
++ .apps['django-k8s'].relations['postgresql'][0].related_app = 'postgresql-k8s'
++ .apps['django-k8s'].relations['postgresql'][0].interface = 'postgresql_client'
++ .apps['django-k8s'].relations['postgresql'][0].scope = 'global'
++ .apps['django-k8s'].relations['secret-storage'][0].related_app = 'django-k8s'
++ .apps['django-k8s'].relations['secret-storage'][0].interface = 'secret-storage'
++ .apps['django-k8s'].relations['secret-storage'][0].scope = 'global'
++ .apps['django-k8s'].units['django-k8s/0'].workload_status.current = 'active'
++ .apps['django-k8s'].units['django-k8s/0'].juju_status.current = 'idle'
++ .apps['django-k8s'].units['django-k8s/0'].juju_status.version = '3.6.11'
++ .apps['django-k8s'].units['django-k8s/0'].leader = True
++ .apps['django-k8s'].units['django-k8s/0'].address = '10.1.110.142'
++ .apps['django-k8s'].units['django-k8s/0'].provider_id = 'django-k8s-0'
++ .apps['django-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['http-proxy'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['ingress'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['oidc'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['openfga'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['postgresql'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['secret-storage'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['smtp'] = 'alpha'
++ .apps['django-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['fastapi-k8s'].charm = 'local:fastapi-k8s-0'
++ .apps['fastapi-k8s'].charm_origin = 'local'
++ .apps['fastapi-k8s'].charm_name = 'fastapi-k8s'
++ .apps['fastapi-k8s'].charm_rev = 0
++ .apps['fastapi-k8s'].exposed = False
++ .apps['fastapi-k8s'].base.name = 'ubuntu'
++ .apps['fastapi-k8s'].base.channel = '24.04'
++ .apps['fastapi-k8s'].scale = 1
++ .apps['fastapi-k8s'].app_status.current = 'waiting'
++ .apps['fastapi-k8s'].app_status.message = 'installing agent'
++ .apps['fastapi-k8s'].relations['postgresql'][0].related_app = 'postgresql-k8s'
++ .apps['fastapi-k8s'].relations['postgresql'][0].interface = 'postgresql_client'
++ .apps['fastapi-k8s'].relations['postgresql'][0].scope = 'global'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].related_app = 'fastapi-k8s'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].interface = 'secret-storage'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].scope = 'global'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing agent'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'allocating'
++ .apps['fastapi-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['http-proxy'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['ingress'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['oidc'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['openfga'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['postgresql'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['secret-storage'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['smtp'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['flask-k8s'].charm = 'local:flask-k8s-0'
++ .apps['flask-k8s'].charm_origin = 'local'
++ .apps['flask-k8s'].charm_name = 'flask-k8s'
++ .apps['flask-k8s'].charm_rev = 0
++ .apps['flask-k8s'].exposed = False
++ .apps['flask-k8s'].base.name = 'ubuntu'
++ .apps['flask-k8s'].base.channel = '22.04'
++ .apps['flask-k8s'].scale = 1
++ .apps['flask-k8s'].provider_id = '259a9a23-579c-4836-aee3-7c36b5d11cf3'
++ .apps['flask-k8s'].address = '10.152.183.187'
++ .apps['flask-k8s'].app_status.current = 'active'
++ .apps['flask-k8s'].relations['openfga'][0].related_app = 'openfga-k8s'
++ .apps['flask-k8s'].relations['openfga'][0].interface = 'openfga'
++ .apps['flask-k8s'].relations['openfga'][0].scope = 'global'
++ .apps['flask-k8s'].relations['secret-storage'][0].related_app = 'flask-k8s'
++ .apps['flask-k8s'].relations['secret-storage'][0].interface = 'secret-storage'
++ .apps['flask-k8s'].relations['secret-storage'][0].scope = 'global'
++ .apps['flask-k8s'].units['flask-k8s/0'].workload_status.current = 'active'
++ .apps['flask-k8s'].units['flask-k8s/0'].juju_status.current = 'idle'
++ .apps['flask-k8s'].units['flask-k8s/0'].juju_status.version = '3.6.11'
++ .apps['flask-k8s'].units['flask-k8s/0'].leader = True
++ .apps['flask-k8s'].units['flask-k8s/0'].address = '10.1.110.141'
++ .apps['flask-k8s'].units['flask-k8s/0'].provider_id = 'flask-k8s-0'
++ .apps['flask-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['http-proxy'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['ingress'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['mongodb'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['mysql'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['oidc'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['openfga'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['postgresql'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['rabbitmq'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['redis'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['s3'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['saml'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['secret-storage'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['smtp'] = 'alpha'
++ .apps['flask-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['openfga-k8s'].charm = 'openfga-k8s'
++ .apps['openfga-k8s'].charm_origin = 'charmhub'
++ .apps['openfga-k8s'].charm_name = 'openfga-k8s'
++ .apps['openfga-k8s'].charm_rev = 128
++ .apps['openfga-k8s'].exposed = False
++ .apps['openfga-k8s'].base.name = 'ubuntu'
++ .apps['openfga-k8s'].base.channel = '22.04'
++ .apps['openfga-k8s'].charm_channel = 'latest/stable'
++ .apps['openfga-k8s'].scale = 1
++ .apps['openfga-k8s'].provider_id = 'b7214044-9c71-4821-b11c-a72b6bcc153c'
++ .apps['openfga-k8s'].address = '10.152.183.78'
++ .apps['openfga-k8s'].app_status.current = 'active'
++ .apps['openfga-k8s'].relations['database'][0].related_app = 'postgresql-k8s'
++ .apps['openfga-k8s'].relations['database'][0].interface = 'postgresql_client'
++ .apps['openfga-k8s'].relations['database'][0].scope = 'global'
++ .apps['openfga-k8s'].relations['openfga'][0].related_app = 'django-k8s'
++ .apps['openfga-k8s'].relations['openfga'][0].interface = 'openfga'
++ .apps['openfga-k8s'].relations['openfga'][0].scope = 'global'
++ .apps['openfga-k8s'].relations['openfga'][1].related_app = 'flask-k8s'
++ .apps['openfga-k8s'].relations['openfga'][1].interface = 'openfga'
++ .apps['openfga-k8s'].relations['openfga'][1].scope = 'global'
++ .apps['openfga-k8s'].relations['peer'][0].related_app = 'openfga-k8s'
++ .apps['openfga-k8s'].relations['peer'][0].interface = 'openfga-peer'
++ .apps['openfga-k8s'].relations['peer'][0].scope = 'global'
++ .apps['openfga-k8s'].units['openfga-k8s/0'].workload_status.current = 'active'
++ .apps['openfga-k8s'].units['openfga-k8s/0'].juju_status.current = 'idle'
++ .apps['openfga-k8s'].units['openfga-k8s/0'].juju_status.version = '3.6.11'
++ .apps['openfga-k8s'].units['openfga-k8s/0'].leader = True
++ .apps['openfga-k8s'].units['openfga-k8s/0'].address = '10.1.110.140'
++ .apps['openfga-k8s'].units['openfga-k8s/0'].provider_id = 'openfga-k8s-0'
++ .apps['openfga-k8s'].version = 'v1.8.4'
++ .apps['openfga-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['certificates'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['database'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['grpc-ingress'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['http-ingress'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['openfga'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['peer'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['send-ca-cert'] = 'alpha'
++ .apps['openfga-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['postgresql-k8s'].charm = 'postgresql-k8s'
++ .apps['postgresql-k8s'].charm_origin = 'charmhub'
++ .apps['postgresql-k8s'].charm_name = 'postgresql-k8s'
++ .apps['postgresql-k8s'].charm_rev = 684
++ .apps['postgresql-k8s'].exposed = False
++ .apps['postgresql-k8s'].base.name = 'ubuntu'
++ .apps['postgresql-k8s'].base.channel = '22.04'
++ .apps['postgresql-k8s'].charm_channel = '14/edge'
++ .apps['postgresql-k8s'].scale = 1
++ .apps['postgresql-k8s'].provider_id = 'c7d4a87a-8313-44c2-b6bb-7c9679313316'
++ .apps['postgresql-k8s'].address = '10.152.183.22'
++ .apps['postgresql-k8s'].app_status.current = 'active'
++ .apps['postgresql-k8s'].relations['database'][0].related_app = 'django-k8s'
++ .apps['postgresql-k8s'].relations['database'][0].interface = 'postgresql_client'
++ .apps['postgresql-k8s'].relations['database'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['database'][1].related_app = 'fastapi-k8s'
++ .apps['postgresql-k8s'].relations['database'][1].interface = 'postgresql_client'
++ .apps['postgresql-k8s'].relations['database'][1].scope = 'global'
++ .apps['postgresql-k8s'].relations['database'][2].related_app = 'openfga-k8s'
++ .apps['postgresql-k8s'].relations['database'][2].interface = 'postgresql_client'
++ .apps['postgresql-k8s'].relations['database'][2].scope = 'global'
++ .apps['postgresql-k8s'].relations['database-peers'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['database-peers'][0].interface = 'postgresql_peers'
++ .apps['postgresql-k8s'].relations['database-peers'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['restart'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['restart'][0].interface = 'rolling_op'
++ .apps['postgresql-k8s'].relations['restart'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['upgrade'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['upgrade'][0].interface = 'upgrade'
++ .apps['postgresql-k8s'].relations['upgrade'][0].scope = 'global'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'active'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Primary'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.version = '3.6.11'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].leader = True
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].address = '10.1.110.139'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].provider_id = 'postgresql-k8s-0'
++ .apps['postgresql-k8s'].version = '14.19'
++ .apps['postgresql-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['certificates'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['database'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['database-peers'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['db'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['db-admin'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['ldap'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['receive-ca-cert'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['replication'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['replication-offer'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['restart'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['s3-parameters'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['upgrade'] = 'alpha'
++ .storage.storage['pgdata/0'].kind = 'filesystem'
++ .storage.storage['pgdata/0'].status.current = 'attached'
++ .storage.storage['pgdata/0'].status.message = 'Successfully provisioned volume pvc-f2f69608-c7d7-4032-bee6-c6e5470a498c'
++ .storage.storage['pgdata/0'].persistent = False
++ .storage.storage['pgdata/0'].life = 'alive'
++ .storage.storage['pgdata/0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].size = 1024
++ .storage.filesystems['0'].provider_id = 'f2f69608-c7d7-4032-bee6-c6e5470a498c'
++ .storage.filesystems['0'].volume = '0'
++ .storage.filesystems['0'].storage = 'pgdata/0'
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].mount_point = '/var/lib/postgresql/data'
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].read_only = False
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].pool = 'kubernetes'
++ .storage.filesystems['0'].life = 'alive'
++ .storage.filesystems['0'].status.current = 'attached'
++ .storage.filesystems['0'].status.message = 'Successfully provisioned volume pvc-f2f69608-c7d7-4032-bee6-c6e5470a498c'
++ .storage.volumes['0'].size = 1024
++ .storage.volumes['0'].persistent = True
++ .storage.volumes['0'].provider_id = 'pvc-f2f69608-c7d7-4032-bee6-c6e5470a498c'
++ .storage.volumes['0'].storage = 'pgdata/0'
++ .storage.volumes['0'].attachments.containers['postgresql-k8s/0'].read_only = False
++ .storage.volumes['0'].attachments.containers['postgresql-k8s/0'].life = 'alive'
++ .storage.volumes['0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.volumes['0'].pool = 'kubernetes'
++ .storage.volumes['0'].life = 'alive'
++ .storage.volumes['0'].status.current = 'attached'
+11:52:18 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+11:52:23 [32mINFO[0m wait: status changed:
++ .apps['fastapi-k8s'].provider_id = '163eebca-c6c6-418b-8ccd-c7e3658b448b'
++ .apps['fastapi-k8s'].address = '10.152.183.75'
+11:52:24 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.message = 'installing agent'
++ .apps['fastapi-k8s'].app_status.message = 'agent initialising'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing agent'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'agent initialising'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.version = '3.6.11'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].leader = True
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].provider_id = 'fastapi-k8s-0'
+11:52:25 [32mINFO[0m wait: status changed:
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].address = '10.1.110.143'
+11:52:28 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'waiting'
+- .apps['fastapi-k8s'].app_status.message = 'agent initialising'
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'installing charm software'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'agent initialising'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'allocating'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running install hook'
+11:52:29 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running install hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-created hook'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-joined hook for fastapi-k8s/0'
+11:52:31 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-created hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running leader-elected hook'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-joined hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
+11:52:32 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running leader-elected hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running config-changed hook'
+11:52:33 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running config-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running start hook'
+11:52:35 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running start hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running app-pebble-ready hook'
+11:52:36 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+11:52:37 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running app-pebble-ready hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running commands'
+11:52:39 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+11:52:40 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook for postgresql-k8s/0'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running commands'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
+11:52:41 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook for postgresql-k8s/0'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-changed hook'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-changed hook'
+11:52:43 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
+11:52:44 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+11:56:55 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+11:56:56 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+11:57:54 [32mINFO[0m wait: status changed:
+- .storage.storage['pgdata/0'].status.message = 'Successfully provisioned volume pvc-f2f69608-c7d7-4032-bee6-c6e5470a498c'
+- .storage.filesystems['0'].status.message = 'Successfully provisioned volume pvc-f2f69608-c7d7-4032-bee6-c6e5470a498c'
+12:01:33 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+12:01:35 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+12:02:17 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-aadc8-microk8s  microk8s/localhost  3.6.11   unsupported  12:02:17Z
+
+App             Version  Status   Scale  Charm           Channel        Rev  Address         Exposed  Message
+django-k8s               active       1  django-k8s                       0  10.152.183.139  no       
+fastapi-k8s              blocked      1  fastapi-k8s                      0  10.152.183.75   no       database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+flask-k8s                active       1  flask-k8s                        0  10.152.183.187  no       
+openfga-k8s     v1.8.4   active       1  openfga-k8s     latest/stable  128  10.152.183.78   no       
+postgresql-k8s  14.19    active       1  postgresql-k8s  14/edge        684  10.152.183.22   no       
+
+Unit               Workload  Agent  Address       Ports  Message
+django-k8s/0*      active    idle   10.1.110.142         
+fastapi-k8s/0*     blocked   idle   10.1.110.143         database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+flask-k8s/0*       active    idle   10.1.110.141         
+openfga-k8s/0*     active    idle   10.1.110.140         
+postgresql-k8s/0*  active    idle   10.1.110.139         Primary
+
+12:02:17 [32mINFO[0m Juju error logs:
+
+unit-openfga-k8s-0: 11:49:06 ERROR unit.openfga-k8s/0.juju-log Kubernetes resources patch failed: `juju trust` this application. statefulsets.apps "openfga-k8s" is forbidden: User "system:serviceaccount:testing:openfga-k8s" cannot get resource "statefulsets" in API group "apps" in the namespace "testing"
+unit-openfga-k8s-0: 11:49:06 ERROR unit.openfga-k8s/0.juju-log Failed to patch resource constraints: Kubernetes resources patch failed: `juju trust` this application. statefulsets.apps "openfga-k8s" is forbidden: User "system:serviceaccount:testing:openfga-k8s" cannot get resource "statefulsets" in API group "apps" in the namespace "testing"
+unit-fastapi-k8s-0: 11:52:33 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 11:52:36 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 11:52:38 ERROR unit.fastapi-k8s/0.juju-log postgresql:11: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 11:52:42 ERROR unit.fastapi-k8s/0.juju-log secret-storage:10: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 11:56:56 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 12:01:34 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+
+12:02:17 [32mINFO[0m Forgetting model main...
+12:02:17 [32mINFO[0m cli: juju debug-log --model testing --limit 1000
