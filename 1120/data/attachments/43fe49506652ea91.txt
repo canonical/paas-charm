@@ -1,0 +1,45 @@
+10:37:47 [32mINFO[0m Deploying ch:amd64/focal/traefik-k8s-254
+10:37:48 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [allocating] waiting: installing agent
+10:38:18 [32mINFO[0m Waiting for model:
+  traefik-k8s/0 [executing] active: Serving at http://juju.test
+10:38:43 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+10:38:43 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+10:39:06 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+10:39:27 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+10:39:49 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-67728-microk8s  microk8s/localhost  3.6.11   unsupported  10:39:49Z
+
+App             Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+go-k8s                   active      1  go-k8s                         0  10.152.183.249  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge      684  10.152.183.55   no       
+traefik-k8s     2.11.0   active      1  traefik-k8s     latest/edge  254  10.152.183.207  no       Serving at http://juju.test
+
+Unit               Workload  Agent  Address       Ports  Message
+go-k8s/0*          active    idle   10.1.110.139         
+postgresql-k8s/0*  active    idle   10.1.110.140         Primary
+traefik-k8s/0*     active    idle   10.1.110.142         Serving at http://juju.test
+
+10:39:49 [32mINFO[0m Juju error logs:
+
+unit-go-k8s-0: 10:35:57 ERROR unit.go-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+unit-go-k8s-0: 10:35:58 ERROR unit.go-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+unit-go-k8s-0: 10:36:00 ERROR unit.go-k8s/0.juju-log secret-storage:3: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+
+10:39:49 [32mINFO[0m Forgetting model main...

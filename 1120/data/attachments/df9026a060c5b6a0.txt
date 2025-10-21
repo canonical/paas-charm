@@ -1,0 +1,279 @@
+10:40:26 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:26 [32mINFO[0m Connecting to existing model github-pr-67728-microk8s:testing on unspecified cloud
+10:40:26 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:26 [33mWARNING[0m unexpected facade SSHSession received from the controller
+10:40:26 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+10:40:26 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:26 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:29 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+10:40:34 [32mINFO[0m Deploying local:fastapi-k8s-0
+10:40:34 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  fastapi-k8s/0 [allocating] waiting: installing agent
+10:41:04 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:41:34 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:42:04 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:42:35 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:43:05 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:43:35 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:44:06 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:44:36 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:45:06 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:45:36 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:46:07 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:46:37 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:47:07 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:47:37 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:48:08 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:48:38 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:49:08 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:49:38 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:50:09 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+10:50:34 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-67728-microk8s  microk8s/localhost  3.6.11   unsupported  10:50:34Z
+
+App             Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+fastapi-k8s              blocked      1  fastapi-k8s                0  10.152.183.112  no       database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+postgresql-k8s  14.19    active       1  postgresql-k8s  14/edge  684  10.152.183.235  no       
+
+Unit               Workload  Agent  Address       Ports  Message
+fastapi-k8s/0*     blocked   idle   10.1.110.138         database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+postgresql-k8s/0*  active    idle   10.1.110.140         Primary
+
+10:50:35 [32mINFO[0m Juju error logs:
+
+unit-fastapi-k8s-0: 10:40:51 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 10:40:53 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 10:40:56 ERROR unit.fastapi-k8s/0.juju-log secret-storage:3: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 10:41:45 ERROR unit.fastapi-k8s/0.juju-log postgresql:4: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 10:45:15 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+unit-fastapi-k8s-0: 10:49:35 ERROR unit.fastapi-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: Traceback (most recent call last):
+  File "/usr/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
+    self.run_cmd(cfg, options)
+  File "/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
+    fn(
+  File "/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
+    script.run_env()
+  File "/lib/python3.12/site-packages/alembic/script/base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/alembic/env.py", line 11, in <module>
+    from app import Base, engine
+  File "/app/app.py", line 11, in <module>
+    from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+  File "/lib/python3.12/site-packages/fastapi_mail/__init__.py", line 1, in <module>
+    from fastapi_mail.config import ConnectionConfig
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 9, in <module>
+    class ConnectionConfig(Settings):
+  File "/lib/python3.12/site-packages/fastapi_mail/config.py", line 11, in ConnectionConfig
+    MAIL_PASSWORD: SecretStr
+                   ^^^^^^^^^
+NameError: name 'SecretStr' is not defined
+
+
+10:50:35 [32mINFO[0m Forgetting model main...
