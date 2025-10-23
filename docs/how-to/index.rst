@@ -50,11 +50,15 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
   enhancements to the 12-factor project
 * :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
   charm, or ``paas-charm`` version. 
+* :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
 
 .. toctree::
    :hidden:
    :maxdepth: 1
 
+   Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
+   Manage a 12-factor app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/howto/manage-web-app-charms/>
    Add a new framework <add-new-framework>
    Contribute <contributing>
    Upgrade <upgrade>
+   Get support <get-support>

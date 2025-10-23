@@ -19,6 +19,8 @@ Place any unreleased changes here, that are subject to release in coming version
 * fix: Fixed FastAPI example and changed to use edge PostgreSQL for integration tests.
 * feat: Add grafana dashboard for FastAPI.
 * docs: Add extension to open links in a new tab.
+* docs: Added a how-to guide on getting support.
+* docs: Incorporated feedback from UX session.
 
 ## 1.9.0 - 2025-10-07
 
