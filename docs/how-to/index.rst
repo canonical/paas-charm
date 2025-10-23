@@ -56,6 +56,8 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    :hidden:
    :maxdepth: 1
 
+   Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
+   Manage a 12-factor app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/howto/manage-web-app-charms/>
    Add a new framework <add-new-framework>
    Contribute <contributing>
    Upgrade <upgrade>
