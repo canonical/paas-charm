@@ -2,7 +2,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for MongoDB database integration."""
+"""Integration tests for MySQL database integration."""
 import logging
 
 import jubilant
