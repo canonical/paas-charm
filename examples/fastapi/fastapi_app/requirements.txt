@@ -7,11 +7,11 @@ opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 opentelemetry-exporter-otlp
 opentelemetry-exporter-otlp-proto-http
-fastapi-mail
+fastapi-mail==1.5.7
 openfga_sdk
 prometheus-fastapi-instrumentator
 Authlib>=1.0
 httpx
 itsdangerous
 jinja2
-pydantic==2.11.10
+pydantic==2.12.2

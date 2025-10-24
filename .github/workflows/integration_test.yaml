@@ -24,6 +24,7 @@ jobs:
           "test_fastapi.py",
           "test_go.py",
           "test_grafana.py",
+          "test_http_proxy.py",
           "test_loki.py",
           "test_minimal.py",
           "test_non_root_db_migration.py",
