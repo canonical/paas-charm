@@ -1,0 +1,14 @@
+09:28:59 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+09:29:04 [32mINFO[0m Deploying local:jammy/django-k8s-0
+09:29:04 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+09:29:35 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+09:30:05 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+09:30:25 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-bool, non-optional-int        
+09:30:40 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-bool, non-optional-int        
+09:30:56 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-int
