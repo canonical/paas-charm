@@ -90,7 +90,7 @@ This is an open source project that warmly welcomes community projects, contribu
 suggestions, fixes and constructive feedback.
 
 * `Code of conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
-* `Get support <https://discourse.charmhub.io/>`_
+* :ref:`Get support <how_to_get_support>`
 * `Join our online chat <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
 * :ref:`Contribute <how_to_contribute>`
 
@@ -98,7 +98,8 @@ Get in touch
 ~~~~~~~~~~~~
 
 Do you have a project or setup where you want to employ this solution? Reach out
-to share your use case and get started!
+to us on `Matrix <https://matrix.to/#/#12-factor-charms:ubuntu.com>`_
+share your use case and get started!
 
 .. toctree::
    :hidden:

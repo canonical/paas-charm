@@ -5,7 +5,7 @@ The Rockcraft and Charmcraft documentation each contain in-depth descriptions of
 12-factor framework support in the products. The reference pages provide technical
 descriptions of the extensions so you can understand their configuration and operation.
 The pages detail the project files, requirements, and information about
-specific topics such as proxies, background tasks, and secrets.
+specific topics such as environment variables, proxies, background tasks, and secrets.
 
 .. list-table::
   :header-rows: 1

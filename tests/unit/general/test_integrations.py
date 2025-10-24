@@ -5,8 +5,9 @@
 import json
 import pathlib
 import unittest
+import uuid
 from types import NoneType
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
@@ -26,6 +27,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.databases import PaaSDatabaseRelationData
+from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
@@ -497,6 +499,36 @@ def test_init_smtp(requires, expected_type):
     charm = unittest.mock.MagicMock()
     result = paas_charm.charm.PaasCharm._init_smtp(self=charm, requires=requires)
     assert isinstance(result, expected_type)
+
+
+@pytest.mark.parametrize(
+    "requires, expected_type",
+    [
+        pytest.param({}, NoneType, id="empty"),
+        pytest.param(
+            {
+                "http-proxy": RelationMeta(
+                    role=RelationRole.requires,
+                    relation_name="http-proxy",
+                    raw={"interface": "http_proxy", "limit": 1},
+                )
+            },
+            PaaSHttpProxyRequirer,
+            id="http_proxy",
+        ),
+    ],
+)
+def test_init_http_proxy(requires, expected_type):
+    """
+    arrange: Get the mock requires.
+    act: Run the _init_http_proxy function.
+    assert: It should return PaaSHttpProxyRequirer when there is http_proxy integration, none otherwise.
+    """
+    test_uuid = str(uuid.uuid4())
+    with patch.object(PaaSHttpProxyRequirer, "_get_requirer_id", return_value=test_uuid):
+        charm = unittest.mock.MagicMock()
+        result = paas_charm.charm.PaasCharm._init_http_proxy(self=charm, requires=requires)
+        assert isinstance(result, expected_type)
 
 
 @pytest.mark.parametrize(

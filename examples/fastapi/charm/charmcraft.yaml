@@ -39,7 +39,9 @@ charm-libs:
   version: '0'
 - lib: hydra.oauth
   version: '0'
-
+- lib: squid_forward_proxy.http_proxy
+  version: '0'
+  
 actions:
   rotate-secret-key:
     description: Rotate the secret key. Users will be forced to log in again.
@@ -134,6 +136,10 @@ requires:
     limit: 1
   oidc:
     interface: oauth
+    optional: True
+    limit: 1
+  http-proxy:
+    interface: http_proxy
     optional: True
     limit: 1
 

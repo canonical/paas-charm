@@ -52,8 +52,12 @@ Relevant links:
 * `Pull request #172 <https://github.com/canonical/paas-charm/pull/172>`_
 * `Spring profiles <https://docs.spring.io/spring-boot/reference/features/profiles.html>`_
 
+.. vale Canonical.007-Headings-sentence-case = NO
+
 Increased Prometheus alert time for Flask and Django extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. vale Canonical.007-Headings-sentence-case = YES
 
 The alert time duration for Flask and Django metric targets has been increased.
 Previously, the alerts fired immediately when a metric was marked as down,
