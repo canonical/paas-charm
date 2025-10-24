@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for SMTP Integration."""
+"""Integration tests for http-proxy Integration."""
 
 import logging
 
