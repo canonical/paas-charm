@@ -46,7 +46,6 @@ def test_proxy_integration(
         unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
         json_response = http.get(f"http://{unit_ip}:{port}/env", timeout=10).json()
-        logger.info("Vars: %s", json_response)
         assert json_response["HTTPS_PROXY"] == "http://proxy.example.com:3128/"
         assert json_response["HTTP_PROXY"] == "http://proxy.example.com:3128/"
     finally:
