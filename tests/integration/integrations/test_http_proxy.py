@@ -34,7 +34,6 @@ def test_proxy_integration(
     assert: The correct proxy env vars from the relation are set in the 12-factor app.
     """
     app = request.getfixturevalue(app_fixture)
-    workload_port = 8000
     try:
         juju.integrate(app.name, http_proxy_app.name)
         juju.wait(
@@ -46,7 +45,7 @@ def test_proxy_integration(
         status = juju.status()
         unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-        json_response = http.get(f"http://{unit_ip}:{workload_port}/env", timeout=10).json()
+        json_response = http.get(f"http://{unit_ip}:{port}/env", timeout=10).json()
         logger.info("Vars: %s", json_response)
         assert json_response["HTTPS_PROXY"] == "http://proxy.example.com:3128/"
         assert json_response["HTTP_PROXY"] == "http://proxy.example.com:3128/"
