@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Integration tests for http-proxy Integration."""
+"""Integration tests for http-proxy integration."""
 
 import logging
 
