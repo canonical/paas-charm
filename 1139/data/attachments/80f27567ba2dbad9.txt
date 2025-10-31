@@ -1,0 +1,4 @@
+09:22:14 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+09:22:35 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [executing] active:
