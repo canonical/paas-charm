@@ -48,6 +48,7 @@ jobs:
       juju-channel: ${{ matrix.juju-version }}
       channel: 1.31-strict/stable
       test-timeout: 45
+      tmate-debug: true
       microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"
   allure-report:
     if: always() && !cancelled()
