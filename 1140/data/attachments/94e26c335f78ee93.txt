@@ -1,0 +1,76 @@
+16:32:09 [33mWARNING[0m adding units to a container-based model not supported, auto-switching to scale
+16:32:09 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+16:32:39 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+16:33:02 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active:
+16:33:30 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-8beda-microk8s  microk8s/localhost  3.6.11   unsupported  16:33:30Z
+
+App             Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+expressjs-k8s            active      1  expressjs-k8s                  0  10.152.183.248  no       
+flask-k8s                active      1  flask-k8s                      0  10.152.183.93   no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge      684  10.152.183.121  no       
+traefik-k8s     2.11.0   active      1  traefik-k8s     latest/edge  259  10.152.183.160  no       Serving at http://juju.test
+
+Unit               Workload  Agent  Address      Ports  Message
+expressjs-k8s/0*   active    idle   10.1.50.139         
+flask-k8s/0*       active    idle   10.1.50.141         
+postgresql-k8s/0*  active    idle   10.1.50.140         Primary
+traefik-k8s/0*     active    idle   10.1.50.143         Serving at http://juju.test
+
+16:33:30 [32mINFO[0m Juju error logs:
+
+unit-flask-k8s-0: 16:25:58 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- flask-permanent-session-lifetime: Input should be greater than 0
+unit-flask-k8s-0: 16:25:58 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 444, in get_framework_config
+    return framework_config_class.model_validate(config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 509, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+pydantic_core._pydantic_core.ValidationError: 1 validation error for FlaskConfig
+flask-permanent-session-lifetime
+  Input should be greater than 0 [type=greater_than, input_value=-1, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.6/v/greater_than
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 692, in _create_charm_state
+    framework_config=self.get_framework_config(),
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 448, in get_framework_config
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError:         invalid options: flask-permanent-session-lifetime
+unit-flask-k8s-0: 16:26:32 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- flask-preferred-url-scheme: String should match pattern '(?i)^(HTTP|HTTPS)$'
+unit-flask-k8s-0: 16:26:32 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 444, in get_framework_config
+    return framework_config_class.model_validate(config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 509, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+pydantic_core._pydantic_core.ValidationError: 1 validation error for FlaskConfig
+flask-preferred-url-scheme
+  String should match pattern '(?i)^(HTTP|HTTPS)$' [type=string_pattern_mismatch, input_value='TLS', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.6/v/string_pattern_mismatch
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 692, in _create_charm_state
+    framework_config=self.get_framework_config(),
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 448, in get_framework_config
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError:         invalid options: flask-preferred-url-scheme
+
+16:33:30 [32mINFO[0m Forgetting model main...

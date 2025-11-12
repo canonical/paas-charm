@@ -1,0 +1,89 @@
+16:19:16 [32mINFO[0m cli: juju deploy --model testing /home/runner/work/paas-charm/paas-charm/flask-minimal-k8s_ubuntu-22.04-amd64.charm --resource flask-app-image=ghcr.io/canonical/flask-minimal-app:bced48fd5dff7c209bccfc6aab35d0b86f07f3b5-_0.1_amd64
+16:19:16 [32mINFO[0m wait: status changed:
++ .model.name = 'testing'
++ .model.type = 'caas'
++ .model.controller = 'github-pr-8beda-microk8s'
++ .model.cloud = 'microk8s'
++ .model.version = '4.0-rc1'
++ .model.region = 'localhost'
++ .model.model_status.current = 'available'
++ .apps['flask-minimal-k8s'].charm = 'local:flask-minimal-k8s-0'
++ .apps['flask-minimal-k8s'].charm_origin = 'local'
++ .apps['flask-minimal-k8s'].charm_name = 'flask-minimal-k8s'
++ .apps['flask-minimal-k8s'].charm_rev = 0
++ .apps['flask-minimal-k8s'].exposed = False
++ .apps['flask-minimal-k8s'].base.name = 'ubuntu'
++ .apps['flask-minimal-k8s'].base.channel = '22.04'
++ .apps['flask-minimal-k8s'].scale = 1
++ .apps['flask-minimal-k8s'].life = 'alive'
++ .apps['flask-minimal-k8s'].app_status.current = 'waiting'
++ .apps['flask-minimal-k8s'].app_status.message = 'installing agent'
++ .apps['flask-minimal-k8s'].relations['secret-storage'][0].related_app = 'flask-minimal-k8s'
++ .apps['flask-minimal-k8s'].relations['secret-storage'][0].interface = 'secret-storage'
++ .apps['flask-minimal-k8s'].relations['secret-storage'][0].scope = 'global'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.current = 'waiting'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'installing agent'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'allocating'
++ .apps['flask-minimal-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['ingress'] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['juju-info'] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['flask-minimal-k8s'].endpoint_bindings['secret-storage'] = 'alpha'
+16:19:27 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].app_status.current = 'waiting'
+- .apps['flask-minimal-k8s'].app_status.message = 'installing agent'
++ .apps['flask-minimal-k8s'].app_status.current = 'active'
+16:19:29 [32mINFO[0m wait: status changed:
++ .apps['flask-minimal-k8s'].provider_id = '017be079-8f41-4646-90e1-98af308be58b'
+16:19:31 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].app_status.current = 'active'
++ .apps['flask-minimal-k8s'].app_status.current = 'waiting'
+16:19:32 [32mINFO[0m wait: status changed:
++ .apps['flask-minimal-k8s'].app_status.message = 'waiting for units to settle down'
+16:19:33 [32mINFO[0m wait: status changed:
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].address = '10.1.50.138'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].provider_id = 'flask-minimal-k8s-0'
+16:19:38 [32mINFO[0m wait: status changed:
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.version = '4.0-rc1'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].leader = True
+16:19:40 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'installing agent'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'agent initialising'
+16:19:41 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.current = 'waiting'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'agent initialising'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'allocating'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.current = 'maintenance'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'executing'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running install hook'
+16:19:42 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running install hook'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running leader-elected hook'
+16:19:43 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].app_status.current = 'waiting'
+- .apps['flask-minimal-k8s'].app_status.message = 'waiting for units to settle down'
++ .apps['flask-minimal-k8s'].app_status.current = 'active'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'installing charm software'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'executing'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running leader-elected hook'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'idle'
+16:19:45 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.current = 'maintenance'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'idle'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].workload_status.current = 'active'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'executing'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running start hook'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].open_ports[0] = '8000/tcp'
+16:19:46 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running start hook'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running flask-app-pebble-ready hook'
+16:19:47 [32mINFO[0m wait: status changed:
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'executing'
+- .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.message = 'running flask-app-pebble-ready hook'
++ .apps['flask-minimal-k8s'].units['flask-minimal-k8s/0'].juju_status.current = 'idle'
+16:19:47 [32mINFO[0m cli: juju status --model testing --format json
