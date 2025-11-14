@@ -1,0 +1,75 @@
+12:48:05 [31m[1mERROR[0m Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x7fb3ddfacf70>
+transport: <_SelectorSocketTransport closing fd=17>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/selector_events.py", line 924, in write
+    n = self._sock.send(data)
+OSError: [Errno 9] Bad file descriptor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "/usr/lib/python3.10/asyncio/selector_events.py", line 930, in write
+    self._fatal_error(exc, 'Fatal write error on socket transport')
+  File "/usr/lib/python3.10/asyncio/selector_events.py", line 725, in _fatal_error
+    self._force_close(exc)
+  File "/usr/lib/python3.10/asyncio/selector_events.py", line 737, in _force_close
+    self._loop.call_soon(self._call_connection_lost, exc)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 753, in call_soon
+    self._check_closed()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+12:48:05 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-61' coro=<Connection.keepalive() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.10/site-packages/websockets/asyncio/connection.py:815> wait_for=<Future pending cb=[Task.__wakeup()]>>
+12:48:05 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task_Pinger' coro=<Connection._pinger() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.10/site-packages/juju/client/connection.py:529> wait_for=<Future pending cb=[Task.__wakeup()]>>
+12:48:05 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task_Receiver' coro=<Connection._receiver() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.10/site-packages/juju/client/connection.py:481> wait_for=<Future pending cb=[Task.__wakeup()]>>
+12:48:05 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-1639' coro=<Connection.recv() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.10/site-packages/websockets/asyncio/connection.py:303> wait_for=<Future pending cb=[Task.__wakeup()]> cb=[create_task_with_handler.<locals>._task_result_exp_handler(task_name='tmp', logger=<Logger juju....ection (INFO)>)() at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.10/site-packages/juju/_jasyncio.py:32]>
+12:48:05 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-1640' coro=<Event.wait() running at /usr/lib/python3.10/asyncio/locks.py:214> wait_for=<Future pending cb=[Task.__wakeup()]>>
+12:48:08 [32mINFO[0m Deploying local:jammy/flask-k8s-1
+12:48:08 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [idle] active: 
+  flask-k8s/2 [idle] active: 
+  flask-k8s/1 [idle] active: 
+  redis-k8s/0 [idle] active: 
+  flask-async-k8s/0 [allocating] waiting: installing agent
+12:48:39 [32mINFO[0m Waiting for model:
+  flask-async-k8s/0 [idle] active:
+12:48:43 [32mINFO[0m Waiting for model:
+  flask-async-k8s/0 [executing] active:
+12:49:03 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-322f8-microk8s  microk8s/localhost  3.6.11   unsupported  12:49:03Z
+
+App               Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+django-async-k8s           active      1  django-k8s                     0  10.152.183.24   no       
+flask-async-k8s            active      1  flask-k8s                      1  10.152.183.42   no       
+flask-k8s                  active      3  flask-k8s                      0  10.152.183.145  no       
+postgresql-k8s    14.19    active      1  postgresql-k8s  14/edge      684  10.152.183.254  no       
+redis-k8s         7.2.5    active      1  redis-k8s       latest/edge   42  10.152.183.247  no       
+
+Unit                 Workload  Agent  Address      Ports  Message
+django-async-k8s/0*  active    idle   10.1.126.10         
+flask-async-k8s/0*   active    idle   10.1.126.18         
+flask-k8s/0*         active    idle   10.1.126.13         
+flask-k8s/1          active    idle   10.1.126.17         
+flask-k8s/2          active    idle   10.1.126.16         
+postgresql-k8s/0*    active    idle   10.1.126.12         Primary
+redis-k8s/0*         active    idle   10.1.126.15         
+
+12:49:03 [32mINFO[0m Juju error logs:
+
+unit-redis-k8s-0: 12:44:26 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-k8s-0: 12:44:26 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Unit redis-k8s/0 doesn't agree on tracked master
+unit-redis-k8s-0: 12:44:26 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+
+12:49:03 [32mINFO[0m Forgetting model main...
