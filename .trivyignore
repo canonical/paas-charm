@@ -59,3 +59,5 @@ CVE-2025-58188
 CVE-2025-41248
 # org.springframework:spring-core (spring-boot-0.0.1.jar)
 CVE-2025-41249
+# FastAPI
+CVE-2025-62727
