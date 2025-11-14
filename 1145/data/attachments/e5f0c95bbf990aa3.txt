@@ -1,0 +1,70 @@
+11:31:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:31:54 [32mINFO[0m Connecting to existing model github-pr-5351f-microk8s:testing on unspecified cloud
+11:31:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:31:54 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:31:54 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:31:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:31:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:31:58 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+11:31:58 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+11:32:29 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+11:32:41 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [allocating] waiting: installing agent
+11:33:11 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+11:33:42 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:34:12 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:34:42 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:13 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:43 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:36:13 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:36:44 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:14 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:44 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:15 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:45 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:39:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:39:46 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:40:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:40:47 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:41:17 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:41:47 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:42:18 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:42:41 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-5351f-microk8s  microk8s/localhost  3.6.11   unsupported  11:42:41Z
+
+App             Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active       1  flask-k8s                  0  10.152.183.211  no       
+postgresql-k8s  14.19    waiting      1  postgresql-k8s  14/edge  684  10.152.183.163  no       awaiting for cluster to start
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.126.10         
+postgresql-k8s/0*  waiting   idle   10.1.126.12         awaiting for cluster to start
+
+11:42:41 [32mINFO[0m Juju error logs:
+
+
+11:42:41 [32mINFO[0m Forgetting model main...

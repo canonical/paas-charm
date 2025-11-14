@@ -1,0 +1,31 @@
+11:32:46 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:46 [32mINFO[0m Connecting to existing model github-pr-5351f-microk8s:testing on unspecified cloud
+11:32:46 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:46 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:32:46 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:32:46 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:46 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:50 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+11:32:50 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [allocating] waiting: installing agent
+11:33:21 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+11:33:29 [32mINFO[0m Deploying ch:amd64/jammy/redis-k8s-42
+11:33:29 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [allocating] waiting: installing agent
+11:33:59 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] waiting: Waiting for Pebble in sentinel container
+11:34:30 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] waiting: Waiting for Pebble in sentinel container
+11:34:51 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] active:
+11:35:11 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+11:35:37 [32mINFO[0m check_correct_celery_stats. Expected schedulers: 1, expected workers 1. Result {'schedulers': ["b'10.1.50.141'"], 'workers': ["b'10.1.50.141'"]}
+11:35:37 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] active: 
+  redis-k8s/0 [executing] active:
