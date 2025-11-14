@@ -1,0 +1,63 @@
+11:32:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:28 [32mINFO[0m Connecting to existing model github-pr-b7ed2-microk8s:testing on unspecified cloud
+11:32:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:28 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:32:28 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:32:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:32 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+11:32:32 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+11:33:03 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+11:33:12 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [allocating] waiting: installing agent
+11:33:43 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+11:34:13 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:34:44 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:14 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:44 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:36:14 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:36:45 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:15 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:45 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:46 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:39:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+11:39:24 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+11:39:24 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: Primary
+11:39:54 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: Primary
+11:40:00 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-b7ed2-microk8s  microk8s/localhost  3.6.11   unsupported  11:40:00Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active      1  flask-k8s                  0  10.152.183.87   no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.165  no       
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.50.138         
+postgresql-k8s/0*  active    idle   10.1.50.140         Primary
+
+11:40:01 [32mINFO[0m Juju error logs:
+
+
+11:40:01 [32mINFO[0m Forgetting model main...

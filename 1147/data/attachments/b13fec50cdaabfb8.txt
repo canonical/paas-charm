@@ -1,0 +1,36 @@
+11:36:06 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:36:06 [32mINFO[0m Connecting to existing model github-pr-b7ed2-microk8s:testing on unspecified cloud
+11:36:06 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:36:06 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:36:06 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:36:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:36:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:36:09 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+11:36:14 [32mINFO[0m Deploying local:fastapi-k8s-0
+11:36:14 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  fastapi-k8s/0 [allocating] waiting: installing agent
+11:36:44 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  fastapi-k8s/0 [idle] maintenance: Preparing service for restart
+11:37:15 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:37:45 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:38:15 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:38:46 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:39:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:39:46 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+11:40:16 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  fastapi-k8s/0 [idle] active:

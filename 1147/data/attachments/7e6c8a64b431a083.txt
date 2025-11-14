@@ -1,0 +1,16 @@
+11:32:52 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:52 [32mINFO[0m Connecting to existing model github-pr-b7ed2-microk8s:testing on unspecified cloud
+11:32:52 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:52 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:32:52 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:32:53 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:53 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:32:57 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+11:32:57 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+11:33:27 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-bool        
+11:33:33 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-bool        
+11:33:50 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: missing options: non-optional-int

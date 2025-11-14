@@ -1,0 +1,4 @@
+11:40:42 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] active:
+11:41:01 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] active:

@@ -1,0 +1,143 @@
+11:33:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:33:07 [32mINFO[0m Connecting to existing model github-pr-b7ed2-microk8s:testing on unspecified cloud
+11:33:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:33:07 [33mWARNING[0m unexpected facade SSHSession received from the controller
+11:33:07 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+11:33:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:33:07 [33mWARNING[0m unexpected facade SSHServer received from the controller
+11:33:11 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+11:33:11 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+11:33:42 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+11:33:51 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+11:33:52 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [allocating] waiting: installing agent
+11:34:22 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+11:34:53 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:00 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+11:35:00 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:35:30 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [executing] waiting: awaiting for primary endpoint to be ready
+11:36:01 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:36:31 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:02 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:37:32 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:02 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:38:33 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+11:39:03 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+11:39:30 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-b7ed2-microk8s  microk8s/localhost  3.6.11   unsupported  11:39:30Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active      1  flask-k8s                  0  10.152.183.125  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.145  no       
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.50.138         
+postgresql-k8s/0*  active    idle   10.1.50.140         Primary
+
+11:39:30 [32mINFO[0m Juju error logs:
+
+unit-flask-k8s-0: 11:33:28 ERROR unit.flask-k8s/0.juju-log webserver configuration check failed, stdout: , stderr: 
+Error while loading the application:
+
+Traceback (most recent call last):
+  File "/lib/python3.10/site-packages/gunicorn/app/base.py", line 207, in run
+    self.load()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/lib/python3.10/site-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/flask/app/app.py", line 14, in <module>
+    engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
+  File "/usr/lib/python3.10/os.py", line 680, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'POSTGRESQL_DB_CONNECT_STRING'
+
+unit-flask-k8s-0: 11:33:30 ERROR unit.flask-k8s/0.juju-log webserver configuration check failed, stdout: , stderr: 
+Error while loading the application:
+
+Traceback (most recent call last):
+  File "/lib/python3.10/site-packages/gunicorn/app/base.py", line 207, in run
+    self.load()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/lib/python3.10/site-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/flask/app/app.py", line 14, in <module>
+    engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
+  File "/usr/lib/python3.10/os.py", line 680, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'POSTGRESQL_DB_CONNECT_STRING'
+
+unit-flask-k8s-0: 11:33:31 ERROR unit.flask-k8s/0.juju-log secret-storage:0: webserver configuration check failed, stdout: , stderr: 
+Error while loading the application:
+
+Traceback (most recent call last):
+  File "/lib/python3.10/site-packages/gunicorn/app/base.py", line 207, in run
+    self.load()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/lib/python3.10/site-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/flask/app/app.py", line 14, in <module>
+    engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
+  File "/usr/lib/python3.10/os.py", line 680, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'POSTGRESQL_DB_CONNECT_STRING'
+
+
+11:39:30 [32mINFO[0m Forgetting model main...
