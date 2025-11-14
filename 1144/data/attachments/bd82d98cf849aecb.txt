@@ -1,0 +1,17 @@
+11:17:47 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-ce016-microk8s  microk8s/localhost  3.6.11   unsupported  11:17:47Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-k8s               active      1  django-k8s                 0  10.152.183.158  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.244  no       
+
+Unit               Workload  Agent  Address      Ports  Message
+django-k8s/0*      active    idle   10.1.126.10         
+postgresql-k8s/0*  active    idle   10.1.126.12         Primary
+
+11:17:47 [32mINFO[0m Juju error logs:
+
+
+11:17:47 [32mINFO[0m Forgetting model main...
