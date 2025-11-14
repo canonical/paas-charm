@@ -564,6 +564,53 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     juju.config("kratos", {"enforce_mfa": False})
 
 
+@pytest.fixture(scope="module", name="http_proxy_app")
+def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_model):
+    """Deploy http proxy configurator and squid proxy."""
+
+    squid_proxy = "squid-forward-proxy"
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        if juju.status().apps.get(squid_proxy):
+            logger.info("squid server already deployed")
+        else:
+            juju.deploy(
+                squid_proxy,
+                channel="edge",
+                config={"hostname": "proxy.example.com"},
+            )
+
+            juju.cli("offer", f"{squid_proxy}:http-proxy", include_model=False)
+            juju.wait(
+                lambda status: jubilant.all_active(status, squid_proxy),
+                timeout=6 * 60,
+                delay=10,
+            )
+    # Add the offer in the original model
+    offer_name = f"{lxd_controller}:admin/{lxd_model}.{squid_proxy}"
+    juju.cli("consume", offer_name, include_model=False)
+
+    http_proxy_configurator = "http-proxy-configurator"
+    if juju.status().apps.get(http_proxy_configurator):
+        logger.info("http-proxy-configurator server already deployed")
+    else:
+        juju.deploy(
+            http_proxy_configurator,
+            channel="latest/edge",
+            config={
+                "http-proxy-auth": "none",
+                "http-proxy-domains": "www.example.com",
+            },
+        )
+        juju.integrate(http_proxy_configurator, squid_proxy)
+    juju.wait(
+        lambda status: jubilant.all_active(status, http_proxy_configurator),
+        timeout=(5 * 60),
+        delay=10,
+    )
+
+    return App(http_proxy_configurator)
+
+
 @pytest.fixture(scope="session")
 def browser_context_manager():
     """
