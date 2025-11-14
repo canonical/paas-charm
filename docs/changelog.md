@@ -21,6 +21,8 @@ Place any unreleased changes here, that are subject to release in coming version
 * docs: Add extension to open links in a new tab.
 * docs: Added a how-to guide on getting support.
 * docs: Incorporated feedback from UX session.
+* docs: Fix misspelling words and broken links.
+
 
 ## 1.9.0 - 2025-10-07
 
