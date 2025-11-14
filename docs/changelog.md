@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 2025-10-08
+## 1.9.1 2025-11-14
 
 * docs: Updated "how to upgrade" documentation.
 * feat: Add `http-proxy` integration support for all frameworks.
@@ -21,6 +21,7 @@ Place any unreleased changes here, that are subject to release in coming version
 * docs: Add extension to open links in a new tab.
 * docs: Added a how-to guide on getting support.
 * docs: Incorporated feedback from UX session.
+* docs: Fix misspelling words and broken links.
 
 ## 1.9.0 - 2025-10-07
 

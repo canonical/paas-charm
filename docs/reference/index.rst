@@ -18,7 +18,7 @@ specific topics such as environment variables, proxies, background tasks, and se
     - `Rockcraft Django extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/django-framework/>`_
     - `Charmcraft Django extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/django-framework-extension/>`_
   * - Express
-    - `Rockcraft Express extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/expressjs-framework/>`_
+    - `Rockcraft Express extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/express-framework/>`_
     - `Charmcraft Express extension <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/>`_
   * - FastAPI
     - `Rockcraft FastAPI extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/fastapi-framework/>`_

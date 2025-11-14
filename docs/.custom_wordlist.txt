@@ -16,13 +16,16 @@ deployable
 Disposability
 downscaled
 entrypoint
+ephemeral
 ExpressJS
 FastAPI
 filesystem
 FQDN
+Gradle
 Gunicorn
 init
 Jinja
+kubectl
 lifecycle
 GitOps
 Integrations

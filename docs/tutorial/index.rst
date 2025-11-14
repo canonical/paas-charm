@@ -22,7 +22,7 @@ or a fully deployed and integrated web app (Charmcraft).
     - `Build a Django app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/django/>`_
     - `Write a Django app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/tutorial/kubernetes-charm-django/>`_
   * - Express
-    - `Build an Express app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/expressjs/>`_
+    - `Build an Express app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/express/>`_
     - `Write an Express app charm <https://canonical-charmcraft.readthedocs-hosted.com/latest/tutorial/kubernetes-charm-express/>`_
   * - FastAPI
     - `Build a FastAPI app rock <https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/fastapi/>`_
