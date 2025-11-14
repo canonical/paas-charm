@@ -51,6 +51,10 @@ CVE-2025-22874
 CVE-2025-22868
 # stdlib
 CVE-2025-47907
+CVE-2025-58183
+CVE-2025-58186
+CVE-2025-58187
+CVE-2025-58188
 # org.springframework.security:spring-security-core (spring-boot-0.0.1.jar)
 CVE-2025-41248
 # org.springframework:spring-core (spring-boot-0.0.1.jar)
