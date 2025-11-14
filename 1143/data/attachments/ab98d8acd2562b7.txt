@@ -1,0 +1,714 @@
+11:15:56 [32mINFO[0m Deploying local:expressjs-k8s-0
+11:15:57 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+11:16:27 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+11:16:52 [32mINFO[0m Waiting for model:
+  expressjs-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-bool        
+11:17:07 [32mINFO[0m Waiting for model:
+  expressjs-k8s/0 [executing] blocked: missing options: non-optional-int, non-optional-bool        
+11:17:23 [32mINFO[0m Waiting for model:
+  expressjs-k8s/0 [executing] blocked: missing options: non-optional-int
+11:17:41 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-52a53-microk8s  microk8s/localhost  3.6.11   unsupported  11:17:41Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-k8s               active      1  django-k8s                 0  10.152.183.82   no       
+expressjs-k8s            active      1  expressjs-k8s              0  10.152.183.123  no       
+fastapi-k8s              active      1  fastapi-k8s                0  10.152.183.217  no       
+flask-k8s                active      1  flask-k8s                  0  10.152.183.112  no       
+go-k8s                   active      1  go-k8s                     0  10.152.183.125  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.21   no       
+
+Unit               Workload  Agent  Address      Ports  Message
+django-k8s/0*      active    idle   10.1.50.139         
+expressjs-k8s/0*   active    idle   10.1.50.144         
+fastapi-k8s/0*     active    idle   10.1.50.142         
+flask-k8s/0*       active    idle   10.1.50.138         
+go-k8s/0*          active    idle   10.1.50.143         
+postgresql-k8s/0*  active    idle   10.1.50.141         Primary
+
+11:17:42 [32mINFO[0m Juju error logs:
+
+unit-flask-k8s-0: 11:09:00 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-flask-k8s-0: 11:09:00 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-flask-k8s-0: 11:09:02 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-flask-k8s-0: 11:09:02 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-flask-k8s-0: 11:09:03 ERROR unit.flask-k8s/0.juju-log secret-storage:0: invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-flask-k8s-0: 11:09:03 ERROR unit.flask-k8s/0.juju-log secret-storage:0: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-flask-k8s-0: 11:09:19 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+unit-flask-k8s-0: 11:09:19 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for AppConfig
+non_optional_int
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int        
+unit-django-k8s-0: 11:10:17 ERROR unit.django-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-django-k8s-0: 11:10:17 ERROR unit.django-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-django-k8s-0: 11:10:19 ERROR unit.django-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-django-k8s-0: 11:10:19 ERROR unit.django-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-django-k8s-0: 11:10:20 ERROR unit.django-k8s/0.juju-log secret-storage:4: invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-django-k8s-0: 11:10:20 ERROR unit.django-k8s/0.juju-log secret-storage:4: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-django-k8s-0: 11:11:32 ERROR unit.django-k8s/0.juju-log postgresql:5: invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-django-k8s-0: 11:11:32 ERROR unit.django-k8s/0.juju-log postgresql:5: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-django-k8s-0: 11:12:07 ERROR unit.django-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+unit-django-k8s-0: 11:12:07 ERROR unit.django-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for AppConfig
+non_optional_int
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+  File "/var/lib/juju/agents/unit-django-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int        
+unit-fastapi-k8s-0: 11:13:02 ERROR unit.fastapi-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+- non-optional-string: Field required
+- non-optional-bool: Field required
+unit-fastapi-k8s-0: 11:13:02 ERROR unit.fastapi-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 3 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_string
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-string, non-optional-bool        
+unit-fastapi-k8s-0: 11:13:07 ERROR unit.fastapi-k8s/0.juju-log postgresql:7: invalid configuration:
+- non-optional-string: Field required
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-fastapi-k8s-0: 11:13:07 ERROR unit.fastapi-k8s/0.juju-log postgresql:7: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 3 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_string
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-string, non-optional-int, non-optional-bool        
+unit-fastapi-k8s-0: 11:13:07 ERROR unit.fastapi-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-string: Field required
+- non-optional-int: Field required
+unit-fastapi-k8s-0: 11:13:07 ERROR unit.fastapi-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 3 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_string
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-string, non-optional-int        
+unit-fastapi-k8s-0: 11:13:08 ERROR unit.fastapi-k8s/0.juju-log secret-storage:6: invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+- non-optional-string: Field required
+unit-fastapi-k8s-0: 11:13:08 ERROR unit.fastapi-k8s/0.juju-log secret-storage:6: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 3 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_string
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool, non-optional-string        
+unit-fastapi-k8s-0: 11:13:43 ERROR unit.fastapi-k8s/0.juju-log invalid configuration:
+- non-optional-string: Field required
+- non-optional-int: Field required
+unit-fastapi-k8s-0: 11:13:43 ERROR unit.fastapi-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_int
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_string
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-fastapi-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-string, non-optional-int        
+unit-go-k8s-0: 11:14:37 ERROR unit.go-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-go-k8s-0: 11:14:37 ERROR unit.go-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-go-k8s-0: 11:14:38 ERROR unit.go-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-go-k8s-0: 11:14:38 ERROR unit.go-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-go-k8s-0: 11:14:41 ERROR unit.go-k8s/0.juju-log postgresql:9: invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-go-k8s-0: 11:14:41 ERROR unit.go-k8s/0.juju-log postgresql:9: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-go-k8s-0: 11:14:42 ERROR unit.go-k8s/0.juju-log secret-storage:8: invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-go-k8s-0: 11:14:42 ERROR unit.go-k8s/0.juju-log secret-storage:8: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-go-k8s-0: 11:15:17 ERROR unit.go-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+unit-go-k8s-0: 11:15:17 ERROR unit.go-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for AppConfig
+non_optional_int
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-go-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int        
+unit-expressjs-k8s-0: 11:16:12 ERROR unit.expressjs-k8s/0.juju-log invalid configuration:
+- non-optional-bool: Field required
+- non-optional-int: Field required
+unit-expressjs-k8s-0: 11:16:12 ERROR unit.expressjs-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-bool, non-optional-int        
+unit-expressjs-k8s-0: 11:16:16 ERROR unit.expressjs-k8s/0.juju-log postgresql:11: invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-expressjs-k8s-0: 11:16:16 ERROR unit.expressjs-k8s/0.juju-log postgresql:11: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-expressjs-k8s-0: 11:16:17 ERROR unit.expressjs-k8s/0.juju-log secret-storage:10: invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-expressjs-k8s-0: 11:16:17 ERROR unit.expressjs-k8s/0.juju-log secret-storage:10: Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-expressjs-k8s-0: 11:16:23 ERROR unit.expressjs-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+- non-optional-bool: Field required
+unit-expressjs-k8s-0: 11:16:23 ERROR unit.expressjs-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AppConfig
+non_optional_bool
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+non_optional_int
+  Field required [type=missing, input_value={'oidc_redirect_path': '/... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int, non-optional-bool        
+unit-expressjs-k8s-0: 11:17:07 ERROR unit.expressjs-k8s/0.juju-log invalid configuration:
+- non-optional-int: Field required
+unit-expressjs-k8s-0: 11:17:07 ERROR unit.expressjs-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 123, in from_charm
+    app_config_class(**user_defined_config)
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/pydantic/main.py", line 171, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for AppConfig
+non_optional_int
+  Field required [type=missing, input_value={'non_optional_bool': Tru... 'openid profile email'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.6/v/missing
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_utils.py", line 59, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm.py", line 689, in _create_charm_state
+    return CharmState.from_charm(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/lib/juju/agents/unit-expressjs-k8s-0/charm/venv/paas_charm/charm_state.py", line 127, in from_charm
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError: missing options: non-optional-int        
+
+11:17:42 [32mINFO[0m Forgetting model main...
