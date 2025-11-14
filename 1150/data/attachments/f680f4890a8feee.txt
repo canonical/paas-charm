@@ -1,0 +1,16 @@
+13:30:49 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+13:30:54 [32mINFO[0m Deploying local:jammy/django-k8s-0
+13:30:54 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+13:31:25 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+13:31:55 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+13:32:25 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+13:32:28 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-bool        
+13:32:43 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-bool        
+13:32:59 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] blocked: missing options: non-optional-int
