@@ -61,3 +61,5 @@ CVE-2025-41248
 CVE-2025-41249
 # FastAPI
 CVE-2025-62727
+# org.apache.tomcat.embed:tomcat-embed-core
+CVE-2025-55752
