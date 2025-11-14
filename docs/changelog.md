@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+
 ## 1.9.1 2025-11-14
 
 * docs: Updated "how to upgrade" documentation.
