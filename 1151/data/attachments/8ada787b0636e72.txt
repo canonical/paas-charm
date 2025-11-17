@@ -1,0 +1,58 @@
+07:47:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:15 [32mINFO[0m Connecting to existing model github-pr-53d2d-microk8s:testing on unspecified cloud
+07:47:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:15 [33mWARNING[0m unexpected facade SSHSession received from the controller
+07:47:15 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+07:47:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:18 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+07:47:19 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+07:47:49 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+07:48:03 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [allocating] waiting: installing agent
+07:48:33 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+07:49:04 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] waiting: awaiting for primary endpoint to be ready
+07:49:34 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:50:04 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:50:35 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:51:05 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:51:35 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:52:06 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:52:36 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:53:06 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:53:36 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+07:54:04 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+07:54:04 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: Primary
+07:54:34 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-53d2d-microk8s  microk8s/localhost  3.6.11   unsupported  07:54:34Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active      1  flask-k8s                  0  10.152.183.27   no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.137  no       
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.126.10         
+postgresql-k8s/0*  active    idle   10.1.126.12         Primary
+
+07:54:34 [32mINFO[0m Juju error logs:
+
+
+07:54:34 [32mINFO[0m Forgetting model main...

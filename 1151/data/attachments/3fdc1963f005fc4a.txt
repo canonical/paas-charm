@@ -1,0 +1,116 @@
+07:47:13 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:13 [32mINFO[0m Connecting to existing model github-pr-53d2d-microk8s:testing on unspecified cloud
+07:47:13 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:13 [33mWARNING[0m unexpected facade SSHSession received from the controller
+07:47:13 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+07:47:13 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:13 [33mWARNING[0m unexpected facade SSHServer received from the controller
+07:47:18 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+07:47:21 [32mINFO[0m Deploying local:jammy/django-k8s-0
+07:47:22 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-async-k8s/0 [allocating] waiting: installing agent
+07:47:52 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+07:48:22 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+07:48:52 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:49:23 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:49:53 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:50:23 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:50:54 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:51:24 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:51:54 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:52:25 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:52:55 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:53:25 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:53:55 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:54:26 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:54:56 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:55:26 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:55:57 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:56:27 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:56:57 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] blocked: Webserver configuration check failed, please review your charm configuration or database relation
+07:57:22 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-53d2d-microk8s  microk8s/localhost  3.6.11   unsupported  07:57:22Z
+
+App               Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-async-k8s           blocked      1  django-k8s                 0  10.152.183.195  no       Webserver configuration check failed, please review your charm configuration or database relation
+postgresql-k8s    14.19    active       1  postgresql-k8s  14/edge  684  10.152.183.220  no       
+
+Unit                 Workload  Agent  Address      Ports  Message
+django-async-k8s/0*  blocked   idle   10.1.126.10         Webserver configuration check failed, please review your charm configuration or database relation
+postgresql-k8s/0*    active    idle   10.1.126.12         Primary
+
+07:57:23 [32mINFO[0m Juju error logs:
+
+unit-django-async-k8s-0: 07:48:43 ERROR unit.django-async-k8s/0.juju-log postgresql:4: webserver configuration check failed, stdout: , stderr: 
+Error while loading the application:
+
+Traceback (most recent call last):
+  File "/lib/python3.10/site-packages/gunicorn/app/base.py", line 207, in run
+    self.load()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+  File "/lib/python3.10/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/lib/python3.10/site-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/django/app/django_async_app/wsgi.py", line 19, in <module>
+    application = get_wsgi_application()
+  File "/lib/python3.10/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/lib/python3.10/site-packages/django/__init__.py", line 19, in setup
+    configure_logging(settings.LOGGING_CONFIG, settings.LOGGING)
+  File "/lib/python3.10/site-packages/django/conf/__init__.py", line 81, in __getattr__
+    self._setup(name)
+  File "/lib/python3.10/site-packages/django/conf/__init__.py", line 68, in _setup
+    self._wrapped = Settings(settings_module)
+  File "/lib/python3.10/site-packages/django/conf/__init__.py", line 166, in __init__
+    mod = importlib.import_module(self.SETTINGS_MODULE)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/django/app/django_async_app/settings.py", line 34, in <module>
+    ALLOWED_HOSTS = json.loads(os.environ["DJANGO_ALLOWED_HOSTS"])
+  File "/usr/lib/python3.10/os.py", line 680, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'DJANGO_ALLOWED_HOSTS'
+
+
+07:57:23 [32mINFO[0m Forgetting model main...

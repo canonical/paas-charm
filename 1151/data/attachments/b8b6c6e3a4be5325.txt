@@ -1,0 +1,1 @@
+07:49:52 [32mINFO[0m cli: juju status --model testing --format json

@@ -1,0 +1,24 @@
+07:52:45 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+07:53:08 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+07:53:28 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-53d2d-microk8s  microk8s/localhost  3.6.11   unsupported  07:53:28Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+expressjs-k8s            active      1  expressjs-k8s              0  10.152.183.124  no       
+flask-k8s                active      1  flask-k8s                  0  10.152.183.191  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.54   no       
+
+Unit               Workload  Agent  Address      Ports  Message
+expressjs-k8s/0*   active    idle   10.1.126.10         
+flask-k8s/0*       active    idle   10.1.126.13         
+postgresql-k8s/0*  active    idle   10.1.126.12         Primary
+
+07:53:29 [32mINFO[0m Juju error logs:
+
+
+07:53:29 [32mINFO[0m Forgetting model main...
+07:53:29 [32mINFO[0m cli: juju debug-log --model testing --limit 1000
