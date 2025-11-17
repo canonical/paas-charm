@@ -57,6 +57,7 @@ class Charm(GunicornBase):
     """
 
     framework_config_class = DjangoConfig
+    configuration_prefix = "DJANGO_"
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the Django charm.

@@ -28,6 +28,8 @@ class WsgiApp(App):
         workload_config: WorkloadConfig,
         database_migration: DatabaseMigration,
         webserver: GunicornWebserver,
+        configuration_prefix: str | None = None,
+        framework_config_prefix: str | None = None,
     ):
         """Construct the WsgiApp instance.
 
@@ -47,8 +49,8 @@ class WsgiApp(App):
             charm_state=charm_state,
             workload_config=workload_config,
             database_migration=database_migration,
-            configuration_prefix=f"{workload_config.framework.upper()}_",
-            framework_config_prefix=f"{workload_config.framework.upper()}_",
+            configuration_prefix=configuration_prefix,
+            framework_config_prefix=framework_config_prefix,
         )
         self._webserver = webserver
 
