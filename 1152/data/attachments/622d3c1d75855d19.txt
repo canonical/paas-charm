@@ -1,0 +1,11 @@
+12:39:25 [32mINFO[0m Deploying local:fastapi-k8s-0
+12:39:25 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+12:39:56 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+12:40:05 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: missing options: non-optional-string, non-optional-bool, non-optional-int        
+12:40:20 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: missing options: non-optional-string, non-optional-bool, non-optional-int        
+12:40:36 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] blocked: missing options: non-optional-int, non-optional-string
