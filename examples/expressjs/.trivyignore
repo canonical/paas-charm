@@ -1,14 +1,3 @@
-# setuptools CVEs
-CVE-2022-40897
-CVE-2024-6345
-CVE-2025-47273
-# statsd exporer CVEs
-CVE-2024-45337
-CVE-2024-45338
-CVE-2025-22869
-CVE-2025-22874
-CVE-2025-22868
-CVE-2025-47907
 # NodeJS
 # uglify-js
 CVE-2015-8857
@@ -16,8 +5,6 @@ CVE-2015-8857
 CVE-2024-45296
 # egexp
 CVE-2024-52798
-# qs
-CVE-2022-24999
 # http-cache-semantics
 CVE-2022-25881
 # ip
@@ -30,28 +17,3 @@ CVE-2024-45590
 CVE-2024-4068
 # @babel/traverse
 CVE-2023-45133
-# Spring boot apache-commons-io
-CVE-2024-47554
-# net.minidev:json-smart
-CVE-2024-57699
-# org.apache.tomcat.embed:tomcat-embed-core 
-CVE-2025-48988
-CVE-2025-24813
-# org.springframework.boot:spring-boot 
-CVE-2025-22235
-# org.postgresql:postgresql (spring-boot-0.0.1.jar)
-CVE-2025-49146
-# io.netty:netty-codec-http2 (spring-boot-0.0.1.jar)
-CVE-2025-55163
-# org.apache.tomcat.embed:tomcat-embed-core
-CVE-2025-48989
-# usr/local/bin/go-app (gobinary)
-CVE-2025-22874
-# usr/bin/statsd_exporter (gobinary)
-CVE-2025-22868
-# stdlib
-CVE-2025-47907
-# org.springframework.security:spring-security-core (spring-boot-0.0.1.jar)
-CVE-2025-41248
-# org.springframework:spring-core (spring-boot-0.0.1.jar)
-CVE-2025-41249
