@@ -53,5 +53,3 @@ CVE-2025-22868
 CVE-2025-47907
 # org.springframework.security:spring-security-core (spring-boot-0.0.1.jar)
 CVE-2025-41248
-# org.springframework:spring-core (spring-boot-0.0.1.jar)
-CVE-2025-41249
