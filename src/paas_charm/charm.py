@@ -239,6 +239,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if "http-proxy" in requires and requires["http-proxy"].interface_name == "http_proxy":
             try:
                 _http_proxy = PaaSHttpProxyRequirer(self)
+                self.framework.observe(
+                    self.on["http-proxy"].relation_changed, self._on_http_proxy_changed
+                )
             except NameError:
                 logger.exception(
                     "Missing charm library,                               "
@@ -849,4 +852,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_data
     def _on_oauth_info_removed(self, _: ops.HookEvent) -> None:
         """Handle the OAuth info removed event."""
+        self.restart()
+
+    @block_if_invalid_data
+    def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
+        """Handle http-proxy relation changed."""
         self.restart()

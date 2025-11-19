@@ -559,9 +559,85 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     if juju.status().apps.get("hydra"):
         logger.info("identity-platform is already deployed")
         return
-    juju.deploy("identity-platform", channel="latest/edge", trust=True)
-    juju.remove_application("kratos-external-idp-integrator")
+    juju.deploy("hydra", channel="latest/stable", revision=362, trust=True)
+    juju.deploy("kratos", channel="latest/stable", revision=527, trust=True)
+    juju.deploy(
+        "identity-platform-login-ui-operator", channel="latest/stable", revision=166, trust=True
+    )
+    juju.deploy("self-signed-certificates", channel="latest/stable", revision=155, trust=True)
+    juju.deploy("traefik-k8s", "traefik-admin", channel="latest/stable", revision=176, trust=True)
+    juju.deploy("traefik-k8s", "traefik-public", channel="latest/stable", revision=176, trust=True)
+    deploy_postgresql(juju)
+    # Integrations
+    juju.integrate(
+        "hydra:hydra-endpoint-info", "identity-platform-login-ui-operator:hydra-endpoint-info"
+    )
+    juju.integrate("hydra:hydra-endpoint-info", "kratos:hydra-endpoint-info")
+    juju.integrate("kratos:kratos-info", "identity-platform-login-ui-operator:kratos-info")
+    juju.integrate(
+        "hydra:ui-endpoint-info", "identity-platform-login-ui-operator:ui-endpoint-info"
+    )
+    juju.integrate(
+        "kratos:ui-endpoint-info", "identity-platform-login-ui-operator:ui-endpoint-info"
+    )
+    juju.integrate("postgresql-k8s:database", "hydra:pg-database")
+    juju.integrate("postgresql-k8s:database", "kratos:pg-database")
+    juju.integrate("self-signed-certificates:certificates", "traefik-admin:certificates")
+    juju.integrate("self-signed-certificates:certificates", "traefik-public:certificates")
+    juju.integrate("traefik-admin:ingress", "hydra:admin-ingress")
+    juju.integrate("traefik-admin:ingress", "kratos:admin-ingress")
+    juju.integrate("traefik-public:ingress", "hydra:public-ingress")
+    juju.integrate("traefik-public:ingress", "kratos:public-ingress")
+    juju.integrate("traefik-public:ingress", "identity-platform-login-ui-operator:ingress")
+
     juju.config("kratos", {"enforce_mfa": False})
+
+
+@pytest.fixture(scope="module", name="http_proxy_app")
+def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_model):
+    """Deploy http proxy configurator and squid proxy."""
+
+    squid_proxy = "squid-forward-proxy"
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        if juju.status().apps.get(squid_proxy):
+            logger.info("squid server already deployed")
+        else:
+            juju.deploy(
+                squid_proxy,
+                channel="edge",
+                config={"hostname": "proxy.example.com"},
+            )
+
+            juju.cli("offer", f"{squid_proxy}:http-proxy", include_model=False)
+            juju.wait(
+                lambda status: jubilant.all_active(status, squid_proxy),
+                timeout=6 * 60,
+                delay=10,
+            )
+    # Add the offer in the original model
+    offer_name = f"{lxd_controller}:admin/{lxd_model}.{squid_proxy}"
+    juju.cli("consume", offer_name, include_model=False)
+
+    http_proxy_configurator = "http-proxy-configurator"
+    if juju.status().apps.get(http_proxy_configurator):
+        logger.info("http-proxy-configurator server already deployed")
+    else:
+        juju.deploy(
+            http_proxy_configurator,
+            channel="latest/edge",
+            config={
+                "http-proxy-auth": "none",
+                "http-proxy-domains": "www.example.com",
+            },
+        )
+        juju.integrate(http_proxy_configurator, squid_proxy)
+    juju.wait(
+        lambda status: jubilant.all_active(status, http_proxy_configurator),
+        timeout=(5 * 60),
+        delay=10,
+    )
+
+    return App(http_proxy_configurator)
 
 
 @pytest.fixture(scope="session")
