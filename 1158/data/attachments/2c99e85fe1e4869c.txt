@@ -1,0 +1,14 @@
+13:13:24 [32mINFO[0m Deploying ch:amd64/focal/traefik-k8s-260
+13:13:25 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  expressjs-k8s/0 [idle] active: 
+  flask-k8s/0 [idle] active: 
+  traefik-k8s/0 [allocating] waiting: installing agent
+13:13:56 [32mINFO[0m Waiting for model:
+  traefik-k8s/0 [idle] waiting: waiting for service: 'traefik'
+13:14:11 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+13:14:11 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  expressjs-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] active: 
+  traefik-k8s/0 [executing] active: Serving at http://juju.test

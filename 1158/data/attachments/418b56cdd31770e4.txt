@@ -1,0 +1,44 @@
+12:59:09 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:09 [32mINFO[0m Connecting to existing model github-pr-52ca7-microk8s:testing on unspecified cloud
+12:59:09 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:09 [33mWARNING[0m unexpected facade SSHSession received from the controller
+12:59:09 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+12:59:09 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:09 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:13 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+12:59:13 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+12:59:43 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+12:59:53 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+13:00:08 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+13:00:08 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [allocating] waiting: agent initialising
+13:00:38 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] unknown: 
+13:01:08 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+13:01:39 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: Primary
+13:01:42 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-52ca7-microk8s  microk8s/localhost  3.6.11   unsupported  13:01:42Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active      1  flask-k8s                  0  10.152.183.184  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.46   no       
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.126.10         
+postgresql-k8s/0*  active    idle   10.1.126.12         Primary
+
+13:01:43 [32mINFO[0m Juju error logs:
+
+
+13:01:43 [32mINFO[0m Forgetting model main...

@@ -1,0 +1,29 @@
+12:59:31 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:31 [32mINFO[0m Connecting to existing model github-pr-52ca7-microk8s:testing on unspecified cloud
+12:59:31 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:31 [33mWARNING[0m unexpected facade SSHSession received from the controller
+12:59:31 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+12:59:31 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:32 [33mWARNING[0m unexpected facade SSHServer received from the controller
+12:59:36 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+12:59:40 [32mINFO[0m Deploying local:jammy/django-k8s-0
+12:59:40 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-async-k8s/0 [allocating] waiting: installing agent
+13:00:05 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-52ca7-microk8s  microk8s/localhost  3.6.11   unsupported  13:00:05Z
+
+App               Version  Status   Scale  Charm           Channel  Rev  Address        Exposed  Message
+django-async-k8s           blocked      1  django-k8s                 0  10.152.183.53  no       missing integrations: postgresql
+postgresql-k8s             error        1  postgresql-k8s  14/edge  684  10.152.183.89  no       OCI image pull error: failed to pull and unpack image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0q...
+
+Unit                 Workload  Agent  Address      Ports  Message
+django-async-k8s/0*  blocked   idle   10.1.126.10         missing integrations: postgresql
+postgresql-k8s/0*    error     idle   10.1.126.12         OCI image pull error: failed to pull and unpack image "registry.jujucharms.com/charm/kotcfrohea62xreenq1q75n1lyspke0q...
+
+13:00:06 [32mINFO[0m Juju error logs:
+
+
+13:00:06 [32mINFO[0m Forgetting model main...
