@@ -20,7 +20,7 @@ following Canonical products:
   container images, based on Ubuntu.
 - A `rock <https://documentation.ubuntu.com/rockcraft/latest/explanation/rocks/>`_
   is an Ubuntu LTS-based container image. The official entrypoint for the
-  image is `Pebble <https://documentation.ubuntu.com/rockcraft/latest/explanation/pebble/#pebble-explanation-page>`_,
+  image is `Pebble <https://documentation.ubuntu.com/rockcraft/latest/explanation/pebble/#pebble>`_,
   a service manager that enhances container experience.
 
 A Rockcraft framework is initially used to facilitate the creation of a well
