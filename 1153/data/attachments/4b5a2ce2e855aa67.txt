@@ -1,0 +1,4 @@
+06:45:09 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  expressjs-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] maintenance: Preparing service for restart

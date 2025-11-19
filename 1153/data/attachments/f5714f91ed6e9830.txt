@@ -1,0 +1,14 @@
+06:33:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:33:28 [32mINFO[0m Connecting to existing model github-pr-3d521-microk8s:testing on unspecified cloud
+06:33:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:33:28 [33mWARNING[0m unexpected facade SSHSession received from the controller
+06:33:28 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+06:33:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:33:28 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:33:33 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+06:33:33 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  expressjs-k8s/0 [idle] active: 
+  flask-k8s/0 [allocating] waiting: installing agent
+06:34:03 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
