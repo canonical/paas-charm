@@ -1,0 +1,39 @@
+10:44:40 [32mINFO[0m Deploying local:jammy/flask-k8s-1
+10:44:40 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+  flask-k8s/2 [idle] active: 
+  redis-k8s/0 [idle] active: 
+  flask-async-k8s/0 [allocating] waiting: installing agent
+10:45:09 [32mINFO[0m Waiting for model:
+  flask-async-k8s/0 [executing] active:
+10:45:28 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-1f8ed-microk8s  microk8s/localhost  3.6.11   unsupported  10:45:28Z
+
+App               Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+django-async-k8s           active      1  django-k8s                     0  10.152.183.228  no       
+flask-async-k8s            active      1  flask-k8s                      1  10.152.183.225  no       
+flask-k8s                  active      3  flask-k8s                      0  10.152.183.51   no       
+postgresql-k8s    14.19    active      1  postgresql-k8s  14/edge      684  10.152.183.83   no       
+redis-k8s         7.2.5    active      1  redis-k8s       latest/edge   42  10.152.183.116  no       
+
+Unit                 Workload  Agent  Address      Ports  Message
+django-async-k8s/0*  active    idle   10.1.126.10         
+flask-async-k8s/0*   active    idle   10.1.126.18         
+flask-k8s/0*         active    idle   10.1.126.13         
+flask-k8s/1          active    idle   10.1.126.16         
+flask-k8s/2          active    idle   10.1.126.17         
+postgresql-k8s/0*    active    idle   10.1.126.12         Primary
+redis-k8s/0*         active    idle   10.1.126.15         
+
+10:45:28 [32mINFO[0m Juju error logs:
+
+unit-redis-k8s-0: 10:41:14 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-k8s-0: 10:41:14 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Unit redis-k8s/0 doesn't agree on tracked master
+unit-redis-k8s-0: 10:41:14 ERROR unit.redis-k8s/0.juju-log redis-peers:6: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+
+10:45:28 [32mINFO[0m Forgetting model main...

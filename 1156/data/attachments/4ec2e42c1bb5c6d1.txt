@@ -1,0 +1,27 @@
+10:37:24 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:24 [32mINFO[0m Connecting to existing model github-pr-1f8ed-microk8s:testing on unspecified cloud
+10:37:25 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:25 [33mWARNING[0m unexpected facade SSHSession received from the controller
+10:37:25 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+10:37:25 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:25 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:29 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+10:37:29 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+10:37:59 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+10:38:08 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-1f8ed-microk8s  microk8s/localhost  3.6.11   unsupported  10:38:08Z
+
+App        Version  Status  Scale  Charm      Channel  Rev  Address         Exposed  Message
+flask-k8s           active      1  flask-k8s             0  10.152.183.236  no       
+
+Unit          Workload  Agent  Address      Ports  Message
+flask-k8s/0*  active    idle   10.1.126.10         
+
+10:38:08 [32mINFO[0m Juju error logs:
+
+
+10:38:08 [32mINFO[0m Forgetting model main...

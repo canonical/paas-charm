@@ -1,0 +1,40 @@
+10:37:38 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:38 [32mINFO[0m Connecting to existing model github-pr-1f8ed-microk8s:testing on unspecified cloud
+10:37:39 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:39 [33mWARNING[0m unexpected facade SSHSession received from the controller
+10:37:39 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+10:37:39 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:39 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:37:43 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+10:37:43 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [allocating] waiting: installing agent
+10:38:13 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+10:38:28 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [allocating] waiting: installing agent
+10:38:58 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+10:39:29 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+10:39:58 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+10:39:59 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: Primary
+10:40:30 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-1f8ed-microk8s  microk8s/localhost  3.6.11   unsupported  10:40:30Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+flask-k8s                active      1  flask-k8s                  0  10.152.183.142  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.35   no       
+
+Unit               Workload  Agent  Address      Ports  Message
+flask-k8s/0*       active    idle   10.1.126.10         
+postgresql-k8s/0*  active    idle   10.1.126.12         Primary
+
+10:40:30 [32mINFO[0m Juju error logs:
+
+
+10:40:30 [32mINFO[0m Forgetting model main...

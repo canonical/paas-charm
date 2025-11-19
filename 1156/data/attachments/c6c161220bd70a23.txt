@@ -1,0 +1,27 @@
+10:40:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:15 [32mINFO[0m Connecting to existing model github-pr-1f8ed-microk8s:testing on unspecified cloud
+10:40:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:15 [33mWARNING[0m unexpected facade SSHSession received from the controller
+10:40:15 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+10:40:15 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:16 [33mWARNING[0m unexpected facade SSHServer received from the controller
+10:40:19 [32mINFO[0m Deploying local:jammy/flask-k8s-0
+10:40:19 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [allocating] waiting: installing agent
+10:40:51 [32mINFO[0m Deploying ch:amd64/jammy/redis-k8s-42
+10:40:52 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [allocating] waiting: installing agent
+10:41:22 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] active: 
+10:41:36 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] active:
+10:41:55 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+10:42:21 [32mINFO[0m check_correct_celery_stats. Expected schedulers: 1, expected workers 1. Result {'schedulers': ["b'10.1.126.13'"], 'workers': ["b'10.1.126.13'"]}
+10:42:21 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] active: 
+  redis-k8s/0 [executing] active:
