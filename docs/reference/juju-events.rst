@@ -12,7 +12,7 @@ For a web app charm, the following events are observed:
   * - Hook
     - Description
     - Action
-  * - `\<container name\>_pebble_ready <https://documentation.ubuntu.com/juju/3.6/reference/hook/index.html#container-pebble-ready>`_
+  * - :ref:`\<container name\>_pebble_ready <juju:hook-container-pebble-ready>`
     - Fired on Kubernetes charms when the requested container is ready.
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``config_changed```
@@ -93,4 +93,4 @@ For a web app charm, the following events are observed:
 
 .. seealso::
 
-    `Hook | Juju documentation <https://documentation.ubuntu.com/juju/3.6/reference/hook/>`_
+    :ref:`Hook | Juju documentation <juju:hook>`

@@ -35,7 +35,7 @@ opinionated way to easily integrate your web application into the Juju ecosystem
 The Juju ecosystem provides a multitude of `curated software operators <https://charmhub.io/>`_
 for your observability stack, database, SSO, and many more and allows their deployment and
 lifecycle management on metal, on VMs, on K8s and on cloud providers
-(see `substrates <https://documentation.ubuntu.com/juju/3.6/reference/cloud/>`_).
+(see :ref:`substrates <juju:kubernetes-clouds-and-juju>`).
 
 That way, the 12-factor framework support in Rockcraft and Charmcraft offers
 a fully fledged Platform as a Service that streamlines managing the

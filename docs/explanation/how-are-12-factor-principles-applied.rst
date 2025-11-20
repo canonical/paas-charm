@@ -63,4 +63,4 @@ This is how the 12-Factor principles are applied in the context of rocks and cha
   the web apps just have to log to the standard Unix output streams.
 - **XII. Admin processes.** The 12-Factor project already provides some functionality out of the box for certain one-off
   processes like migration scripts. Other management tasks can be cleanly defined in
-  `Juju Actions <https://documentation.ubuntu.com/juju/3.6/reference/action/>`_.
+  :ref:`Juju Actions <juju:action>`.

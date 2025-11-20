@@ -196,7 +196,7 @@ Some features of the charm are forbidden to add or modify, meaning that ``charmc
 will fail if those features were changed. 
 
 For instance, while Juju supports storage management
-(see `How to manage storage <https://documentation.ubuntu.com/juju/3.6/howto/manage-storage/>`_),
+(see :ref:`How to manage storage <juju:manage-storage>`),
 the 12-factor tooling does not offer this support. If your app requires additional
 storage or volumes, you will not be able to use the 12-factor support in Charmcraft.
 
