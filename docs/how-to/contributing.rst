@@ -56,7 +56,7 @@ Environment setup
 -----------------
 
 To make contributions to this charm, you'll need a working
-`development setup <https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-your-deployment/manage-your-deployment-environment/>`_.
+:ref:`development setup <juju:set-things-up>`.
 
 The code for this charm can be downloaded as follows:
 

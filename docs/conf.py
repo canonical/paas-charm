@@ -368,5 +368,10 @@ intersphinx_mapping = {
     'starter-pack': ('https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest', None),
     'sphinxcontrib-mermaid': ('https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest', None),
     'juju': ("https://documentation.ubuntu.com/juju/3.6/", None),
+    'charmcraft': ("https://documentation.ubuntu.com/charmcraft/stable/", None),
+    'rockcraft': ("https://documentation.ubuntu.com/rockcraft/latest/", None),
+    'pebble': ("https://documentation.ubuntu.com/pebble/", None),
+    'cos': ("https://documentation.ubuntu.com/observability/latest/", None),
+    'ops': ("https://documentation.ubuntu.com/ops/latest/", None),
 }
 

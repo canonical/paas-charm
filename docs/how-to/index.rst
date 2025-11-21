@@ -14,10 +14,10 @@ Manage a 12-factor app rock
 The Rockcraft documentation contains a set of how-to guides for managing
 a 12-factor app container image.
 
-* `Manage a 12-Factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>`_
-   * `Set up a 12-Factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/web-app-rocks/set-up-web-app-rock/>`_:
+* :ref:`Manage a 12-Factor app rock <rockcraft:how-to-manage-a-12-factor-app-rock>`
+   * :ref:`Set up a 12-Factor app rock <rockcraft:set-up-web-app-rock>`:
      Initialize and configure a rock using the 12-factor extensions.
-   * `Use a 12-Factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/web-app-rocks/use-web-app-rock/>`_:
+   * :ref:`Use a 12-Factor app rock <rockcraft:use-web-app-rock>`:
      Learn about the various ways you can use and update your rock.
 
 Manage a 12-factor app charm
@@ -26,17 +26,17 @@ Manage a 12-factor app charm
 The Charmcraft documentation contains a set of how-to guides for initializing,
 configuring, integrating, and using a 12-factor app charm.
 
-* `Manage a 12-factor app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/howto/manage-web-app-charms/>`_:
-   * `Initialization <https://canonical-charmcraft.readthedocs-hosted.com/latest/howto/manage-web-app-charms/#initialization>`_
-   * `Configuration <https://canonical-charmcraft.readthedocs-hosted.com/latest/howto/manage-web-app-charms/configure-web-app-charm/>`_:
+* :ref:`Manage a 12-factor app charm <charmcraft:manage-12-factor-app-charms>`:
+   * :ref:`Initialization <charmcraft:init-12-factor-charms>`
+   * :ref:`Configuration <charmcraft:configure-12-factor-charms>`:
      The 12-factor tooling includes different ways you can customize to fit your use case.
      These guides provide instructions on tasks like adding configurations, actions, and
      managing secrets.
-   * `Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/howto/manage-web-app-charms/integrate-web-app-charm/>`_:
+   * :ref:`Relations <charmcraft:integrate-12-factor-charms>`:
      The tooling provides you the ability to integrate with preexisting charms in the
      Juju ecosystem. These guides get you started with three commonly used relations:
      databases, ingress, and observability.
-   * `Usage <https://canonical-charmcraft.readthedocs-hosted.com/latest/howto/manage-web-app-charms/use-web-app-charm/>`_:
+   * :ref:`Usage <charmcraft:use-12-factor-charms>`:
      Learn more about tasks such as migrations and troubleshooting.
 
 Contribute to the project
@@ -57,7 +57,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    :maxdepth: 1
 
    Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
-   Manage a 12-factor app charm <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/howto/manage-web-app-charms/>
+   Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
    Add a new framework <add-new-framework>
    Contribute <contributing>
    Upgrade <upgrade>

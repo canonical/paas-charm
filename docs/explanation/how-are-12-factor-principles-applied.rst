@@ -57,8 +57,8 @@ This is how the 12-Factor principles are applied in the context of rocks and cha
 - **X. Development/production parity.** Juju facilitates the development/production parity, as very similar environments
   can be created using Juju tooling. It is also up to the good processes and practices to close the gap between
   development and production.
-- **XI. Logs.** Taking advantage of `Pebble log forwarding <https://documentation.ubuntu.com/pebble/reference/log-forwarding/>`_
-  and the `Canonical Observability Stack <https://documentation.ubuntu.com/observability/>`_, the 12-Factor project in
+- **XI. Logs.** Taking advantage of :ref:`Pebble log forwarding <pebble:log_forwarding_usage>`
+  and the :doc:`Canonical Observability Stack <cos:index>`, the 12-Factor project in
   Charmcraft and Rockcraft provides the best tools and practices in observability. Following the 12-Factor principle,
   the web apps just have to log to the standard Unix output streams.
 - **XII. Admin processes.** The 12-Factor project already provides some functionality out of the box for certain one-off

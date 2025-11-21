@@ -15,23 +15,23 @@ specific topics such as environment variables, proxies, background tasks, and se
     - Container image profiles
     - Software operator profiles
   * - Django
-    - `Rockcraft Django extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/django-framework/>`_
-    - `Charmcraft Django extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/django-framework-extension/>`_
+    - :ref:`Rockcraft Django extension <rockcraft:reference-django-framework>`
+    - :ref:`Charmcraft Django extension <charmcraft:django-framework-extension>`
   * - Express
-    - `Rockcraft Express extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/express-framework/>`_
-    - `Charmcraft Express extension <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/>`_
+    - :ref:`Rockcraft Express extension <rockcraft:reference-express-framework>`
+    - :ref:`Charmcraft Express extension <charmcraft:expressjs-framework-extension>`
   * - FastAPI
-    - `Rockcraft FastAPI extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/fastapi-framework/>`_
-    - `Charmcraft FastAPI extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/fastapi-framework-extension/>`_
+    - :ref:`Rockcraft FastAPI extension <rockcraft:reference-fastapi-framework>`
+    - :ref:`Charmcraft FastAPI extension <charmcraft:fastapi-framework-extension>`
   * - Flask
-    - `Rockcraft Flask extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/>`_
-    - `Charmcraft Flask extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/flask-framework-extension/>`_
+    - :ref:`Rockcraft Flask extension <rockcraft:reference-flask-framework>`
+    - :ref:`Charmcraft Flask extension <charmcraft:flask-framework-extension>`
   * - Go
-    - `Rockcraft Go extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/go-framework/>`_
-    - `Charmcraft Go extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/go-framework-extension/>`_
+    - :ref:`Rockcraft Go extension <rockcraft:reference-go-framework>`
+    - :ref:`Charmcraft Go extension <charmcraft:go-framework-extension>`
   * - Spring Boot
-    - `Rockcraft Spring Boot extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/spring-boot-framework/>`_
-    - `Charmcraft Spring Boot extension <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/>`_
+    - :ref:`Rockcraft Spring Boot extension <rockcraft:reference-spring-boot-framework>`
+    - :ref:`Charmcraft Spring Boot extension <charmcraft:spring-boot-framework-extension>`
 
 Juju
 ----

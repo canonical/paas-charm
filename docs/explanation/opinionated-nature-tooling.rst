@@ -182,7 +182,7 @@ exposes the configuration to the web app workload.
 
 .. seealso::
 
-    `How to add a configuration to a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/configure-web-app-charm/#add-a-new-configuration>`_
+    :ref:`charmcraft:configure-12-factor-charms`
 
 Relations
 ~~~~~~~~~

@@ -8,8 +8,8 @@ version 1.8 and its extended support into Charmcraft and Rockcraft.
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
 
-* `Release notes - Rockcraft 1.13 <https://documentation.ubuntu.com/rockcraft/latest/release-notes/rockcraft-1-13/#release-1-13>`_
-* `Release notes - Charmcraft 4.0 <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/>`_
+* :ref:`Release notes - Rockcraft 1.13 <rockcraft:release-1.13>`
+* :doc:`Release notes - Charmcraft 4.0 <charmcraft:release-notes/charmcraft-4.0>`
 
 See our :ref:`Release policy and schedule <release_policy_schedule>`.
 
@@ -123,8 +123,8 @@ tutorial and reference page for the extension.
 Relevant links:
 
 * `Spring Boot framework extension - Charmcraft 4.0 release notes <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/#spring-boot-framework-extension>`_
-* `Write your first Kubernetes charm for a Spring Boot app <https://documentation.ubuntu.com/charmcraft/latest/tutorial/kubernetes-charm-spring-boot/>`_
-* `Spring Boot framework extension - Charmcraft reference documentation <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/>`_
+* :ref:`Write your first Kubernetes charm for a Spring Boot app <charmcraft:write-your-first-kubernetes-charm-for-a-spring-boot-app>`
+* :ref:`Spring Boot framework extension - Charmcraft reference documentation <charmcraft:spring-boot-framework-extension>`
 
 Backwards-incompatible changes
 ------------------------------
