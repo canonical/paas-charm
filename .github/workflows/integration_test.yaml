@@ -53,7 +53,7 @@ jobs:
       test-timeout: 45
       microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"
   allure-report:
-    if: ${{ (success() || failure()) && github.event_name == 'schedule' }}
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
     needs:
     - integration-tests
     uses: canonical/operator-workflows/.github/workflows/allure_report.yaml@main
