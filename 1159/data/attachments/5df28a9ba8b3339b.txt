@@ -1,0 +1,37 @@
+06:30:19 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:30:19 [32mINFO[0m Connecting to existing model github-pr-ca5d9-microk8s:testing on unspecified cloud
+06:30:19 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:30:19 [33mWARNING[0m unexpected facade SSHSession received from the controller
+06:30:19 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+06:30:19 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:30:19 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:30:24 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+06:30:28 [32mINFO[0m Deploying local:jammy/django-k8s-0
+06:30:29 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-async-k8s/0 [allocating] waiting: installing agent
+06:30:59 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+06:31:29 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] blocked: missing integrations: postgresql
+06:31:54 [32mINFO[0m Waiting for model:
+  django-async-k8s/0 [idle] active:
+06:32:13 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-ca5d9-microk8s  microk8s/localhost  3.6.11   unsupported  06:32:13Z
+
+App               Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-async-k8s           active      1  django-k8s                 0  10.152.183.112  no       
+postgresql-k8s    14.19    active      1  postgresql-k8s  14/edge  684  10.152.183.226  no       
+
+Unit                 Workload  Agent  Address      Ports  Message
+django-async-k8s/0*  active    idle   10.1.126.11         
+postgresql-k8s/0*    active    idle   10.1.126.12         Primary
+
+06:32:14 [32mINFO[0m Juju error logs:
+
+
+06:32:14 [32mINFO[0m Forgetting model main...
