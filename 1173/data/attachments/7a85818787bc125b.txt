@@ -1,0 +1,24 @@
+08:04:58 [33mWARNING[0m unexpected facade SSHServer received from the controller
+08:04:58 [32mINFO[0m Connecting to existing model github-pr-bef35-microk8s:testing on unspecified cloud
+08:04:58 [33mWARNING[0m unexpected facade SSHServer received from the controller
+08:04:58 [33mWARNING[0m unexpected facade SSHSession received from the controller
+08:04:58 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+08:04:58 [33mWARNING[0m unexpected facade SSHServer received from the controller
+08:04:58 [33mWARNING[0m unexpected facade SSHServer received from the controller
+08:05:01 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+08:05:06 [32mINFO[0m Deploying local:fastapi-k8s-0
+08:05:06 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  fastapi-k8s/0 [allocating] waiting: installing agent
+08:05:36 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+08:06:06 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+08:06:37 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for primary endpoint to be ready
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+08:07:07 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  fastapi-k8s/0 [executing] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status

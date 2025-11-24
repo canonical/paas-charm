@@ -1,0 +1,2 @@
+08:07:02 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active:
