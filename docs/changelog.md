@@ -11,13 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.9.2 2025-11-24
+
+* chore: Update Express grafana dashboard.
 * fix: Fix bug in the Grafana Dashboards of Django, Express, FastAPI and Flask
 where when all the variables hold the value `All` (which it does in default), Loki
 throws an error.
-
-## 2025-11-19
-
-* chore: Update Express grafana dashboard.
 
 ## 1.9.1 2025-11-14
 
