@@ -1,0 +1,18 @@
+06:02:32 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:02:32 [32mINFO[0m Connecting to existing model github-pr-b51d5-microk8s:testing on unspecified cloud
+06:02:33 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:02:33 [33mWARNING[0m unexpected facade SSHSession received from the controller
+06:02:33 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+06:02:33 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:02:33 [33mWARNING[0m unexpected facade SSHServer received from the controller
+06:02:35 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-684
+06:02:40 [32mINFO[0m Deploying local:fastapi-k8s-0
+06:02:40 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  fastapi-k8s/0 [allocating] waiting: installing agent
+06:03:10 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  fastapi-k8s/0 [executing] waiting: Waiting for pebble ready
+06:03:40 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  fastapi-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status

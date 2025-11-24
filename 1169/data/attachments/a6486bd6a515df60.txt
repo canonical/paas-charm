@@ -1,0 +1,11 @@
+06:08:46 [32mINFO[0m Deploying local:go-k8s-0
+06:08:46 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+06:09:17 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+06:09:40 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] blocked: missing options: non-optional-bool, non-optional-int        
+06:09:55 [32mINFO[0m Waiting for model:
+  go-k8s/0 [executing] blocked: missing options: non-optional-bool, non-optional-int        
+06:10:12 [32mINFO[0m Waiting for model:
+  go-k8s/0 [executing] blocked: missing options: non-optional-int
