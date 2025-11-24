@@ -2,13 +2,16 @@ name: Integration tests
 
 on:
   pull_request:
+  schedule:
+  - cron: "0 15 * * SAT"
 
 jobs:
   integration-tests:
     strategy:
       matrix:
-        juju-version: [ 3.6/stable ]
-    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
+        juju-version: [3.6/stable]
+    uses: 
+      canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
       extra-arguments: '-x --log-format="%(asctime)s %(levelname)s %(message)s"'
@@ -50,7 +53,7 @@ jobs:
       test-timeout: 45
       microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"
   allure-report:
-    if: always() && !cancelled()
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
     needs:
-      - integration-tests
+    - integration-tests
     uses: canonical/operator-workflows/.github/workflows/allure_report.yaml@main
