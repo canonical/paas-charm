@@ -839,7 +839,7 @@
             "uid": "${lokids}"
           },
           "editorMode": "builder",
-          "expr": "{juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\"} |= ``",
+          "expr": "{juju_application=~\"$juju_application\",juju_application!=``,juju_model=~\"$juju_model\",juju_model!=``,juju_model_uuid=~\"$juju_model_uuid\",juju_model_uuid!=``,juju_unit=~\"$juju_unit\",juju_unit!=``} |= ``",
           "queryType": "range",
           "refId": "A"
         }
