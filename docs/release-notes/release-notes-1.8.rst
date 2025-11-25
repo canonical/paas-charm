@@ -111,7 +111,7 @@ OpenID Connect is now available in all the 12-factor extensions.
 
 Relevant links:
 
-* `OpenID Connect integration - Charmcraft 4.0 release notes <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/#openid-connect-integration>`_
+* :ref:`OpenID Connect integration - Charmcraft 4.0 release notes <charmcraft:release-4.0-openid-connect-integration>`
 
 Spring Boot framework extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -122,7 +122,7 @@ tutorial and reference page for the extension.
 
 Relevant links:
 
-* `Spring Boot framework extension - Charmcraft 4.0 release notes <https://documentation.ubuntu.com/charmcraft/latest/release-notes/charmcraft-4.0/#spring-boot-framework-extension>`_
+* :ref:`Spring Boot framework extension - Charmcraft 4.0 release notes <charmcraft:release-4.0-spring-boot-framework-extension>`
 * :ref:`Write your first Kubernetes charm for a Spring Boot app <charmcraft:write-your-first-kubernetes-charm-for-a-spring-boot-app>`
 * :ref:`Spring Boot framework extension - Charmcraft reference documentation <charmcraft:spring-boot-framework-extension>`
 

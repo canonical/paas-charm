@@ -54,22 +54,22 @@ the relevant Charmcraft documentation for each web app framework:
     - Supported integrations
   * - Django
     - :ref:`Django extension | Grafana dashboard graphs <charmcraft:django-grafana-graphs>`
-    - `Django extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#relations>`_
+    - :ref:`Django extension | Relations <charmcraft:django-framework-extension-relations>`
   * - Express
     - :ref:`Express extension | Grafana dashboard graphs <charmcraft:express-grafana-graphs>`
-    - `Express extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#relations>`_
+    - :ref:`Express extension | Relations <charmcraft:expressjs-framework-extension-relations>`
   * - FastAPI
     - :ref:`FastAPI extension | Grafana dashboard graphs <charmcraft:fastapi-grafana-graphs>`
-    - `FastAPI extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#relations>`_
+    - :ref:`FastAPI extension | Relations <charmcraft:fastapi-framework-extension-relations>`
   * - Flask
     - :ref:`Flask extension | Grafana dashboard graphs <charmcraft:flask-grafana-graphs>`
-    - `Flask extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#relations>`_
+    - :ref:`Flask extension | Relations <charmcraft:flask-framework-extension-relations>`
   * - Go
     - :ref:`Go extension | Grafana dashboard graphs <charmcraft:go-grafana-graphs>`
-    - `Go extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#relations>`_
+    - :ref:`Go extension | Relations <charmcraft:go-framework-extension-relations>`
   * - Spring Boot
     - :ref:`Spring Boot extension | Grafana dashboard graphs <charmcraft:spring-boot-grafana-graphs>`
-    - `Spring Boot extension | Relations <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#relations>`_
+    - :ref:`Spring Boot extension | Relations <charmcraft:spring-boot-framework-extension-relations>`
 
 
 All contents
