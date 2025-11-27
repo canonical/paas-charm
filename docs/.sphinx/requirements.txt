@@ -34,3 +34,4 @@ vale
 # Added on top of the starter pack
 sphinxcontrib-mermaid
 sphinx-new-tab-link
+
