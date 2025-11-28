@@ -8,7 +8,7 @@ version 1.9 and its extended support into Charmcraft and Rockcraft.
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
 
-* `Release notes - Rockcraft 1.14 <https://documentation.ubuntu.com/rockcraft/latest/release-notes/rockcraft-1-14/>`_
+* :ref:`Release notes - Rockcraft 1.14 <rockcraft:release-1.14>`
 * Charmcraft support coming soon
 
 See our :ref:`Release policy and schedule <release_policy_schedule>`.

@@ -6,8 +6,8 @@ summarizing new features, bug fixes and backwards-incompatible changes in each v
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
 
-* `Release notes - Rockcraft documentation <https://documentation.ubuntu.com/rockcraft/en/latest/release-notes/>`_
-* `Release notes - Charmcraft documentation <https://canonical-charmcraft.readthedocs-hosted.com/latest/release-notes/>`_
+* :ref:`Release notes - Rockcraft documentation <rockcraft:release-notes>`
+* :ref:`Release notes - Charmcraft documentation <charmcraft:release-notes>`
 
 Release notes contain specific upgrade instructions for the specific release of
 ``paas-charm``. See also the general guidance on :ref:`how to prepare for and perform an upgrade <how_to_upgrade>`.

@@ -64,9 +64,9 @@ Since the tooling is natively part of the Rockcraft and Charmcraft products,
 additional documentation is available in their respective documentation sites
 under the sections for tutorials, how-to guides, and reference material:
 
-1. `Rockcraft <https://documentation.ubuntu.com/rockcraft/en/latest/>`_:
+1. :doc:`Rockcraft <rockcraft:index>`:
    Documentation related to the OCI image containers
-2. `Charmcraft <https://canonical-charmcraft.readthedocs-hosted.com/latest/>`_:
+2. :doc:`Charmcraft <charmcraft:index>`:
    Documentation related to the software operators (charms)
 
 Contributing to this documentation
