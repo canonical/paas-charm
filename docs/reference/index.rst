@@ -15,23 +15,23 @@ specific topics such as environment variables, proxies, background tasks, and se
     - Container image profiles
     - Software operator profiles
   * - Django
-    - `Rockcraft Django extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/django-framework/>`_
-    - `Charmcraft Django extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/django-framework-extension/>`_
+    - :ref:`Rockcraft Django extension <rockcraft:reference-django-framework>`
+    - :ref:`Charmcraft Django extension <charmcraft:django-framework-extension>`
   * - Express
-    - `Rockcraft Express extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/express-framework/>`_
-    - `Charmcraft Express extension <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/>`_
+    - :ref:`Rockcraft Express extension <rockcraft:reference-express-framework>`
+    - :ref:`Charmcraft Express extension <charmcraft:expressjs-framework-extension>`
   * - FastAPI
-    - `Rockcraft FastAPI extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/fastapi-framework/>`_
-    - `Charmcraft FastAPI extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/fastapi-framework-extension/>`_
+    - :ref:`Rockcraft FastAPI extension <rockcraft:reference-fastapi-framework>`
+    - :ref:`Charmcraft FastAPI extension <charmcraft:fastapi-framework-extension>`
   * - Flask
-    - `Rockcraft Flask extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/>`_
-    - `Charmcraft Flask extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/flask-framework-extension/>`_
+    - :ref:`Rockcraft Flask extension <rockcraft:reference-flask-framework>`
+    - :ref:`Charmcraft Flask extension <charmcraft:flask-framework-extension>`
   * - Go
-    - `Rockcraft Go extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/go-framework/>`_
-    - `Charmcraft Go extension <https://canonical-charmcraft.readthedocs-hosted.com/en/latest/reference/extensions/go-framework-extension/>`_
+    - :ref:`Rockcraft Go extension <rockcraft:reference-go-framework>`
+    - :ref:`Charmcraft Go extension <charmcraft:go-framework-extension>`
   * - Spring Boot
-    - `Rockcraft Spring Boot extension <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/spring-boot-framework/>`_
-    - `Charmcraft Spring Boot extension <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/>`_
+    - :ref:`Rockcraft Spring Boot extension <rockcraft:reference-spring-boot-framework>`
+    - :ref:`Charmcraft Spring Boot extension <charmcraft:spring-boot-framework-extension>`
 
 Juju
 ----
@@ -53,23 +53,23 @@ the relevant Charmcraft documentation for each web app framework:
     - Metrics and tracing
     - Supported integrations
   * - Django
-    - `Django extension | Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#grafana-dashboard-graphs>`_
-    - `Django extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/django-framework-extension/#relations>`_
+    - :ref:`Django extension | Grafana dashboard graphs <charmcraft:django-grafana-graphs>`
+    - :ref:`Django extension | Relations <charmcraft:django-framework-extension-relations>`
   * - Express
-    - `Express extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#observability>`_
-    - `Express extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/express-framework-extension/#relations>`_
+    - :ref:`Express extension | Grafana dashboard graphs <charmcraft:express-grafana-graphs>`
+    - :ref:`Express extension | Relations <charmcraft:expressjs-framework-extension-relations>`
   * - FastAPI
-    - `FastAPI extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#observability>`_
-    - `FastAPI extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/fastapi-framework-extension/#relations>`_
+    - :ref:`FastAPI extension | Grafana dashboard graphs <charmcraft:fastapi-grafana-graphs>`
+    - :ref:`FastAPI extension | Relations <charmcraft:fastapi-framework-extension-relations>`
   * - Flask
-    - `Flask extension | Grafana dashboard graphs <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#grafana-dashboard-graphs>`_
-    - `Flask extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/flask-framework-extension/#relations>`_
+    - :ref:`Flask extension | Grafana dashboard graphs <charmcraft:flask-grafana-graphs>`
+    - :ref:`Flask extension | Relations <charmcraft:flask-framework-extension-relations>`
   * - Go
-    - `Go extension | Observability <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#observability>`_
-    - `Go extension | Relations <https://canonical-charmcraft.readthedocs-hosted.com/latest/reference/extensions/go-framework-extension/#relations>`_
+    - :ref:`Go extension | Grafana dashboard graphs <charmcraft:go-grafana-graphs>`
+    - :ref:`Go extension | Relations <charmcraft:go-framework-extension-relations>`
   * - Spring Boot
-    - `Spring Boot extension | Observability <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#observability>`_
-    - `Spring Boot extension | Relations <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/spring-boot-framework-extension/#relations>`_
+    - :ref:`Spring Boot extension | Grafana dashboard graphs <charmcraft:spring-boot-grafana-graphs>`
+    - :ref:`Spring Boot extension | Relations <charmcraft:spring-boot-framework-extension-relations>`
 
 
 All contents

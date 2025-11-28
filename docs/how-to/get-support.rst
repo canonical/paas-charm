@@ -4,7 +4,7 @@ How to get support
 ==================
 
 The Charmcraft documentation contains a
-`troubleshooting guide <https://documentation.ubuntu.com/charmcraft/stable/howto/manage-web-app-charms/use-web-app-charm/#troubleshoot-the-charm>`_
+:ref:`troubleshooting guide <charmcraft:use-12-factor-charms-troubleshoot>`
 with detailed information on accessing logs, viewing the app details,
 and checking the Juju container.
 

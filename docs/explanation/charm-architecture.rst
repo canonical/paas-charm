@@ -24,7 +24,7 @@ as databases and ingress, using open source tooling.
 
 The charm design leverages the
 `sidecar <https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/#example-1-sidecar-containers>`_
-pattern to allow multiple containers in each pod with `Pebble <https://juju.is/docs/sdk/pebble>`_
+pattern to allow multiple containers in each pod with :doc:`Pebble <pebble:index>`
 running as the containers' entrypoint.
 Pebble is a lightweight, API-driven process supervisor that is responsible for
 configuring processes to run in a container and controlling those processes
@@ -50,13 +50,13 @@ processes startup.
 OCI images
 ----------
 
-We use `Rockcraft <https://canonical-rockcraft.readthedocs-hosted.com/en/latest/>`_ to build OCI Images for the web app charm. 
+We use :doc:`Rockcraft <rockcraft:index>` to build OCI Images for the web app charm. 
 
 .. seealso::
 
-   `How to publish your charm on Charmhub <https://juju.is/docs/sdk/publishing>`_
+   :ref:`How to publish your charm on Charmhub <charmcraft:publish-a-charm>`
    
-   `Build a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>`_
+   :ref:`Build a 12-factor app rock <rockcraft:how-to-manage-a-12-factor-app-rock>`
 
 Juju events
 -----------
@@ -75,11 +75,11 @@ Charm code overview
 The :code:`src/paas_charm/charm.py` contains the charm logic that all supported frameworks will inherit and extend.
 Each framework will define its entry point in its own :code:`charm.py` file, defining a class that will extend from :code:`PaasCharm`.
 
-PaasCharm is the base class from which all Charms are formed, defined by `Ops  <https://juju.is/docs/sdk/ops>`_ (Python framework for developing charms).
+PaasCharm is the base class from which all Charms are formed, defined by :doc:`Ops  <ops:index>` (Python framework for developing charms).
 
 .. seealso::
 
-   `Charm <https://canonical-juju.readthedocs-hosted.com/en/3.6/user/reference/charm/>`_
+   :ref:`Charm <juju:charm>`
 
 The :code:`__init__` method guarantees that the charm observes all events relevant to its operation and handles them.
 
