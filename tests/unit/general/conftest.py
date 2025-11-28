@@ -225,6 +225,7 @@ def flask_base_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
@@ -256,6 +257,7 @@ def spring_boot_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
@@ -322,6 +324,7 @@ def django_base_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
@@ -358,6 +361,7 @@ def fastapi_base_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
@@ -394,6 +398,7 @@ def go_base_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
@@ -424,6 +429,7 @@ def expressjs_state_fixture():
             )
         },
         "model": testing.Model(name="test-model"),
+        "leader": True,
     }
 
 
