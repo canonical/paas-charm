@@ -1,0 +1,22 @@
+15:23:01 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:01 [32mINFO[0m Connecting to existing model github-pr-ac6dc-microk8s:testing on unspecified cloud
+15:23:01 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:01 [33mWARNING[0m unexpected facade SSHSession received from the controller
+15:23:01 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+15:23:01 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:01 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:05 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-701
+15:23:09 [32mINFO[0m Deploying local:jammy/django-k8s-0
+15:23:09 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-k8s/0 [allocating] waiting: installing agent
+15:23:39 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  django-k8s/0 [idle] blocked: missing integrations: postgresql
+15:24:09 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  django-k8s/0 [idle] blocked: missing integrations: postgresql
+15:24:32 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] active:
+15:25:04 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] active:

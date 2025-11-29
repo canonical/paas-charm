@@ -1,0 +1,21 @@
+15:23:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:54 [32mINFO[0m Connecting to existing model github-pr-ac6dc-microk8s:testing on unspecified cloud
+15:23:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:54 [33mWARNING[0m unexpected facade SSHSession received from the controller
+15:23:54 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+15:23:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:54 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:23:57 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-701
+15:24:01 [32mINFO[0m Deploying local:go-k8s-0
+15:24:01 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  go-k8s/0 [allocating] waiting: installing agent
+15:24:32 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: agent initialising
+  go-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+15:25:02 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  go-k8s/0 [idle] blocked: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status
+15:25:33 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  go-k8s/0 [idle] active:

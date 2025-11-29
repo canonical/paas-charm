@@ -1,0 +1,2 @@
+15:25:31 [32mINFO[0m Waiting for model:
+  fastapi-k8s/0 [idle] active:
