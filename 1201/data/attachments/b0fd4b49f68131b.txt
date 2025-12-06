@@ -1,0 +1,42 @@
+15:17:00 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:17:00 [32mINFO[0m Connecting to existing model github-pr-130d5-microk8s:testing on unspecified cloud
+15:17:00 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:17:00 [33mWARNING[0m unexpected facade SSHSession received from the controller
+15:17:00 [33mWARNING[0m unexpected facade SSHTunneler received from the controller
+15:17:00 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:17:00 [33mWARNING[0m unexpected facade SSHServer received from the controller
+15:17:04 [32mINFO[0m Deploying ch:amd64/jammy/postgresql-k8s-701
+15:17:08 [32mINFO[0m Deploying local:jammy/django-k8s-0
+15:17:08 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  django-k8s/0 [allocating] waiting: installing agent
+15:17:38 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  django-k8s/0 [executing] blocked: missing integrations: postgresql
+15:18:08 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  django-k8s/0 [idle] blocked: missing integrations: postgresql
+15:18:37 [32mINFO[0m Waiting for model:
+  django-k8s/0 [idle] active: 
+15:18:55 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-k8s/0 [idle] blocked: missing integrations: postgresql
+15:19:25 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+15:19:32 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-130d5-microk8s  microk8s/localhost  3.6.12   unsupported  15:19:32Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+django-k8s               active      1  django-k8s                 0  10.152.183.141  no       
+postgresql-k8s  14.19    active      1  postgresql-k8s  14/edge  701  10.152.183.248  no       
+
+Unit               Workload  Agent  Address       Ports  Message
+django-k8s/0*      active    idle   10.1.106.142         
+postgresql-k8s/0*  active    idle   10.1.106.141         Primary
+
+15:19:33 [32mINFO[0m Juju error logs:
+
+
+15:19:33 [32mINFO[0m Forgetting model main...
