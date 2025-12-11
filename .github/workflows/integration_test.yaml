@@ -11,7 +11,7 @@ jobs:
       matrix:
         juju-version: [3.6/stable]
     uses: 
-      canonical/operator-workflows/.github/workflows/integration_test.yaml@main
+      canonical/operator-workflows/.github/workflows/integration_test.yaml@update-trivy-revision
     secrets: inherit
     with:
       extra-arguments: '-x --log-format="%(asctime)s %(levelname)s %(message)s"'
