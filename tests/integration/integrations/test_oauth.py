@@ -124,6 +124,7 @@ def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test
         page.get_by_label("Password").fill(test_password)
         page.get_by_role("button", name="Sign in").click()
         try:
+            page.wait_for_url(f"{app_url}/**")
             expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
         finally:
             logger.info("Final page url %s", page.url)
