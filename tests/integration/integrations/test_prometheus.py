@@ -44,7 +44,7 @@ def test_prometheus_integration(
     try:
         juju.integrate(app.name, prometheus_app.name)
         juju.wait(
-            lambda status: jubilant.all_active(status, app.name, prometheus_app.name), delay=5
+            lambda status: jubilant.all_active(status, app.name, prometheus_app.name), delay=10
         )
 
         status = juju.status()
