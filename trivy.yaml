@@ -1,0 +1,6 @@
+timeout: 20m
+scan:
+  offline-scan: true
+  skip-files:
+    - usr/bin/pebble
+    - bin/pebble
