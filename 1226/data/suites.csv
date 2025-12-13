@@ -1,0 +1,656 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+    arrange: after non-root charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","65688","test_non_root_loki_integration[Go non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_loki","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","63755","test_prometheus_integration[spring_boot_app-8080-/actuator/prometheus]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: Django is deployed with async enabled rock. Change gunicorn worker class.
+    act: Do 15 requests that would take 2 seconds each.
+    assert: All 15 requests should be served in under 3 seconds.
+    ","19054","test_async_workers","tests.integration.django","2025-12-13","passed","2025-12-13","","test_workers","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","64981","test_workload_tracing[spring_boot_app-8080]","tests.integration.integrations","2025-12-13","broken","2025-12-13","","test_tracing","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the MongoDB database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","140573","test_with_mongodb[spring_boot_app-8080-mongodb/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_mongodb","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the redis database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","105395","test_with_redis[spring_boot_app-8080-redis/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_redis","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations
+        to certain invalid values.
+    act: none.
+    assert: flask charm should enter the blocked status and the status message should show
+        invalid configuration options.
+    ","0","test_invalid_flask_config[preferred_url_scheme]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","122900","test_grafana_integration[django_app-Django Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: build and deploy the flask charm.
+    act: run rotate-secret-key action on the leader unit.
+    assert: Flask applications on every unit should have a new secret key configured.
+    ","28152","test_rotate_secret_key","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","60245","test_grafana_integration[fastapi_app-FastAPI Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: build and deploy the non-root charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","44654","test_non_root_db_migration[Django non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_db_migration","",""
+"
+    arrange: build and deploy the flask charm, and change Flask app configurations.
+    act: none.
+    assert: Flask application should receive the application configuration correctly.
+    ","183","test_app_config[str]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the ExpressJS charm.
+    act: call the endpoint.
+    assert: the charm should respond with 200 OK.
+    ","208","test_expressjs_is_up","tests.integration.expressjs","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the redis database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","70452","test_with_redis[flask_app-8000-redis/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_redis","",""
+"
+    arrange: build and deploy the flask charm.
+    act: add a unit and request env variables through the unit IP addresses.
+    assert: the peer address must be present in the units' env.
+    ","79764","test_app_peer_address","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the flask charm.
+    act: query flask secret key from the Flask server.
+    assert: flask should have a default and secure secret configured.
+    ","197","test_default_secret_key","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","69674","test_grafana_integration[spring_boot_app-Spring Boot Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations.
+    act: query flask configurations from the Flask server.
+    assert: the flask configuration should match flask related charm configurations.
+    ","191","test_flask_config[debug]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","311805","test_oauth_integrations[flask_app-login]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","146881","test_workload_tracing[django_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_tracing","",""
+"
+    arrange: build and deploy the non-root charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","121576","test_non_root_db_migration[ExpressJS non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_db_migration","",""
+"
+    arrange: The app and rabbitmq deployed
+    act: Integrate the app with rabbitmq
+    assert: Assert that RabbitMQ works correctly
+    ","337199","test_rabbitmq_server_integration[flask_app-8000-rabbitmq_server_app]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_rabbitmq","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
+    act: Send a read authorization models request from the charm.
+    assert: The request succeeds.
+    ","50936","test_openfga_integrations[django_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_openfga","",""
+"
+    arrange: Deploy the application.
+    act: Set the non-optional config options 1 by 1 and check.
+    assert: At first both options should be in status message,
+        when one set the charm should still be in blocked state
+        with the message showing which option is missing.
+        When both set charm should be in active state.
+    ","111690","test_non_optional[go]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_config","",""
+"
+    arrange: build and deploy the Springboot charm with postgresql integration.
+    act: send a request to an endpoint that checks the table created by the migration script.
+        Then try to add same user twice.
+    assert: the Springboot application should add the user only once.
+    ","799","test_migration","tests.integration.springboot","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the flask charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the flask application managed by the flask charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","9260","test_flask_webserver_timeout[timeout=5]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: Integrate the Charm with saml-integrator, with a real SP.
+    act: Call the endpoint to get env variables.
+    assert: Valid Saml env variables should be in the workload.
+    ","82931","test_saml_integration[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_saml","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","76466","test_oauth_integrations[fastapi_app-login]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: build and deploy the django charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the django application managed by the django charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","10422","test_django_webserver_timeout[timeout=5]","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
+    act: Send a read authorization models request from the charm.
+    assert: The request succeeds.
+    ","64920","test_openfga_integrations[spring_boot_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_openfga","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the MongoDB database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","68020","test_with_mongodb[flask_app-8000-mongodb/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_mongodb","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","76418","test_oauth_integrations[django_app-auth_login]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: build and deploy the flask charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","104395","test_db_migration","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_db_migration","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","65088","test_smtp_integrations[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: build and deploy the django charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the django application managed by the django charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","6427","test_django_webserver_timeout[timeout=3]","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations
+        to certain invalid values.
+    act: none.
+    assert: flask charm should enter the blocked status and the status message should show
+        invalid configuration options.
+    ","1","test_invalid_flask_config[permanent_session_lifetime]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after non-root charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","78367","test_non_root_loki_integration[ExpressJS non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_loki","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","155750","test_loki_integration[go_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
+    act: Send a read authorization models request from the charm.
+    assert: The request succeeds.
+    ","54746","test_openfga_integrations[fastapi_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_openfga","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","44402","test_smtp_integrations[fastapi_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: build and deploy the flask charm.
+    act: send a request to the flask application managed by the flask charm.
+    assert: the flask application should return a correct response.
+    ","191","test_flask_is_up","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the flask charm, and change Flask app configurations.
+    act: none.
+    assert: Flask application should receive the application configuration correctly.
+    ","197","test_app_config[dict]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the django charm, and change the django related configuration.
+    act: send request to the django application to retrieve the corresponding settings.
+    assert: settings in django application correctly updated according to the charm configuration.
+    ","472","test_django_charm_config[secret-key]","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: The app and rabbitmq deployed
+    act: Integrate the app with rabbitmq
+    assert: Assert that RabbitMQ works correctly
+    ","142452","test_rabbitmq_server_integration[flask_app-8000-rabbitmq_k8s_app]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_rabbitmq","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","52042","test_grafana_integration[expressjs_app-ExpressJS Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: build and deploy the flask charm, and change Flask app configurations.
+    act: none.
+    assert: Flask application should receive the application configuration correctly.
+    ","197","test_app_config[int]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the django charm, and change the django related configuration.
+    act: send request to the django application to retrieve the corresponding settings.
+    assert: settings in django application correctly updated according to the charm configuration.
+    ","503","test_django_charm_config[allowed-host]","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","182859","test_loki_integration[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: build and deploy the django charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the django application managed by the django charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","14425","test_django_webserver_timeout[timeout=7]","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: build and deploy the go charm.
+    act: send a request to the go application managed by the go charm.
+    assert: the go application should return a correct response.
+    ","246","test_go_is_up","tests.integration.go","2025-12-13","passed","2025-12-13","","test_go","",""
+"
+    arrange: Build and deploy the charm with minimal integrations.
+    act: Send a request to the web application.
+    assert: The request succeeds.
+    ","193","test_flask_minimal","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_minimal","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","","test_workload_tracing[expressjs_app-8080]","tests.integration.integrations","","unknown","","","test_tracing","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","54753","test_prometheus_integration[fastapi_app-8080-/metrics]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: Deploy the application.
+    act: Set the non-optional config options 1 by 1 and check.
+    assert: At first both options should be in status message,
+        when one set the charm should still be in blocked state
+        with the message showing which option is missing.
+        When both set charm should be in active state.
+    ","96102","test_non_optional[fastapi]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_config","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","","test_workload_tracing[fastapi_app-8080]","tests.integration.integrations","","unknown","","","test_tracing","",""
+"
+    arrange: Flask and redis deployed and integrated.
+    act: Scale the app to the desired number of units.
+    assert: There should be only one scheduler and as many workers as units. That will
+            be checked because the scheduler is constantly sending tasks with its hostname
+            to the workers, and the workers will put its own hostname and the schedulers
+            hostname in Redis sets. Those sets are checked through the Flask app,
+            that queries Redis.
+    ","75789","test_workers_and_scheduler_services[3]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_workers","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","47592","test_prometheus_integration[flask_app-9102-/metrics]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","81451","test_smtp_integrations[spring_boot_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","108471","test_s3_integration[spring_boot_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_s3","",""
+"
+    arrange: after non-root charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","63000","test_non_root_loki_integration[Flask non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_loki","",""
+"
+    arrange: build and deploy the flask charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","126032","test_with_database[postgresql/status-postgresql-k8s-14/edge-None-True]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_database","",""
+"
+    arrange: build and deploy the fastapi charm with postgresql integration.
+    act: send a request to an endpoint that checks the table created by the micration script.
+    assert: the fastapi application should return a correct response.
+    ","221","test_migration","tests.integration.fastapi","2025-12-13","passed","2025-12-13","","test_fastapi","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations.
+    act: query flask configurations from the Flask server.
+    assert: the flask configuration should match flask related charm configurations.
+    ","194","test_flask_config[secret_key]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: Flask and redis deployed and integrated.
+    act: Scale the app to the desired number of units.
+    assert: There should be only one scheduler and as many workers as units. That will
+            be checked because the scheduler is constantly sending tasks with its hostname
+            to the workers, and the workers will put its own hostname and the schedulers
+            hostname in Redis sets. Those sets are checked through the Flask app,
+            that queries Redis.
+    ","25730","test_workers_and_scheduler_services[1]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_workers","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
+    act: Send a read authorization models request from the charm.
+    assert: The request succeeds.
+    ","47577","test_openfga_integrations[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_openfga","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","172192","test_loki_integration[spring_boot_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","157375","test_loki_integration[fastapi_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: build and deploy the go charm with postgresql integration.
+    act: send a request to an endpoint that uses the table created by the migration script.
+    assert: the go application should return a correct response.
+    ","213","test_migration","tests.integration.go","2025-12-13","passed","2025-12-13","","test_go","",""
+"
+    arrange: build and deploy the fastapi charm. Set the config user-defined-config to a new value.
+    act: call the endpoint to get the value of the env variable related to the config.
+    assert: the value of the env variable and the config should match.
+    ","17403","test_user_defined_config","tests.integration.fastapi","2025-12-13","passed","2025-12-13","","test_fastapi","",""
+"
+    arrange: build and deploy the flask charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the flask application managed by the flask charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","13279","test_flask_webserver_timeout[timeout=7]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: The app and rabbitmq deployed
+    act: Integrate the app with rabbitmq
+    assert: Assert that RabbitMQ works correctly
+    ","146309","test_rabbitmq_server_integration[spring_boot_app-8080-rabbitmq_k8s_app]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_rabbitmq","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","50512","test_s3_integration[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_s3","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","108566","test_prometheus_integration[django_app-9102-/metrics]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","323100","test_workload_tracing[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_tracing","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","48111","test_grafana_integration[go_app-Go Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: build and deploy the ExpressJS charm. Set the config user-defined-config to a new value.
+    act: call the endpoint to get the value of the env variable related to the config.
+    assert: the value of the env variable and the config should match.
+    ","5382","test_user_defined_config","tests.integration.expressjs","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the MySQL database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","92308","test_with_mysql[flask_app-8000-mysql/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_mysql","",""
+"
+    arrange: Deploy Tempo cluster, app to test and postgres if required.
+    act: Send 5 requests to the app.
+    assert: Tempo should have tracing info about the app.
+    ","","test_workload_tracing[go_app-8080]","tests.integration.integrations","","unknown","","","test_tracing","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with grafana charm.
+    assert: grafana 12-Factor dashboard can be found.
+    ","49619","test_grafana_integration[flask_app-Flask Operator]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_grafana","",""
+"
+    arrange: after non-root charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","114916","test_non_root_loki_integration[Django non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_loki","",""
+"
+    arrange: Deploy the application.
+    act: Set the non-optional config options 1 by 1 and check.
+    assert: At first both options should be in status message,
+        when one set the charm should still be in blocked state
+        with the message showing which option is missing.
+        When both set charm should be in active state.
+    ","139391","test_non_optional[django]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_config","",""
+"
+    arrange: build and deploy the go charm. Set the config user-defined-config to a new value.
+    act: call the endpoint to get the value of the env variable related to the config.
+    assert: the value of the env variable and the config should match.
+    ","17468","test_user_defined_config","tests.integration.go","2025-12-13","passed","2025-12-13","","test_go","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","40885","test_smtp_integrations[go_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: Charm is deployed with postgresql integration.
+    act: Remove integration.
+    assert: The service is down.
+    act: Integrate again with postgresql.
+    assert: The service is working again.
+    ","55389","test_blocking_and_restarting_on_required_integration","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django_integrations","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations.
+    act: query flask configurations from the Flask server.
+    assert: the flask configuration should match flask related charm configurations.
+    ","194","test_flask_config[permanent_session_lifetime]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: integrate the spring boot charm with SAML integrator.
+    act: call the samltest endpoint.
+    assert: the charm should be redirected to IdP and when logged in should return 200.
+    ","35336","test_springboot_saml_integration","tests.integration.springboot","2025-12-13","passed","2025-12-13","","test_spring_saml","",""
+"
+    arrange: build and deploy the flask charm, and change Flask app configurations.
+    act: none.
+    assert: Flask application should receive the application configuration correctly.
+    ","189","test_app_config[bool]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: Deploy the application.
+    act: Set the non-optional config options 1 by 1 and check.
+    assert: At first both options should be in status message,
+        when one set the charm should still be in blocked state
+        with the message showing which option is missing.
+        When both set charm should be in active state.
+    ","73485","test_non_optional[flask]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_config","",""
+"
+    arrange: build and deploy the flask charm, and change Flask app configurations.
+    act: none.
+    assert: Flask application should receive the application configuration correctly.
+    ","188","test_app_config[builtin]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: Deploy the application.
+    act: Set the non-optional config options 1 by 1 and check.
+    assert: At first both options should be in status message,
+        when one set the charm should still be in blocked state
+        with the message showing which option is missing.
+        When both set charm should be in active state.
+    ","98643","test_non_optional[expressjs]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_config","",""
+"
+    arrange: build and deploy the non-root charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","42846","test_non_root_db_migration[Flask non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_db_migration","",""
+"
+    arrange: build and deploy the flask charm, and change secret configurations.
+    act: query flask environment variables from the Flask server.
+    assert: the flask environment variables should match secret configuration values.
+    ","193","test_flask_secret_config[secret_key]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the fastapi charm.
+    act: send a request to the fastapi application managed by the fastapi charm.
+    assert: the fastapi application should return a correct response.
+    ","229","test_fastapi_is_up","tests.integration.fastapi","2025-12-13","passed","2025-12-13","","test_fastapi","",""
+"
+    arrange: build and deploy the flask charm, and change secret configurations.
+    act: query flask environment variables from the Flask server.
+    assert: the flask environment variables should match secret configuration values.
+    ","201","test_flask_secret_config[user-secret]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after non-root charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","68631","test_non_root_loki_integration[FastAPI non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_loki","",""
+"
+    arrange: build and deploy the flask charm, and change flask related configurations.
+    act: query flask configurations from the Flask server.
+    assert: the flask configuration should match flask related charm configurations.
+    ","192","test_flask_config[env]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","104664","test_oauth_integrations[spring_boot_app-oauth2/authorization/oidc]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","205356","test_loki_integration[django_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with loki charm.
+    assert: loki joins relation successfully, logs are being output to container and to files for
+        loki to scrape.
+    ","162373","test_loki_integration[expressjs_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_loki","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","118857","test_smtp_integrations[django_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
+    act: Send a read authorization models request from the charm.
+    assert: The request succeeds.
+    ","35760","test_openfga_integrations[go_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_openfga","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","51642","test_prometheus_integration[go_app-8081-/metrics]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: build and deploy the non-root charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","46848","test_non_root_db_migration[FastAPI non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_db_migration","",""
+"
+    arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
+    act: Send an email from the charm.
+    assert: The mailcatcher should have received the email.
+    ","56317","test_smtp_integrations[expressjs_app-8080]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_smtp","",""
+"
+    arrange: build and deploy the Springboot charm.
+    act: call the endpoint.
+    assert: the charm should respond with 200 OK.
+    ","30637","test_springboot_is_up","tests.integration.springboot","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after 12-Factor charm has been deployed.
+    act: establish relations established with prometheus charm.
+    assert: prometheus metrics endpoint for prometheus is active and prometheus has active scrape
+        targets.
+    ","61294","test_prometheus_integration[expressjs_app-8080-/metrics]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_prometheus","",""
+"
+    arrange: build and deploy the ExpressJS charm with postgresql integration.
+    act: send a request to an endpoint that checks the table created by the migration script.
+        Then try to add same user twice.
+    assert: the ExpressJS application should add the user only once.
+    ","240","test_migration","tests.integration.expressjs","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the django charm with database migration enabled.
+    act: access an endpoint requiring database.
+    assert: request succeed.
+    ","482","test_django_database_migration","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"Build and deploy the flask charm.","42121","test_proxy","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_proxy","",""
+"
+    arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
+    act: Do 15 requests that would take 2 seconds each.
+    assert: All 15 requests should be served in under 3 seconds.
+    ","19010","test_async_workers","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_workers","",""
+"
+    arrange: build and deploy the non-root charm.
+    act: deploy the database and relate it to the charm.
+    assert: requesting the charm should return a correct response indicate
+        the database migration script has been executed and only executed once.
+    ","43747","test_non_root_db_migration[Go non-root]","tests.integration.general","2025-12-13","passed","2025-12-13","","test_non_root_db_migration","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","79748","test_oauth_integrations[expressjs_app-login]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: Deploy 12-factor app and http proxy configurator correctly configured.
+    act: Relate the http proxy configurator with the 12-factor app.
+    assert: The correct proxy env vars from the relation are set in the 12-factor app.
+    ","58954","test_proxy_integration[flask_app-8000]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_http_proxy","",""
+"
+    arrange: build and deploy the flask charm without ingress. Get the service ip
+        address.
+    act: request env variables through the service ip address.
+    assert: the request should success and the env variable FLASK_BASE_URL
+        should point to the service.
+    ","1022","test_port_without_ingress","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: build and deploy the django charm.
+    act: create a superuser using the create-superuser action.
+    assert: a superuser is created by the charm.
+    ","2780","test_django_create_superuser","tests.integration.django","2025-12-13","passed","2025-12-13","","test_django","",""
+"
+    arrange: build and deploy the flask charm, and change the gunicorn timeout configuration.
+    act: send long-running requests to the flask application managed by the flask charm.
+    assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
+    ","5297","test_flask_webserver_timeout[timeout=3]","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: set up the test Juju model and deploy the workload charm.
+    act: integrate with ingress and hydra.
+    assert: the workload charm uses the Kratos charm as the idp.
+    ","70191","test_oauth_integrations[go_app-login/openid-connect]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_oauth","",""
+"
+    arrange: build and deploy the flask charm, and deploy the ingress.
+    act: relate the ingress charm with the Flask charm.
+    assert: requesting the charm through traefik should return a correct response,
+         and the BASE_URL config should be correctly set (FLASK_BASE_URL env variable).
+    ","23922","test_with_ingress","tests.integration.flask","2025-12-13","passed","2025-12-13","","test_charm","",""
+"
+    arrange: after Go charm has been deployed.
+    act: integrate with the traefik charm with the ingress integration and change app-port configuration.
+    assert: charm opened ports should change accordingly.
+    ","65821","test_open_ports","tests.integration.go","2025-12-13","passed","2025-12-13","","test_go","",""
+"
+    arrange: build and deploy the paas charm.
+    act: deploy the MySQL database and relate it to the charm.
+    assert: requesting the charm should return a correct response
+    ","36951","test_with_mysql[spring_boot_mysql_app-8080-mysql/status]","tests.integration.integrations","2025-12-13","passed","2025-12-13","","test_mysql","",""
