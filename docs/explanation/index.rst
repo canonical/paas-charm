@@ -9,6 +9,72 @@ Explanation
 The following explanations provide context and clarification on key topics related to the use and
 configuration of web app frameworks.
 
+.. mermaid::
+
+    flowchart LR
+    %% -- Styling Classes --
+    classDef nodeBox fill:#fff,stroke:#666,stroke-width:2px,color:#333,rx:5,ry:5,text-align:center;
+    classDef groupContainer fill:none,stroke:#7c4dff,stroke-width:2px,stroke-dasharray: 5 5,color:#333,font-size:12px;
+    
+    %% -- Main Flow Styling --
+    linkStyle default stroke:#7c4dff,stroke-width:2px,fill:none;
+
+    %% -- Phase 1 --
+    subgraph P1 ["PLAN + CODE"]
+        direction TB
+        Node1["Source:<br/>12-factor web app"]:::nodeBox
+    end
+
+    %% -- Phase 2 --
+    subgraph P2 ["BUILD + TEST"]
+        direction TB
+        Node2["Container:<br/>12-factor app rock"]:::nodeBox
+        Node3["Software operator:<br/>12-factor app charm"]:::nodeBox
+    end
+
+    %% -- Phase 3 --
+    subgraph P3 ["RELEASE"]
+        direction TB
+        Node4["Published:<br/>12-factor app rock<br/>and charm in the<br/>Charmhub store"]:::nodeBox
+    end
+
+    %% -- Phase 4 --
+    subgraph P4 ["DEPLOY + OPERATE"]
+        direction LR
+        Node5["Production:<br/>12-factor app deployed<br/>to end users"]:::nodeBox
+        Node6["Day 1 Operations:<br/>Integrate with database, ingress, SSO, etc."]:::nodeBox
+        
+        %% Internal Link (Grey)
+        Node5 --> Node6
+    end
+
+    %% -- Phase 5 --
+    subgraph P5 ["MONITOR"]
+        direction TB
+        Node7["Observe: <br/> Track and monitor<br/>with COS"]:::nodeBox
+    end
+
+    %% -- Connections --
+    %% Connect Source to the first item in Build
+    Node1 --> Node2
+    Node1 --> Node3
+    
+    %% Connect both Build items to Release
+    Node2 --> Node4
+    Node3 --> Node4
+    
+    %% Connect Release to Deploy
+    Node4 --> Node5
+    
+    %% Connect Deploy to Monitor
+    Node6 --> Node7
+
+    %% -- Apply Group Styles --
+    class P1,P2,P3,P4,P5 groupContainer
+
+    %% -- Override Internal Link Style for P4 (Grey Arrow) --
+    linkStyle 4 stroke:#666,stroke-width:2px;
+
 12-factor app principles
 ------------------------
 
