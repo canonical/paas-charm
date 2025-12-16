@@ -77,7 +77,7 @@ Development and operations
     linkStyle default stroke:#7c4dff,stroke-width:2px,fill:none;
 
     %% -- Phase 1 --
-    subgraph P1 ["PLAN + CODE"]
+    subgraph P1 ["CODE"]
         direction TB
         Node1["Source:<br/>12-factor web app"]:::nodeBox
     end
