@@ -129,9 +129,6 @@ Development and operations
     %% -- Apply Group Styles --
     class P1,P2,P3,P4,P5 groupContainer
 
-    %% -- Override Internal Link Style for P4 (Grey Arrow) --
-    linkStyle 4 stroke:#666,stroke-width:2px;
-
 .. vale on
 
 The diagram above shows the 12-factor tooling in the context of the development
