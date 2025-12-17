@@ -68,7 +68,7 @@ Development and operations
 
 .. mermaid::
 
-    flowchart LR
+    flowchart TD
     %% -- Styling Classes --
     classDef nodeBox fill:#fff,stroke:#666,stroke-width:2px,color:#333,rx:5,ry:5,text-align:center;
     classDef groupContainer fill:none,stroke:#7c4dff,stroke-width:2px,stroke-dasharray: 5 5,color:#333,font-size:12px;
