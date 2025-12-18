@@ -29,7 +29,7 @@ def test_s3_integration(
     s3_integrator_app: App,
     s3_credentials,
     s3_configuration,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -48,7 +48,7 @@ def test_s3_integration(
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    response = http.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    response = session_with_retry.get(f"http://{unit_ip}:{port}/env", timeout=5)
     assert response.status_code == 200
     env = response.json()
 
@@ -69,6 +69,6 @@ def test_s3_integration(
 
     # Check that it list_objects in the bucket. If the connection
     # is unsuccessful of the bucket does not exist, the code raises.
-    response = http.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
+    response = session_with_retry.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" == response.text

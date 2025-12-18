@@ -36,8 +36,8 @@ NON_OPTIONAL_CONFIGS = {
 }
 
 
-@pytest.fixture(scope="function", name="http")
-def fixture_http_client():
+@pytest.fixture(scope="function", name="session_with_retry")
+def fixture_session_with_retry():
     """Return the --test-flask-image test parameter."""
     retry_strategy = Retry(
         total=5,
@@ -50,9 +50,9 @@ def fixture_http_client():
         raise_on_status=False,
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
-    with requests.Session() as http:
-        http.mount("http://", adapter)
-        yield http
+    with requests.Session() as session_with_retry:
+        session_with_retry.mount("http://", adapter)
+        yield session_with_retry
 
 
 @pytest.fixture(scope="module", name="test_flask_image")

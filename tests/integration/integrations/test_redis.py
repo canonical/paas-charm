@@ -28,7 +28,7 @@ def test_with_redis(
     endpoint: str,
     request: pytest.FixtureRequest,
     redis_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the paas charm.
@@ -44,6 +44,6 @@ def test_with_redis(
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = http.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
+    response = session_with_retry.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" in response.text, f"Response: {response.text}"
