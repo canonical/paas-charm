@@ -68,6 +68,7 @@ class Charm(GunicornBase):
     """
 
     framework_config_class = FlaskConfig
+    configuration_prefix = "FLASK_"
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the Flask charm.
