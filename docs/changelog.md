@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2025-12-15
+
+* docs: Add user journey diagram to the explanation section.
+
 ## 2025-11-25
 
 * chore(docs): Update RTD project to latest version of the starter pack.
