@@ -30,6 +30,7 @@ def test_workload_tracing(
     app_fixture: str,
     port: int,
     request: pytest.FixtureRequest,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: Deploy Tempo cluster, app to test and postgres if required.
@@ -54,7 +55,7 @@ def test_workload_tracing(
     tempo_host = status.apps[tempo_app].units[tempo_app + "/0"].address
 
     for _ in range(5):
-        response = requests.get(f"http://{unit_ip}:{port}", timeout=5)
+        response = session_with_retry.get(f"http://{unit_ip}:{port}", timeout=5)
         assert response.status_code == 200
 
     # verify workload traces are ingested into Tempo

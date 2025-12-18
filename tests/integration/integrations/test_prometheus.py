@@ -32,7 +32,7 @@ def test_prometheus_integration(
     metrics_path: str,
     juju: jubilant.Juju,
     prometheus_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -52,7 +52,7 @@ def test_prometheus_integration(
             status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].address
         )
         app_unit_ip = status.apps[app.name].units[app.name + "/0"].address
-        query_targets = http.get(
+        query_targets = session_with_retry.get(
             f"http://{prometheus_unit_ip}:9090/api/v1/targets", timeout=10
         ).json()
         active_targets = query_targets["data"]["activeTargets"]
@@ -65,7 +65,7 @@ def test_prometheus_integration(
                 and app_unit_ip in scrape_url
             ):
                 # scrape the url directly to see if it works
-                response = http.get(scrape_url, timeout=10)
+                response = session_with_retry.get(scrape_url, timeout=10)
                 response.raise_for_status()
                 break
         else:
