@@ -43,14 +43,6 @@ framework support fits in:
   Description of how the 12-factor tooling is opinionated and when those opinions can be
   overridden by users.
 
-12-factor app charm
--------------------
-
-The following pages provide more information about the software operator built with Charmcraft.
-
-* :ref:`Charm architecture <explanation_charm_architecture>`: An overview of the architecture,
-  components, and source code.
-
 .. toctree::
    :maxdepth: 1
    :numbered:
@@ -62,4 +54,3 @@ The following pages provide more information about the software operator built w
    Web app framework <web-app-framework>
    Why use 12-factor? <why-12-factor>
    Opinionated nature of the tooling <opinionated-nature-tooling>
-   Charm architecture <charm-architecture>

@@ -1,5 +1,7 @@
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
 
+(changelog)=
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
