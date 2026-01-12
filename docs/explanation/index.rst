@@ -17,7 +17,7 @@ the `12-factor methodology <https://12factor.net/>`_. The 12-Factor methodology
 is a set of best practices for building modern, scalable, and maintainable web
 applications. 
 
-Learn more about the components involved and how the principles are applied in
+Learn more about the components involved and how these principles are applied in
 the following pages:
 
 * :ref:`Juju, charms and rocks <explanation_foundations>`: Descriptions of
