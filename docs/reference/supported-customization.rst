@@ -13,7 +13,7 @@ in a 12-factor app rock and charm:
 * :ref:`Database migrations <charmcraft:use-12-factor-charms-migrate-workload-database>`
 * :ref:`Enabling supported relations <charmcraft:integrate-12-factor-charms>`
 * :ref:`Handling secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
-* Overriding commands
+* :ref:`Overriding commands <rockcraft:set-up-web-app-rock-override-commands>`
 * Task manager and scheduler
     .. tabs::
 
