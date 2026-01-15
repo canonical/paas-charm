@@ -1,6 +1,6 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
-.. _explanation_charm_architecture:
+.. _ref_charm_architecture:
 
 Charm architecture
 ==================
