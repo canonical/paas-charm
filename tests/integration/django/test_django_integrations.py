@@ -3,13 +3,15 @@
 
 """Integration tests for Django charm integrations."""
 
+import jubilant
 import pytest
 import requests
-from juju.model import Model
+
+from tests.integration.types import App
 
 
-async def test_blocking_and_restarting_on_required_integration(
-    model: Model, django_app, get_unit_ips
+def test_blocking_and_restarting_on_required_integration(
+    juju: jubilant.Juju, django_app: App
 ):
     """
     arrange: Charm is deployed with postgresql integration.
@@ -19,25 +21,33 @@ async def test_blocking_and_restarting_on_required_integration(
     assert: The service is working again.
     """
     # the service is initially running
-    unit_ip = (await get_unit_ips(django_app.name))[0]
+    status = juju.status()
+    unit = list(status.apps[django_app.name].units.values())[0]
+    unit_ip = unit.address
     response = requests.get(f"http://{unit_ip}:8000/len/users", timeout=5)
     assert response.status_code == 200
 
     # remove integration and check that the service is stopped
-    await django_app.destroy_relation("postgresql", "postgresql-k8s:database")
+    juju.remove_relation(django_app.name, "postgresql-k8s:database")
 
-    await model.wait_for_idle(apps=[django_app.name], status="blocked")
-    unit_ip = (await get_unit_ips(django_app.name))[0]
+    juju.wait(lambda status: jubilant.all_blocked(status, django_app.name))
+    
+    status = juju.status()
+    unit = list(status.apps[django_app.name].units.values())[0]
+    unit_ip = unit.address
+    
     with pytest.raises(requests.exceptions.ConnectionError):
         requests.get(f"http://{unit_ip}:8000/len/users", timeout=5)
-    unit = model.applications[django_app.name].units[0]
-    assert unit.workload_status == "blocked"
+    
+    assert unit.is_blocked
     assert "postgresql" in unit.workload_status_message
 
     # add integration again and check that the service is running
-    await model.integrate(django_app.name, "postgresql-k8s:database")
-    await model.wait_for_idle(status="active")
+    juju.integrate(django_app.name, "postgresql-k8s:database")
+    juju.wait(lambda status: jubilant.all_active(status, django_app.name, "postgresql-k8s"))
 
-    unit_ip = (await get_unit_ips(django_app.name))[0]
+    status = juju.status()
+    unit = list(status.apps[django_app.name].units.values())[0]
+    unit_ip = unit.address
     response = requests.get(f"http://{unit_ip}:8000/len/users", timeout=5)
     assert response.status_code == 200
