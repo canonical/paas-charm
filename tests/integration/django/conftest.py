@@ -38,6 +38,7 @@ def fixture_django_async_app_image(pytestconfig: Config):
         raise ValueError("the following arguments are required: --django-async-app-image")
     return image
 
+
 @pytest.fixture(scope="module", name="django_app")
 def django_app_fixture(
     juju: jubilant.Juju,
@@ -51,7 +52,7 @@ def django_app_fixture(
     resources = {
         "django-app-image": django_app_image,
     }
-    
+
     # Deploy postgresql if not already deployed
     if not juju.status().apps.get("postgresql-k8s"):
         juju.deploy(
@@ -65,9 +66,9 @@ def django_app_fixture(
                 "plugin_pg_trgm_enable": "true",
             },
         )
-    
+
     charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
-    
+
     juju.deploy(
         charm=charm_file,
         app=app_name,
@@ -96,7 +97,7 @@ def django_async_app_fixture(
     resources = {
         "django-app-image": django_async_app_image,
     }
-    
+
     # Deploy postgresql if not already deployed
     if not juju.status().apps.get("postgresql-k8s"):
         juju.deploy(
@@ -110,9 +111,9 @@ def django_async_app_fixture(
                 "plugin_pg_trgm_enable": "true",
             },
         )
-    
+
     charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
-    
+
     juju.deploy(
         charm=charm_file,
         app=app_name,
@@ -137,7 +138,7 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
     app_name = django_app.name
     status = juju.status()
     orig_config = status.apps[app_name].config
-    
+
     request_config = {k: str(v) for k, v in request.param.items()}
     juju.config(app_name, request_config)
     juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"))

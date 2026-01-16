@@ -88,10 +88,12 @@ def test_django_create_superuser(django_app: App, juju: jubilant.Juju):
     """
     status = juju.status()
     unit_name = list(status.apps[django_app.name].units.keys())[0]
-    
-    result = juju.run_action(unit_name, "create-superuser", email="test@example.com", username="test")
+
+    result = juju.run_action(
+        unit_name, "create-superuser", email="test@example.com", username="test"
+    )
     password = result["password"]
-    
+
     for unit in status.apps[django_app.name].units.values():
         assert requests.get(
             f"http://{unit.address}:8000/login",

@@ -36,7 +36,7 @@ def test_async_workers(
 
     # Use concurrent requests with requests library
     import concurrent.futures
-    
+
     def fetch_page():
         params = {"duration": 2}
         response = requests.get(f"http://{django_unit_ip}:8000/sleep", params=params, timeout=10)
@@ -46,6 +46,6 @@ def test_async_workers(
     with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
         futures = [executor.submit(fetch_page) for _ in range(15)]
         results = [future.result() for future in concurrent.futures.as_completed(futures)]
-    
+
     elapsed_time = (datetime.now() - start_time).seconds
     assert elapsed_time < 3, "Async workers for Django are not working!"
