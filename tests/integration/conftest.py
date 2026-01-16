@@ -822,6 +822,21 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
         return juju
 
 
+@pytest.fixture(scope="module", name="django_app")
+def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "django"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"django-allowed-hosts": "*"},
+        resources={
+            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+        },
+    )
+
+
 def generate_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,

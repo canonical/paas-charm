@@ -39,51 +39,6 @@ def fixture_django_async_app_image(pytestconfig: Config):
     return image
 
 
-@pytest.fixture(scope="module", name="django_app")
-def django_app_fixture(
-    juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
-    django_app_image: str,
-    tmp_path_factory,
-):
-    """Build and deploy the Django charm."""
-    app_name = "django-k8s"
-
-    resources = {
-        "django-app-image": django_app_image,
-    }
-
-    # Deploy postgresql if not already deployed
-    if not juju.status().apps.get("postgresql-k8s"):
-        juju.deploy(
-            "postgresql-k8s",
-            channel="14/edge",
-            base="ubuntu@22.04",
-            trust=True,
-            config={
-                "profile": "testing",
-                "plugin_hstore_enable": "true",
-                "plugin_pg_trgm_enable": "true",
-            },
-        )
-
-    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
-
-    juju.deploy(
-        charm=charm_file,
-        app=app_name,
-        resources=resources,
-        config={"django-allowed-hosts": "*"},
-        base="ubuntu@22.04",
-    )
-    juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(
-        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
-        timeout=300,
-    )
-    return App(app_name)
-
-
 @pytest.fixture(scope="module", name="django_async_app")
 def django_async_app_fixture(
     juju: jubilant.Juju,
