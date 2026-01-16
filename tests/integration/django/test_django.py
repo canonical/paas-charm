@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Django charm."""
-import typing
 
 import jubilant
 import pytest
@@ -89,10 +88,10 @@ def test_django_create_superuser(django_app: App, juju: jubilant.Juju):
     status = juju.status()
     unit_name = list(status.apps[django_app.name].units.keys())[0]
 
-    result = juju.run_action(
-        unit_name, "create-superuser", email="test@example.com", username="test"
+    task = juju.run(
+        unit_name, "create-superuser", {"email":"test@example.com", "username":"test"}
     )
-    password = result["password"]
+    password = task.results["password"]
 
     for unit in status.apps[django_app.name].units.values():
         assert requests.get(
