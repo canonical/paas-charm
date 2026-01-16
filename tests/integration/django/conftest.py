@@ -146,5 +146,5 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
 
     # Restore original configuration
     restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
-    reset_config = [k for k in request_config if orig_config[k] is None]
+    reset_config = [k for k in request_config if orig_config.get(k) is None]
     juju.config(app_name, restore_config, reset=reset_config)
