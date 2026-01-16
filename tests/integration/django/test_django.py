@@ -89,7 +89,7 @@ def test_django_create_superuser(django_app: App, juju: jubilant.Juju):
     unit_name = list(status.apps[django_app.name].units.keys())[0]
 
     task = juju.run(
-        unit_name, "create-superuser", {"email":"test@example.com", "username":"test"}
+        unit_name, "create-superuser", {"email": "test@example.com", "username": "test"}
     )
     password = task.results["password"]
 
