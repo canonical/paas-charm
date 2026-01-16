@@ -1,5 +1,7 @@
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
 
+(changelog)=
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -10,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 Place any unreleased changes here, that are subject to release in coming versions :).
+
+## 2026-01-12
+
+* docs: Maintenance of the landing pages, including some reorganization of content.
 
 ## 2025-12-15
 

@@ -39,6 +39,16 @@ configuring, integrating, and using a 12-factor app charm.
    * :ref:`Usage <charmcraft:use-12-factor-charms>`:
      Learn more about tasks such as migrations and troubleshooting.
 
+Manage a deployment
+-------------------
+
+The pages below describe general tasks related to managing a deployment:
+
+* :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
+  charm, or ``paas-charm`` version. 
+* :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
+
+
 Contribute to the project
 -------------------------
 
@@ -48,9 +58,6 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
   contributing to the 12-factor project, Rockcraft, and Charmcraft.
 * :ref:`Contribute <how_to_contribute>`: Recommended processes and practices for contributing
   enhancements to the 12-factor project
-* :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
-  charm, or ``paas-charm`` version. 
-* :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
 
 .. toctree::
    :hidden:
@@ -58,7 +65,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
 
    Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
    Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
-   Add a new framework <add-new-framework>
-   Contribute <contributing>
    Upgrade <upgrade>
    Get support <get-support>
+   Add a new framework <add-new-framework>
+   Contribute <contributing>

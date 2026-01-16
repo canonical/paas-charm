@@ -1,11 +1,25 @@
 Reference
 =========
 
+The following pages provide technical descriptions on the individual components in the
+12-factor framework support.
+
+Extensions in Rockcraft and Charmcraft
+--------------------------------------
+
 The Rockcraft and Charmcraft documentation each contain in-depth descriptions of the native
-12-factor framework support in the products. The reference pages provide technical
+12-factor framework support in the products:
+
+* :ref:`Rockcraft extensions <rockcraft:reference-extensions>`: Technical descriptions of the
+  extensions for 12-factor app container images.
+* :ref:`Charmcraft extensions <charmcraft:extensions>`: Technical descriptions of the extensions
+  for 12-factor app charms.
+
+The reference pages provide technical
 descriptions of the extensions so you can understand their configuration and operation.
 The pages detail the project files, requirements, and information about
 specific topics such as environment variables, proxies, background tasks, and secrets.
+The following table contains links to pages for the individual extensions.
 
 .. list-table::
   :header-rows: 1
@@ -33,51 +47,40 @@ specific topics such as environment variables, proxies, background tasks, and se
     - :ref:`Rockcraft Spring Boot extension <rockcraft:reference-spring-boot-framework>`
     - :ref:`Charmcraft Spring Boot extension <charmcraft:spring-boot-framework-extension>`
 
+12-factor app charm
+-------------------
+
+The following pages provide more information about the software operator built with Charmcraft.
+
+* :ref:`Metrics and relations <ref_metrics_relations>`: A list of pages with technical descriptions
+  about the enabled metrics and relations supported in the 12-factor app support in Charmcraft.
+* :ref:`Charm architecture <ref_charm_architecture>`: An overview of the architecture,
+  components, and source code.
+
 Juju
 ----
 
 The following pages contain descriptions of topics relevant to
 web app deployment with Juju.
 
-* :ref:`Events: A list of Juju hooks relevant to the 12-factor tooling <ref_juju_events>`
+* :ref:`Events <ref_juju_events>`: A list of Juju hooks relevant to the 12-factor tooling.
 
-Furthermore, the framework support in Charmcraft comes with enabled metrics
-and relations depending on the extension. The following table contains links to
-the relevant Charmcraft documentation for each web app framework:
+Project features and changes
+----------------------------
 
-.. list-table::
-  :header-rows: 1
-  :widths: 15 20 20
+The following pages provide more information about the 12-factor project.
 
-  * - Web app framework
-    - Metrics and tracing
-    - Supported integrations
-  * - Django
-    - :ref:`Django extension | Grafana dashboard graphs <charmcraft:django-grafana-graphs>`
-    - :ref:`Django extension | Relations <charmcraft:django-framework-extension-relations>`
-  * - Express
-    - :ref:`Express extension | Grafana dashboard graphs <charmcraft:express-grafana-graphs>`
-    - :ref:`Express extension | Relations <charmcraft:expressjs-framework-extension-relations>`
-  * - FastAPI
-    - :ref:`FastAPI extension | Grafana dashboard graphs <charmcraft:fastapi-grafana-graphs>`
-    - :ref:`FastAPI extension | Relations <charmcraft:fastapi-framework-extension-relations>`
-  * - Flask
-    - :ref:`Flask extension | Grafana dashboard graphs <charmcraft:flask-grafana-graphs>`
-    - :ref:`Flask extension | Relations <charmcraft:flask-framework-extension-relations>`
-  * - Go
-    - :ref:`Go extension | Grafana dashboard graphs <charmcraft:go-grafana-graphs>`
-    - :ref:`Go extension | Relations <charmcraft:go-framework-extension-relations>`
-  * - Spring Boot
-    - :ref:`Spring Boot extension | Grafana dashboard graphs <charmcraft:spring-boot-grafana-graphs>`
-    - :ref:`Spring Boot extension | Relations <charmcraft:spring-boot-framework-extension-relations>`
-
-
-All contents
-------------
+* :ref:`ref_supported_customization`: A list of customizable features in 12-factor app rocks and charms.
+* :ref:`changelog`: A list of notable changes in the ``paas-charm`` project.
 
 .. toctree::
+    :hidden:
     :titlesonly:
 
+    Rockcraft extensions <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/>
+    Charmcraft extensions <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/>
+    metrics-relations
+    charm-architecture
     juju-events
     Customizable features <supported-customization>
     Changelog <../changelog.md>
