@@ -38,7 +38,7 @@ def test_blocking_and_restarting_on_required_integration(juju: jubilant.Juju, dj
         requests.get(f"http://{unit_ip}:8000/len/users", timeout=5)
 
     assert unit.is_blocked
-    assert "postgresql" in unit.workload_status_message
+    assert "postgresql" in unit.workload_status.message
 
     # add integration again and check that the service is running
     juju.integrate(django_app.name, "postgresql-k8s:database")
