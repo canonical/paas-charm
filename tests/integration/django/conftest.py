@@ -136,16 +136,15 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
     This fixture must be parameterized with changing charm configurations.
     """
     app_name = django_app.name
-    status = juju.status()
-    orig_config = status.apps[app_name].config
+    orig_config = juju.config(app_name)
 
     request_config = {k: str(v) for k, v in request.param.items()}
     juju.config(app_name, request_config)
-    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"))
+    juju.wait(lambda status: jubilant.all_active(status, app_name))
 
     yield request_config
 
     # Restore original configuration
     restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
-    if restore_config:
-        juju.config(app_name, restore_config)
+    reset_config = [k for k in request_config if orig_config[k] is None]
+    juju.config(app_name, restore_config, reset=reset_config)
