@@ -1,24 +1,23 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Fixtures for flask charm integration tests."""
+"""Fixtures for Django charm integration tests."""
 import os
 import pathlib
 
+import jubilant
 import pytest
-import pytest_asyncio
-from juju.application import Application
-from juju.model import Model
-from pytest import Config, FixtureRequest
-from pytest_operator.plugin import OpsTest
+from pytest import Config
 
-from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.conftest import build_charm_file
+from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 
 @pytest.fixture(autouse=True)
 def cwd():
+    """Change working directory to Django charm."""
     return os.chdir(PROJECT_ROOT / "examples/django/charm")
 
 
@@ -39,91 +38,113 @@ def fixture_django_async_app_image(pytestconfig: Config):
         raise ValueError("the following arguments are required: --django-async-app-image")
     return image
 
-
-@pytest_asyncio.fixture(scope="module", name="charm_file")
-async def charm_file_fixture(
-    pytestconfig: pytest.Config, ops_test: OpsTest, tmp_path_factory
-) -> str:
-    """Get the existing charm file."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if "django-k8s" in f), None
-    )
-    if not charm_file:
-        charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/django/charm")
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    return inject_charm_config(
-        charm_file,
-        {
-            "config": {
-                "options": {
-                    "allowed-hosts": {"type": "string"},
-                    "webserver-worker-class": {"type": "string"},
-                }
-            }
-        },
-        tmp_path_factory.mktemp("django"),
-    )
-
-
-@pytest_asyncio.fixture(scope="module", name="django_app")
-async def django_app_fixture(charm_file: str, model: Model, django_app_image: str, postgresql_k8s):
-    """Build and deploy the django charm."""
+@pytest.fixture(scope="module", name="django_app")
+def django_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    django_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Django charm."""
     app_name = "django-k8s"
 
     resources = {
         "django-app-image": django_app_image,
     }
-    app = await model.deploy(
-        charm_file,
-        application_name=app_name,
-        config={"django-allowed-hosts": "*"},
+    
+    # Deploy postgresql if not already deployed
+    if not juju.status().apps.get("postgresql-k8s"):
+        juju.deploy(
+            "postgresql-k8s",
+            channel="14/edge",
+            base="ubuntu@22.04",
+            trust=True,
+            config={
+                "profile": "testing",
+                "plugin_hstore_enable": "true",
+                "plugin_pg_trgm_enable": "true",
+            },
+        )
+    
+    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
+    
+    juju.deploy(
+        charm=charm_file,
+        app=app_name,
         resources=resources,
-        series="jammy",
+        config={"django-allowed-hosts": "*"},
+        base="ubuntu@22.04",
     )
-    await model.integrate(app_name, "postgresql-k8s:database")
-    await model.wait_for_idle(status="active")
-    return app
+    juju.integrate(app_name, "postgresql-k8s:database")
+    juju.wait(
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
+        timeout=300,
+    )
+    return App(app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="django_async_app")
-async def django_async_app_fixture(
-    charm_file: str, model: Model, django_async_app_image: str, postgresql_k8s
+@pytest.fixture(scope="module", name="django_async_app")
+def django_async_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    django_async_app_image: str,
+    tmp_path_factory,
 ):
-    """Build and deploy the async django charm."""
+    """Build and deploy the async Django charm."""
     app_name = "django-async-k8s"
 
     resources = {
         "django-app-image": django_async_app_image,
     }
-    app = await model.deploy(
-        charm_file,
-        application_name=app_name,
-        config={"django-allowed-hosts": "*"},
+    
+    # Deploy postgresql if not already deployed
+    if not juju.status().apps.get("postgresql-k8s"):
+        juju.deploy(
+            "postgresql-k8s",
+            channel="14/edge",
+            base="ubuntu@22.04",
+            trust=True,
+            config={
+                "profile": "testing",
+                "plugin_hstore_enable": "true",
+                "plugin_pg_trgm_enable": "true",
+            },
+        )
+    
+    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
+    
+    juju.deploy(
+        charm=charm_file,
+        app=app_name,
         resources=resources,
-        series="jammy",
+        config={"django-allowed-hosts": "*"},
+        base="ubuntu@22.04",
     )
-    await model.integrate(app_name, "postgresql-k8s:database")
-    await model.wait_for_idle(status="active")
-    return app
+    juju.integrate(app_name, "postgresql-k8s:database")
+    juju.wait(
+        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
+        timeout=300,
+    )
+    return App(app_name)
 
 
-@pytest_asyncio.fixture
-async def update_config(model: Model, request: FixtureRequest, django_app: Application):
-    """Update the django application configuration.
+@pytest.fixture
+def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_app: App):
+    """Update the Django application configuration.
 
     This fixture must be parameterized with changing charm configurations.
     """
-    orig_config = {k: v.get("value") for k, v in (await django_app.get_config()).items()}
+    app_name = django_app.name
+    status = juju.status()
+    orig_config = status.apps[app_name].config
+    
     request_config = {k: str(v) for k, v in request.param.items()}
-    await django_app.set_config(request_config)
-    await model.wait_for_idle(apps=[django_app.name])
+    juju.config(app_name, request_config)
+    juju.wait(lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"))
 
     yield request_config
 
-    await django_app.set_config(
-        {k: v for k, v in orig_config.items() if k in request_config and v is not None}
-    )
-    await django_app.reset_config([k for k in request_config if orig_config[k] is None])
-    await model.wait_for_idle(apps=[django_app.name])
+    # Restore original configuration
+    restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
+    if restore_config:
+        juju.config(app_name, restore_config)
