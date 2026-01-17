@@ -11,10 +11,17 @@ import unittest
 import ops
 import pytest
 import yaml
+from ops import testing
 from ops.testing import Harness
 from pydantic import Field
 
 import paas_charm
+from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
+from examples.fastapi.charm.src.charm import FastAPICharm
+from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
+from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
@@ -464,3 +471,55 @@ def test_secret_storage_config(
     service_env = container.get_plan().services[framework].environment
     expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.test-model.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.test-model.svc.cluster.local"
     assert service_env[f"{app_prefix}_PEER_FQDNS"] == expected_output
+
+
+def _test_custom_config_prefix_parameters():
+    return [
+        pytest.param("spring_boot_base_state", SpringBootCharm, "springboot", id="spring-boot"),
+        pytest.param("fastapi_base_state", FastAPICharm, "fastapi", id="fastapi"),
+        pytest.param("expressjs_base_state", ExpressJSCharm, "expressjs", id="expressjs"),
+        pytest.param("django_base_state", DjangoCharm, "django", id="django"),
+        pytest.param("flask_base_state", FlaskCharm, "flask", id="flask"),
+        pytest.param("go_base_state", GoCharm, "go", id="go"),
+    ]
+
+@pytest.mark.parametrize("base_state_fixture, charm_class, service_name", _test_custom_config_prefix_parameters())
+def test_custom_config_prefix(
+    request, base_state_fixture: str, charm_class, service_name, monkeypatch
+):
+    """
+    arrange: Provide mock config yaml with optional and non optional config options.
+    act: Create an AppConfig object.
+    assert: The resultant AppConfig object should have the required parameters set correctly.
+        The AppConfig object should not have attributes for framework settings.
+    """
+    # Get the actual fixture value
+    base_state = request.getfixturevalue(base_state_fixture)
+    
+    # Set the appropriate configuration prefix based on charm type
+    monkeypatch.setattr(
+        f"paas_charm.{service_name}.charm.Charm.configuration_prefix",
+        "CUSTOM_"
+    )
+    config = base_state.get("config", {})
+    if service_name == "fastapi":
+        config["non-optional-string"] = "something-new"
+    config["user-defined-config"] = "something-new"
+    base_state["config"] = config
+    
+    state = testing.State(**base_state)
+    context = testing.Context(
+        charm_type=charm_class,
+    )
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+
+    app_layer = list(list(out.containers)[0].plan.services.values())[0].to_dict()
+    # Verify that the CUSTOM_ prefix is used instead of APP_
+    assert "CUSTOM_USER_DEFINED_CONFIG" in app_layer["environment"]
+    assert app_layer["environment"]["CUSTOM_USER_DEFINED_CONFIG"] == "something-new"
+    assert "CUSTOM_SECRET_KEY" in app_layer["environment"]
+    assert "CUSTOM_BASE_URL" in app_layer["environment"]
+    # Ensure APP_ prefixed variables are not present
+    assert "APP_USER_DEFINED_CONFIG" not in app_layer["environment"]

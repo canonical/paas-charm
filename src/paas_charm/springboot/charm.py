@@ -435,6 +435,7 @@ class Charm(PaasCharm):
             workload_config=self._workload_config,
             database_migration=self._database_migration,
             framework_config_prefix="",
+            configuration_prefix=self.configuration_prefix,
         )
 
     def get_cos_dir(self) -> str:

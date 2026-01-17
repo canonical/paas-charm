@@ -105,6 +105,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     """
 
     framework_config_class: type[BaseModel]
+    configuration_prefix = "APP_"
 
     @property
     @abc.abstractmethod
