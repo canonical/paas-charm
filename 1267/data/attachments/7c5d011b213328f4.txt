@@ -1,0 +1,20 @@
+15:22:40 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] active:
+15:22:58 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+15:23:28 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [executing] maintenance: Preparing service for restart
+  flask-k8s/2 [executing] maintenance: Preparing service for restart
+15:23:58 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+  flask-k8s/2 [idle] active: 
+15:24:11 [32mINFO[0m check_correct_celery_stats. Expected schedulers: 1, expected workers 3. Result {'schedulers': ["b'10.1.60.15'"], 'workers': ["b'10.1.60.19'", "b'10.1.60.15'", "b'10.1.60.18'"]}
+15:24:12 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] active: 
+  flask-k8s/1 [executing] active: 
+  flask-k8s/2 [executing] active: 
+  redis-k8s/0 [executing] active:
