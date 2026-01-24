@@ -1,0 +1,52 @@
+15:19:13 [32mINFO[0m Deploying ch:amd64/focal/traefik-k8s-266
+15:19:13 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [allocating] waiting: installing agent
+15:19:44 [32mINFO[0m Waiting for model:
+  traefik-k8s/0 [idle] maintenance: restarting traefik...
+15:20:13 [33mWARNING[0m relate is deprecated and will be removed. Use integrate instead.
+15:20:13 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+15:20:38 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+15:21:08 [32mINFO[0m Waiting for model:
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+15:21:09 [32mINFO[0m Waiting for model:
+  go-k8s/0 [idle] active: 
+  traefik-k8s/0 [idle] active: Serving at http://juju.test
+15:21:31 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-e032f-microk8s  microk8s/localhost  3.6.13   unsupported  15:21:31Z
+
+App             Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+go-k8s                   active      1  go-k8s                         0  10.152.183.102  no       
+postgresql-k8s  14.20    active      1  postgresql-k8s  14/edge      717  10.152.183.234  no       
+traefik-k8s     2.11.0   active      1  traefik-k8s     latest/edge  266  10.152.183.158  no       Serving at http://juju.test
+
+Unit               Workload  Agent  Address      Ports  Message
+go-k8s/0*          active    idle   10.1.12.140         
+postgresql-k8s/0*  active    idle   10.1.12.142         Primary
+traefik-k8s/0*     active    idle   10.1.12.144         Serving at http://juju.test
+
+15:21:32 [32mINFO[0m Juju error logs:
+
+unit-go-k8s-0: 15:17:24 ERROR unit.go-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+unit-go-k8s-0: 15:17:25 ERROR unit.go-k8s/0.juju-log database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+unit-go-k8s-0: 15:17:27 ERROR unit.go-k8s/0.juju-log secret-storage:3: database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, stdout: , stderr: psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+
+unit-traefik-k8s-0: 15:19:36 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:19:37 ERROR unit.traefik-k8s/0.juju-log peers:5: Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:19:38 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:19:40 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:19:41 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+
+15:21:32 [32mINFO[0m Forgetting model main...

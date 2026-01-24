@@ -1,0 +1,30 @@
+15:21:58 [32mINFO[0m Waiting for model:
+  redis-k8s/0 [idle] active:
+15:22:16 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+15:22:47 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [executing] active: 
+  flask-k8s/2 [executing] maintenance: Preparing service for restart
+15:23:17 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+  flask-k8s/2 [idle] active: 
+15:23:32 [32mINFO[0m check_correct_celery_stats. Expected schedulers: 1, expected workers 3. Result {'schedulers': ["b'10.1.12.143'"], 'workers': ["b'10.1.12.143'", "b'10.1.12.146'", "b'10.1.12.147'"]}
+15:23:32 [32mINFO[0m Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  django-async-k8s/0 [idle] active: 
+  flask-k8s/0 [executing] active: 
+  flask-k8s/1 [executing] active: 
+  flask-k8s/2 [executing] active: 
+  redis-k8s/0 [executing] active: 
+15:23:35 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-61' coro=<Connection.keepalive() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.12/site-packages/websockets/asyncio/connection.py:820> wait_for=<Future pending cb=[Task.__wakeup()]>>
+15:23:35 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task_Pinger' coro=<Connection._pinger() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.12/site-packages/juju/client/connection.py:529> wait_for=<Future pending cb=[Task.__wakeup()]>>
+15:23:35 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task_Receiver' coro=<Connection._receiver() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.12/site-packages/juju/client/connection.py:481> wait_for=<Future pending cb=[Task.__wakeup()]>>
+15:23:35 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-1733' coro=<Connection.recv() running at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.12/site-packages/websockets/asyncio/connection.py:305> wait_for=<Future pending cb=[Task.__wakeup()]> cb=[create_task_with_handler.<locals>._task_result_exp_handler(task_name='tmp', logger=<Logger juju....ection (INFO)>)() at /home/runner/work/paas-charm/paas-charm/.tox/integration/lib/python3.12/site-packages/juju/_jasyncio.py:32]>
+15:23:35 [31m[1mERROR[0m Task was destroyed but it is pending!
+task: <Task pending name='Task-1734' coro=<Event.wait() running at /usr/lib/python3.12/asyncio/locks.py:212> wait_for=<Future pending cb=[Task.__wakeup()]>>
