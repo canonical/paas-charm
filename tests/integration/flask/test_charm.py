@@ -6,14 +6,12 @@
 
 import json
 import logging
-import typing
 
-import juju
-import ops
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
@@ -23,17 +21,19 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8000
 
 
-async def test_flask_is_up(
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_flask_is_up(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
     act: send a request to the flask application managed by the flask charm.
     assert: the flask application should return a correct response.
     """
-    for unit_ip in await get_unit_ips(flask_app.name):
-        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}", timeout=5)
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
+        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
@@ -48,9 +48,10 @@ async def test_flask_is_up(
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-async def test_flask_webserver_timeout(
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_flask_webserver_timeout(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
     timeout: int,
 ):
     """
@@ -59,29 +60,32 @@ async def test_flask_webserver_timeout(
     assert: the gunicorn should restart the worker if the request duration exceeds the timeout.
     """
     safety_timeout = timeout + 3
-    for unit_ip in await get_unit_ips(flask_app.name):
-        assert requests.get(
-            f"http://{unit_ip}:{WORKLOAD_PORT}/sleep?duration={timeout - 1}",
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
+        assert http.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/sleep?duration={timeout - 1}",
             timeout=safety_timeout,
         ).ok
-        assert not requests.get(
-            f"http://{unit_ip}:{WORKLOAD_PORT}/sleep?duration={timeout + 1}",
+        assert not http.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/sleep?duration={timeout + 1}",
             timeout=safety_timeout,
         ).ok
 
 
-async def test_default_secret_key(
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_default_secret_key(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
     act: query flask secret key from the Flask server.
     assert: flask should have a default and secure secret configured.
     """
+    status = juju.status()
     secret_keys = [
-        requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10).json()
-        for unit_ip in await get_unit_ips(flask_app.name)
+        http.get(f"http://{unit.address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10).json()
+        for unit in status.apps[flask_app.name].units.values()
     ]
     assert len(set(secret_keys)) == 1
     assert len(secret_keys[0]) > 10
@@ -102,9 +106,10 @@ async def test_default_secret_key(
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-async def test_flask_config(
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_flask_config(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
     excepted_config: dict,
 ):
     """
@@ -112,11 +117,12 @@ async def test_flask_config(
     act: query flask configurations from the Flask server.
     assert: the flask configuration should match flask related charm configurations.
     """
-    for unit_ip in await get_unit_ips(flask_app.name):
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in excepted_config.items():
             assert (
-                requests.get(
-                    f"http://{unit_ip}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
+                http.get(
+                    f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
             )
@@ -139,9 +145,10 @@ async def test_flask_config(
     indirect=["update_secret_config"],
 )
 @pytest.mark.usefixtures("update_secret_config")
-async def test_flask_secret_config(
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_flask_secret_config(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
     excepted_config: dict,
 ):
     """
@@ -149,11 +156,12 @@ async def test_flask_secret_config(
     act: query flask environment variables from the Flask server.
     assert: the flask environment variables should match secret configuration values.
     """
-    for unit_ip in await get_unit_ips(flask_app.name):
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in excepted_config.items():
             assert (
-                requests.get(
-                    f"http://{unit_ip}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
+                http.get(
+                    f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
             )
@@ -176,7 +184,7 @@ async def test_flask_secret_config(
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-async def test_invalid_flask_config(flask_app: Application, invalid_configs: tuple[str, ...]):
+def test_invalid_flask_config(flask_app: App, juju: jubilant.Juju, invalid_configs: tuple[str, ...]):
     """
     arrange: build and deploy the flask charm, and change flask related configurations
         to certain invalid values.
@@ -184,13 +192,15 @@ async def test_invalid_flask_config(flask_app: Application, invalid_configs: tup
     assert: flask charm should enter the blocked status and the status message should show
         invalid configuration options.
     """
-    assert flask_app.status == "blocked"
+    status = juju.status()
+    app_status = status.apps[flask_app.name]
+    assert app_status.is_blocked
     for invalid_config in invalid_configs:
-        assert invalid_config in flask_app.status_message
-    for unit in flask_app.units:
-        assert unit.workload_status == "blocked"
+        assert invalid_config in app_status.status_info.message
+    for unit in app_status.units.values():
+        assert unit.is_blocked
         for invalid_config in invalid_configs:
-            assert invalid_config in unit.workload_status_message
+            assert invalid_config in unit.workload_status.message
 
 
 @pytest.mark.parametrize(
@@ -205,56 +215,68 @@ async def test_invalid_flask_config(flask_app: Application, invalid_configs: tup
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-async def test_app_config(
-    flask_app: Application,
+def test_app_config(
+    flask_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
     excepted_config: dict[str, str | int | bool],
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
 ):
     """
     arrange: build and deploy the flask charm, and change Flask app configurations.
     act: none.
     assert: Flask application should receive the application configuration correctly.
     """
-    for unit_ip in await get_unit_ips(flask_app.name):
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in excepted_config.items():
             assert (
-                requests.get(
-                    f"http://{unit_ip}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
+                http.get(
+                    f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
             )
 
 
-async def test_rotate_secret_key(
-    model: juju.model.Model,
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_rotate_secret_key(
+    juju: jubilant.Juju,
+    flask_app: App,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
     act: run rotate-secret-key action on the leader unit.
     assert: Flask applications on every unit should have a new secret key configured.
     """
-    unit_ips = await get_unit_ips(flask_app.name)
-    secret_key = requests.get(
-        f"http://{unit_ips[0]}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
+    status = juju.status()
+    units = list(status.apps[flask_app.name].units.values())
+    secret_key = http.get(
+        f"http://{units[0].address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
     ).json()
-    leader_unit = [u for u in flask_app.units if await u.is_leader_from_status()][0]
-    action = await leader_unit.run_action("rotate-secret-key")
-    await action.wait()
-    assert action.results["status"] == "success"
-    await model.wait_for_idle(status=ops.ActiveStatus.name)  # type: ignore
-    for unit_ip in unit_ips:
-        new_secret_key = requests.get(
-            f"http://{unit_ip}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
+
+    # Find leader unit
+    leader_unit = None
+    for unit_name in status.apps[flask_app.name].units.keys():
+        if status.apps[flask_app.name].units[unit_name].is_leader:
+            leader_unit = unit_name
+            break
+
+    task = juju.run(leader_unit, "rotate-secret-key")
+    assert task.results["status"] == "success"
+    juju.wait(lambda status: status.apps[flask_app.name].is_active)
+
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
+        new_secret_key = http.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
         ).json()
         assert len(new_secret_key) > 10
         assert new_secret_key != secret_key
 
 
-async def test_port_without_ingress(
-    model: juju.model.Model,
-    flask_app: Application,
+def test_port_without_ingress(
+    juju: jubilant.Juju,
+    flask_app: App,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm without ingress. Get the service ip
@@ -263,28 +285,29 @@ async def test_port_without_ingress(
     assert: the request should success and the env variable FLASK_BASE_URL
         should point to the service.
     """
-    service_hostname = f"{flask_app.name}.{model.name}"
-    action = await flask_app.units[0].run(f"/usr/bin/getent hosts {service_hostname}")
-    result = await action.wait()
-    assert result.status == "completed"
-    assert result.results["return-code"] == 0
-    service_ip = result.results["stdout"].split()[0]
+    status = juju.status()
+    model_name = status.model.name
+    service_hostname = f"{flask_app.name}.{model_name}"
+    unit_name = list(status.apps[flask_app.name].units.keys())[0]
 
-    response = requests.get(f"http://{service_ip}:{WORKLOAD_PORT}/env", timeout=30)
+    task = juju.run(unit_name, f"/usr/bin/getent hosts {service_hostname}")
+    assert task.results["return-code"] == 0
+    service_ip = task.results["stdout"].split()[0]
+
+    response = http.get(f"http://{service_ip}:{WORKLOAD_PORT}/env", timeout=30)
 
     assert response.status_code == 200
     env_vars = response.json()
     assert env_vars["FLASK_BASE_URL"] == f"http://{service_hostname}:{WORKLOAD_PORT}"
 
 
-async def test_with_ingress(
-    ops_test: OpsTest,
-    model: juju.model.Model,
-    flask_app: Application,
-    traefik_app,  # pylint: disable=unused-argument
+def test_with_ingress(
+    juju: jubilant.Juju,
+    flask_app: App,
+    traefik_app: App,
     traefik_app_name: str,
     external_hostname: str,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm, and deploy the ingress.
@@ -292,54 +315,67 @@ async def test_with_ingress(
     assert: requesting the charm through traefik should return a correct response,
          and the BASE_URL config should be correctly set (FLASK_BASE_URL env variable).
     """
-    await model.add_relation(flask_app.name, traefik_app_name)
-    # mypy doesn't see that ActiveStatus has a name
-    await model.wait_for_idle(status=ops.ActiveStatus.name)  # type: ignore
+    try:
+        juju.integrate(flask_app.name, traefik_app_name)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name))
 
-    traefik_ip = (await get_unit_ips(traefik_app_name))[0]
-    response = requests.get(
+    status = juju.status()
+    model_name = status.model.name
+    traefik_unit = list(status.apps[traefik_app_name].units.values())[0]
+    traefik_ip = traefik_unit.address
+
+    response = http.get(
         f"http://{traefik_ip}/config/BASE_URL",
-        headers={"Host": f"{ops_test.model_name}-{flask_app.name}.{external_hostname}"},
+        headers={"Host": f"{model_name}-{flask_app.name}.{external_hostname}"},
         timeout=5,
     )
     assert response.status_code == 200
-    assert response.json() == f"http://{ops_test.model_name}-{flask_app.name}.{external_hostname}/"
+    assert response.json() == f"http://{model_name}-{flask_app.name}.{external_hostname}/"
 
 
-async def test_app_peer_address(
-    model: juju.model.Model,
-    flask_app: Application,
-    get_unit_ips: typing.Callable[[str], typing.Awaitable[tuple[str, ...]]],
+def test_app_peer_address(
+    juju: jubilant.Juju,
+    flask_app: App,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
     act: add a unit and request env variables through the unit IP addresses.
     assert: the peer address must be present in the units' env.
     """
-    await flask_app.add_unit()
-    await model.wait_for_idle(status="active", apps=[flask_app.name])
+    # Add a unit
+    juju.add_unit(flask_app.name)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active)
+
+    status = juju.status()
+    model_name = status.model.name
 
     actual_result = set()
-    for unit_ip in await get_unit_ips(flask_app.name):
-        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+    for unit in status.apps[flask_app.name].units.values():
+        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
         assert "FLASK_PEER_FQDNS" in env_vars
         actual_result.add(env_vars["FLASK_PEER_FQDNS"])
 
     expected_result = set()
-    for unit in flask_app.units:
+    for unit_name in status.apps[flask_app.name].units.keys():
         # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
         expected_result.add(
-            f"{unit.name.replace('/', '-')}.{flask_app.name}-endpoints.{model.name}.svc.cluster.local"
+            f"{unit_name.replace('/', '-')}.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
         )
     assert actual_result == expected_result
 
-    await flask_app.scale(scale=1)
-    await model.wait_for_idle(status="active", apps=[flask_app.name])
+    # Scale back to 1 unit
+    juju.scale(flask_app.name, 1)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active)
 
-    for unit_ip in await get_unit_ips(flask_app.name):
-        response = requests.get(f"http://{unit_ip}:{WORKLOAD_PORT}/env", timeout=30)
+    status = juju.status()
+    for unit in status.apps[flask_app.name].units.values():
+        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
         assert "FLASK_PEER_FQDNS" not in env_vars

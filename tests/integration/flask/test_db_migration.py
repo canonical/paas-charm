@@ -5,15 +5,18 @@
 
 import logging
 
-import juju
+import jubilant
 import requests
-from juju.application import Application
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
 
-async def test_db_migration(
-    flask_db_app: Application, model: juju.model.Model, get_unit_ips, postgresql_k8s
+def test_db_migration(
+    flask_db_app: App,
+    juju: jubilant.Juju,
+    http: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -21,18 +24,33 @@ async def test_db_migration(
     assert: requesting the charm should return a correct response indicate
         the database migration script has been executed and only executed once.
     """
-    await model.wait_for_idle()
-    await model.add_relation(flask_db_app.name, postgresql_k8s.name)
-    await model.wait_for_idle(status="active", timeout=20 * 60)
+    # Deploy postgresql if not already present
+    from tests.integration.conftest import deploy_postgresql
 
-    for unit_ip in await get_unit_ips(flask_db_app.name):
-        assert requests.head(f"http://{unit_ip}:8000/tables/users", timeout=5).status_code == 200
+    deploy_postgresql(juju)
+
+    juju.wait(lambda status: status.apps.get("postgresql-k8s") and status.apps["postgresql-k8s"].is_active)
+
+    # Integrate with database
+    try:
+        juju.integrate(flask_db_app.name, "postgresql-k8s")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(
+        lambda status: jubilant.all_active(status, flask_db_app.name, "postgresql-k8s"), timeout=20 * 60
+    )
+
+    status = juju.status()
+    for unit in status.apps[flask_db_app.name].units.values():
+        assert http.head(f"http://{unit.address}:8000/tables/users", timeout=5).status_code == 200
         user_creation_request = {"username": "foo", "password": "bar"}
-        response = requests.post(
-            f"http://{unit_ip}:8000/users", json=user_creation_request, timeout=5
+        response = http.post(
+            f"http://{unit.address}:8000/users", json=user_creation_request, timeout=5
         )
         assert response.status_code == 201
-        response = requests.post(
-            f"http://{unit_ip}:8000/users", json=user_creation_request, timeout=5
+        response = http.post(
+            f"http://{unit.address}:8000/users", json=user_creation_request, timeout=5
         )
         assert response.status_code == 400
