@@ -3,50 +3,50 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Django charm."""
-import asyncio
+
 import logging
 import time
-import typing
 from datetime import datetime
 
-import aiohttp
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from juju.model import Model
-from juju.utils import block_until
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.usefixtures("django_async_app")
-async def test_async_workers(
-    ops_test: OpsTest,
-    model: Model,
-    django_async_app: Application,
-    get_unit_ips,
+def test_async_workers(
+    juju: jubilant.Juju,
+    django_async_app: App,
 ):
     """
     arrange: Django is deployed with async enabled rock. Change gunicorn worker class.
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    await django_async_app.set_config({"webserver-worker-class": "gevent"})
-    await model.wait_for_idle(apps=[django_async_app.name], status="active", timeout=60)
+    juju.config(django_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.wait(lambda status: jubilant.all_active(status, django_async_app.name), timeout=60)
 
     # the django unit is not important. Take the first one
-    django_unit_ip = (await get_unit_ips(django_async_app.name))[0]
+    status = juju.status()
+    django_unit = list(status.apps[django_async_app.name].units.values())[0]
+    django_unit_ip = django_unit.address
 
-    async def _fetch_page(session):
+    # Use concurrent requests with requests library
+    import concurrent.futures
+
+    def fetch_page():
         params = {"duration": 2}
-        async with session.get(f"http://{django_unit_ip}:8000/sleep", params=params) as response:
-            return await response.text()
+        response = requests.get(f"http://{django_unit_ip}:8000/sleep", params=params, timeout=10)
+        return response.text
 
     start_time = datetime.now()
-    async with aiohttp.ClientSession() as session:
-        pages = [_fetch_page(session) for _ in range(15)]
-        await asyncio.gather(*pages)
-        assert (
-            datetime.now() - start_time
-        ).seconds < 3, "Async workers for Django are not working!"
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        futures = [executor.submit(fetch_page) for _ in range(15)]
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+    elapsed_time = (datetime.now() - start_time).seconds
+    assert elapsed_time < 3, "Async workers for Django are not working!"

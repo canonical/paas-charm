@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Django Charm service."""
+
 import logging
 import secrets
 import typing

@@ -28,7 +28,6 @@ This library is very similar and uses the same events as
 See https://github.com/openstack-charmers/charm-rabbitmq-k8s/blob/main/lib/charms/rabbitmq_k8s/v0/rabbitmq.py  # pylint: disable=line-too-long # noqa: W505
 """
 
-
 import logging
 import urllib.parse
 from typing import NamedTuple

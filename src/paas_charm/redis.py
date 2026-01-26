@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide a wrapper around SAML integration lib."""
+
 import logging
 import re
 

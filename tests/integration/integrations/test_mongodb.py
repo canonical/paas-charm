@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for MongoDB database integration."""
+
 import logging
 
 import jubilant

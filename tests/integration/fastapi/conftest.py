@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for FastAPI charm integration tests."""
+
 import os
 import pathlib
 

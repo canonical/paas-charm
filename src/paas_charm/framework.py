@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Framework related base classes."""
+
 import typing
 
 import pydantic

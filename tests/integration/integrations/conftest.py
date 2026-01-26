@@ -59,21 +59,6 @@ def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, 
     )
 
 
-@pytest.fixture(scope="module", name="django_app")
-def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
-    framework = "django"
-    yield from generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-        tmp_path_factory=tmp_path_factory,
-        config={"django-allowed-hosts": "*"},
-        resources={
-            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
-        },
-    )
-
-
 @pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "fastapi"

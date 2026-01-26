@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide a wrapper around Tempo integration lib."""
+
 import logging
 
 from charms.tempo_coordinator_k8s.v0.tracing import (

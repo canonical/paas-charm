@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Generic utility functions."""
+
 import functools
 import itertools
 import os
