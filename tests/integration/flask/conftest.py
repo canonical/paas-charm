@@ -9,6 +9,7 @@ import pathlib
 import jubilant
 import pytest
 
+from tests.integration.conftest import build_charm_file, inject_charm_config
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
@@ -26,8 +27,6 @@ def flask_app_fixture(
     tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-flask image."""
-    from tests.integration.conftest import build_charm_file, inject_charm_config
-
     framework = "flask"
     app_name = f"{framework}-k8s"
 
@@ -78,8 +77,6 @@ def flask_db_app_fixture(
     tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-db-flask image."""
-    from tests.integration.conftest import build_charm_file, inject_charm_config
-
     framework = "flask"
     app_name = f"{framework}-k8s"
 
@@ -130,8 +127,6 @@ def flask_async_app_fixture(
     tmp_path_factory,
 ):
     """Build and deploy the flask charm with test-async-flask image."""
-    from tests.integration.conftest import build_charm_file, inject_charm_config
-
     framework = "flask"
     app_name = "flask-async-k8s"
 

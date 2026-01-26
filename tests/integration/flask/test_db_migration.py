@@ -8,6 +8,7 @@ import logging
 import jubilant
 import requests
 
+from tests.integration.conftest import deploy_postgresql
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -25,8 +26,6 @@ def test_db_migration(
         the database migration script has been executed and only executed once.
     """
     # Deploy postgresql if not already present
-    from tests.integration.conftest import deploy_postgresql
-
     deploy_postgresql(juju)
 
     juju.wait(lambda status: status.apps.get("postgresql-k8s") and status.apps["postgresql-k8s"].is_active)

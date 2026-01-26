@@ -8,6 +8,7 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.conftest import build_charm_file, inject_charm_config
 from tests.integration.types import App
 
 
@@ -18,8 +19,6 @@ def test_proxy(
     http: requests.Session,
 ):
     """Build and deploy the flask charm."""
-    from tests.integration.conftest import build_charm_file, inject_charm_config
-
     app_name = "flask-k8s"
     http_proxy = "http://proxy.test"
     https_proxy = "http://https.proxy.test"
