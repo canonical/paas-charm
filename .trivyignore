@@ -30,6 +30,9 @@ CVE-2024-45590
 CVE-2024-4068
 # @babel/traverse
 CVE-2023-45133
+# node-pkg
+CVE-2026-23745
+CVE-2026-23950
 # Spring boot apache-commons-io
 CVE-2024-47554
 # net.minidev:json-smart
