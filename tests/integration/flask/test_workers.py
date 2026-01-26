@@ -3,8 +3,10 @@
 
 """Integration tests for Flask workers and schedulers."""
 
+import concurrent.futures
 import logging
 import time
+from datetime import datetime
 
 import jubilant
 import pytest
@@ -120,9 +122,6 @@ def test_async_workers(
     flask_unit_ip = list(status.apps[flask_async_app.name].units.values())[0].address
 
     # Use threading to make concurrent requests
-    import concurrent.futures
-    from datetime import datetime
-
     def fetch_page():
         params = {"duration": 2}
         response = http.get(f"http://{flask_unit_ip}:8000/sleep", params=params, timeout=5)
