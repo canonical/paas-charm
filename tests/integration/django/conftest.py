@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Fixtures for Django charm integration tests."""
+
 import os
 import pathlib
 

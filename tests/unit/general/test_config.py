@@ -3,7 +3,6 @@
 
 """Utils unit tests."""
 
-
 import os
 import pathlib
 import unittest

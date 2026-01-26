@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """This module defines utility functions to use by the Charm."""
+
 import logging
 import typing
 from functools import wraps

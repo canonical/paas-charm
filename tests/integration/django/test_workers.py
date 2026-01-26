@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Django charm."""
+
 import logging
 import time
 from datetime import datetime
