@@ -25,22 +25,19 @@ GUNICORN_CONFIG_TEST_PARAMS = [
     pytest.param(
         {"workers": 10},
         False,
-        textwrap.dedent(
-            """\
+        textwrap.dedent("""\
                 bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
                 statsd_host = 'localhost:9125'
-                workers = 10"""
-        ),
+                workers = 10"""),
         id="workers=10",
     ),
     pytest.param(
         {"threads": 2, "timeout": 3, "keepalive": 4},
         False,
-        textwrap.dedent(
-            """\
+        textwrap.dedent("""\
                 bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
@@ -48,15 +45,13 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 statsd_host = 'localhost:9125'
                 threads = 2
                 keepalive = 4
-                timeout = 3"""
-        ),
+                timeout = 3"""),
         id="threads=2,timeout=3,keepalive=4",
     ),
     pytest.param(
         {},
         True,
-        textwrap.dedent(
-            """\
+        textwrap.dedent("""\
                 from opentelemetry import trace
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
                 from opentelemetry.sdk.trace import TracerProvider
@@ -74,8 +69,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                     trace.set_tracer_provider(TracerProvider())
                     span_processor = BatchSpanProcessor(OTLPSpanExporter())
                     trace.get_tracer_provider().add_span_processor(span_processor)
-                """
-        ),
+                """),
         id="with-tracing",
     ),
 ]

@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """This module defines the CharmState class which represents the state of the charm."""
+
 import logging
 import os
 import pathlib

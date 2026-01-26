@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for 12Factor charms S3 integration."""
+
 import logging
 
 import jubilant

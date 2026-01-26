@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Rabbitmq Integration."""
+
 import logging
 
 import jubilant

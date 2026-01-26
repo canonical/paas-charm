@@ -8,6 +8,7 @@ Revises:
 Create Date: 2023-09-05 17:12:56.303534
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """S3 lib wrapper unit tests."""
+
 import pytest
 from ops.testing import Harness
 

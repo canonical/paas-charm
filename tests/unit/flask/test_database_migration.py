@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Unit tests for Flask charm database integration."""
+
 import pathlib
 import unittest.mock
 

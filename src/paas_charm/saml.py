@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide a wrapper around SAML integration lib."""
+
 import logging
 
 # The import may fail if optional libs are not fetched. Let it fall through
