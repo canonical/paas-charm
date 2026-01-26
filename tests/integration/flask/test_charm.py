@@ -184,7 +184,9 @@ def test_flask_secret_config(
     indirect=["update_config"],
 )
 @pytest.mark.usefixtures("update_config")
-def test_invalid_flask_config(flask_app: App, juju: jubilant.Juju, invalid_configs: tuple[str, ...]):
+def test_invalid_flask_config(
+    flask_app: App, juju: jubilant.Juju, invalid_configs: tuple[str, ...]
+):
     """
     arrange: build and deploy the flask charm, and change flask related configurations
         to certain invalid values.
