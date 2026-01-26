@@ -186,29 +186,29 @@ def build_charm_file(
     return pathlib.Path(charm_file).absolute()
 
 
-@pytest_asyncio.fixture(scope="module", name="flask_app")
-async def flask_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    test_flask_image: str,
-    tmp_path_factory,
-):
-    """Build and deploy the flask charm with test-flask image."""
-    app_name = "flask-k8s"
+# @pytest_asyncio.fixture(scope="module", name="flask_app")
+# async def flask_app_fixture(
+#     pytestconfig: pytest.Config,
+#     model: Model,
+#     test_flask_image: str,
+#     tmp_path_factory,
+# ):
+#     """Build and deploy the flask charm with test-flask image."""
+#     app_name = "flask-k8s"
 
-    resources = {
-        "flask-app-image": test_flask_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig,
-        "flask",
-        tmp_path_factory,
-    )
-    app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
-    return app
+#     resources = {
+#         "flask-app-image": test_flask_image,
+#     }
+#     charm_file = build_charm_file(
+#         pytestconfig,
+#         "flask",
+#         tmp_path_factory,
+#     )
+#     app = await model.deploy(
+#         charm_file, resources=resources, application_name=app_name, series="jammy"
+#     )
+#     await model.wait_for_idle(apps=[app_name], status="active", timeout=300, raise_on_blocked=True)
+#     return app
 
 
 @pytest.fixture(scope="module", name="loki_app")
@@ -883,5 +883,24 @@ def deploy_postgresql(
             "profile": "testing",
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
+        },
+    )
+
+
+@pytest.fixture(scope="module", name="flask_app")
+def flask_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+):
+    framework = "flask"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
         },
     )

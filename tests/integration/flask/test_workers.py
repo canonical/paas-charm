@@ -28,9 +28,7 @@ def redis_k8s_app_fixture(juju: jubilant.Juju):
 
 
 @pytest.fixture
-def integrate_redis_k8s_flask(
-    juju: jubilant.Juju, flask_app: App, redis_k8s_app: App
-):
+def integrate_redis_k8s_flask(juju: jubilant.Juju, flask_app: App, redis_k8s_app: App):
     """Integrate redis_k8s with flask apps."""
     try:
         juju.integrate(flask_app.name, redis_k8s_app.name)

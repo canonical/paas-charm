@@ -28,7 +28,10 @@ def test_db_migration(
     # Deploy postgresql if not already present
     deploy_postgresql(juju)
 
-    juju.wait(lambda status: status.apps.get("postgresql-k8s") and status.apps["postgresql-k8s"].is_active)
+    juju.wait(
+        lambda status: status.apps.get("postgresql-k8s")
+        and status.apps["postgresql-k8s"].is_active
+    )
 
     # Integrate with database
     try:
@@ -38,7 +41,8 @@ def test_db_migration(
             raise err
 
     juju.wait(
-        lambda status: jubilant.all_active(status, flask_db_app.name, "postgresql-k8s"), timeout=20 * 60
+        lambda status: jubilant.all_active(status, flask_db_app.name, "postgresql-k8s"),
+        timeout=20 * 60,
     )
 
     status = juju.status()
