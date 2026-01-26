@@ -71,18 +71,6 @@ def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_pa
     )
 
 
-@pytest.fixture(scope="module", name="go_app")
-def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
-    framework = "go"
-    yield from generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-        tmp_path_factory=tmp_path_factory,
-        config={"metrics-port": 8081},
-    )
-
-
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"

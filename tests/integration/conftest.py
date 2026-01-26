@@ -445,25 +445,38 @@ def fastapi_non_root_app_fixture(
     )
 
 
-@pytest_asyncio.fixture(scope="module", name="go_app")
-async def go_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    go_app_image: str,
-    postgresql_k8s,
-    tmp_path_factory,
-):
-    """Build and deploy the Go charm with go-app image."""
-    app_name = "go-k8s"
+@pytest.fixture(scope="module", name="go_app")
+def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "go"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        use_postgres=True,
+        tmp_path_factory=tmp_path_factory,
+        config={"metrics-port": 8081},
+    )
 
-    resources = {
-        "app-image": go_app_image,
-    }
-    charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
-    return app
+
+# @pytest_asyncio.fixture(scope="module", name="go_app")
+# async def go_app_fixture(
+#     pytestconfig: pytest.Config,
+#     model: Model,
+#     go_app_image: str,
+#     postgresql_k8s,
+#     tmp_path_factory,
+# ):
+#     """Build and deploy the Go charm with go-app image."""
+#     app_name = "go-k8s"
+
+#     resources = {
+#         "app-image": go_app_image,
+#     }
+#     charm_file = build_charm_file(pytestconfig, "go", tmp_path_factory)
+#     app = await model.deploy(charm_file, resources=resources, application_name=app_name)
+#     await model.integrate(app_name, f"{postgresql_k8s.name}:database")
+#     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+#     return app
 
 
 @pytest_asyncio.fixture(scope="module", name="go_blocked_app")

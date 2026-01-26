@@ -89,7 +89,7 @@ def test_open_ports(
     assert (
         requests.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model_name}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -105,7 +105,7 @@ def test_open_ports(
     assert (
         requests.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model_name}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -120,7 +120,7 @@ def test_open_ports(
     assert (
         requests.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model_name}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
