@@ -293,34 +293,6 @@ async def flask_blocked_app_fixture(
     return app
 
 
-@pytest_asyncio.fixture(scope="module", name="django_app")
-async def django_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    django_app_image: str,
-    postgresql_k8s: Application,
-    tmp_path_factory,
-):
-    """Build and deploy the Django charm with django-app image."""
-    app_name = "django-k8s"
-
-    resources = {
-        "django-app-image": django_app_image,
-    }
-    charm_file = build_charm_file(pytestconfig, "django", tmp_path_factory)
-
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        config={"django-allowed-hosts": "*"},
-        application_name=app_name,
-        series="jammy",
-    )
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
-    return app
-
-
 @pytest_asyncio.fixture(scope="module", name="django_blocked_app")
 async def django_blocked_app_fixture(
     pytestconfig: pytest.Config,
@@ -375,30 +347,42 @@ def django_non_root_app_fixture(
     )
 
 
-@pytest_asyncio.fixture(scope="module", name="fastapi_app")
-async def fastapi_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    fastapi_app_image: str,
-    postgresql_k8s: Application,
-    tmp_path_factory,
-):
-    """Build and deploy the FastAPI charm with fastapi-app image."""
-    app_name = "fastapi-k8s"
+# @pytest_asyncio.fixture(scope="module", name="fastapi_app")
+# async def fastapi_app_fixture(
+#     pytestconfig: pytest.Config,
+#     model: Model,
+#     fastapi_app_image: str,
+#     postgresql_k8s: Application,
+#     tmp_path_factory,
+# ):
+#     """Build and deploy the FastAPI charm with fastapi-app image."""
+#     app_name = "fastapi-k8s"
 
-    resources = {
-        "app-image": fastapi_app_image,
-    }
-    charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        application_name=app_name,
-        config={"non-optional-string": "non-optional-value"},
+#     resources = {
+#         "app-image": fastapi_app_image,
+#     }
+#     charm_file = build_charm_file(pytestconfig, "fastapi", tmp_path_factory)
+#     app = await model.deploy(
+#         charm_file,
+#         resources=resources,
+#         application_name=app_name,
+#         config={"non-optional-string": "non-optional-value"},
+#     )
+#     await model.integrate(app_name, f"{postgresql_k8s.name}:database")
+#     await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
+#     return app
+
+
+@pytest.fixture(scope="module", name="fastapi_app")
+def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "fastapi"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"non-optional-string": "string"},
     )
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[app_name, postgresql_k8s.name], status="active", timeout=300)
-    return app
 
 
 @pytest_asyncio.fixture(scope="module", name="fastapi_blocked_app")
