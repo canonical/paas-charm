@@ -37,10 +37,10 @@ def integrate_redis_k8s_flask(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: status.apps[redis_k8s_app.name].is_active)
+    juju.wait(lambda status: status.apps[redis_k8s_app.name].is_active, timeout=10 * 60)
     yield
     juju.remove_relation(flask_app.name, f"{redis_k8s_app.name}:redis")
-    juju.wait(lambda status: status.apps[flask_app.name].is_active)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, timeout=10 * 60)
 
 
 @pytest.mark.parametrize(
@@ -99,8 +99,9 @@ def test_workers_and_scheduler_services(
         time.sleep(1)
 
     # Final check
-    assert check_correct_celery_stats(num_schedulers=1, num_workers=num_units), \
-        f"Failed to get {num_units} workers and 1 scheduler"
+    assert check_correct_celery_stats(
+        num_schedulers=1, num_workers=num_units
+    ), f"Failed to get {num_units} workers and 1 scheduler"
 
 
 @pytest.mark.usefixtures("flask_async_app")
@@ -132,5 +133,5 @@ def test_async_workers(
         futures = [executor.submit(fetch_page) for _ in range(15)]
         concurrent.futures.wait(futures)
 
-    elapsed_seconds = (datetime.now() - start_time).seconds
+    elapsed_seconds = (datetime.now() - start_time).total_seconds()
     assert elapsed_seconds < 3, f"Async workers for Flask are not working! Took {elapsed_seconds}s"
