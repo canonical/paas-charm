@@ -372,7 +372,7 @@ def test_app_peer_address(
     assert actual_result == expected_result
 
     # Scale back to 1 unit
-    juju.scale(flask_app.name, 1)
+    juju.remove_unit(flask_app.name)
     juju.wait(lambda status: status.apps[flask_app.name].is_active)
 
     status = juju.status()
