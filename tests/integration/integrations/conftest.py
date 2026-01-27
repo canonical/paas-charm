@@ -59,6 +59,18 @@ def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, 
     )
 
 
+@pytest.fixture(scope="module", name="fastapi_app")
+def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "fastapi"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"non-optional-string": "string"},
+    )
+
+
 @pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "go"
