@@ -225,13 +225,14 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, fl
     app_name = flask_app.name
     orig_config = juju.config(app_name)
     request_config = {}
+    secret_ids = []
 
     for secret_config_option, secret_value in request.param.items():
-        secret_id = juju.add_secret(
-            secret_config_option, [f"{k}={v}" for k, v in secret_value.items()]
-        )
-        juju.grant_secret(secret_config_option, app_name)
+        secret_id = juju.add_secret(secret_config_option, secret_value)
+
+        juju.grant_secret(secret_id, app_name)
         request_config[secret_config_option] = secret_id
+        secret_ids.append(secret_id)
 
     juju.config(app_name, request_config)
     juju.wait(lambda status: status.apps[app_name].is_active)
@@ -243,5 +244,5 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, fl
     reset_config = [k for k in request_config if orig_config.get(k) is None]
     juju.config(app_name, restore_config, reset=reset_config)
 
-    for secret_name in request_config:
-        juju.remove_secret(secret_name)
+    for secret_id in secret_ids:
+        juju.remove_secret(secret_id)
