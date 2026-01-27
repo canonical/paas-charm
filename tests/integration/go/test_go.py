@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 WORKLOAD_PORT = 8080
 
 
-def test_go_is_up(go_app: App, juju: jubilant.Juju):
+def test_go_is_up(go_app: App, http: requests.Session, juju: jubilant.Juju):
     """
     arrange: build and deploy the go charm.
     act: send a request to the go application managed by the go charm.
@@ -23,12 +23,12 @@ def test_go_is_up(go_app: App, juju: jubilant.Juju):
     """
     status = juju.status()
     for unit in status.apps[go_app.name].units.values():
-        response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
+        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
 
-def test_user_defined_config(go_app: App, juju: jubilant.Juju):
+def test_user_defined_config(go_app: App, http: requests.Session, juju: jubilant.Juju):
     """
     arrange: build and deploy the go charm. Set the config user-defined-config to a new value.
     act: call the endpoint to get the value of the env variable related to the config.
@@ -39,14 +39,14 @@ def test_user_defined_config(go_app: App, juju: jubilant.Juju):
 
     status = juju.status()
     for unit in status.apps[go_app.name].units.values():
-        response = requests.get(
+        response = http.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/env/user-defined-config", timeout=5
         )
         assert response.status_code == 200
         assert "newvalue" in response.text
 
 
-def test_migration(go_app: App, juju: jubilant.Juju):
+def test_migration(go_app: App, http: requests.Session, juju: jubilant.Juju):
     """
     arrange: build and deploy the go charm with postgresql integration.
     act: send a request to an endpoint that uses the table created by the migration script.
@@ -54,7 +54,7 @@ def test_migration(go_app: App, juju: jubilant.Juju):
     """
     status = juju.status()
     for unit in status.apps[go_app.name].units.values():
-        response = requests.get(
+        response = http.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/postgresql/migratestatus", timeout=5
         )
         assert response.status_code == 200
@@ -65,6 +65,7 @@ def test_open_ports(
     juju: jubilant.Juju,
     go_app: App,
     traefik_app: App,
+    http: requests.Session,
     external_hostname: str,
 ):
     """
@@ -87,7 +88,7 @@ def test_open_ports(
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
-        requests.get(
+        http.get(
             f"http://{traefik_ip}",
             headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
@@ -103,7 +104,7 @@ def test_open_ports(
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{new_port}/tcp"
     assert (
-        requests.get(
+        http.get(
             f"http://{traefik_ip}",
             headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
@@ -118,7 +119,7 @@ def test_open_ports(
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
-        requests.get(
+        http.get(
             f"http://{traefik_ip}",
             headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
             timeout=5,
