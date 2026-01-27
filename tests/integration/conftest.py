@@ -730,7 +730,6 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
             raise e
 
 
-
 @pytest.fixture(scope="module", name="traefik_app")
 def deploy_traefik_fixture(
     juju: jubilant.Juju,
@@ -754,6 +753,7 @@ def deploy_traefik_fixture(
         error=jubilant.any_blocked,
     )
     return App(traefik_app_name)
+
 
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
 async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
@@ -947,6 +947,7 @@ def flask_db_app_fixture(
             "flask-app-image": pytestconfig.getoption(f"--test-db-flask-image"),
         },
     )
+
 
 @pytest.fixture(scope="module", name="flask_async_app")
 def flask_async_app_fixture(
