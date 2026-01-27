@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide a wrapper around OAuth integration lib."""
+
 import logging
 
 import ops

@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide the base generic class to represent the application."""
+
 import collections
 import json
 import logging

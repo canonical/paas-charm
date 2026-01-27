@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide a wrapper around S3 integration lib."""
+
 import logging
 from typing import Optional
 

@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """SAML charm integration unit tests."""
+
 from unittest.mock import MagicMock
 
 import pytest

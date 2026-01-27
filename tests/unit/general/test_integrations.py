@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Integrations unit tests."""
+
 import json
 import pathlib
 import unittest

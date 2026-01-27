@@ -3,7 +3,6 @@
 
 """FastAPI constants."""
 
-
 DEFAULT_LAYER = {
     "services": {
         "fastapi": {

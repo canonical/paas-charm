@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for Flask charm database integration."""
+
 import asyncio
 import logging
 

@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide the SecretStorage for managing the persistent secret storage for charms."""
+
 import abc
 import secrets
 import typing

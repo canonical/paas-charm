@@ -73,6 +73,15 @@ def fixture_django_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="django_async_app_image")
+def fixture_django_async_app_image(pytestconfig: Config):
+    """Return the --django-async-app-image test parameter."""
+    image = pytestconfig.getoption("--django-async-app-image")
+    if not image:
+        raise ValueError("the following arguments are required: --django-async-app-image")
+    return image
+
+
 @pytest.fixture(scope="module", name="fastapi_app_image")
 def fixture_fastapi_app_image(pytestconfig: Config):
     """Return the --fastapi-app-image test parameter."""
@@ -822,6 +831,36 @@ def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]
         return juju
 
 
+@pytest.fixture(scope="module", name="django_app")
+def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "django"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"django-allowed-hosts": "*"},
+        resources={
+            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+        },
+    )
+
+
+@pytest.fixture(scope="module", name="django_async_app")
+def django_async_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "django-async"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        config={"django-allowed-hosts": "*"},
+        resources={
+            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+        },
+    )
+
+
 def generate_app_fixture(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
@@ -844,10 +883,17 @@ def generate_app_fixture(
         resources = {
             "app-image": pytestconfig.getoption(f"--{image_name}"),
         }
-    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory, charm_dict=charm_dict)
+    main_framework = framework
+    # The async version of frameworks uses the same charm as the sync one
+    if "-async" in main_framework:
+        main_framework = main_framework.replace("-async", "")
+    charm_file = build_charm_file(
+        pytestconfig, main_framework, tmp_path_factory, charm_dict=charm_dict
+    )
     try:
         juju.deploy(
             charm=charm_file,
+            app=f"{framework}-k8s",
             resources=resources,
             config=config,
         )

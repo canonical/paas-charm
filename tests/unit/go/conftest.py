@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """pytest fixtures for the go unit test."""
+
 import os
 import pathlib
 import typing
