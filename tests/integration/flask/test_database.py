@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "endpoint,db_name, db_channel, revision, trust",
+    "endpoint, db_name, db_channel, revision, trust",
     [
         ("postgresql/status", "postgresql-k8s", "14/edge", None, True),
     ],
@@ -32,7 +32,7 @@ def test_with_database(
     endpoint: str,
     db_name: str,
     db_channel: str,
-    revision: str | None,
+    revision: int | None,
     trust: bool,
 ):
     """
@@ -42,14 +42,9 @@ def test_with_database(
     """
     # Deploy database if not already deployed
     if not juju.status().apps.get(db_name):
-        deploy_args = {"channel": db_channel}
-        if revision:
-            deploy_args["revision"] = revision
-        if trust:
-            deploy_args["trust"] = True
-        juju.deploy(db_name, **deploy_args)
+        juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust)
 
-    juju.wait(lambda status: status.apps.get(db_name) and status.apps[db_name].is_active)
+    juju.wait(lambda status: status.apps.get(db_name, False) and status.apps[db_name].is_active)
 
     # Integrate with database
     try:
