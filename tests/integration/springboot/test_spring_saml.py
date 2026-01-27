@@ -21,7 +21,7 @@ def test_springboot_saml_integration(
     spring_boot_app: App,
     saml_integrator: App,
     spring_boot_unit_ip: str,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: integrate the spring boot charm with SAML integrator.
@@ -33,6 +33,8 @@ def test_springboot_saml_integration(
         lambda status: jubilant.all_active(status, saml_integrator.name, spring_boot_app.name),
         timeout=10 * 60,
     )
-    response = http.get(f"http://{spring_boot_unit_ip}:{WORKLOAD_PORT}/samltest", timeout=5)
+    response = session_with_retry.get(
+        f"http://{spring_boot_unit_ip}:{WORKLOAD_PORT}/samltest", timeout=5
+    )
     assert response.status_code == 200
     assert "simplesaml" in response.text
