@@ -61,7 +61,8 @@ def test_workers_and_scheduler_services(
             hostname in Redis sets. Those sets are checked through the Flask app,
             that queries Redis.
     """
-    juju.scale(flask_app.name, num_units)
+    for n in range(1, num_units):
+        juju.add_unit(flask_app.name)
     juju.wait(lambda status: status.apps[flask_app.name].is_active)
 
     # the flask unit is not important. Take the first one

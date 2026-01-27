@@ -8,7 +8,6 @@ import logging
 import jubilant
 import requests
 
-from tests.integration.conftest import deploy_postgresql
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -25,21 +24,6 @@ def test_db_migration(
     assert: requesting the charm should return a correct response indicate
         the database migration script has been executed and only executed once.
     """
-    # Deploy postgresql if not already present
-    deploy_postgresql(juju)
-
-    juju.wait(
-        lambda status: status.apps.get("postgresql-k8s")
-        and status.apps["postgresql-k8s"].is_active
-    )
-
-    # Integrate with database
-    try:
-        juju.integrate(flask_db_app.name, "postgresql-k8s")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-
     juju.wait(
         lambda status: jubilant.all_active(status, flask_db_app.name, "postgresql-k8s"),
         timeout=20 * 60,

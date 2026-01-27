@@ -730,6 +730,31 @@ async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
             raise e
 
 
+
+@pytest.fixture(scope="module", name="traefik_app")
+def deploy_traefik_fixture(
+    juju: jubilant.Juju,
+    traefik_app_name: str,
+    external_hostname: str,
+):
+    """Deploy traefik."""
+    if not juju.status().apps.get(traefik_app_name):
+        juju.deploy(
+            "traefik-k8s",
+            app=traefik_app_name,
+            channel="edge",
+            trust=True,
+            config={
+                "external_hostname": external_hostname,
+                "routing_mode": "subdomain",
+            },
+        )
+    juju.wait(
+        lambda status: status.apps[traefik_app_name].is_active,
+        error=jubilant.any_blocked,
+    )
+    return App(traefik_app_name)
+
 @pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
 async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
     """Deploy Redis k8s charm."""
@@ -820,7 +845,7 @@ def generate_app_fixture(
     use_postgres: bool = True,
     config: dict[str, str] | None = None,
     resources: dict[str, str] | None = None,
-    charm_dict: dict = None,
+    charm_dict: dict | None = None,
 ):
     """Generates the charm, configures and deploys it and the relations it depends on."""
     app_name = f"{framework}-k8s"
@@ -902,5 +927,41 @@ def flask_app_fixture(
         use_postgres=False,
         resources={
             "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
+        },
+    )
+
+
+@pytest.fixture(scope="module", name="flask_db_app")
+def flask_db_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+):
+    framework = "flask"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        resources={
+            "flask-app-image": pytestconfig.getoption(f"--test-db-flask-image"),
+        },
+    )
+
+@pytest.fixture(scope="module", name="flask_async_app")
+def flask_async_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    tmp_path_factory,
+):
+    framework = "flask-async"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "flask-app-image": pytestconfig.getoption(f"--test-async-flask-image"),
         },
     )
