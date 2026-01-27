@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Flask charm state unit tests."""
+
 import copy
 import unittest.mock
 from secrets import token_hex

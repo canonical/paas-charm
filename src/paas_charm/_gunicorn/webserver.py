@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide the GunicornWebserver class to represent the gunicorn server."""
+
 import dataclasses
 import datetime
 import logging

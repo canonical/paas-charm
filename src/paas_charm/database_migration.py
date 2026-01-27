@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide the DatabaseMigration class to manage database migrations."""
+
 import enum
 import logging
 import pathlib

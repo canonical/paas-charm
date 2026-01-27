@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 """Integration tests for MySQL database integration."""
+
 import logging
 
 import jubilant

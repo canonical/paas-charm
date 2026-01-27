@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 """Provide the Observability class to represent the observability stack for charms."""
+
 import os.path
 import pathlib
 
