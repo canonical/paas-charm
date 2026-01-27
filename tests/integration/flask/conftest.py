@@ -20,56 +20,6 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
-# @pytest.fixture(scope="module", name="flask_app")
-# def flask_app_fixture(
-#     juju: jubilant.Juju,
-#     pytestconfig: pytest.Config,
-#     tmp_path_factory,
-# ):
-#     """Build and deploy the flask charm with test-flask image."""
-#     framework = "flask"
-#     app_name = f"{framework}-k8s"
-
-#     use_existing = pytestconfig.getoption("--use-existing", default=False)
-#     if use_existing:
-#         return App(app_name)
-
-#     # Build the charm with additional config options
-#     charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
-#     charm_file = inject_charm_config(
-#         charm_file,
-#         {
-#             "config": {
-#                 "options": {
-#                     "foo-str": {"type": "string"},
-#                     "foo-int": {"type": "int"},
-#                     "foo-bool": {"type": "boolean"},
-#                     "foo-dict": {"type": "string"},
-#                     "application-root": {"type": "string"},
-#                 }
-#             }
-#         },
-#         tmp_path_factory.mktemp("flask"),
-#     )
-
-#     resources = {
-#         "flask-app-image": pytestconfig.getoption("--test-flask-image"),
-#     }
-
-#     try:
-#         juju.deploy(
-#             charm=charm_file,
-#             app=app_name,
-#             resources=resources,
-#         )
-#     except jubilant.CLIError as err:
-#         if "application already exists" not in err.stderr:
-#             raise err
-
-#     juju.wait(lambda status: jubilant.all_active(status, app_name), timeout=10 * 60)
-#     return App(app_name)
-
-
 @pytest.fixture(scope="module", name="flask_db_app")
 def flask_db_app_fixture(
     juju: jubilant.Juju,
