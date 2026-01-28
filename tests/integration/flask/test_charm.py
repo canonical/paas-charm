@@ -206,6 +206,7 @@ def test_app_peer_address(
     status = juju.status()
     model_name = status.model.name
 
+    status = juju.status()
     actual_result = set()
     for unit in status.apps[flask_app.name].units.values():
         response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)

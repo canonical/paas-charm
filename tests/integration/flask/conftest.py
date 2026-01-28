@@ -13,9 +13,23 @@ from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
+# Configuration dict for extra test configs
+TEST_CONFIGS = {
+    "config": {
+        "options": {
+            "foo-str": {"type": "string"},
+            "foo-int": {"type": "int"},
+            "foo-bool": {"type": "boolean"},
+            "foo-dict": {"type": "string"},
+            "application-root": {"type": "string"},
+        }
+    }
+}
+
 
 @pytest.fixture(autouse=True)
 def cwd():
+    """Change working directory to Flask charm."""
     return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
