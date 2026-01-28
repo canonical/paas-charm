@@ -3,18 +3,17 @@
 
 """Integration tests for Flask workers and schedulers."""
 
-import asyncio
 import logging
 import time
 from datetime import datetime
 
 import aiohttp
+import asyncio
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from juju.model import Model
-from juju.utils import block_until
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,11 @@ logger = logging.getLogger(__name__)
     "num_units",
     [1, 3],
 )
-@pytest.mark.usefixtures("integrate_redis_k8s_flask")
-async def test_workers_and_scheduler_services(
-    ops_test: OpsTest, model: Model, flask_app: Application, get_unit_ips, num_units: int
+@pytest.mark.usefixtures("integrate_redis_k8s_flask_jubilant")
+def test_workers_and_scheduler_services(
+    juju: jubilant.Juju,
+    flask_app_with_configs: App,
+    num_units: int,
 ):
     """
     arrange: Flask and redis deployed and integrated.
@@ -36,11 +37,12 @@ async def test_workers_and_scheduler_services(
             hostname in Redis sets. Those sets are checked through the Flask app,
             that queries Redis.
     """
-    await flask_app.scale(num_units)
-    await model.wait_for_idle(apps=[flask_app.name], status="active")
+    juju.cli("scale-application", flask_app_with_configs.name, str(num_units))
+    juju.wait(lambda status: jubilant.all_active(status, flask_app_with_configs.name), timeout=10 * 60)
 
-    # the flask unit is not important. Take the first one
-    flask_unit_ip = (await get_unit_ips(flask_app.name))[0]
+    # Get the first flask unit IP
+    status = juju.status()
+    flask_unit_ip = list(status.apps[flask_app_with_configs.name].units.values())[0].address
 
     def check_correct_celery_stats(num_schedulers, num_workers):
         """Check that the expected number of workers and schedulers is right."""
@@ -55,50 +57,52 @@ async def test_workers_and_scheduler_services(
         )
         return len(data["workers"]) == num_workers and len(data["schedulers"]) == num_schedulers
 
-    # clean the current celery stats
+    # Clean the current celery stats
     response = requests.get(f"http://{flask_unit_ip}:8000/redis/clear_celery_stats", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" == response.text
 
-    # enough time for all the schedulers to send messages
+    # Enough time for all the schedulers to send messages
     time.sleep(10)
-    try:
-        await block_until(
-            lambda: check_correct_celery_stats(num_schedulers=1, num_workers=num_units),
-            timeout=60,
-            wait_period=1,
-        )
-    except asyncio.TimeoutError:
-        assert False, "Failed to get 2 workers and 1 scheduler"
+    
+    # Poll for correct stats
+    for _ in range(60):
+        if check_correct_celery_stats(num_schedulers=1, num_workers=num_units):
+            return
+        time.sleep(1)
+    
+    assert False, "Failed to get correct number of workers and schedulers"
 
 
-@pytest.mark.usefixtures("flask_async_app")
-async def test_async_workers(
-    ops_test: OpsTest,
-    model: Model,
-    flask_async_app: Application,
-    get_unit_ips,
+def test_async_workers(
+    juju: jubilant.Juju,
+    flask_async_app: App,
 ):
     """
     arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    await flask_async_app.set_config({"webserver-worker-class": "gevent"})
-    await model.wait_for_idle(apps=[flask_async_app.name], status="active", timeout=60)
+    juju.config(flask_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.wait(lambda status: jubilant.all_active(status, flask_async_app.name), timeout=10 * 60)
 
-    # the flask unit is not important. Take the first one
-    flask_unit_ip = (await get_unit_ips(flask_async_app.name))[0]
+    # Get the flask unit IP
+    status = juju.status()
+    flask_unit_ip = list(status.apps[flask_async_app.name].units.values())[0].address
 
     async def _fetch_page(session):
         params = {"duration": 2}
         async with session.get(f"http://{flask_unit_ip}:8000/sleep", params=params) as response:
             return await response.text()
 
-    start_time = datetime.now()
-    async with aiohttp.ClientSession() as session:
-        pages = [_fetch_page(session) for _ in range(15)]
-        await asyncio.gather(*pages)
-        assert (
-            datetime.now() - start_time
-        ).seconds < 3, "Async workers for Flask are not working!"
+    async def run_async_test():
+        start_time = datetime.now()
+        async with aiohttp.ClientSession() as session:
+            pages = [_fetch_page(session) for _ in range(15)]
+            await asyncio.gather(*pages)
+            assert (
+                datetime.now() - start_time
+            ).seconds < 3, "Async workers for Flask are not working!"
+    
+    # Run the async test
+    asyncio.run(run_async_test())
