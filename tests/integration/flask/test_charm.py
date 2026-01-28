@@ -198,7 +198,7 @@ def test_invalid_flask_config(
     app_status = status.apps[flask_app.name]
     assert app_status.is_blocked
     for invalid_config in invalid_configs:
-        assert invalid_config in app_status.status_info.message
+        assert invalid_config in app_status.app_status.message
     for unit in app_status.units.values():
         assert unit.is_blocked
         for invalid_config in invalid_configs:
@@ -258,10 +258,10 @@ def test_rotate_secret_key(
     # Find leader unit
     leader_unit = None
     for unit_name in status.apps[flask_app.name].units.keys():
-        if status.apps[flask_app.name].units[unit_name].is_leader:
+        if status.apps[flask_app.name].units[unit_name].leader:
             leader_unit = unit_name
             break
-
+    assert leader_unit is not None
     task = juju.run(leader_unit, "rotate-secret-key")
     assert task.results["status"] == "success"
     juju.wait(lambda status: status.apps[flask_app.name].is_active)
@@ -372,7 +372,7 @@ def test_app_peer_address(
     assert actual_result == expected_result
 
     # Scale back to 1 unit
-    juju.remove_unit(flask_app.name)
+    juju.remove_unit(flask_app.name, num_units=1)
     juju.wait(lambda status: status.apps[flask_app.name].is_active)
 
     status = juju.status()

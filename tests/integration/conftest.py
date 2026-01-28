@@ -928,6 +928,17 @@ def flask_app_fixture(
         resources={
             "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
         },
+        charm_dict={
+            "config": {
+                "options": {
+                    "foo-str": {"type": "string"},
+                    "foo-int": {"type": "int"},
+                    "foo-bool": {"type": "boolean"},
+                    "foo-dict": {"type": "string"},
+                    "application-root": {"type": "string"},
+                }
+            }
+        },
     )
 
 
