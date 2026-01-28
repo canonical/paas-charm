@@ -74,22 +74,22 @@ def test_non_optional(
     blocked_app: App = request.getfixturevalue(blocked_app_fixture)
     status = juju.status()
     app_status = status.apps[blocked_app.name]
-    assert app_status.status == "blocked"
+    assert app_status.is_blocked
     for missing_config in missing_configs:
-        assert missing_config in app_status.message
+        assert missing_config in app_status.app_status.message
 
     juju.config(blocked_app.name, first_non_optional_config)
-    juju.wait(lambda status: status.apps[blocked_app.name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[blocked_app.name].is_blocked, timeout=5 * 60)
     status = juju.status()
     app_status = status.apps[blocked_app.name]
     for invalid_config in rest_of_the_invalid_configs:
-        assert invalid_config in app_status.message
+        assert invalid_config in app_status.app_status.message
     for config in first_non_optional_config.keys():
-        assert config not in app_status.message
+        assert config not in app_status.app_status.message
 
     juju.config(blocked_app.name, remaining_non_optional_configs_dict)
     juju.wait(lambda status: status.apps[blocked_app.name].is_active, timeout=5 * 60)
     status = juju.status()
     app_status = status.apps[blocked_app.name]
     for missing_config in missing_configs:
-        assert missing_config not in app_status.message
+        assert missing_config not in app_status.app_status.message

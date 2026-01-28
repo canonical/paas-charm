@@ -943,7 +943,7 @@ def flask_blocked_app_jubilant_fixture(
         if "application already exists" not in err.stderr:
             raise err
     
-    juju.wait(lambda status: status.apps[app_name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
 
@@ -985,7 +985,7 @@ def django_blocked_app_jubilant_fixture(
             raise err
     
     juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
-    juju.wait(lambda status: status.apps[app_name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
 
@@ -1022,7 +1022,7 @@ def fastapi_blocked_app_jubilant_fixture(
             raise err
     
     juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
-    juju.wait(lambda status: status.apps[app_name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
 
@@ -1059,7 +1059,7 @@ def go_blocked_app_jubilant_fixture(
             raise err
     
     juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
-    juju.wait(lambda status: status.apps[app_name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
 
@@ -1096,5 +1096,5 @@ def expressjs_blocked_app_jubilant_fixture(
             raise err
     
     juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
-    juju.wait(lambda status: status.apps[app_name].status == "blocked", timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
