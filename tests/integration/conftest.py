@@ -741,6 +741,16 @@ async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
     return redis_app
 
 
+@pytest.fixture(scope="module", name="redis_k8s_app_jubilant")
+def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
+    """Deploy Redis k8s charm using jubilant."""
+    app_name = "redis-k8s"
+    if not juju.status().apps.get(app_name):
+        juju.deploy(app_name, channel="edge")
+    juju.wait(lambda status: status.apps[app_name].is_active, error=jubilant.any_blocked)
+    return App(app_name)
+
+
 @pytest_asyncio.fixture(scope="function", name="integrate_redis_k8s_flask")
 async def integrate_redis_k8s_flask_fixture(
     ops_test: OpsTest, model: Model, flask_app: Application, redis_k8s_app: Application
@@ -751,6 +761,27 @@ async def integrate_redis_k8s_flask_fixture(
     yield relation
     await flask_app.destroy_relation("redis", f"{redis_k8s_app.name}")
     await model.wait_for_idle()
+
+
+@pytest.fixture(scope="function", name="integrate_redis_k8s_flask_jubilant")
+def integrate_redis_k8s_flask_jubilant_fixture(
+    juju: jubilant.Juju,
+    flask_app_with_configs: App,
+    redis_k8s_app_jubilant: App,
+):
+    """Integrate redis_k8s with flask apps using jubilant."""
+    try:
+        juju.integrate(flask_app_with_configs.name, redis_k8s_app_jubilant.name)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, flask_app_with_configs.name, redis_k8s_app_jubilant.name))
+    
+    yield
+    
+    # Teardown - remove relation
+    juju.cli("remove-relation", flask_app_with_configs.name, redis_k8s_app_jubilant.name)
+    juju.wait(lambda status: status.apps.get(flask_app_with_configs.name) is not None, timeout=5 * 60)
 
 
 @pytest_asyncio.fixture
