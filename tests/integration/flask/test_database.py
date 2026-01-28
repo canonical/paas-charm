@@ -4,15 +4,14 @@
 
 """Integration tests for Flask charm database integration."""
 
-import asyncio
 import logging
+import time
 
-import juju
-import ops
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
@@ -26,11 +25,9 @@ logger = logging.getLogger(__name__)
         ("postgresql/status", "postgresql-k8s", "14/edge", None, True),
     ],
 )
-async def test_with_database(
-    ops_test: OpsTest,
-    flask_app: Application,
-    model: juju.model.Model,
-    get_unit_ips,
+def test_with_database(
+    juju: jubilant.Juju,
+    flask_app_with_configs: App,
     endpoint: str,
     db_name: str,
     db_channel: str,
@@ -42,24 +39,33 @@ async def test_with_database(
     act: deploy the database and relate it to the charm.
     assert: requesting the charm should return a correct response
     """
-    deploy_cmd = ["deploy", db_name, "--channel", db_channel]
-    if revision:
-        deploy_cmd.extend(["--revision", revision])
-    if trust:
-        deploy_cmd.extend(["--trust"])
-    await ops_test.juju(*deploy_cmd)
+    # Deploy database if not already deployed
+    if not juju.status().apps.get(db_name):
+        deploy_args = [db_name, "--channel", db_channel]
+        if revision:
+            deploy_args.extend(["--revision", revision])
+        if trust:
+            deploy_args.append("--trust")
+        juju.cli("deploy", *deploy_args)
 
-    await model.wait_for_idle(status=ops.ActiveStatus.name)
+    juju.wait(lambda status: status.apps[db_name].is_active, error=jubilant.any_blocked)
 
-    await model.add_relation(flask_app.name, f"{db_name}:database")
+    # Add relation
+    try:
+        juju.integrate(flask_app_with_configs.name, f"{db_name}:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
 
-    await model.wait_for_idle(status=ops.ActiveStatus.name)
+    juju.wait(lambda status: jubilant.all_active(status, flask_app_with_configs.name, db_name))
 
-    for unit_ip in await get_unit_ips(flask_app.name):
+    # Test database connectivity
+    status = juju.status()
+    for unit in status.apps[flask_app_with_configs.name].units.values():
         for _ in range(10):
-            response = requests.get(f"http://{unit_ip}:8000/{endpoint}", timeout=5)
+            response = requests.get(f"http://{unit.address}:8000/{endpoint}", timeout=5)
             if "SUCCESS" == response.text:
                 return
-            await asyncio.sleep(60)
+            time.sleep(60)
         assert response.status_code == 200
         assert "SUCCESS" == response.text
