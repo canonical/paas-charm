@@ -6,25 +6,36 @@
 import os
 import pathlib
 
+import jubilant
 import pytest
-import pytest_asyncio
-from juju.application import Application
-from juju.model import Model
-from pytest import Config, FixtureRequest
-from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers import inject_charm_config, inject_venv
+from tests.integration.helpers import inject_charm_config
+from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+# Configuration dict for extra test configs
+TEST_CONFIGS = {
+    "config": {
+        "options": {
+            "foo-str": {"type": "string"},
+            "foo-int": {"type": "int"},
+            "foo-bool": {"type": "boolean"},
+            "foo-dict": {"type": "string"},
+            "application-root": {"type": "string"},
+        }
+    }
+}
 
 
 @pytest.fixture(autouse=True)
 def cwd():
+    """Change working directory to Flask charm."""
     return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
 @pytest.fixture(scope="module", name="test_async_flask_image")
-def fixture_test_async_flask_image(pytestconfig: Config):
+def fixture_test_async_flask_image(pytestconfig: pytest.Config):
     """Return the --test-async-flask-image test parameter."""
     test_flask_image = pytestconfig.getoption("--test-async-flask-image")
     if not test_flask_image:
@@ -32,157 +43,138 @@ def fixture_test_async_flask_image(pytestconfig: Config):
     return test_flask_image
 
 
-@pytest_asyncio.fixture(scope="module", name="charm_file")
-async def charm_file_fixture(pytestconfig: pytest.Config, ops_test: OpsTest) -> pathlib.Path:
-    """Get the existing charm file."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if "flask-k8s" in f), None
-    )
-    if not charm_file:
-        charm_file = await ops_test.build_charm(PROJECT_ROOT / "examples/flask/charm")
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
-    return pathlib.Path(charm_file).absolute()
+@pytest.fixture(scope="module", name="flask_app_with_configs")
+def flask_app_with_configs_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    test_flask_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the flask charm with extra config options."""
+    from tests.integration.conftest import build_charm_file
 
-
-@pytest_asyncio.fixture(scope="module", name="build_charm")
-async def build_charm_fixture(charm_file: str, tmp_path_factory) -> str:
-    """Build the charm and injects additional configurations into config.yaml.
-
-    This fixture is designed to simulate a feature that is not yet available in charmcraft that
-    allows for the modification of charm configurations during the build process.
-    Three additional configurations, namely foo_str, foo_int, foo_dict, foo_bool,
-    and application_root will be appended to the config.yaml file.
-    """
-    return inject_charm_config(
-        charm_file,
-        {
-            "config": {
-                "options": {
-                    "foo-str": {"type": "string"},
-                    "foo-int": {"type": "int"},
-                    "foo-bool": {"type": "boolean"},
-                    "foo-dict": {"type": "string"},
-                    "application-root": {"type": "string"},
-                }
-            }
-        },
-        tmp_path_factory.mktemp("flask"),
-    )
-
-
-@pytest_asyncio.fixture(scope="module", name="flask_app")
-async def flask_app_fixture(build_charm: str, model: Model, test_flask_image: str):
-    """Build and deploy the flask charm."""
     app_name = "flask-k8s"
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        return App(app_name)
 
-    resources = {
-        "flask-app-image": test_flask_image,
-    }
-    app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="flask_db_app")
-async def flask_db_app_fixture(build_charm: str, model: Model, test_db_flask_image: str):
-    """Build and deploy the flask charm with test-db-flask image."""
-    app_name = "flask-k8s"
-
-    resources = {
-        "flask-app-image": test_db_flask_image,
-    }
-    app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle()
-    return app
+    charm_file = build_charm_file(pytestconfig, "flask", tmp_path_factory, charm_dict=TEST_CONFIGS)
+    resources = {"flask-app-image": test_flask_image}
+    
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+    
+    juju.wait(lambda status: jubilant.all_active(status, app_name), timeout=10 * 60)
+    return App(app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="flask_async_app")
-async def flask_async_app_fixture(build_charm: str, model: Model, test_async_flask_image: str):
+@pytest.fixture(scope="module", name="flask_async_app")
+def flask_async_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    test_async_flask_image: str,
+    tmp_path_factory,
+):
     """Build and deploy the flask charm with test-async-flask image."""
+    from tests.integration.conftest import build_charm_file
+
     app_name = "flask-async-k8s"
+    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    if use_existing:
+        return App(app_name)
 
-    resources = {
-        "flask-app-image": test_async_flask_image,
-    }
-    app = await model.deploy(
-        build_charm, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-    return app
+    charm_file = build_charm_file(pytestconfig, "flask", tmp_path_factory, charm_dict=TEST_CONFIGS)
+    resources = {"flask-app-image": test_async_flask_image}
+    
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+    
+    juju.wait(lambda status: jubilant.all_active(status, app_name), timeout=10 * 60)
+    return App(app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="traefik_app")
-async def deploy_traefik_fixture(
-    model: Model,
-    flask_app,  # pylint: disable=unused-argument
+@pytest.fixture(scope="module", name="traefik_app")
+def deploy_traefik_fixture(
+    juju: jubilant.Juju,
+    flask_app_with_configs: App,  # pylint: disable=unused-argument
     traefik_app_name: str,
     external_hostname: str,
 ):
     """Deploy traefik."""
-    app = await model.deploy(
-        "traefik-k8s",
-        application_name=traefik_app_name,
-        channel="edge",
-        trust=True,
-        config={
-            "external_hostname": external_hostname,
-            "routing_mode": "subdomain",
-        },
-    )
-    await model.wait_for_idle(raise_on_blocked=True)
-
-    return app
-
-
-@pytest_asyncio.fixture
-async def update_config(model: Model, request: FixtureRequest, flask_app: Application):
-    """Update the flask application configuration.
-
-    This fixture must be parameterized with changing charm configurations.
-    """
-    orig_config = {k: v.get("value") for k, v in (await flask_app.get_config()).items()}
-    request_config = {k: str(v) for k, v in request.param.items()}
-    await flask_app.set_config(request_config)
-    await model.wait_for_idle(apps=[flask_app.name])
-
-    yield request_config
-
-    await flask_app.set_config(
-        {k: v for k, v in orig_config.items() if k in request_config and v is not None}
-    )
-    await flask_app.reset_config([k for k in request_config if orig_config[k] is None])
-    await model.wait_for_idle(apps=[flask_app.name])
-
-
-@pytest_asyncio.fixture
-async def update_secret_config(model: Model, request: FixtureRequest, flask_app: Application):
-    """Update a secret flask application configuration.
-
-    This fixture must be parameterized with changing charm configurations.
-    """
-    orig_config = {k: v.get("value") for k, v in (await flask_app.get_config()).items()}
-    request_config = {}
-    for secret_config_option, secret_value in request.param.items():
-        secret_id = await model.add_secret(
-            secret_config_option, [f"{k}={v}" for k, v in secret_value.items()]
+    if not juju.status().apps.get(traefik_app_name):
+        juju.deploy(
+            "traefik-k8s",
+            app=traefik_app_name,
+            channel="edge",
+            trust=True,
+            config={
+                "external_hostname": external_hostname,
+                "routing_mode": "subdomain",
+            },
         )
-        await model.grant_secret(secret_config_option, flask_app.name)
-        request_config[secret_config_option] = secret_id
-    await flask_app.set_config(request_config)
-    await model.wait_for_idle(apps=[flask_app.name])
+    juju.wait(
+        lambda status: status.apps[traefik_app_name].is_active,
+        error=jubilant.any_blocked,
+    )
+    return App(traefik_app_name)
+
+
+@pytest.fixture
+def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app_with_configs: App):
+    """Update the Flask application configuration.
+
+    This fixture must be parameterized with changing charm configurations.
+    """
+    app_name = flask_app_with_configs.name
+    orig_config = juju.config(app_name)
+
+    request_config = {k: str(v) for k, v in request.param.items()}
+    juju.config(app_name, request_config)
+    juju.wait(lambda status: status.apps.get(app_name) is not None, timeout=10 * 60)
 
     yield request_config
 
-    await flask_app.set_config(
-        {k: v for k, v in orig_config.items() if k in request_config and v is not None}
-    )
-    await flask_app.reset_config([k for k in request_config if orig_config[k] is None])
+    # Restore original configuration
+    restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
+    reset_config = [k for k in request_config if orig_config.get(k) is None]
+    juju.config(app_name, restore_config, reset=reset_config)
+    juju.wait(lambda status: status.apps.get(app_name) is not None, timeout=10 * 60)
+
+
+@pytest.fixture
+def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app_with_configs: App):
+    """Update a secret Flask application configuration.
+
+    This fixture must be parameterized with changing charm configurations.
+    """
+    app_name = flask_app_with_configs.name
+    orig_config = juju.config(app_name)
+    request_config = {}
+    
+    for secret_config_option, secret_value in request.param.items():
+        # Add secret using jubilant
+        secret_data = [f"{k}={v}" for k, v in secret_value.items()]
+        secret_id = juju.cli("add-secret", secret_config_option, *secret_data).strip()
+        juju.cli("grant-secret", secret_config_option, app_name)
+        request_config[secret_config_option] = secret_id
+    
+    juju.config(app_name, request_config)
+    juju.wait(lambda status: status.apps.get(app_name) is not None, timeout=10 * 60)
+
+    yield request_config
+
+    # Restore original configuration
+    restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
+    reset_config = [k for k in request_config if orig_config.get(k) is None]
+    juju.config(app_name, restore_config, reset=reset_config)
+    
     for secret_name in request_config:
-        await model.remove_secret(secret_name)
-    await model.wait_for_idle(apps=[flask_app.name])
+        juju.cli("remove-secret", secret_name)
+    
+    juju.wait(lambda status: status.apps.get(app_name) is not None, timeout=10 * 60)
