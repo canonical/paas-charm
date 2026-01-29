@@ -19,6 +19,7 @@ jobs:
       modules: |
         [
           "test_charm.py",
+          "test_flask_configs.py",
           "test_config.py",
           "test_database.py",
           "test_db_migration.py",
