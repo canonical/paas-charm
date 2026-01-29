@@ -25,25 +25,6 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="module", name="flask_app")
-def flask_app_fixture(
-    juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
-    tmp_path_factory,
-):
-    framework = "flask"
-    yield from generate_app_fixture(
-        juju=juju,
-        pytestconfig=pytestconfig,
-        framework=framework,
-        tmp_path_factory=tmp_path_factory,
-        use_postgres=False,
-        resources={
-            "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
-        },
-    )
-
-
 @pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "flask-minimal"
