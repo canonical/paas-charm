@@ -158,14 +158,14 @@ func (s *Service) RabbitMQSend() error {
 	}
 	defer ch.Close()
 
-	// Use Quorum Queues for high availability in clusters
+	// Declare a classic, non-durable queue to match existing deployments
 	q, err := ch.QueueDeclare(
 		"charm",
-		true, // Durable must be true for Quorum Queues
+		false, // durable
 		false,
 		false,
 		false,
-		amqp.Table{"x-queue-type": "quorum"}, // Replicate across units
+		nil,
 	)
 	if err != nil {
 		return err
@@ -223,11 +223,11 @@ func (s *Service) RabbitMQSendToUnit(unitIndex int) error {
 
 	q, err := ch.QueueDeclare(
 		"charm",
-		true,
 		false,
 		false,
 		false,
-		amqp.Table{"x-queue-type": "quorum"},
+		false,
+		nil,
 	)
 	if err != nil {
 		return err
