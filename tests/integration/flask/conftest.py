@@ -59,7 +59,7 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, fl
         secret_ids.append(secret_id)
 
     juju.config(app_name, request_config)
-    juju.wait(lambda status: status.apps[app_name].is_active)
+    juju.wait(lambda status: status.apps[app_name].is_active, successes=5, delay=10)
 
     yield request_config
 
