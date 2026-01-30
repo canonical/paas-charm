@@ -90,7 +90,6 @@ def test_default_secret_key(
     assert len(secret_keys[0]) > 10
 
 
-
 def test_rotate_secret_key(
     juju: jubilant.Juju,
     flask_app: App,
@@ -202,7 +201,7 @@ def test_app_peer_address(
     """
     # Add a unit
     juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=10)
 
     status = juju.status()
     model_name = status.model.name

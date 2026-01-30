@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8000
 
+
 @pytest.mark.parametrize(
     "update_config, expected_config",
     [
