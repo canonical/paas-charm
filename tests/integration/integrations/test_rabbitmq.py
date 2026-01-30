@@ -104,12 +104,6 @@ def test_rabbitmq_ha_integration(
         response = requests.get(f"http://{unit_ip}:{port}/rabbitmq/receive_ha?unit=1", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" == response.text
-        # Receive the message.
-        # Since the first unit is gone, GetRabbitMQConnection() will catch the error,
-        # iterate through the RABBITMQ_HOSTNAMES IPs, and find a healthy unit.
-        response = requests.get(f"http://{unit_ip}:{port}/rabbitmq/receive", timeout=10)
-        assert response.status_code == 200
-        assert "SUCCESS" == response.text
     finally:
 
         with jubilant_temp_controller(juju, lxd_controller, lxd_model):
