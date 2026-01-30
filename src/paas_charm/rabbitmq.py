@@ -89,6 +89,7 @@ class PaaSRabbitMQRelationData(BaseModel):
         username: username to use for RabbitMQ.
         password: password to use for RabbitMQ.
         amqp_uri: amqp uri for connecting to RabbitMQ server.
+        hostnames: a list of hostnames of the RabbitMQ server units.
     """
 
     vhost: str
@@ -96,6 +97,7 @@ class PaaSRabbitMQRelationData(BaseModel):
     hostname: str
     username: str
     password: str
+    hostnames: list[str] = []
 
     @property
     def amqp_uri(self) -> str:
@@ -185,6 +187,18 @@ class RabbitMQRequires(Object):
         return self.framework.model.get_relation(self.relation_name)
 
     @property
+    def hostnames(self) -> list[str]:
+        """Return a list of remote RMQ hosts from the RabbitMQ relation."""
+        _hosts: list[str] = []
+        rel = self._rabbitmq_rel
+        if not rel:
+            return _hosts
+        for unit in rel.units:
+            if ingress := rel.data[unit].get("hostname"):
+                _hosts.append(ingress)
+        return _hosts
+
+    @property
     def _rabbitmq_server_connection_params(self) -> Credentials | None:
         """The RabbitMQ hostname, password."""
         if not self._rabbitmq_rel:
@@ -243,6 +257,7 @@ class RabbitMQRequires(Object):
             password = self._rabbitmq_server_connection_params.password
         if not password or not hostname:
             return None
+
         try:
             return PaaSRabbitMQRelationData(
                 username=self.username,
@@ -250,6 +265,7 @@ class RabbitMQRequires(Object):
                 hostname=hostname,
                 port=self.port,
                 vhost=self.vhost,
+                hostnames=self.hostnames,
             )
         # Validation error cannot happen unless there's an issue in code as only hostname and
         # password values come from the relation data.
