@@ -19,7 +19,7 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/flask/charm")
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app: App):
     """Update the flask application configuration.
 
@@ -40,7 +40,7 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app
     juju.config(app_name, restore_config, reset=reset_config)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app: App):
     """Update a secret flask application configuration.
 
