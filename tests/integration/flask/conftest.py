@@ -30,7 +30,11 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app
 
     request_config = {k: str(v) for k, v in request.param.items()}
     juju.config(app_name, request_config)
-    juju.wait(lambda status: status.apps[app_name].is_active or status.apps[app_name].is_blocked, successes=5, delay=10)
+    juju.wait(
+        lambda status: status.apps[app_name].is_active or status.apps[app_name].is_blocked,
+        successes=5,
+        delay=10,
+    )
 
     yield request_config
 
