@@ -1,0 +1,83 @@
+15:34:12 [33mWARNING[0m adding units to a container-based model not supported, auto-switching to scale
+15:34:12 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+15:34:43 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+15:35:05 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active: 
+  flask-k8s/1 [idle] active: 
+15:35:35 [32mINFO[0m Waiting for model:
+  flask-k8s/0 [idle] active:
+15:35:38 [32mINFO[0m Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-8e884-microk8s  microk8s/localhost  3.6.14   unsupported  15:35:38Z
+
+App             Version  Status  Scale  Charm           Channel      Rev  Address         Exposed  Message
+expressjs-k8s            active      1  expressjs-k8s                  0  10.152.183.213  no       
+flask-k8s                active      1  flask-k8s                      0  10.152.183.70   no       
+postgresql-k8s  14.20    active      1  postgresql-k8s  14/edge      730  10.152.183.234  no       
+traefik-k8s     2.11.0   active      1  traefik-k8s     latest/edge  268  10.152.183.20   no       Serving at http://juju.test
+
+Unit               Workload  Agent  Address       Ports  Message
+expressjs-k8s/0*   active    idle   10.1.100.204         
+flask-k8s/0*       active    idle   10.1.100.207         
+postgresql-k8s/0*  active    idle   10.1.100.206         Primary
+traefik-k8s/0*     active    idle   10.1.100.209         Serving at http://juju.test
+
+15:35:38 [32mINFO[0m Juju error logs:
+
+unit-flask-k8s-0: 15:27:51 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- flask-permanent-session-lifetime: Input should be greater than 0
+unit-flask-k8s-0: 15:27:51 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 445, in get_framework_config
+    return framework_config_class.model_validate(config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 509, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+pydantic_core._pydantic_core.ValidationError: 1 validation error for FlaskConfig
+flask-permanent-session-lifetime
+  Input should be greater than 0 [type=greater_than, input_value=-1, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.6/v/greater_than
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 60, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 693, in _create_charm_state
+    framework_config=self.get_framework_config(),
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 449, in get_framework_config
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError:         invalid options: flask-permanent-session-lifetime
+unit-flask-k8s-0: 15:28:25 ERROR unit.flask-k8s/0.juju-log invalid configuration:
+- flask-preferred-url-scheme: String should match pattern '(?i)^(HTTP|HTTPS)$'
+unit-flask-k8s-0: 15:28:25 ERROR unit.flask-k8s/0.juju-log Wrong Charm Configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 445, in get_framework_config
+    return framework_config_class.model_validate(config)
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/pydantic/main.py", line 509, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+pydantic_core._pydantic_core.ValidationError: 1 validation error for FlaskConfig
+flask-preferred-url-scheme
+  String should match pattern '(?i)^(HTTP|HTTPS)$' [type=string_pattern_mismatch, input_value='TLS', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.6/v/string_pattern_mismatch
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm_utils.py", line 60, in wrapper
+    instance._create_charm_state()  # pylint: disable=protected-access
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 693, in _create_charm_state
+    framework_config=self.get_framework_config(),
+  File "/var/lib/juju/agents/unit-flask-k8s-0/charm/venv/paas_charm/charm.py", line 449, in get_framework_config
+    raise CharmConfigInvalidError(error_messages.short) from exc
+paas_charm.exceptions.CharmConfigInvalidError:         invalid options: flask-preferred-url-scheme
+unit-traefik-k8s-0: 15:33:10 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:33:11 ERROR unit.traefik-k8s/0.juju-log peers:6: Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:33:13 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:33:14 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+unit-traefik-k8s-0: 15:33:15 ERROR unit.traefik-k8s/0.juju-log Failed to fetch LoadBalancer traefik-k8s-lb: services "traefik-k8s-lb" not found
+
+15:35:38 [32mINFO[0m Forgetting model main...
