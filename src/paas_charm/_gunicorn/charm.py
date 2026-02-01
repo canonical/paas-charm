@@ -92,6 +92,7 @@ class GunicornBase(PaasCharm):
             workload_config=self._workload_config,
             webserver=webserver,
             database_migration=self._database_migration,
+            configuration_prefix=self.configuration_prefix,
         )
 
     def _check_gevent_package(self) -> bool:

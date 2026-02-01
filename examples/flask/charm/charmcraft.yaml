@@ -126,6 +126,9 @@ config:
       type: string
       description: A list of scopes with spaces in between.
       default: "openid profile email"
+    user-defined-config:
+      type: string
+      description: Example of a user defined configuration.
 
 containers:
   flask-app:
