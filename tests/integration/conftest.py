@@ -129,12 +129,21 @@ def fixture_spring_boot_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="test_async_flask_image")
+def fixture_test_async_flask_image(pytestconfig: pytest.Config):
+    """Return the --test-async-flask-image test parameter."""
+    test_flask_image = pytestconfig.getoption("--test-async-flask-image")
+    if not test_flask_image:
+        raise ValueError("the following arguments are required: --test-async-flask-image")
+    return test_flask_image
+
+
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
     tmp_path_factory,
-    charm_dict: dict | None = None,
-    charm_location: pathlib.Path | None = None,
+    charm_dict: dict = None,
+    charm_location: pathlib.Path = None,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -176,7 +185,7 @@ def build_charm_file(
             charm_dict,
             tmp_path_factory.mktemp(framework),
         )
-    return str(pathlib.Path(charm_file).absolute())
+    return pathlib.Path(charm_file).absolute()
 
 
 @pytest.fixture(scope="module", name="loki_app")
@@ -572,26 +581,22 @@ def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
 @pytest.fixture(scope="function", name="integrate_redis_k8s_flask")
 def integrate_redis_k8s_flask_fixture(
     juju: jubilant.Juju,
-    flask_app_with_configs: App,
+    flask_app: App,
     redis_k8s_app: App,
 ):
     """Integrate redis_k8s with flask apps using jubilant."""
     try:
-        juju.integrate(flask_app_with_configs.name, redis_k8s_app.name)
+        juju.integrate(flask_app.name, redis_k8s_app.name)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(
-        lambda status: jubilant.all_active(status, flask_app_with_configs.name, redis_k8s_app.name)
-    )
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, redis_k8s_app.name))
 
     yield
 
     # Teardown - remove relation
-    juju.cli("remove-relation", flask_app_with_configs.name, redis_k8s_app.name)
-    juju.wait(
-        lambda status: status.apps.get(flask_app_with_configs.name) is not None, timeout=5 * 60
-    )
+    juju.cli("remove-relation", flask_app.name, redis_k8s_app.name)
+    juju.wait(lambda status: status.apps.get(flask_app.name) is not None, timeout=5 * 60)
 
 
 @pytest.fixture(scope="session")
