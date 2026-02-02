@@ -133,8 +133,8 @@ def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
     tmp_path_factory,
-    charm_dict: dict = None,
-    charm_location: pathlib.Path = None,
+    charm_dict: dict | None = None,
+    charm_location: pathlib.Path | None = None,
 ) -> str:
     """Get the existing charm file if exists, build a new one if not."""
     charm_file = next(
@@ -176,7 +176,7 @@ def build_charm_file(
             charm_dict,
             tmp_path_factory.mktemp(framework),
         )
-    return pathlib.Path(charm_file).absolute()
+    return str(pathlib.Path(charm_file).absolute())
 
 
 @pytest.fixture(scope="module", name="loki_app")
@@ -651,7 +651,7 @@ def generate_app_fixture(
     tmp_path_factory,
     image_name: str = "",
     use_postgres: bool = True,
-    config: dict[str, str] | None = None,
+    config: dict[str, jubilant.ConfigValue] | None = None,
     resources: dict[str, str] | None = None,
     charm_dict: dict | None = None,
 ):

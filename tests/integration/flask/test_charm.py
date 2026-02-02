@@ -5,7 +5,7 @@
 """Integration tests for Flask charm."""
 
 import logging
-import json
+
 import jubilant
 import pytest
 import requests
