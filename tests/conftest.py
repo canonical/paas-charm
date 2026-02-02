@@ -18,3 +18,4 @@ def pytest_addoption(parser):
     parser.addoption("--expressjs-app-image", action="store")
     parser.addoption("--paas-spring-boot-app-image", action="store")
     parser.addoption("--kube-config", action="store")
+    parser.addoption("--keep-models", action="store_false")
