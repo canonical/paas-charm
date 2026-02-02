@@ -13,7 +13,7 @@ from tests.integration.types import App
     "blocked_app_fixture, missing_configs, first_non_optional_config, rest_of_the_invalid_configs, remaining_non_optional_configs_dict",
     [
         pytest.param(
-            "flask_blocked_app_jubilant",
+            "flask_blocked_app",
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
@@ -21,7 +21,7 @@ from tests.integration.types import App
             id="flask",
         ),
         pytest.param(
-            "django_blocked_app_jubilant",
+            "django_blocked_app",
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
@@ -29,7 +29,7 @@ from tests.integration.types import App
             id="django",
         ),
         pytest.param(
-            "fastapi_blocked_app_jubilant",
+            "fastapi_blocked_app",
             ["non-optional-bool", "non-optional-int", "non-optional-string"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
@@ -37,7 +37,7 @@ from tests.integration.types import App
             id="fastapi",
         ),
         pytest.param(
-            "go_blocked_app_jubilant",
+            "go_blocked_app",
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
@@ -45,7 +45,7 @@ from tests.integration.types import App
             id="go",
         ),
         pytest.param(
-            "expressjs_blocked_app_jubilant",
+            "expressjs_blocked_app",
             ["non-optional-bool", "non-optional-int"],
             {"non-optional-bool": "True"},
             ["non-optional-int"],
