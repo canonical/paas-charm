@@ -775,13 +775,19 @@ def integrate_redis_k8s_flask_jubilant_fixture(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, flask_app_with_configs.name, redis_k8s_app_jubilant.name))
-    
+    juju.wait(
+        lambda status: jubilant.all_active(
+            status, flask_app_with_configs.name, redis_k8s_app_jubilant.name
+        )
+    )
+
     yield
-    
+
     # Teardown - remove relation
     juju.cli("remove-relation", flask_app_with_configs.name, redis_k8s_app_jubilant.name)
-    juju.wait(lambda status: status.apps.get(flask_app_with_configs.name) is not None, timeout=5 * 60)
+    juju.wait(
+        lambda status: status.apps.get(flask_app_with_configs.name) is not None, timeout=5 * 60
+    )
 
 
 @pytest_asyncio.fixture
