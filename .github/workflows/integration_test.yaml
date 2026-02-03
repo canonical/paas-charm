@@ -18,11 +18,13 @@ jobs:
       modules: |
         [
           "test_charm.py",
+          "test_flask_configs.py",
           "test_config.py",
           "test_database.py",
           "test_db_migration.py",
           "test_django.py",
           "test_django_integrations.py",
+          "test_expressjs.py",
           "test_fastapi.py",
           "test_go.py",
           "test_grafana.py",
