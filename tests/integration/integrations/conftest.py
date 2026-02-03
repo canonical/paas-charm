@@ -525,14 +525,14 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     if juju.status().apps.get("hydra"):
         logger.info("identity-platform is already deployed")
         return
-    juju.deploy("hydra", channel="latest/stable", revision=362, trust=True)
-    juju.deploy("kratos", channel="latest/stable", revision=527, trust=True)
+    juju.deploy("hydra", channel="latest/edge", revision=399, trust=True)
+    juju.deploy("kratos", channel="latest/edge", revision=567, trust=True)
     juju.deploy(
-        "identity-platform-login-ui-operator", channel="latest/stable", revision=166, trust=True
+        "identity-platform-login-ui-operator", channel="latest/edge", revision=200, trust=True
     )
-    juju.deploy("self-signed-certificates", channel="latest/stable", revision=155, trust=True)
+    juju.deploy("self-signed-certificates", channel="1/stable", revision=317, trust=True)
     juju.deploy("traefik-k8s", "traefik-admin", channel="latest/stable", revision=176, trust=True)
-    juju.deploy("traefik-k8s", "traefik-public", channel="latest/stable", revision=176, trust=True)
+    juju.deploy("traefik-k8s", "traefik-public", channel="latest/edge", revision=270, trust=True)
     deploy_postgresql(juju)
     # Integrations
     juju.integrate(
@@ -552,9 +552,11 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     juju.integrate("self-signed-certificates:certificates", "traefik-public:certificates")
     juju.integrate("traefik-admin:ingress", "hydra:admin-ingress")
     juju.integrate("traefik-admin:ingress", "kratos:admin-ingress")
-    juju.integrate("traefik-public:ingress", "hydra:public-ingress")
-    juju.integrate("traefik-public:ingress", "kratos:public-ingress")
-    juju.integrate("traefik-public:ingress", "identity-platform-login-ui-operator:ingress")
+    juju.integrate("traefik-public:traefik-route", "hydra:public-route")
+    juju.integrate("traefik-public:traefik-route", "kratos:public-route")
+    juju.integrate(
+        "traefik-public:traefik-route", "identity-platform-login-ui-operator:public-route"
+    )
 
     juju.config("kratos", {"enforce_mfa": False})
 
