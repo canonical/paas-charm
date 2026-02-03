@@ -96,4 +96,6 @@ def test_non_optional(
     status = juju.status()
     app_status = status.apps[blocked_app.name]
     for missing_config in missing_configs:
-        assert missing_config not in app_status.app_status.message
+        assert (
+            missing_config not in app_status.app_status.message
+        ), f"{missing_config} should be set"
