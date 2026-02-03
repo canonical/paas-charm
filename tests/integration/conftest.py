@@ -349,7 +349,7 @@ def expressjs_app_fixture(
     """
     app_name = "expressjs-k8s"
 
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    use_existing = pytestconfig.getoption("--use-existing")
     if use_existing:
         return App(app_name)
 
@@ -664,7 +664,7 @@ def generate_app_fixture(
     app_name = f"{framework}-k8s"
     if image_name == "":
         image_name = f"{framework}-app-image"
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    use_existing = pytestconfig.getoption("--use-existing")
     if use_existing:
         return App(app_name)
     if resources is None:
