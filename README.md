@@ -1,8 +1,9 @@
 # PaaS Charm
 
-Easily deploy and operate your Flask or Django applications and associated
-infrastructure, such as databases and ingress, using open source tooling. This
-lets you focus on creating applications for your users backed with the
+Easily deploy and operate your Flask, Django, FastAPI, Go, Express,
+or Spring Boot applications and associated
+infrastructure, such as databases and ingress, using open source tooling.
+This lets you focus on creating applications for your users backed with the
 confidence that your operations are taken care of by world class tooling
 developed by Canonical, the creators of Ubuntu.
 
@@ -23,10 +24,9 @@ external traffic in seconds.
 
 ## Getting Started
 
-There are 2 requirements for the flask application:
-
-* There is a `requirements.txt` file in the project root
-* The WSGI path is `app:app`
+This project provides 12-factor app support across multiple frameworks
+(Flask, Django, FastAPI, Go, Express, and Spring Boot).
+The quickest way to get started is to follow the framework-specific tutorials linked below.
 
 Make sure that you have the `latest/edge` version of Charmcraft and Rockcraft
 installed:
@@ -36,10 +36,10 @@ sudo snap install charmcraft --channel latest/edge --classic
 sudo snap install rockcraft --channel latest/edge --classic
 ```
 
-Both have the `flask-framework` profile to create the required files
-and include the `flask-framework` extension which will do all the hard
-operational work for you and you just need to fill in some metadata in the
-`rockcraft.yaml` and `charmcraft.yaml` files. To create the necessary files:
+Both tools provide framework profiles and extensions that
+generate the required files and handle the operational workload.
+You only need to fill in some metadata in the `rockcraft.yaml` and `charmcraft.yaml` files.
+To create the necessary files (example shown for Flask):
 
 ```bash
 rockcraft init --profile flask-framework
@@ -49,20 +49,18 @@ charmcraft init --profile flask-framework
 ```
 
 After packing the rock and charm using `rockcraft pack` and `charmcraft pack`
-and uploading the rock to a k8s registry, you can juju deploy your flask
-application, integrate it with ingress and start serving traffic to your users!
+and uploading the rock to a k8s registry, you can juju deploy your application,
+integrate it with ingress, and start serving traffic to your users.
 
-Read the
-[comprehensive getting started tutorial](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/tutorial/flask/)
-for more!
+Read the framework-specific tutorials for a complete walkthrough:
 
-Additional resources:
+* [Django](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-django/)
+* [Express](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-express/)
+* [FastAPI](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-fastapi/)
+* [Flask](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-flask/)
+* [Go](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-go/)
+* [Spring Boot](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-spring-boot/)
 
-* [Tutorial to build a rock for a Flask application](https://documentation.ubuntu.com/rockcraft/en/latest/tutorial/flask)
-* [Charmcraft `flask-framework` reference](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/flask-framework-extension/)
-* [Charmcraft `flask-framework` how to guides](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/howto/manage-a-12-factor-app-charm/)
-* [Rockcraft`flask-framework`
-   reference](https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/flask-framework/)
 
 ## Documentation
 
@@ -80,18 +78,19 @@ make run
 If you have any documentation-related comments, issues, or suggestions, please open an issue or
 pull request in this repository, or reach out to us on [Matrix](https://matrix.to/#/#12-factor-charms:ubuntu.com).
 
-Additional resources:
 
-* [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/en/latest/)
-* [Rockcraft](https://documentation.ubuntu.com/rockcraft/en/latest/):
+## Additional resources
+
+* [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/latest/)
+* [Rockcraft](https://documentation.ubuntu.com/rockcraft/latest/):
   Documentation related to the OCI image containers
-* [Charmcraft](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/):
+* [Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/):
   Documentation related to the software operators (charms)
 
 ## Contributing
 
-Is there something missing from the 12-Factor app support framework? We
-welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+Is there something missing from the 12-Factor app support framework?
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 Reach out to us on [Matrix](https://matrix.to/#/#12-factor-charms:ubuntu.com) with your questions
 and use cases.
