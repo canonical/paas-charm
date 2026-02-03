@@ -54,13 +54,12 @@ integrate it with ingress, and start serving traffic to your users.
 
 Read the framework-specific tutorials for a complete walkthrough:
 
-* [Django](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-django/)
-* [Express](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-express/)
-* [FastAPI](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-fastapi/)
-* [Flask](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-flask/)
-* [Go](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-go/)
-* [Spring Boot](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-spring-boot/)
-
+- [Django](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-django/)
+- [Express](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-express/)
+- [FastAPI](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-fastapi/)
+- [Flask](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-flask/)
+- [Go](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-go/)
+- [Spring Boot](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-spring-boot/)
 
 ## Documentation
 
@@ -78,13 +77,12 @@ make run
 If you have any documentation-related comments, issues, or suggestions, please open an issue or
 pull request in this repository, or reach out to us on [Matrix](https://matrix.to/#/#12-factor-charms:ubuntu.com).
 
-
 ## Additional resources
 
-* [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/latest/)
-* [Rockcraft](https://documentation.ubuntu.com/rockcraft/latest/):
+- [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/latest/)
+- [Rockcraft](https://documentation.ubuntu.com/rockcraft/latest/):
   Documentation related to the OCI image containers
-* [Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/):
+- [Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/):
   Documentation related to the software operators (charms)
 
 ## Contributing
