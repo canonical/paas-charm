@@ -550,8 +550,6 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     juju.integrate("postgresql-k8s:database", "kratos:pg-database")
     juju.integrate("self-signed-certificates:certificates", "traefik-admin:certificates")
     juju.integrate("self-signed-certificates:certificates", "traefik-public:certificates")
-    juju.integrate("traefik-admin:ingress", "hydra:admin-ingress")
-    juju.integrate("traefik-admin:ingress", "kratos:admin-ingress")
     juju.integrate("traefik-public:traefik-route", "hydra:public-route")
     juju.integrate("traefik-public:traefik-route", "kratos:public-route")
     juju.integrate(
