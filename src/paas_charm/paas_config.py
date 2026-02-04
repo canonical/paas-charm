@@ -25,6 +25,7 @@ class PaasConfig(BaseModel):
         version: Configuration file schema version.
         prometheus: Prometheus-related configuration (reserved for future use).
         http_proxy: HTTP proxy configuration (reserved for future use).
+        model_config: Pydantic model configuration.
     """
 
     version: str = Field(description="Configuration file schema version")
