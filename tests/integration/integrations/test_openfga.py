@@ -26,11 +26,10 @@ logger = logging.getLogger(__name__)
 )
 def test_openfga_integrations(
     juju: jubilant.Juju,
-    app_fixture: App,
+    app_fixture: str,
     port,
     request: pytest.FixtureRequest,
     openfga_server_app: App,
-    postgresql_k8s: App,
 ):
     """
     arrange: Build and deploy the charm. Integrate the charm with OpenFGA.
@@ -43,7 +42,7 @@ def test_openfga_integrations(
     juju.integrate(app.name, f"{openfga_server_app.name}:openfga")
     juju.wait(
         lambda status: jubilant.all_active(
-            status, app.name, openfga_server_app.name, postgresql_k8s.name
+            status, app.name, openfga_server_app.name, "postgresql-k8s"
         )
     )
 
