@@ -3,14 +3,62 @@
 
 """Provide the Observability class to represent the observability stack for charms."""
 
+import logging
 import os.path
 import pathlib
+import typing
 
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
 from paas_charm.utils import enable_pebble_log_forwarding
+
+if typing.TYPE_CHECKING:
+    from paas_charm.paas_config import PrometheusConfig
+
+logger = logging.getLogger(__name__)
+
+
+def build_prometheus_jobs(
+    metrics_target: str | None,
+    metrics_path: str | None,
+    prometheus_config: "PrometheusConfig | None",
+) -> list[dict[str, typing.Any]] | None:
+    """Build Prometheus scrape jobs list from framework defaults and custom config.
+
+    Args:
+        metrics_target: Default framework metrics target (e.g., "*:8000").
+        metrics_path: Default framework metrics path (e.g., "/metrics").
+        prometheus_config: Custom Prometheus configuration from paas-config.yaml.
+
+    Returns:
+        List of Prometheus job configurations, or None if no jobs are configured.
+    """
+    jobs: list[dict[str, typing.Any]] = []
+
+    # Add default framework job if configured
+    if metrics_path and metrics_target:
+        jobs.append(
+            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
+        )
+
+    # Add custom jobs from paas-config.yaml
+    if prometheus_config and prometheus_config.scrape_configs:
+        for scrape_config in prometheus_config.scrape_configs:
+            job: dict[str, typing.Any] = {
+                "job_name": scrape_config.job_name,
+                "metrics_path": scrape_config.metrics_path,
+                "static_configs": [],
+            }
+            for static_config in scrape_config.static_configs:
+                static_cfg: dict[str, typing.Any] = {"targets": static_config.targets}
+                if static_config.labels:
+                    static_cfg["labels"] = static_config.labels
+                job["static_configs"].append(static_cfg)
+            jobs.append(job)
+
+    return jobs if jobs else None
 
 
 class Observability(ops.Object):
@@ -25,6 +73,7 @@ class Observability(ops.Object):
         log_files: list[pathlib.Path],
         metrics_target: str | None,
         metrics_path: str | None,
+        prometheus_config: "PrometheusConfig | None" = None,
     ):
         """Initialize a new instance of the Observability class.
 
@@ -36,14 +85,11 @@ class Observability(ops.Object):
             log_files: List of files to monitor.
             metrics_target: Target to scrape for metrics.
             metrics_path: Path to scrape for metrics.
+            prometheus_config: Custom Prometheus configuration from paas-config.yaml.
         """
         super().__init__(charm, "observability")
         self._charm = charm
-        jobs = None
-        if metrics_path and metrics_target:
-            jobs = [
-                {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
-            ]
+        jobs = build_prometheus_jobs(metrics_target, metrics_path, prometheus_config)
         self._metrics_endpoint = MetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),

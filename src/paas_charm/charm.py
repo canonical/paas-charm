@@ -24,6 +24,7 @@ from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
+from paas_charm.paas_config import read_paas_config
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
@@ -160,6 +161,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._oauth = self._init_oauth(requires)
 
+        # Read paas-config.yaml for Prometheus custom scrape configs
+        paas_config = read_paas_config()
         self._observability = Observability(
             charm=self,
             log_files=self._workload_config.log_files,
@@ -167,6 +170,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             cos_dir=self.get_cos_dir(),
             metrics_target=self._workload_config.metrics_target,
             metrics_path=self._workload_config.metrics_path,
+            prometheus_config=paas_config.prometheus if paas_config else None,
         )
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
