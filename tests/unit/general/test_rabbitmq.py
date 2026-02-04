@@ -44,6 +44,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
                 username="flask-k8s",
                 password="testingvalue",
                 amqp_uri="amqp://flask-k8s:testingvalue@testinghostname:5672/",
+                hostnames=["testinghostname"],
             ),
             id="unit relation data",
         ),

@@ -126,6 +126,7 @@ class RabbitMQRequires(Object):
     Attributes:
         on: ObjectEvents for RabbitMQRequires
         port: amqp port
+        hostnames: The hostnames for the RabbitMQ units
     """
 
     on = RabbitMQServerEvents()
