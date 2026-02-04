@@ -1,0 +1,8 @@
+version: "1"
+prometheus:
+  scrape_configs:
+    - job_name: "example-job"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets:
+          - "*:8080"
