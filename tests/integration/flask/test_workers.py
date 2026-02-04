@@ -87,7 +87,7 @@ def test_workers_and_scheduler_services(
     assert response.status_code == 200
     assert "SUCCESS" == response.text
 
-    # enough time for all the schedulers to send messages
+    # Enough time for all the schedulers to send messages
     time.sleep(10)
 
     # Wait up to 60 seconds for correct stats
