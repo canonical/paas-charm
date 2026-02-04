@@ -18,19 +18,72 @@ logger = logging.getLogger(__name__)
 CONFIG_FILE_NAME = "paas-config.yaml"
 
 
+class StaticConfig(BaseModel):
+    """Prometheus static configuration for scrape targets.
+
+    Attributes:
+        targets: List of target hosts to scrape (e.g., ["*:8000", "localhost:9090"]).
+        labels: Optional labels to assign to all metrics from these targets.
+        model_config: Pydantic model configuration.
+    """
+
+    targets: typing.List[str] = Field(description="List of target hosts to scrape")
+    labels: typing.Dict[str, str] | None = Field(
+        default=None, description="Labels assigned to all metrics scraped from the targets"
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ScrapeConfig(BaseModel):
+    """Prometheus scrape job configuration.
+
+    Attributes:
+        job_name: Job name assigned to scraped metrics.
+        metrics_path: HTTP resource path on which to fetch metrics from targets.
+        static_configs: List of statically configured targets for this job.
+        model_config: Pydantic model configuration.
+    """
+
+    job_name: str = Field(description="Job name assigned to scraped metrics")
+    metrics_path: str = Field(
+        default="/metrics", description="HTTP resource path on which to fetch metrics"
+    )
+    static_configs: typing.List[StaticConfig] = Field(
+        description="List of labeled statically configured targets for this job"
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PrometheusConfig(BaseModel):
+    """Prometheus configuration section.
+
+    Attributes:
+        scrape_configs: List of scrape job configurations.
+        model_config: Pydantic model configuration.
+    """
+
+    scrape_configs: typing.List[ScrapeConfig] | None = Field(
+        default=None, description="List of scrape job configurations"
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
     Attributes:
         version: Configuration file schema version.
-        prometheus: Prometheus-related configuration (reserved for future use).
+        prometheus: Prometheus-related configuration.
         http_proxy: HTTP proxy configuration (reserved for future use).
         model_config: Pydantic model configuration.
     """
 
     version: str = Field(description="Configuration file schema version")
-    prometheus: typing.Dict[str, typing.Any] | None = Field(
-        default=None, description="Prometheus configuration (reserved for future use)"
+    prometheus: PrometheusConfig | None = Field(
+        default=None, description="Prometheus configuration"
     )
     http_proxy: typing.Dict[str, typing.Any] | None = Field(
         default=None,
