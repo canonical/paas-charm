@@ -1,22 +1,15 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-import json
 import logging
 import pathlib
 import subprocess
-from collections.abc import Generator
 from typing import cast
 
 import jubilant
 import pytest
-import pytest_asyncio
 import requests
 import yaml
-from juju.application import Application
-from juju.errors import JujuError
-from juju.model import Model
 from pytest import Config
-from pytest_operator.plugin import OpsTest
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -136,6 +129,15 @@ def fixture_spring_boot_app_image(pytestconfig: Config):
     return image
 
 
+@pytest.fixture(scope="module", name="test_async_flask_image")
+def fixture_test_async_flask_image(pytestconfig: pytest.Config):
+    """Return the --test-async-flask-image test parameter."""
+    test_flask_image = pytestconfig.getoption("--test-async-flask-image")
+    if not test_flask_image:
+        raise ValueError("the following arguments are required: --test-async-flask-image")
+    return test_flask_image
+
+
 def build_charm_file(
     pytestconfig: pytest.Config,
     framework: str,
@@ -245,60 +247,6 @@ def flask_non_root_app_fixture(
     )
 
 
-@pytest_asyncio.fixture(scope="module", name="flask_blocked_app")
-async def flask_blocked_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    test_flask_image: str,
-    tmp_path_factory,
-):
-    """Build and deploy the flask charm with test-flask image."""
-    app_name = "flask-k8s"
-
-    resources = {
-        "flask-app-image": test_flask_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
-    app = await model.deploy(
-        charm_file, resources=resources, application_name=app_name, series="jammy"
-    )
-    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
-    return app
-
-
-@pytest_asyncio.fixture(scope="module", name="django_blocked_app")
-async def django_blocked_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    django_app_image: str,
-    postgresql_k8s: Application,
-    tmp_path_factory,
-):
-    """Build and deploy the Django charm with django-app image."""
-    app_name = "django-k8s"
-
-    resources = {
-        "django-app-image": django_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
-
-    app = await model.deploy(
-        charm_file,
-        resources=resources,
-        config={"django-allowed-hosts": "*"},
-        application_name=app_name,
-        series="jammy",
-    )
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
-    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
-    return app
-
-
 @pytest.fixture(scope="module", name="django_non_root_app")
 def django_non_root_app_fixture(
     juju: jubilant.Juju,
@@ -332,28 +280,6 @@ def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_pa
         tmp_path_factory=tmp_path_factory,
         config={"non-optional-string": "string"},
     )
-
-
-@pytest_asyncio.fixture(scope="module", name="fastapi_blocked_app")
-async def fastapi_blocked_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    fastapi_app_image: str,
-    postgresql_k8s: Application,
-    tmp_path_factory,
-):
-    """Build and deploy the FastAPI charm with fastapi-app image."""
-    app_name = "fastapi-k8s"
-
-    resources = {"app-image": fastapi_app_image}
-    charm_file = build_charm_file(
-        pytestconfig, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
-    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
-    return app
 
 
 @pytest.fixture(scope="module", name="fastapi_non_root_app")
@@ -391,30 +317,6 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
     )
 
 
-@pytest_asyncio.fixture(scope="module", name="go_blocked_app")
-async def go_blocked_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    go_app_image: str,
-    postgresql_k8s,
-    tmp_path_factory,
-):
-    """Build and deploy the Go charm with go-app image."""
-    app_name = "go-k8s"
-
-    resources = {
-        "app-image": go_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=300)
-    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
-    return app
-
-
 @pytest.fixture(scope="module", name="go_non_root_app")
 def go_non_root_app_fixture(
     juju: jubilant.Juju,
@@ -447,7 +349,7 @@ def expressjs_app_fixture(
     """
     app_name = "expressjs-k8s"
 
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    use_existing = pytestconfig.getoption("--use-existing")
     if use_existing:
         return App(app_name)
 
@@ -480,30 +382,6 @@ def expressjs_app_fixture(
     )
 
     return App(app_name)
-
-
-@pytest_asyncio.fixture(scope="module", name="expressjs_blocked_app")
-async def expressjs_blocked_app_fixture(
-    pytestconfig: pytest.Config,
-    model: Model,
-    expressjs_app_image: str,
-    postgresql_k8s,
-    tmp_path_factory,
-):
-    """Build and deploy the ExpressJS charm with expressjs-app image."""
-    app_name = "expressjs-k8s"
-
-    resources = {
-        "app-image": expressjs_app_image,
-    }
-    charm_file = build_charm_file(
-        pytestconfig, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
-    )
-    app = await model.deploy(charm_file, resources=resources, application_name=app_name)
-    await model.integrate(app_name, f"{postgresql_k8s.name}:database")
-    await model.wait_for_idle(apps=[postgresql_k8s.name], status="active", timeout=600)
-    await model.wait_for_idle(apps=[app_name], status="blocked", timeout=300)
-    return app
 
 
 @pytest.fixture(scope="module", name="expressjs_non_root_app")
@@ -641,34 +519,6 @@ def spring_boot_mysql_app_fixture(
     return App(app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="get_unit_ips")
-async def fixture_get_unit_ips(ops_test: OpsTest):
-    """Return an async function to retrieve unit ip addresses of a certain application."""
-
-    async def get_unit_ips(application_name: str):
-        """Retrieve unit ip addresses of a certain application.
-
-        Returns:
-            A list containing unit ip addresses.
-        """
-        _, status, _ = await ops_test.juju("status", "--format", "json")
-        status = json.loads(status)
-        units = status["applications"][application_name]["units"]
-        return tuple(
-            unit_status["address"]
-            for _, unit_status in sorted(units.items(), key=lambda kv: int(kv[0].split("/")[-1]))
-        )
-
-    return get_unit_ips
-
-
-@pytest_asyncio.fixture(scope="module", name="model")
-async def fixture_model(ops_test: OpsTest) -> Model:
-    """Return the current testing juju model."""
-    assert ops_test.model
-    return ops_test.model
-
-
 @pytest.fixture(scope="module", name="external_hostname")
 def external_hostname_fixture() -> str:
     """Return the external hostname for ingress-related tests."""
@@ -691,21 +541,6 @@ def loki_app_name_fixture() -> str:
 def grafana_app_name_fixture() -> str:
     """Return the name of the grafana application deployed for tests."""
     return "grafana-k8s"
-
-
-@pytest_asyncio.fixture(scope="module", name="postgresql_k8s")
-async def deploy_postgres_fixture(ops_test: OpsTest, model: Model):
-    """Deploy postgres k8s charm."""
-    _, status, _ = await ops_test.juju("status", "--format", "json")
-    version = json.loads(status)["model"]["version"]
-    try:
-        return await model.deploy("postgresql-k8s", channel="14/edge", trust=True)
-    except JujuError as e:
-        if 'cannot add application "postgresql-k8s": application already exists' in e.message:
-            logger.info("Application 'postgresql-k8s' already exists")
-            return model.applications["postgresql-k8s"]
-        else:
-            raise e
 
 
 @pytest.fixture(scope="module", name="traefik_app")
@@ -733,39 +568,39 @@ def deploy_traefik_fixture(
     return App(traefik_app_name)
 
 
-@pytest_asyncio.fixture(scope="module", name="redis_k8s_app")
-async def deploy_redisk8s_fixture(ops_test: OpsTest, model: Model):
-    """Deploy Redis k8s charm."""
-    redis_app = await model.deploy("redis-k8s", channel="edge")
-    await model.wait_for_idle(apps=[redis_app.name], status="active")
-    return redis_app
+@pytest.fixture(scope="module", name="redis_k8s_app")
+def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
+    """Deploy Redis k8s charm using jubilant."""
+    app_name = "redis-k8s"
+    if not juju.status().apps.get(app_name):
+        juju.deploy(app_name, channel="edge")
+    juju.wait(lambda status: status.apps[app_name].is_active, error=jubilant.any_blocked)
+    return App(app_name)
 
 
-@pytest_asyncio.fixture(scope="function", name="integrate_redis_k8s_flask")
-async def integrate_redis_k8s_flask_fixture(
-    ops_test: OpsTest, model: Model, flask_app: Application, redis_k8s_app: Application
+@pytest.fixture(scope="function", name="integrate_redis_k8s_flask")
+def integrate_redis_k8s_flask_fixture(
+    juju: jubilant.Juju,
+    flask_app: App,
+    redis_k8s_app: App,
 ):
-    """Integrate redis_k8s with flask apps."""
-    relation = await model.integrate(flask_app.name, redis_k8s_app.name)
-    await model.wait_for_idle(apps=[redis_k8s_app.name], status="active")
-    yield relation
-    await flask_app.destroy_relation("redis", f"{redis_k8s_app.name}")
-    await model.wait_for_idle()
+    """Integrate redis_k8s with flask apps using jubilant."""
+    try:
+        juju.integrate(flask_app.name, redis_k8s_app.name)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, redis_k8s_app.name))
 
+    yield
 
-@pytest_asyncio.fixture
-def run_action(ops_test: OpsTest):
-    async def _run_action(application_name, action_name, **params):
-        app = ops_test.model.applications[application_name]
-        action = await app.units[0].run_action(action_name, **params)
-        await action.wait()
-        return action.results
-
-    return _run_action
+    # Teardown - remove relation
+    juju.cli("remove-relation", flask_app.name, redis_k8s_app.name)
+    juju.wait(lambda status: status.apps.get(flask_app.name) is not None, timeout=5 * 60)
 
 
 @pytest.fixture(scope="session")
-def juju(request: pytest.FixtureRequest) -> Generator[jubilant.Juju, None, None]:
+def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""
 
     use_existing = request.config.getoption("--use-existing", default=False)
@@ -821,7 +656,7 @@ def generate_app_fixture(
     tmp_path_factory,
     image_name: str = "",
     use_postgres: bool = True,
-    config: dict[str, str] | None = None,
+    config: dict[str, jubilant.ConfigValue] | None = None,
     resources: dict[str, str] | None = None,
     charm_dict: dict | None = None,
 ):
@@ -829,7 +664,7 @@ def generate_app_fixture(
     app_name = f"{framework}-k8s"
     if image_name == "":
         image_name = f"{framework}-app-image"
-    use_existing = pytestconfig.getoption("--use-existing", default=False)
+    use_existing = pytestconfig.getoption("--use-existing")
     if use_existing:
         return App(app_name)
     if resources is None:
@@ -955,3 +790,185 @@ def flask_async_app_fixture(
             "flask-app-image": pytestconfig.getoption(f"--test-async-flask-image"),
         },
     )
+
+
+# Jubilant-based blocked app fixtures for test_config.py
+@pytest.fixture(scope="module", name="flask_blocked_app")
+def flask_blocked_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    test_flask_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the flask charm with non-optional configs using jubilant."""
+    app_name = "flask-k8s"
+    use_existing = pytestconfig.getoption("--use-existing")
+    if use_existing:
+        return App(app_name)
+
+    resources = {"flask-app-image": test_flask_image}
+    charm_file = build_charm_file(
+        pytestconfig, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+    )
+
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
+    return App(app_name)
+
+
+@pytest.fixture(scope="module", name="django_blocked_app")
+def django_blocked_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    django_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Django charm with non-optional configs using jubilant."""
+    app_name = "django-k8s"
+    use_existing = pytestconfig.getoption("--use-existing")
+    if use_existing:
+        return App(app_name)
+
+    resources = {"django-app-image": django_app_image}
+    charm_file = build_charm_file(
+        pytestconfig, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+    )
+
+    try:
+        juju.deploy(
+            charm=str(charm_file),
+            app=app_name,
+            resources=resources,
+            config={"django-allowed-hosts": "*"},
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    # Deploy and integrate postgresql if needed
+    deploy_postgresql(juju)
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
+    return App(app_name)
+
+
+@pytest.fixture(scope="module", name="fastapi_blocked_app")
+def fastapi_blocked_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the FastAPI charm with non-optional configs using jubilant."""
+    app_name = "fastapi-k8s"
+    use_existing = pytestconfig.getoption("--use-existing")
+    if use_existing:
+        return App(app_name)
+
+    resources = {"app-image": fastapi_app_image}
+    charm_file = build_charm_file(
+        pytestconfig, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+    )
+
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    # Deploy and integrate postgresql if needed
+    deploy_postgresql(juju)
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
+    return App(app_name)
+
+
+@pytest.fixture(scope="module", name="go_blocked_app")
+def go_blocked_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    go_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Go charm with non-optional configs using jubilant."""
+    app_name = "go-k8s"
+    use_existing = pytestconfig.getoption("--use-existing")
+    if use_existing:
+        return App(app_name)
+
+    resources = {"app-image": go_app_image}
+    charm_file = build_charm_file(
+        pytestconfig, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+    )
+
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    # Deploy and integrate postgresql if needed
+    deploy_postgresql(juju)
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
+    return App(app_name)
+
+
+@pytest.fixture(scope="module", name="expressjs_blocked_app")
+def expressjs_blocked_app_fixture(
+    juju: jubilant.Juju,
+    pytestconfig: pytest.Config,
+    expressjs_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the ExpressJS charm with non-optional configs using jubilant."""
+    app_name = "expressjs-k8s"
+    use_existing = pytestconfig.getoption("--use-existing")
+    if use_existing:
+        return App(app_name)
+
+    resources = {"app-image": expressjs_app_image}
+    charm_file = build_charm_file(
+        pytestconfig, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+    )
+
+    try:
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+    except jubilant.CLIError as err:
+        if "application already exists" not in err.stderr:
+            raise err
+
+    # Deploy and integrate postgresql if needed
+    deploy_postgresql(juju)
+    try:
+        juju.integrate(app_name, "postgresql-k8s:database")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
+    return App(app_name)
