@@ -5,13 +5,15 @@
 version: "1"
 
 # Prometheus scrape configuration
+# This demonstrates adding a custom scrape job alongside the framework default (port 9102)
 prometheus:
   scrape_configs:
-    - job_name: "flask-app-metrics"
+    - job_name: "flask-app-custom"
       metrics_path: "/metrics"
       static_configs:
         - targets:
-            - "*:8000"
+            - "*:9102"  # Same port as framework default, but different job name
           labels:
             app: "flask"
             env: "example"
+            custom: "true"  # Distinguish this from the framework job
