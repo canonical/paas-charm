@@ -1,11 +1,17 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+# Configuration file for the paas-charm library
 version: "1"
+
+# Prometheus scrape configuration
 prometheus:
   scrape_configs:
-    - job_name: "example-job"
+    - job_name: "flask-app-metrics"
       metrics_path: "/metrics"
       static_configs:
         - targets:
-          - "*:8080"
+            - "*:8000"
+          labels:
+            app: "flask"
+            env: "example"

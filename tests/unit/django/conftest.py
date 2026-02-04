@@ -37,7 +37,8 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
 @pytest.fixture(name="harness_no_integrations")
 def harness_no_integrations_fixture() -> typing.Generator[Harness, None, None]:
     """Ops testing framework harness fixture without a database."""
-    meta = textwrap.dedent("""
+    meta = textwrap.dedent(
+        """
     name: django-k8s
 
     bases:
@@ -70,7 +71,8 @@ def harness_no_integrations_fixture() -> typing.Generator[Harness, None, None]:
         limit: 1
       logging:
         interface: loki_push_api
-    """)
+    """
+    )
     harness = _build_harness(meta)
     yield harness
     harness.cleanup()
