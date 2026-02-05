@@ -26,18 +26,7 @@ class PaasConfigError(Exception):
     This indicates a charm development error, not a runtime configuration issue.
     The paas-config.yaml file is part of the charm code, not operator-provided config.
     The charm developer must fix the file and redeploy the charm.
-
-    Attrs:
-        msg (str): Explanation of the error.
     """
-
-    def __init__(self, msg: str):
-        """Initialize a new instance of the PaasConfigError exception.
-
-        Args:
-            msg (str): Explanation of the error.
-        """
-        self.msg = msg
 
 
 class PebbleNotReadyError(Exception):
