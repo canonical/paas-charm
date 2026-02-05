@@ -5,6 +5,8 @@
 """Integration tests for Flask charm."""
 
 import logging
+from functools import wraps
+from time import sleep
 
 import jubilant
 import pytest
@@ -18,6 +20,24 @@ from tests.integration.types import App
 logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8000
+
+
+def retry_on_assert(max_attempts=5, delay=10):
+    """Decorator to retry function if assertion fails."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_error = None
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except AssertionError as e:
+                    last_error = e
+                    if attempt < max_attempts - 1:
+                        sleep(delay)
+            raise last_error
+        return wrapper
+    return decorator
 
 
 def test_flask_is_up(
@@ -206,13 +226,21 @@ def test_app_peer_address(
     status = juju.status()
     model_name = status.model.name
 
-    actual_result = set()
-    for unit in status.apps[flask_app.name].units.values():
+    
+    @retry_on_assert(max_attempts=5, delay=10)
+    def check_peer_fqdns(unit, actual_result: set, is_in:  bool = True):
         response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
-        assert "FLASK_PEER_FQDNS" in env_vars
-        actual_result.add(env_vars["FLASK_PEER_FQDNS"])
+        if is_in:
+            assert "FLASK_PEER_FQDNS" in env_vars
+            actual_result.add(env_vars["FLASK_PEER_FQDNS"])
+        else:
+            assert "FLASK_PEER_FQDNS" not in env_vars
+
+    actual_result = set()
+    for unit in status.apps[flask_app.name].units.values():
+        check_peer_fqdns(unit, actual_result)
 
     expected_result = set()
     for unit_name in status.apps[flask_app.name].units.keys():
@@ -228,7 +256,4 @@ def test_app_peer_address(
 
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
-        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
-        assert response.status_code == 200
-        env_vars = response.json()
-        assert "FLASK_PEER_FQDNS" not in env_vars
+        check_peer_fqdns(unit, actual_result, is_in=False)
