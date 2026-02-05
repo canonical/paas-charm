@@ -20,6 +20,7 @@ class TestBuildPrometheusJobs:
         jobs = build_prometheus_jobs("*:8000", "/metrics", None)
         assert len(jobs) == 1
         assert jobs[0] == {
+            "job_name": "juju_paas_app_metrics",
             "metrics_path": "/metrics",
             "static_configs": [{"targets": ["*:8000"]}],
         }
@@ -57,6 +58,7 @@ class TestBuildPrometheusJobs:
         assert len(jobs) == 2
         # First job is framework default
         assert jobs[0] == {
+            "job_name": "juju_paas_app_metrics",
             "metrics_path": "/metrics",
             "static_configs": [{"targets": ["*:8000"]}],
         }

@@ -38,7 +38,11 @@ def build_prometheus_jobs(
     # Add default framework job if configured
     if metrics_path and metrics_target:
         jobs.append(
-            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
+            {
+                "job_name": "juju_paas_app_metrics",
+                "metrics_path": metrics_path,
+                "static_configs": [{"targets": [metrics_target]}],
+            }
         )
 
     # Add custom jobs from paas-config.yaml
