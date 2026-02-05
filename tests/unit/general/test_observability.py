@@ -13,12 +13,11 @@ class TestBuildPrometheusJobs:
     def test_no_jobs_configured(self):
         """Test when no metrics are configured."""
         jobs = build_prometheus_jobs(None, None, None)
-        assert jobs is None
+        assert jobs == []
 
     def test_only_framework_default_job(self):
         """Test with only framework default metrics."""
         jobs = build_prometheus_jobs("*:8000", "/metrics", None)
-        assert jobs is not None
         assert len(jobs) == 1
         assert jobs[0] == {
             "metrics_path": "/metrics",
@@ -37,7 +36,6 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs(None, None, prom_config)
-        assert jobs is not None
         assert len(jobs) == 1
         assert jobs[0]["job_name"] == "custom-job"
         assert jobs[0]["metrics_path"] == "/custom/metrics"
@@ -55,7 +53,7 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        assert jobs is not None
+        # Jobs are always a list
         assert len(jobs) == 2
         # First job is framework default
         assert jobs[0] == {
@@ -85,7 +83,7 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs(None, None, prom_config)
-        assert jobs is not None
+        # Jobs are always a list
         assert len(jobs) == 1
         assert jobs[0]["static_configs"][0]["labels"] == {
             "env": "production",
@@ -109,7 +107,7 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        assert jobs is not None
+        # Jobs are always a list
         assert len(jobs) == 3  # 1 default + 2 custom
         assert jobs[1]["job_name"] == "job1"
         assert jobs[2]["job_name"] == "job2"
@@ -128,7 +126,7 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs(None, None, prom_config)
-        assert jobs is not None
+        # Jobs are always a list
         assert len(jobs) == 1
         assert len(jobs[0]["static_configs"]) == 2
         assert jobs[0]["static_configs"][0] == {
@@ -144,7 +142,7 @@ class TestBuildPrometheusJobs:
         """Test with empty PrometheusConfig (no scrape_configs)."""
         prom_config = PrometheusConfig()
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        assert jobs is not None
+        # Jobs are always a list
         assert len(jobs) == 1  # Only framework default
         assert jobs[0]["metrics_path"] == "/metrics"
 
@@ -152,8 +150,8 @@ class TestBuildPrometheusJobs:
         """Test when framework has only path or only target."""
         # Only target, no path
         jobs = build_prometheus_jobs("*:8000", None, None)
-        assert jobs is None
+        assert jobs == []
 
         # Only path, no target
         jobs = build_prometheus_jobs(None, "/metrics", None)
-        assert jobs is None
+        assert jobs == []

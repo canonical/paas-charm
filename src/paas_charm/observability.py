@@ -22,7 +22,7 @@ def build_prometheus_jobs(
     metrics_target: str | None,
     metrics_path: str | None,
     prometheus_config: PrometheusConfig | None,
-) -> list[dict[str, typing.Any]] | None:
+) -> list[dict[str, typing.Any]]:
     """Build Prometheus scrape jobs list from framework defaults and custom config.
 
     Args:
@@ -31,7 +31,7 @@ def build_prometheus_jobs(
         prometheus_config: Custom Prometheus configuration from paas-config.yaml.
 
     Returns:
-        List of Prometheus job configurations, or None if no jobs are configured.
+        List of Prometheus job configurations (empty list if no jobs are configured).
     """
     jobs: list[dict[str, typing.Any]] = []
 
@@ -44,19 +44,18 @@ def build_prometheus_jobs(
     # Add custom jobs from paas-config.yaml
     if prometheus_config and prometheus_config.scrape_configs:
         for scrape_config in prometheus_config.scrape_configs:
-            job: dict[str, typing.Any] = {
-                "job_name": scrape_config.job_name,
-                "metrics_path": scrape_config.metrics_path,
-                "static_configs": [],
-            }
-            for static_config in scrape_config.static_configs:
-                static_cfg: dict[str, typing.Any] = {"targets": static_config.targets}
-                if static_config.labels:
-                    static_cfg["labels"] = static_config.labels
-                job["static_configs"].append(static_cfg)
-            jobs.append(job)
+            jobs.append(
+                {
+                    "job_name": scrape_config.job_name,
+                    "metrics_path": scrape_config.metrics_path,
+                    "static_configs": [
+                        {"targets": sc.targets, **({"labels": sc.labels} if sc.labels else {})}
+                        for sc in scrape_config.static_configs
+                    ],
+                }
+            )
 
-    return jobs if jobs else None
+    return jobs
 
 
 class Observability(ops.Object):
