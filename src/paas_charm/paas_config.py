@@ -86,14 +86,14 @@ class PaasConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
-def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig | None:
+def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     """Read and validate the paas-config.yaml file.
 
     Args:
         charm_root: Path to the charm root directory. If None, uses current directory.
 
     Returns:
-        PaasConfig object if file exists and is valid, None if file doesn't exist.
+        PaasConfig object. Returns empty PaasConfig() if file doesn't exist or is empty.
 
     Raises:
         CharmConfigInvalidError: If the file exists but is invalid (malformed YAML
@@ -106,11 +106,11 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig | Non
 
     if not config_path.exists():
         logger.info("No %s file found, using default configuration", CONFIG_FILE_NAME)
-        return None
+        return PaasConfig()
 
     try:
         with config_path.open("r", encoding="utf-8") as config_file:
-            config_data = yaml.safe_load(config_file)
+            config_data = yaml.safe_load(config_file) or {}
     except yaml.YAMLError as exc:
         error_msg = f"Invalid YAML in {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)
@@ -119,10 +119,6 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig | Non
         error_msg = f"Failed to read {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)
         raise CharmConfigInvalidError(error_msg) from exc
-
-    if config_data is None:
-        logger.warning("%s file is empty, using default configuration", CONFIG_FILE_NAME)
-        return None
 
     try:
         return PaasConfig(**config_data)

@@ -55,10 +55,11 @@ class TestPaasConfig:
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""
 
-    def test_missing_file_returns_none(self, tmp_path):
-        """Test that missing config file returns None."""
+    def test_missing_file_returns_empty_config(self, tmp_path):
+        """Test that missing config file returns empty PaasConfig."""
         config = read_paas_config(tmp_path)
-        assert config is None
+        assert config == PaasConfig()
+        assert config.prometheus is None
 
     def test_valid_config_file(self, tmp_path):
         """Test reading a valid config file."""
@@ -68,26 +69,27 @@ class TestReadPaasConfig:
             yaml.dump(config_data, f)
 
         config = read_paas_config(tmp_path)
-        assert config is not None
         assert config.prometheus is not None
         assert config.prometheus.scrape_configs == []
 
-    def test_empty_file_returns_none(self, tmp_path):
-        """Test that empty config file returns None."""
+    def test_empty_file_returns_empty_config(self, tmp_path):
+        """Test that empty config file returns empty PaasConfig."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_path.touch()
 
         config = read_paas_config(tmp_path)
-        assert config is None
+        assert config == PaasConfig()
+        assert config.prometheus is None
 
-    def test_file_with_only_whitespace_returns_none(self, tmp_path):
-        """Test that file with only whitespace returns None."""
+    def test_file_with_only_whitespace_returns_empty_config(self, tmp_path):
+        """Test that file with only whitespace returns empty PaasConfig."""
         config_path = tmp_path / CONFIG_FILE_NAME
         with config_path.open("w", encoding="utf-8") as f:
             f.write("   \n\n   \n")
 
         config = read_paas_config(tmp_path)
-        assert config is None
+        assert config == PaasConfig()
+        assert config.prometheus is None
 
     def test_invalid_yaml_raises_error(self, tmp_path):
         """Test that invalid YAML raises CharmConfigInvalidError."""
@@ -133,7 +135,6 @@ class TestReadPaasConfig:
 
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 config = read_paas_config()
-                assert config is not None
                 assert config.prometheus is not None
 
     def test_config_with_all_fields(self, tmp_path):
@@ -154,7 +155,6 @@ class TestReadPaasConfig:
             yaml.dump(config_data, f)
 
         config = read_paas_config(tmp_path)
-        assert config is not None
         assert config.prometheus is not None
 
 

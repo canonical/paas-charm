@@ -169,7 +169,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             cos_dir=self.get_cos_dir(),
             metrics_target=self._workload_config.metrics_target,
             metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus if paas_config else None,
+            prometheus_config=paas_config.prometheus,
         )
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
