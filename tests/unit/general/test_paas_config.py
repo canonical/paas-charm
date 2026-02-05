@@ -311,6 +311,67 @@ class TestPrometheusConfig:
         errors = exc_info.value.errors()
         assert any("extra" in str(err["type"]) for err in errors)
 
+    def test_duplicate_job_names_rejected(self):
+        """Test that duplicate job_names are rejected."""
+
+        with pytest.raises(ValidationError) as exc_info:
+            PrometheusConfig(
+                scrape_configs=[
+                    ScrapeConfig(job_name="app-metrics", static_configs=[StaticConfig(targets=["*:8000"])]),
+                    ScrapeConfig(job_name="app-metrics", static_configs=[StaticConfig(targets=["*:9000"])]),
+                ]
+            )
+        errors = exc_info.value.errors()
+        assert len(errors) == 1
+        assert "app-metrics" in str(errors[0]["ctx"]["error"])
+        assert "Duplicate job_name" in str(errors[0]["ctx"]["error"])
+
+    def test_multiple_duplicate_job_names(self):
+        """Test that multiple duplicates are all reported."""
+
+        with pytest.raises(ValidationError) as exc_info:
+            PrometheusConfig(
+                scrape_configs=[
+                    ScrapeConfig(job_name="job1", static_configs=[StaticConfig(targets=["*:8000"])]),
+                    ScrapeConfig(job_name="job2", static_configs=[StaticConfig(targets=["*:8001"])]),
+                    ScrapeConfig(job_name="job1", static_configs=[StaticConfig(targets=["*:8002"])]),
+                    ScrapeConfig(job_name="job2", static_configs=[StaticConfig(targets=["*:8003"])]),
+                ]
+            )
+        errors = exc_info.value.errors()
+        assert len(errors) == 1
+        error_msg = str(errors[0]["ctx"]["error"])
+        assert "job1" in error_msg
+        assert "job2" in error_msg
+
+    def test_unique_job_names_accepted(self):
+        """Test that unique job_names are accepted."""
+
+        prom_config = PrometheusConfig(
+            scrape_configs=[
+                ScrapeConfig(job_name="job1", static_configs=[StaticConfig(targets=["*:8000"])]),
+                ScrapeConfig(job_name="job2", static_configs=[StaticConfig(targets=["*:8001"])]),
+                ScrapeConfig(job_name="job3", static_configs=[StaticConfig(targets=["*:8002"])]),
+            ]
+        )
+        assert len(prom_config.scrape_configs) == 3
+
+    def test_single_job_no_duplicate(self):
+        """Test that a single job cannot be a duplicate."""
+
+        prom_config = PrometheusConfig(
+            scrape_configs=[
+                ScrapeConfig(job_name="only-job", static_configs=[StaticConfig(targets=["*:8000"])])
+            ]
+        )
+        assert len(prom_config.scrape_configs) == 1
+
+    def test_empty_scrape_configs_no_validation(self):
+        """Test that empty scrape_configs doesn't trigger validation."""
+
+        prom_config = PrometheusConfig(scrape_configs=[])
+        assert prom_config.scrape_configs == []
+
 
 class TestPaasConfigWithPrometheus:
     """Tests for PaasConfig with Prometheus configuration."""

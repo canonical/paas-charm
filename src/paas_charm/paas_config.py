@@ -8,7 +8,7 @@ import pathlib
 import typing
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
@@ -69,6 +69,23 @@ class PrometheusConfig(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_unique_job_names(self) -> "PrometheusConfig":
+        """Validate that all job_names are unique."""
+        if not self.scrape_configs:
+            return self
+
+        job_names = [sc.job_name for sc in self.scrape_configs]
+        duplicates = [name for name in set(job_names) if job_names.count(name) > 1]
+
+        if duplicates:
+            raise ValueError(
+                f"Duplicate job_name values found in prometheus.scrape_configs: "
+                f"{', '.join(sorted(set(duplicates)))}. Each job must have a unique name."
+            )
+
+        return self
 
 
 class PaasConfig(BaseModel):
