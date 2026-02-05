@@ -9,7 +9,6 @@ import pytest
 import requests
 
 from tests.integration.conftest import build_charm_file, inject_charm_config
-from tests.integration.types import App
 
 
 def test_proxy(
