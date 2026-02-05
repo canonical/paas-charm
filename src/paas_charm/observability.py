@@ -35,7 +35,7 @@ def build_prometheus_jobs(
     """
     jobs: list[dict[str, typing.Any]] = []
 
-    # Add default framework job if configured
+    # Add default framework job if configured. The library adds a default job_name.
     if metrics_path and metrics_target:
         jobs.append(
             {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
