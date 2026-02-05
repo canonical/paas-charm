@@ -115,14 +115,14 @@ class TestReadPaasConfig:
     def test_file_read_error_raises_error(self, tmp_path):
         """Test that file read error raises PaasConfigError."""
         config_path = tmp_path / CONFIG_FILE_NAME
-        config_path.touch(mode=0o000)  # No read permissions
+        config_path.touch(mode=0o000)
 
         try:
             with pytest.raises(PaasConfigError) as exc_info:
                 read_paas_config(tmp_path)
             assert "Failed to read" in str(exc_info.value)
         finally:
-            config_path.chmod(0o644)  # Restore permissions for cleanup
+            config_path.chmod(0o644)
 
     def test_default_charm_root_uses_cwd(self):
         """Test that None charm_root uses current working directory."""
@@ -199,12 +199,11 @@ class TestScrapeConfig:
 
     def test_valid_scrape_config_minimal(self):
         """Test valid minimal scrape config with defaults."""
-
         scrape_config = ScrapeConfig(
             job_name="my-job", static_configs=[StaticConfig(targets=["*:8000"])]
         )
         assert scrape_config.job_name == "my-job"
-        assert scrape_config.metrics_path == "/metrics"  # default
+        assert scrape_config.metrics_path == "/metrics"
         assert len(scrape_config.static_configs) == 1
         assert scrape_config.static_configs[0].targets == ["*:8000"]
 
@@ -436,7 +435,7 @@ class TestPaasConfigWithPrometheus:
         assert config.prometheus.scrape_configs[0].job_name == "job1"
         assert config.prometheus.scrape_configs[0].metrics_path == "/metrics"
         assert config.prometheus.scrape_configs[1].job_name == "job2"
-        assert config.prometheus.scrape_configs[1].metrics_path == "/metrics"  # default
+        assert config.prometheus.scrape_configs[1].metrics_path == "/metrics"
 
     def test_paas_config_empty_prometheus_section(self):
         """Test PaasConfig with empty prometheus section."""

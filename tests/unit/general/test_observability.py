@@ -53,14 +53,11 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        # Jobs are always a list
         assert len(jobs) == 2
-        # First job is framework default
         assert jobs[0] == {
             "metrics_path": "/metrics",
             "static_configs": [{"targets": ["*:8000"]}],
         }
-        # Second job is custom
         assert jobs[1]["job_name"] == "app-metrics"
         assert jobs[1]["metrics_path"] == "/app/metrics"
         assert jobs[1]["static_configs"] == [
@@ -83,7 +80,6 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs(None, None, prom_config)
-        # Jobs are always a list
         assert len(jobs) == 1
         assert jobs[0]["static_configs"][0]["labels"] == {
             "env": "production",
@@ -107,8 +103,7 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        # Jobs are always a list
-        assert len(jobs) == 3  # 1 default + 2 custom
+        assert len(jobs) == 3
         assert jobs[1]["job_name"] == "job1"
         assert jobs[2]["job_name"] == "job2"
 
@@ -126,7 +121,6 @@ class TestBuildPrometheusJobs:
             ]
         )
         jobs = build_prometheus_jobs(None, None, prom_config)
-        # Jobs are always a list
         assert len(jobs) == 1
         assert len(jobs[0]["static_configs"]) == 2
         assert jobs[0]["static_configs"][0] == {
@@ -142,16 +136,13 @@ class TestBuildPrometheusJobs:
         """Test with empty PrometheusConfig (no scrape_configs)."""
         prom_config = PrometheusConfig()
         jobs = build_prometheus_jobs("*:8000", "/metrics", prom_config)
-        # Jobs are always a list
-        assert len(jobs) == 1  # Only framework default
+        assert len(jobs) == 1
         assert jobs[0]["metrics_path"] == "/metrics"
 
     def test_partial_framework_config(self):
         """Test when framework has only path or only target."""
-        # Only target, no path
         jobs = build_prometheus_jobs("*:8000", None, None)
         assert jobs == []
 
-        # Only path, no target
         jobs = build_prometheus_jobs(None, "/metrics", None)
         assert jobs == []

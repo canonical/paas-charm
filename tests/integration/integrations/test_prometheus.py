@@ -60,7 +60,6 @@ def test_prometheus_integration(
                 and metrics_path in scrape_url
                 and app_unit_ip in scrape_url
             ):
-                # scrape the url directly to see if it works
                 response = http.get(scrape_url, timeout=10)
                 response.raise_for_status()
                 break
@@ -96,7 +95,6 @@ def test_prometheus_custom_scrape_configs(
         app_unit_ip = status.apps[flask_app.name].units[flask_app.name + "/0"].address
         prometheus_unit_ip, active_targets = get_prometheus_targets(juju, prometheus_app, http)
 
-        # Filter targets for this app by port
         framework_targets = [
             t
             for t in active_targets
@@ -108,19 +106,16 @@ def test_prometheus_custom_scrape_configs(
             if app_unit_ip in t["scrapeUrl"] and ":8081" in t["scrapeUrl"]
         ]
 
-        # Assert framework default job exists (port 9102)
         assert len(framework_targets) == 1, (
             f"Expected 1 framework default job on port 9102, found {len(framework_targets)}. "
             f"All targets: {active_targets}"
         )
 
-        # Assert custom job from paas-config.yaml exists (port 8081)
         assert len(custom_targets) == 1, (
             f"Expected 1 custom job on port 8081 from paas-config.yaml, "
             f"found {len(custom_targets)}. All targets: {active_targets}"
         )
 
-        # Verify custom job has correct job_name and labels
         custom_job = custom_targets[0]
         assert (
             "flask-app-custom" in custom_job["labels"]["job"]
