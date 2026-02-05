@@ -12,10 +12,8 @@ import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
+from paas_charm.paas_config import PrometheusConfig
 from paas_charm.utils import enable_pebble_log_forwarding
-
-if typing.TYPE_CHECKING:
-    from paas_charm.paas_config import PrometheusConfig
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,7 @@ logger = logging.getLogger(__name__)
 def build_prometheus_jobs(
     metrics_target: str | None,
     metrics_path: str | None,
-    prometheus_config: "PrometheusConfig | None",
+    prometheus_config: PrometheusConfig | None,
 ) -> list[dict[str, typing.Any]] | None:
     """Build Prometheus scrape jobs list from framework defaults and custom config.
 
@@ -73,7 +71,7 @@ class Observability(ops.Object):
         log_files: list[pathlib.Path],
         metrics_target: str | None,
         metrics_path: str | None,
-        prometheus_config: "PrometheusConfig | None" = None,
+        prometheus_config: PrometheusConfig | None = None,
     ):
         """Initialize a new instance of the Observability class.
 
