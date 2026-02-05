@@ -20,6 +20,15 @@ class CharmConfigInvalidError(Exception):
         self.msg = msg
 
 
+class PaasConfigError(Exception):
+    """Exception raised when paas-config.yaml is invalid.
+
+    This indicates a charm development error, not a runtime configuration issue.
+    The paas-config.yaml file is part of the charm code, not operator-provided config.
+    The charm developer must fix the file and redeploy the charm.
+    """
+
+
 class PebbleNotReadyError(Exception):
     """Exception raised when accessing pebble while it isn't ready."""
 
