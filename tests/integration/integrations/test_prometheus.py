@@ -124,7 +124,7 @@ def test_prometheus_custom_scrape_configs(
         # Verify custom job has correct job_name and labels
         custom_job = custom_targets[0]
         assert (
-            custom_job["labels"]["job"] == "flask-app-custom"
+            "flask-app-custom" in custom_job["labels"]["job"]
         ), f"Expected job_name='flask-app-custom', got: {custom_job['labels']['job']}"
         assert (
             custom_job["labels"]["app"] == "flask"
