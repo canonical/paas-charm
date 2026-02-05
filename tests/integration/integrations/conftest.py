@@ -512,6 +512,7 @@ def deploy_rabbitmq_server_ha_fixture(
         )
     return rabbitmq_server_app
 
+
 @pytest.fixture(scope="module", name="rabbitmq_k8s_app")
 def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     """Deploy rabbitmq-k8s app."""
@@ -531,7 +532,6 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
         timeout=10 * 60,
     )
     return rabbitmq_k8s
-
 
 
 @pytest.fixture(scope="module", name="rabbitmq_k8s_ha_app")

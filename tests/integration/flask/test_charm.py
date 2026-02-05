@@ -24,6 +24,7 @@ WORKLOAD_PORT = 8000
 
 def retry_on_assert(max_attempts=5, delay=10):
     """Decorator to retry function if assertion fails."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -35,8 +36,11 @@ def retry_on_assert(max_attempts=5, delay=10):
                     last_error = e
                     if attempt < max_attempts - 1:
                         sleep(delay)
-            raise last_error
+            if last_error:
+                raise last_error
+
         return wrapper
+
     return decorator
 
 
@@ -226,9 +230,8 @@ def test_app_peer_address(
     status = juju.status()
     model_name = status.model.name
 
-    
     @retry_on_assert(max_attempts=5, delay=10)
-    def check_peer_fqdns(unit, actual_result: set, is_in:  bool = True):
+    def check_peer_fqdns(unit, actual_result: set, is_in: bool = True):
         response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
