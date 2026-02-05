@@ -3,20 +3,42 @@
 
 """Integration tests for Flask workers and schedulers."""
 
-import asyncio
+import concurrent.futures
 import logging
 import time
 from datetime import datetime
 
-import aiohttp
+import jubilant
 import pytest
 import requests
-from juju.application import Application
-from juju.model import Model
-from juju.utils import block_until
-from pytest_operator.plugin import OpsTest
+
+from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture(scope="module", name="redis_k8s_app")
+def redis_k8s_app_fixture(juju: jubilant.Juju):
+    """Deploy Redis k8s charm."""
+    redis_app_name = "redis-k8s"
+    if not juju.status().apps.get(redis_app_name):
+        juju.deploy(redis_app_name, channel="edge")
+    juju.wait(lambda status: status.apps[redis_app_name].is_active)
+    return App(redis_app_name)
+
+
+@pytest.fixture
+def integrate_redis_k8s_flask(juju: jubilant.Juju, flask_app: App, redis_k8s_app: App):
+    """Integrate redis_k8s with flask apps."""
+    try:
+        juju.integrate(flask_app.name, redis_k8s_app.name)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+    juju.wait(lambda status: status.apps[redis_k8s_app.name].is_active, timeout=10 * 60)
+    yield
+    juju.remove_relation(flask_app.name, f"{redis_k8s_app.name}:redis")
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, timeout=10 * 60)
 
 
 @pytest.mark.parametrize(
@@ -24,8 +46,11 @@ logger = logging.getLogger(__name__)
     [1, 3],
 )
 @pytest.mark.usefixtures("integrate_redis_k8s_flask")
-async def test_workers_and_scheduler_services(
-    ops_test: OpsTest, model: Model, flask_app: Application, get_unit_ips, num_units: int
+def test_workers_and_scheduler_services(
+    juju: jubilant.Juju,
+    flask_app: App,
+    http: requests.Session,
+    num_units: int,
 ):
     """
     arrange: Flask and redis deployed and integrated.
@@ -36,15 +61,17 @@ async def test_workers_and_scheduler_services(
             hostname in Redis sets. Those sets are checked through the Flask app,
             that queries Redis.
     """
-    await flask_app.scale(num_units)
-    await model.wait_for_idle(apps=[flask_app.name], status="active")
+    for n in range(1, num_units):
+        juju.add_unit(flask_app.name)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active)
 
     # the flask unit is not important. Take the first one
-    flask_unit_ip = (await get_unit_ips(flask_app.name))[0]
+    status = juju.status()
+    flask_unit_ip = list(status.apps[flask_app.name].units.values())[0].address
 
     def check_correct_celery_stats(num_schedulers, num_workers):
         """Check that the expected number of workers and schedulers is right."""
-        response = requests.get(f"http://{flask_unit_ip}:8000/redis/celery_stats", timeout=5)
+        response = http.get(f"http://{flask_unit_ip}:8000/redis/celery_stats", timeout=5)
         assert response.status_code == 200
         data = response.json()
         logger.info(
@@ -56,49 +83,54 @@ async def test_workers_and_scheduler_services(
         return len(data["workers"]) == num_workers and len(data["schedulers"]) == num_schedulers
 
     # clean the current celery stats
-    response = requests.get(f"http://{flask_unit_ip}:8000/redis/clear_celery_stats", timeout=5)
+    response = http.get(f"http://{flask_unit_ip}:8000/redis/clear_celery_stats", timeout=5)
     assert response.status_code == 200
     assert "SUCCESS" == response.text
 
-    # enough time for all the schedulers to send messages
+    # Enough time for all the schedulers to send messages
     time.sleep(10)
-    try:
-        await block_until(
-            lambda: check_correct_celery_stats(num_schedulers=1, num_workers=num_units),
-            timeout=60,
-            wait_period=1,
-        )
-    except asyncio.TimeoutError:
-        assert False, "Failed to get 2 workers and 1 scheduler"
+
+    # Wait up to 60 seconds for correct stats
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        if check_correct_celery_stats(num_schedulers=1, num_workers=num_units):
+            return
+        time.sleep(1)
+
+    # Final check
+    assert check_correct_celery_stats(
+        num_schedulers=1, num_workers=num_units
+    ), f"Failed to get {num_units} workers and 1 scheduler"
 
 
 @pytest.mark.usefixtures("flask_async_app")
-async def test_async_workers(
-    ops_test: OpsTest,
-    model: Model,
-    flask_async_app: Application,
-    get_unit_ips,
+def test_async_workers(
+    juju: jubilant.Juju,
+    flask_async_app: App,
+    http: requests.Session,
 ):
     """
     arrange: Flask is deployed with async enabled rock. Change gunicorn worker class.
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    await flask_async_app.set_config({"webserver-worker-class": "gevent"})
-    await model.wait_for_idle(apps=[flask_async_app.name], status="active", timeout=60)
+    juju.config(flask_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.wait(lambda status: status.apps[flask_async_app.name].is_active, timeout=60)
 
     # the flask unit is not important. Take the first one
-    flask_unit_ip = (await get_unit_ips(flask_async_app.name))[0]
+    status = juju.status()
+    flask_unit_ip = list(status.apps[flask_async_app.name].units.values())[0].address
 
-    async def _fetch_page(session):
+    # Use threading to make concurrent requests
+    def fetch_page():
         params = {"duration": 2}
-        async with session.get(f"http://{flask_unit_ip}:8000/sleep", params=params) as response:
-            return await response.text()
+        response = http.get(f"http://{flask_unit_ip}:8000/sleep", params=params, timeout=5)
+        return response.text
 
     start_time = datetime.now()
-    async with aiohttp.ClientSession() as session:
-        pages = [_fetch_page(session) for _ in range(15)]
-        await asyncio.gather(*pages)
-        assert (
-            datetime.now() - start_time
-        ).seconds < 3, "Async workers for Flask are not working!"
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        futures = [executor.submit(fetch_page) for _ in range(15)]
+        concurrent.futures.wait(futures)
+
+    elapsed_seconds = (datetime.now() - start_time).total_seconds()
+    assert elapsed_seconds < 3, f"Async workers for Flask are not working! Took {elapsed_seconds}s"
