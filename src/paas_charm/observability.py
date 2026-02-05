@@ -18,50 +18,6 @@ from paas_charm.utils import enable_pebble_log_forwarding
 logger = logging.getLogger(__name__)
 
 
-def build_prometheus_jobs(
-    metrics_target: str | None,
-    metrics_path: str | None,
-    prometheus_config: PrometheusConfig | None,
-) -> list[dict[str, typing.Any]]:
-    """Build Prometheus scrape jobs list from framework defaults and custom config.
-
-    Args:
-        metrics_target: Default framework metrics target (e.g., "*:8000").
-        metrics_path: Default framework metrics path (e.g., "/metrics").
-        prometheus_config: Custom Prometheus configuration from paas-config.yaml.
-
-    Returns:
-        List of Prometheus job configurations (empty list if no jobs are configured).
-    """
-    jobs: list[dict[str, typing.Any]] = []
-
-    # Add default framework job if configured. The library adds a default job_name.
-    if metrics_path and metrics_target:
-        jobs.append(
-            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
-        )
-
-    # Add custom jobs from paas-config.yaml
-    if prometheus_config and prometheus_config.scrape_configs:
-        for scrape_config in prometheus_config.scrape_configs:
-            jobs.append(
-                {
-                    "job_name": scrape_config.job_name,
-                    "metrics_path": scrape_config.metrics_path,
-                    "static_configs": [
-                        (
-                            {"targets": sc.targets, "labels": sc.labels}
-                            if sc.labels
-                            else {"targets": sc.targets}
-                        )
-                        for sc in scrape_config.static_configs
-                    ],
-                }
-            )
-
-    return jobs
-
-
 class Observability(ops.Object):
     """A class representing the observability stack for charm managed application."""
 
@@ -138,3 +94,47 @@ class Observability(ops.Object):
             dashboards_path=os.path.join(cos_dir, "grafana_dashboards"),
             relation_name="grafana-dashboard",
         )
+
+
+def build_prometheus_jobs(
+    metrics_target: str | None,
+    metrics_path: str | None,
+    prometheus_config: PrometheusConfig | None,
+) -> list[dict[str, typing.Any]]:
+    """Build Prometheus scrape jobs list from framework defaults and custom config.
+
+    Args:
+        metrics_target: Default framework metrics target (e.g., "*:8000").
+        metrics_path: Default framework metrics path (e.g., "/metrics").
+        prometheus_config: Custom Prometheus configuration from paas-config.yaml.
+
+    Returns:
+        List of Prometheus job configurations (empty list if no jobs are configured).
+    """
+    jobs: list[dict[str, typing.Any]] = []
+
+    # Add default framework job if configured. The library adds a default job_name.
+    if metrics_path and metrics_target:
+        jobs.append(
+            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
+        )
+
+    # Add custom jobs from paas-config.yaml
+    if prometheus_config and prometheus_config.scrape_configs:
+        for scrape_config in prometheus_config.scrape_configs:
+            jobs.append(
+                {
+                    "job_name": scrape_config.job_name,
+                    "metrics_path": scrape_config.metrics_path,
+                    "static_configs": [
+                        (
+                            {"targets": sc.targets, "labels": sc.labels}
+                            if sc.labels
+                            else {"targets": sc.targets}
+                        )
+                        for sc in scrape_config.static_configs
+                    ],
+                }
+            )
+
+    return jobs
