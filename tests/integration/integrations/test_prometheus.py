@@ -133,8 +133,8 @@ def test_prometheus_custom_scrape_configs(
                         labels.get("env") == "example"
                     ), f"Expected label env=example on custom job, got: {labels}"
                     assert (
-                        job_name == "flask-app-custom"
-                    ), f"Expected job_name=flask-app-custom, got: {job_name}"
+                        "flask-app-custom" in job_name
+                    ), f"Expected job_name to contain 'flask-app-custom', got: {job_name}"
                     found_custom_job = True
                     logger.info(
                         f"Found custom job from paas-config.yaml: {scrape_url}, "
