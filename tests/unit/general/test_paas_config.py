@@ -11,7 +11,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
     PaasConfig,
@@ -92,33 +92,33 @@ class TestReadPaasConfig:
         assert config.prometheus is None
 
     def test_invalid_yaml_raises_error(self, tmp_path):
-        """Test that invalid YAML raises CharmConfigInvalidError."""
+        """Test that invalid YAML raises PaasConfigError."""
         config_path = tmp_path / CONFIG_FILE_NAME
         with config_path.open("w", encoding="utf-8") as f:
             f.write("version: 1\n  invalid: yaml: content")
 
-        with pytest.raises(CharmConfigInvalidError) as exc_info:
+        with pytest.raises(PaasConfigError) as exc_info:
             read_paas_config(tmp_path)
         assert "Invalid YAML" in str(exc_info.value)
 
     def test_invalid_schema_raises_error(self, tmp_path):
-        """Test that schema validation error raises CharmConfigInvalidError."""
+        """Test that schema validation error raises PaasConfigError."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_data = {"unknown_key": "value"}
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config_data, f)
 
-        with pytest.raises(CharmConfigInvalidError) as exc_info:
+        with pytest.raises(PaasConfigError) as exc_info:
             read_paas_config(tmp_path)
         assert "Invalid" in str(exc_info.value)
 
     def test_file_read_error_raises_error(self, tmp_path):
-        """Test that file read error raises CharmConfigInvalidError."""
+        """Test that file read error raises PaasConfigError."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_path.touch(mode=0o000)  # No read permissions
 
         try:
-            with pytest.raises(CharmConfigInvalidError) as exc_info:
+            with pytest.raises(PaasConfigError) as exc_info:
                 read_paas_config(tmp_path)
             assert "Failed to read" in str(exc_info.value)
         finally:

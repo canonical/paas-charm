@@ -10,7 +10,7 @@ import typing
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
         PaasConfig object. Returns empty PaasConfig() if file doesn't exist or is empty.
 
     Raises:
-        CharmConfigInvalidError: If the file exists but is invalid (malformed YAML
+        PaasConfigError: If the file exists but is invalid (malformed YAML
             or schema validation error).
     """
     if charm_root is None:
@@ -114,11 +114,11 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     except yaml.YAMLError as exc:
         error_msg = f"Invalid YAML in {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)
-        raise CharmConfigInvalidError(error_msg) from exc
+        raise PaasConfigError(error_msg) from exc
     except (OSError, IOError) as exc:
         error_msg = f"Failed to read {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)
-        raise CharmConfigInvalidError(error_msg) from exc
+        raise PaasConfigError(error_msg) from exc
 
     try:
         return PaasConfig(**config_data)
@@ -126,4 +126,4 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
         error_details = build_validation_error_message(exc, underscore_to_dash=True)
         error_msg = f"Invalid {CONFIG_FILE_NAME}: {error_details.short}"
         logger.error("%s: %s", error_msg, error_details.long)
-        raise CharmConfigInvalidError(error_msg) from exc
+        raise PaasConfigError(error_msg) from exc
