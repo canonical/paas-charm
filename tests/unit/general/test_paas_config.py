@@ -317,8 +317,12 @@ class TestPrometheusConfig:
         with pytest.raises(ValidationError) as exc_info:
             PrometheusConfig(
                 scrape_configs=[
-                    ScrapeConfig(job_name="app-metrics", static_configs=[StaticConfig(targets=["*:8000"])]),
-                    ScrapeConfig(job_name="app-metrics", static_configs=[StaticConfig(targets=["*:9000"])]),
+                    ScrapeConfig(
+                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:8000"])]
+                    ),
+                    ScrapeConfig(
+                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:9000"])]
+                    ),
                 ]
             )
         errors = exc_info.value.errors()
@@ -332,10 +336,18 @@ class TestPrometheusConfig:
         with pytest.raises(ValidationError) as exc_info:
             PrometheusConfig(
                 scrape_configs=[
-                    ScrapeConfig(job_name="job1", static_configs=[StaticConfig(targets=["*:8000"])]),
-                    ScrapeConfig(job_name="job2", static_configs=[StaticConfig(targets=["*:8001"])]),
-                    ScrapeConfig(job_name="job1", static_configs=[StaticConfig(targets=["*:8002"])]),
-                    ScrapeConfig(job_name="job2", static_configs=[StaticConfig(targets=["*:8003"])]),
+                    ScrapeConfig(
+                        job_name="job1", static_configs=[StaticConfig(targets=["*:8000"])]
+                    ),
+                    ScrapeConfig(
+                        job_name="job2", static_configs=[StaticConfig(targets=["*:8001"])]
+                    ),
+                    ScrapeConfig(
+                        job_name="job1", static_configs=[StaticConfig(targets=["*:8002"])]
+                    ),
+                    ScrapeConfig(
+                        job_name="job2", static_configs=[StaticConfig(targets=["*:8003"])]
+                    ),
                 ]
             )
         errors = exc_info.value.errors()
@@ -361,7 +373,9 @@ class TestPrometheusConfig:
 
         prom_config = PrometheusConfig(
             scrape_configs=[
-                ScrapeConfig(job_name="only-job", static_configs=[StaticConfig(targets=["*:8000"])])
+                ScrapeConfig(
+                    job_name="only-job", static_configs=[StaticConfig(targets=["*:8000"])]
+                )
             ]
         )
         assert len(prom_config.scrape_configs) == 1
