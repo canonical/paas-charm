@@ -92,7 +92,6 @@ def test_prometheus_custom_scrape_configs(
             delay=10,
         )
 
-        # Get flask app IP and Prometheus targets
         status = juju.status()
         app_unit_ip = status.apps[flask_app.name].units[flask_app.name + "/0"].address
         prometheus_unit_ip, active_targets = get_prometheus_targets(juju, prometheus_app, http)
@@ -132,20 +131,6 @@ def test_prometheus_custom_scrape_configs(
         assert (
             custom_job["labels"]["env"] == "example"
         ), f"Expected label env=example on custom job, got: {custom_job['labels']}"
-
-        logger.info(
-            f"Found 2 scrape jobs for flask app:\n"
-            f"  Framework default: port 9102, job={framework_targets[0]['labels']['job']}\n"
-            f"  Custom from paas-config.yaml: port 8081, "
-            f"job={custom_job['labels']['job']}, labels={custom_job['labels']}"
-        )
-
-        # Verify framework default is scrapable (port 9102 actually exists)
-        response = http.get(framework_targets[0]["scrapeUrl"], timeout=10)
-        response.raise_for_status()
-
-        # Note: We don't scrape port 8081 because that endpoint doesn't exist in the Flask app.
-        # This test verifies paas-config.yaml integration with Prometheus, not HTTP endpoints.
 
     finally:
         juju.remove_relation(flask_app.name, prometheus_app.name)

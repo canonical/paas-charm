@@ -49,7 +49,11 @@ def build_prometheus_jobs(
                     "job_name": scrape_config.job_name,
                     "metrics_path": scrape_config.metrics_path,
                     "static_configs": [
-                        {"targets": sc.targets, "labels": sc.labels} if sc.labels else {"targets": sc.targets}
+                        (
+                            {"targets": sc.targets, "labels": sc.labels}
+                            if sc.labels
+                            else {"targets": sc.targets}
+                        )
                         for sc in scrape_config.static_configs
                     ],
                 }
