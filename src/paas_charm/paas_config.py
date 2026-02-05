@@ -72,7 +72,14 @@ class PrometheusConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_unique_job_names(self) -> "PrometheusConfig":
-        """Validate that all job_names are unique."""
+        """Validate that all job_names are unique.
+
+        Returns:
+            The validated PrometheusConfig instance.
+
+        Raises:
+            ValueError: If duplicate job_names are found.
+        """
         if not self.scrape_configs:
             return self
 

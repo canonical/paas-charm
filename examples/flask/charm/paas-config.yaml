@@ -11,8 +11,7 @@ prometheus:
       metrics_path: "/metrics"
       static_configs:
         - targets:
-            - "*:9102"  # Same port as framework default, but different job name
+            - "*:8081"  # Different port from framework default (9102)
           labels:
             app: "flask"
             env: "example"
-            custom: "true"  # Distinguish this from the framework job
