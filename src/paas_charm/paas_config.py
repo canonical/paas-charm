@@ -89,7 +89,7 @@ class PrometheusConfig(BaseModel):
         if duplicates:
             raise ValueError(
                 f"Duplicate job_name values found in prometheus.scrape_configs: "
-                f"{', '.join(sorted(set(duplicates)))}. Each job must have a unique name."
+                f"{', '.join(sorted(duplicates)))}. Each job must have a unique name."
             )
 
         return self
