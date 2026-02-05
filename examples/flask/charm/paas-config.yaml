@@ -2,7 +2,6 @@
 # See LICENSE file for licensing details.
 
 # Configuration file for the paas-charm library
-version: "1"
 
 # Prometheus scrape configuration
 # This demonstrates adding a custom scrape job alongside the framework default (port 9102)

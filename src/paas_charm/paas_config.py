@@ -8,7 +8,7 @@ import pathlib
 import typing
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import build_validation_error_message
@@ -75,45 +75,15 @@ class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
     Attributes:
-        version: Configuration file schema version.
         prometheus: Prometheus-related configuration.
-        http_proxy: HTTP proxy configuration (reserved for future use).
         model_config: Pydantic model configuration.
     """
 
-    version: str = Field(description="Configuration file schema version")
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
-    http_proxy: typing.Dict[str, typing.Any] | None = Field(
-        default=None,
-        alias="http-proxy",
-        description="HTTP proxy configuration (reserved for future use)",
-    )
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
-
-    @field_validator("version")
-    @classmethod
-    def validate_version(cls, value: str) -> str:
-        """Validate the version field.
-
-        Args:
-            value: The version string to validate.
-
-        Returns:
-            The validated version string.
-
-        Raises:
-            ValueError: If the version is not supported.
-        """
-        supported_versions = {"1"}
-        if value not in supported_versions:
-            raise ValueError(
-                f"Unsupported paas-config.yaml version: {value}. "
-                f"Supported versions: {', '.join(sorted(supported_versions))}"
-            )
-        return value
 
 
 def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig | None:

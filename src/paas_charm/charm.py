@@ -161,7 +161,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._oauth = self._init_oauth(requires)
 
-        # Read paas-config.yaml for Prometheus custom scrape configs
         paas_config = read_paas_config()
         self._observability = Observability(
             charm=self,

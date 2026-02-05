@@ -16,7 +16,6 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
-from paas_charm.paas_config import PaasConfig, read_paas_config
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -48,7 +47,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: the charm managed application secret key.
         is_secret_storage_ready: whether the secret storage system is ready.
         proxy: proxy information.
-        paas_config: configuration from paas-config.yaml file if present.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -62,7 +60,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
-        paas_config: PaasConfig | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -75,7 +72,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
-            paas_config: Configuration from paas-config.yaml file.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -85,7 +81,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
-        self.paas_config = paas_config
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -215,9 +210,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         ):
             peer_fqdns = ",".join(peer_unit_fqdns)
 
-        # Read paas-config.yaml file if present
-        paas_config = read_paas_config()
-
         return cls(
             framework=framework,
             framework_config=framework_config.model_dump(exclude_none=True),
@@ -231,7 +223,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
-            paas_config=paas_config,
         )
 
     @property

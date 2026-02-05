@@ -26,72 +26,30 @@ class TestPaasConfig:
     """Tests for PaasConfig Pydantic model."""
 
     def test_valid_config_minimal(self):
-        """Test valid minimal configuration with only version."""
-        config = PaasConfig(version="1")
-        assert config.version == "1"
+        """Test valid minimal configuration (empty)."""
+        config = PaasConfig()
         assert config.prometheus is None
-        assert config.http_proxy is None
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""
         config = PaasConfig(
-            version="1",
             prometheus={
                 "scrape_configs": [
                     {"job_name": "test", "static_configs": [{"targets": ["*:8000"]}]}
                 ]
             },
         )
-        assert config.version == "1"
         assert config.prometheus is not None
         assert config.prometheus.scrape_configs is not None
         assert len(config.prometheus.scrape_configs) == 1
         assert config.prometheus.scrape_configs[0].job_name == "test"
 
-    def test_valid_config_with_http_proxy_snake_case(self):
-        """Test valid configuration with http_proxy in snake_case."""
-        config = PaasConfig(version="1", http_proxy={"domains": ["example.com"]})
-        assert config.version == "1"
-        assert config.http_proxy == {"domains": ["example.com"]}
-
-    def test_valid_config_with_http_proxy_kebab_case(self):
-        """Test valid configuration with http-proxy in kebab-case (alias)."""
-        config_data = {"version": "1", "http-proxy": {"domains": ["example.com"]}}
-        config = PaasConfig(**config_data)
-        assert config.version == "1"
-        assert config.http_proxy == {"domains": ["example.com"]}
-
-    def test_missing_version(self):
-        """Test that version field is required."""
-        with pytest.raises(ValidationError) as exc_info:
-            PaasConfig()
-        errors = exc_info.value.errors()
-        assert len(errors) == 1
-        assert errors[0]["loc"] == ("version",)
-        assert "required" in errors[0]["msg"].lower()
-
-    def test_unsupported_version(self):
-        """Test that unsupported version raises validation error."""
-        with pytest.raises(ValidationError) as exc_info:
-            PaasConfig(version="2")
-        errors = exc_info.value.errors()
-        assert len(errors) == 1
-        assert "unsupported" in errors[0]["msg"].lower()
-
     def test_extra_fields_forbidden(self):
         """Test that extra fields are not allowed."""
         with pytest.raises(ValidationError) as exc_info:
-            PaasConfig(version="1", unknown_field="value")
+            PaasConfig(unknown_field="value")
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
-
-    def test_invalid_version_type(self):
-        """Test that version must be a string."""
-        with pytest.raises(ValidationError) as exc_info:
-            PaasConfig(version=1)
-        errors = exc_info.value.errors()
-        assert len(errors) == 1
-        assert errors[0]["loc"] == ("version",)
 
 
 class TestReadPaasConfig:
@@ -105,13 +63,12 @@ class TestReadPaasConfig:
     def test_valid_config_file(self, tmp_path):
         """Test reading a valid config file."""
         config_path = tmp_path / CONFIG_FILE_NAME
-        config_data = {"version": "1", "prometheus": {"scrape_configs": []}}
+        config_data = {"prometheus": {"scrape_configs": []}}
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config_data, f)
 
         config = read_paas_config(tmp_path)
         assert config is not None
-        assert config.version == "1"
         assert config.prometheus is not None
         assert config.prometheus.scrape_configs == []
 
@@ -145,18 +102,7 @@ class TestReadPaasConfig:
     def test_invalid_schema_raises_error(self, tmp_path):
         """Test that schema validation error raises CharmConfigInvalidError."""
         config_path = tmp_path / CONFIG_FILE_NAME
-        config_data = {"version": "99", "unknown_key": "value"}
-        with config_path.open("w", encoding="utf-8") as f:
-            yaml.dump(config_data, f)
-
-        with pytest.raises(CharmConfigInvalidError) as exc_info:
-            read_paas_config(tmp_path)
-        assert "Invalid" in str(exc_info.value)
-
-    def test_missing_version_field_raises_error(self, tmp_path):
-        """Test that missing version field raises CharmConfigInvalidError."""
-        config_path = tmp_path / CONFIG_FILE_NAME
-        config_data = {"prometheus": {}}
+        config_data = {"unknown_key": "value"}
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config_data, f)
 
@@ -181,20 +127,19 @@ class TestReadPaasConfig:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
             config_path = tmp_path / CONFIG_FILE_NAME
-            config_data = {"version": "1"}
+            config_data = {"prometheus": {"scrape_configs": []}}
             with config_path.open("w", encoding="utf-8") as f:
                 yaml.dump(config_data, f)
 
             with patch("pathlib.Path.cwd", return_value=tmp_path):
                 config = read_paas_config()
                 assert config is not None
-                assert config.version == "1"
+                assert config.prometheus is not None
 
     def test_config_with_all_fields(self, tmp_path):
         """Test reading a config file with all supported fields."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_data = {
-            "version": "1",
             "prometheus": {
                 "scrape_configs": [
                     {
@@ -204,17 +149,13 @@ class TestReadPaasConfig:
                     }
                 ]
             },
-            "http-proxy": {"domains": ["api.example.com"]},
         }
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config_data, f)
 
         config = read_paas_config(tmp_path)
         assert config is not None
-        assert config.version == "1"
         assert config.prometheus is not None
-        assert config.http_proxy is not None
-        assert config.http_proxy == {"domains": ["api.example.com"]}
 
 
 class TestStaticConfig:
@@ -378,7 +319,6 @@ class TestPaasConfigWithPrometheus:
         """Test PaasConfig with complete prometheus section."""
 
         config = PaasConfig(
-            version="1",
             prometheus=PrometheusConfig(
                 scrape_configs=[
                     ScrapeConfig(
@@ -404,7 +344,6 @@ class TestPaasConfigWithPrometheus:
     def test_paas_config_prometheus_from_dict(self):
         """Test PaasConfig with prometheus section from dict (YAML-like)."""
         config_dict = {
-            "version": "1",
             "prometheus": {
                 "scrape_configs": [
                     {
@@ -426,7 +365,7 @@ class TestPaasConfigWithPrometheus:
 
     def test_paas_config_empty_prometheus_section(self):
         """Test PaasConfig with empty prometheus section."""
-        config_dict = {"version": "1", "prometheus": {}}
+        config_dict = {"prometheus": {}}
         config = PaasConfig(**config_dict)
         assert config.prometheus is not None
         assert config.prometheus.scrape_configs is None
