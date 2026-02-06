@@ -1,0 +1,26 @@
+timeout: 20m
+scan:
+  offline-scan: true
+  skip-files:
+    - usr/bin/pebble
+    - usr/bin/statsd_exporter
+    - bin/pebble
+    - bin/statsd_exporter
+    - usr/lib/python3.10/site-packages/setuptools-59.6.0.dist-info/METADATA
+    - usr/lib/python3.10/site-packages/protobuf-6.33.4.dist-info/METADATA
+    - usr/lib/python3.10/site-packages/django-5.2.10.dist-info/METADATA
+    - usr/share/nodejs/tar/package.json
+    - usr/lib/node_modules/app/node_modules/path-to-regexp/package.json
+    - usr/share/nodejs/npm/package.json
+    - usr/lib/node_modules/app/node_modules/body-parser/package.json
+    - usr/lib/node_modules/app/node_modules/constantinople/package.json
+    - usr/lib/node_modules/app/node_modules/qs/package.json
+    - usr/lib/node_modules/app/node_modules/transformers/node_modules/uglify-js/package.json
+    - usr/share/nodejs/@babel/traverse/package.json
+    - usr/share/nodejs/braces/package.json
+    - usr/share/nodejs/http-cache-semantics/package.json
+    - usr/share/nodejs/ip/package.json
+    - usr/lib/python3.12/site-packages/starlette-0.48.0.dist-info/METADATA
+    - usr/lib/python3.12/site-packages/protobuf-6.33.4.dist-info/METADATA
+    - lib/python3.10/site-packages/setuptools-59.6.0.dist-info/METADATA
+    - app/spring-boot-0.0.1.jar
