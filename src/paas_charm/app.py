@@ -142,6 +142,8 @@ def generate_rabbitmq_env(
     parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
     if len(parsed_url.path) > 1:
         envvars["RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
+    if relation_data.hostnames:
+        envvars["RABBITMQ_HOSTNAMES"] = ",".join(relation_data.hostnames)
     return envvars
 
 
