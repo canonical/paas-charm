@@ -1,6 +1,9 @@
 timeout: 20m
 scan:
   offline-scan: true
+  # The reason we have so much directories here is because
+  # the rocks in this repo are examples and not deployed anywhere
+  # so the CVE's are not that important
   skip-files:
     - usr/bin/pebble
     - usr/bin/statsd_exporter
