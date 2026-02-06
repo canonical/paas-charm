@@ -93,19 +93,9 @@ func (s *Service) GetRabbitMQConnection() (*amqp.Connection, error) {
 	// For this example, we assume hostnames are IPs and we reuse the URI format
 	// Example format of RABBITMQ_HOSTNAMES: "10.0.0.1,10.0.0.2,10.0.0.3"
 	units := strings.Split(hostnames, ",")
-
-	// Example credentials extraction logic (simplified)
-	// In a real scenario, you might store user/pass in separate variables
-	user := os.Getenv("RABBITMQ_USERNAME")
-	pass := os.Getenv("RABBITMQ_PASSWORD")
-
 	for _, ip := range units {
-		ip = strings.TrimSpace(ip)
-		// Constructing URI for each unit
-		addr := fmt.Sprintf("amqp://%s:%s@%s:5672/", user, pass, ip)
-
 		log.Printf("Attempting to connect to fallback unit: %s", ip)
-		conn, err := amqp.Dial(addr)
+		conn, err := amqp.Dial(ip)
 		if err == nil {
 			log.Printf("Successfully connected to unit: %s", ip)
 			return conn, nil

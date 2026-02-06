@@ -195,8 +195,11 @@ class RabbitMQRequires(Object):
         if not rel:
             return _hosts
         for unit in rel.units:
+            unit_data = rel.data[unit]
+            password = unit_data.get("password", None)
             if ingress := rel.data[unit].get("hostname"):
-                _hosts.append(ingress)
+                vhost = urllib.parse.quote(self.vhost, safe="")
+                _hosts.append(f"amqp://{self.username}:{password}@{ingress}:{self.port}/{vhost}")
         return _hosts
 
     @property
