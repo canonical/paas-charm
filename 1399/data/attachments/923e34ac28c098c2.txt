@@ -1,0 +1,396 @@
+15:19:29 [32mINFO[0m cli: juju deploy --model testing /home/runner/snap/juju/common/tmpzg5z1lf7/_temp.charm fastapi-k8s --config non-optional-string=string --resource app-image=ghcr.io/canonical/fastapi-app:853629e0615e3c0514928511dab497800bd0f73f-_0.1_amd64
+15:19:33 [32mINFO[0m cli: juju status --model testing --format json
+15:19:33 [32mINFO[0m cli: juju deploy --model testing postgresql-k8s --base ubuntu@22.04 --channel 14/edge --config profile=testing --config plugin_hstore_enable=true --config plugin_pg_trgm_enable=true --trust
+15:19:35 [32mINFO[0m cli: juju integrate --model testing fastapi-k8s postgresql-k8s:database
+15:19:36 [32mINFO[0m wait: status changed:
++ .model.name = 'testing'
++ .model.type = 'caas'
++ .model.controller = 'github-pr-fcc63-microk8s'
++ .model.cloud = 'microk8s'
++ .model.version = '3.6.14'
++ .model.region = 'localhost'
++ .model.model_status.current = 'available'
++ .apps['fastapi-k8s'].charm = 'local:fastapi-k8s-0'
++ .apps['fastapi-k8s'].charm_origin = 'local'
++ .apps['fastapi-k8s'].charm_name = 'fastapi-k8s'
++ .apps['fastapi-k8s'].charm_rev = 0
++ .apps['fastapi-k8s'].exposed = False
++ .apps['fastapi-k8s'].base.name = 'ubuntu'
++ .apps['fastapi-k8s'].base.channel = '24.04'
++ .apps['fastapi-k8s'].scale = 1
++ .apps['fastapi-k8s'].app_status.current = 'waiting'
++ .apps['fastapi-k8s'].app_status.message = 'installing agent'
++ .apps['fastapi-k8s'].relations['postgresql'][0].related_app = 'postgresql-k8s'
++ .apps['fastapi-k8s'].relations['postgresql'][0].interface = 'postgresql_client'
++ .apps['fastapi-k8s'].relations['postgresql'][0].scope = 'global'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].related_app = 'fastapi-k8s'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].interface = 'secret-storage'
++ .apps['fastapi-k8s'].relations['secret-storage'][0].scope = 'global'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing agent'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'allocating'
++ .apps['fastapi-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['http-proxy'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['ingress'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['oidc'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['openfga'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['postgresql'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['secret-storage'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['smtp'] = 'alpha'
++ .apps['fastapi-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['postgresql-k8s'].charm = 'postgresql-k8s'
++ .apps['postgresql-k8s'].charm_origin = 'charmhub'
++ .apps['postgresql-k8s'].charm_name = 'postgresql-k8s'
++ .apps['postgresql-k8s'].charm_rev = 736
++ .apps['postgresql-k8s'].exposed = False
++ .apps['postgresql-k8s'].base.name = 'ubuntu'
++ .apps['postgresql-k8s'].base.channel = '22.04'
++ .apps['postgresql-k8s'].charm_channel = '14/edge'
++ .apps['postgresql-k8s'].scale = 1
++ .apps['postgresql-k8s'].app_status.current = 'waiting'
++ .apps['postgresql-k8s'].app_status.message = 'installing agent'
++ .apps['postgresql-k8s'].relations['database'][0].related_app = 'fastapi-k8s'
++ .apps['postgresql-k8s'].relations['database'][0].interface = 'postgresql_client'
++ .apps['postgresql-k8s'].relations['database'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['database-peers'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['database-peers'][0].interface = 'postgresql_peers'
++ .apps['postgresql-k8s'].relations['database-peers'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['restart'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['restart'][0].interface = 'rolling_op'
++ .apps['postgresql-k8s'].relations['restart'][0].scope = 'global'
++ .apps['postgresql-k8s'].relations['upgrade'][0].related_app = 'postgresql-k8s'
++ .apps['postgresql-k8s'].relations['upgrade'][0].interface = 'upgrade'
++ .apps['postgresql-k8s'].relations['upgrade'][0].scope = 'global'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'installing agent'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'allocating'
++ .apps['postgresql-k8s'].endpoint_bindings[''] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['certificates'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['database'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['database-peers'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['db'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['db-admin'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['grafana-dashboard'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['ldap'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['logging'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['metrics-endpoint'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['receive-ca-cert'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['replication'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['replication-offer'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['restart'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['s3-parameters'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['tracing'] = 'alpha'
++ .apps['postgresql-k8s'].endpoint_bindings['upgrade'] = 'alpha'
++ .storage.storage['pgdata/0'].kind = 'filesystem'
++ .storage.storage['pgdata/0'].status.current = 'pending'
++ .storage.storage['pgdata/0'].persistent = False
++ .storage.storage['pgdata/0'].life = 'alive'
++ .storage.storage['pgdata/0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].size = 0
++ .storage.filesystems['0'].volume = '0'
++ .storage.filesystems['0'].storage = 'pgdata/0'
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].mount_point = ''
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].read_only = False
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.filesystems['0'].life = 'alive'
++ .storage.filesystems['0'].status.current = 'pending'
++ .storage.volumes['0'].size = 0
++ .storage.volumes['0'].persistent = False
++ .storage.volumes['0'].storage = 'pgdata/0'
++ .storage.volumes['0'].attachments.containers['postgresql-k8s/0'].read_only = False
++ .storage.volumes['0'].attachments.containers['postgresql-k8s/0'].life = 'alive'
++ .storage.volumes['0'].attachments.units['postgresql-k8s/0'].life = 'alive'
++ .storage.volumes['0'].life = 'alive'
++ .storage.volumes['0'].status.current = 'pending'
+15:19:37 [32mINFO[0m wait: status changed:
++ .apps['fastapi-k8s'].provider_id = '473db93f-29ef-4692-bd02-470542fe1101'
++ .apps['fastapi-k8s'].address = '10.152.183.247'
+15:19:42 [32mINFO[0m wait: status changed:
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].provider_id = 'fastapi-k8s-0'
+15:19:43 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.message = 'installing agent'
++ .apps['fastapi-k8s'].app_status.message = 'agent initialising'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing agent'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'agent initialising'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.version = '3.6.14'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].leader = True
+15:19:46 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'waiting'
+- .apps['fastapi-k8s'].app_status.message = 'agent initialising'
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'installing charm software'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'agent initialising'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'allocating'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running install hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].address = '10.1.76.140'
+15:19:48 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running install hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-created hook'
+15:19:50 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-created hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running leader-elected hook'
+15:19:51 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].app_status.current = 'waiting'
++ .apps['fastapi-k8s'].app_status.message = 'Waiting for pebble ready'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Waiting for pebble ready'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running leader-elected hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running start hook'
++ .apps['postgresql-k8s'].provider_id = 'e555909f-c397-49a1-b8b6-d3400d4579fb'
++ .apps['postgresql-k8s'].address = '10.152.183.207'
+15:19:52 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running start hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-changed hook'
+15:19:54 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'waiting'
+- .apps['fastapi-k8s'].app_status.message = 'Waiting for pebble ready'
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'waiting'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Waiting for pebble ready'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+15:19:55 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+15:19:56 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running secret-storage-relation-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].provider_id = 'postgresql-k8s-0'
+15:19:57 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'blocked'
++ .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+15:20:00 [32mINFO[0m wait: status changed:
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].address = '10.1.76.142'
+- .storage.storage['pgdata/0'].status.current = 'pending'
++ .storage.storage['pgdata/0'].status.current = 'attached'
++ .storage.storage['pgdata/0'].status.message = 'Successfully provisioned volume pvc-36d23481-5222-4ab7-a55d-ffc0c1f74b5c'
+- .storage.filesystems['0'].size = 0
++ .storage.filesystems['0'].size = 1024
++ .storage.filesystems['0'].provider_id = '36d23481-5222-4ab7-a55d-ffc0c1f74b5c'
+- .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].mount_point = ''
++ .storage.filesystems['0'].attachments.containers['postgresql-k8s/0'].mount_point = '/var/lib/postgresql/data'
++ .storage.filesystems['0'].pool = 'kubernetes'
+- .storage.filesystems['0'].status.current = 'pending'
+- .storage.volumes['0'].size = 0
+- .storage.volumes['0'].persistent = False
++ .storage.filesystems['0'].status.current = 'attached'
++ .storage.filesystems['0'].status.message = 'Successfully provisioned volume pvc-36d23481-5222-4ab7-a55d-ffc0c1f74b5c'
++ .storage.volumes['0'].size = 1024
++ .storage.volumes['0'].persistent = True
++ .storage.volumes['0'].provider_id = 'pvc-36d23481-5222-4ab7-a55d-ffc0c1f74b5c'
++ .storage.volumes['0'].pool = 'kubernetes'
+- .storage.volumes['0'].status.current = 'pending'
++ .storage.volumes['0'].status.current = 'attached'
+15:20:02 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.message = 'installing agent'
++ .apps['postgresql-k8s'].app_status.message = 'agent initialising'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'installing agent'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'agent initialising'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.version = '3.6.14'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].leader = True
+15:20:07 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.current = 'waiting'
+- .apps['postgresql-k8s'].app_status.message = 'agent initialising'
++ .apps['postgresql-k8s'].app_status.current = 'maintenance'
++ .apps['postgresql-k8s'].app_status.message = 'installing charm software'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'agent initialising'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'allocating'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'maintenance'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running install hook'
+15:20:10 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook for postgresql-k8s/0'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running install hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-created hook'
+15:20:11 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook for postgresql-k8s/0'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-created hook'
+15:20:12 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running restart-relation-created hook'
+15:20:14 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running restart-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running upgrade-relation-created hook'
+15:20:15 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running upgrade-relation-created hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running leader-elected hook'
+15:20:17 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running leader-elected hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running pgdata-storage-attached hook'
+15:20:18 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running pgdata-storage-attached hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running config-changed hook'
+15:20:20 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running config-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running start hook'
+15:20:21 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.current = 'maintenance'
+- .apps['postgresql-k8s'].app_status.message = 'installing charm software'
++ .apps['postgresql-k8s'].app_status.current = 'waiting'
++ .apps['postgresql-k8s'].app_status.message = 'installing agent'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'maintenance'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'installing charm software'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'unknown'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running start hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook'
+15:20:22 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-joined hook for fastapi-k8s/0'
+15:20:23 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-joined hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
+15:20:25 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-changed hook'
+15:20:36 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.message = 'installing agent'
++ .apps['postgresql-k8s'].app_status.message = 'awaiting for primary endpoint to be ready'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'unknown'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'awaiting for primary endpoint to be ready'
+15:20:37 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-peers-relation-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running upgrade-relation-changed hook'
+15:20:52 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running upgrade-relation-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+15:21:04 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running postgresql-pebble-ready hook'
+15:21:15 [32mINFO[0m wait: status changed:
++ .apps['postgresql-k8s'].version = '14.20'
+15:21:17 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
+- .apps['postgresql-k8s'].app_status.message = 'awaiting for primary endpoint to be ready'
++ .apps['postgresql-k8s'].app_status.message = 'awaiting for cluster to start'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'awaiting for primary endpoint to be ready'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running postgresql-pebble-ready hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'awaiting for cluster to start'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+15:21:18 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
+15:21:20 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+15:21:21 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.current = 'waiting'
+- .apps['postgresql-k8s'].app_status.message = 'awaiting for cluster to start'
++ .apps['postgresql-k8s'].app_status.current = 'maintenance'
++ .apps['postgresql-k8s'].app_status.message = 'Beginning rolling restart'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'awaiting for cluster to start'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'maintenance'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Executing restart operation'
+15:21:22 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'maintenance'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Executing restart operation'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'active'
+15:21:23 [32mINFO[0m wait: status changed:
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Primary'
+15:21:26 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'active'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Primary'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Updating extensions'
+15:21:27 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'waiting'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Updating extensions'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.current = 'active'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].workload_status.message = 'Primary'
+15:21:30 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].app_status.current = 'maintenance'
+- .apps['postgresql-k8s'].app_status.message = 'Beginning rolling restart'
++ .apps['postgresql-k8s'].app_status.current = 'active'
+15:21:31 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'blocked'
+- .apps['fastapi-k8s'].app_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
++ .apps['fastapi-k8s'].app_status.current = 'maintenance'
++ .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'blocked'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = "database migration command ['bash', '-eo', 'pipefail', 'migrate.sh'] failed, will retry in next update-status"
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running restart-relation-changed hook'
+15:21:34 [32mINFO[0m wait: status changed:
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running restart-relation-changed hook'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+15:21:35 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'maintenance'
+- .apps['fastapi-k8s'].app_status.message = 'Preparing service for restart'
++ .apps['fastapi-k8s'].app_status.current = 'waiting'
++ .apps['fastapi-k8s'].app_status.message = 'installing agent'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'maintenance'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.message = 'Preparing service for restart'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'executing'
+- .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.message = 'running postgresql-relation-changed hook'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].workload_status.current = 'active'
++ .apps['fastapi-k8s'].units['fastapi-k8s/0'].juju_status.current = 'idle'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
+15:21:36 [32mINFO[0m wait: status changed:
+- .apps['fastapi-k8s'].app_status.current = 'waiting'
+- .apps['fastapi-k8s'].app_status.message = 'installing agent'
++ .apps['fastapi-k8s'].app_status.current = 'active'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'executing'
+- .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.message = 'running database-relation-changed hook for fastapi-k8s/0'
++ .apps['postgresql-k8s'].units['postgresql-k8s/0'].juju_status.current = 'idle'
+15:21:38 [32mINFO[0m cli: juju status --model testing --format json

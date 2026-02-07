@@ -1,0 +1,2 @@
+15:31:58 [32mINFO[0m cli: juju status --model testing --format json
+15:31:58 [32mINFO[0m cli: juju exec --model testing --format json --unit flask-k8s/0 -- '/usr/bin/getent hosts flask-k8s.testing'
