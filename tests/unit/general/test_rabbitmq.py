@@ -44,7 +44,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
                 username="flask-k8s",
                 password="testingvalue",
                 amqp_uri="amqp://flask-k8s:testingvalue@testinghostname:5672/",
-                hostnames=["testinghostname"],
+                hostnames=["amqp://flask-k8s:testingvalue@testinghostname:5672/%2F"],
             ),
             id="unit relation data",
         ),
@@ -95,5 +95,4 @@ def test_rabbitmq_get_relation_data(
         flask_harness.charm.app.name,
         paas_app_data,
     )
-
     assert flask_harness.charm._rabbitmq.get_relation_data() == expected_relation_data

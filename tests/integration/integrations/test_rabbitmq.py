@@ -64,8 +64,7 @@ def test_rabbitmq_server_integration(
 def test_rabbitmq_ha_integration(
     juju: jubilant.Juju,
     go_app: App,
-    rabbitmq_app_fixture: str,
-    request: pytest.FixtureRequest,
+    rabbitmq_server_app: App,
     lxd_controller,
     lxd_model,
 ):
@@ -74,10 +73,8 @@ def test_rabbitmq_ha_integration(
     act: Integrate the app with rabbitmq
     assert: Assert that RabbitMQ works correctly
     """
-    rabbitmq_app = request.getfixturevalue(rabbitmq_app_fixture)
-
     try:
-        juju.integrate(go_app.name, rabbitmq_app.name)
+        juju.integrate(go_app.name, rabbitmq_server_app.name)
         juju.wait(
             lambda status: jubilant.all_active(status, go_app.name),
             timeout=(10 * 60),
@@ -95,10 +92,10 @@ def test_rabbitmq_ha_integration(
         assert "SUCCESS" == response.text
     finally:
         with jubilant_temp_controller(juju, lxd_controller, lxd_model):
-            juju.add_unit(rabbitmq_app.name, num_units=1)
+            juju.add_unit(rabbitmq_server_app.name, num_units=1)
             juju.wait(
-                lambda status: jubilant.all_active(status, rabbitmq_app.name),
+                lambda status: jubilant.all_active(status, rabbitmq_server_app.name),
                 timeout=6 * 60,
                 delay=10,
             )
-        juju.remove_relation(go_app.name, rabbitmq_app.name)
+        juju.remove_relation(go_app.name, rabbitmq_server_app.name)
