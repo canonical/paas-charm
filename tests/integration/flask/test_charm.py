@@ -175,7 +175,9 @@ def test_with_ingress(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name), delay=5
+    )
 
     status = juju.status()
     model_name = status.model.name
@@ -206,7 +208,7 @@ def test_app_peer_address(
     """
     # Add a unit
     juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, delay=5)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
 
     status = juju.status()
     model_name = status.model.name
