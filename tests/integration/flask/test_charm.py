@@ -234,7 +234,7 @@ def test_app_peer_address(
     # Scale back to 1 unit
     juju.remove_unit(flask_app.name, num_units=1)
     juju.wait(
-        lambda status: status.apps[flask_app.name].units[f"{flask_app.name}/0"].is_active, delay=5
+        lambda status: status.apps[flask_app.name].is_active, delay=5
     )
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
