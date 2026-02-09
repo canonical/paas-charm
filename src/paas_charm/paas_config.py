@@ -6,6 +6,7 @@
 import logging
 import pathlib
 import typing
+from collections import Counter
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -83,8 +84,8 @@ class PrometheusConfig(BaseModel):
         if not self.scrape_configs:
             return self
 
-        job_names = [sc.job_name for sc in self.scrape_configs]
-        duplicates = [name for name in set(job_names) if job_names.count(name) > 1]
+        job_names = Counter(sc.job_name for sc in self.scrape_configs)
+        duplicates = [name for name, count in job_names.items() if count > 1]
 
         if duplicates:
             raise ValueError(
