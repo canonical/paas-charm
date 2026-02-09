@@ -15,7 +15,9 @@ WORKLOAD_PORT = 8080
 import requests
 
 
-def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju, http: requests.Session):
+def test_springboot_is_up(
+    spring_boot_app: App, juju: jubilant.Juju, session_with_retry: requests.Session
+):
     """
     arrange: build and deploy the Springboot charm.
     act: call the endpoint.
@@ -25,12 +27,16 @@ def test_springboot_is_up(spring_boot_app: App, juju: jubilant.Juju, http: reque
     assert status.apps[spring_boot_app.name].units[spring_boot_app.name + "/0"].is_active
     for unit in status.apps[spring_boot_app.name].units.values():
         assert unit.is_active, f"Unit {unit.name} is not active"
-        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/hello-world", timeout=5)
+        response = session_with_retry.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/hello-world", timeout=5
+        )
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
 
-def test_migration(spring_boot_app: App, juju: jubilant.Juju, http: requests.Session):
+def test_migration(
+    spring_boot_app: App, juju: jubilant.Juju, session_with_retry: requests.Session
+):
     """
     arrange: build and deploy the Springboot charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the migration script.
@@ -39,7 +45,9 @@ def test_migration(spring_boot_app: App, juju: jubilant.Juju, http: requests.Ses
     """
     status = juju.status()
     for unit in status.apps[spring_boot_app.name].units.values():
-        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
+        response = session_with_retry.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5
+        )
         assert response.status_code == 200
         user_creation_request = {"name": "foo", "password": "bar"}
         response = requests.post(
