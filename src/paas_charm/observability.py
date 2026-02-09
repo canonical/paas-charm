@@ -12,6 +12,7 @@ import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
+from paas_charm.app import SCHEDULER_UNIT_NUMBER
 from paas_charm.paas_config import PrometheusConfig
 from paas_charm.utils import enable_pebble_log_forwarding
 
@@ -46,7 +47,9 @@ class Observability(ops.Object):
         """
         super().__init__(charm, "observability")
         self._charm = charm
-        jobs = build_prometheus_jobs(metrics_target, metrics_path, prometheus_config)
+        jobs = build_prometheus_jobs(
+            metrics_target, metrics_path, prometheus_config, charm.app.name, charm.model.name
+        )
         self._metrics_endpoint = MetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
@@ -96,10 +99,39 @@ class Observability(ops.Object):
         )
 
 
+def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) -> str:
+    """Replace @scheduler placeholder with scheduler unit FQDN.
+
+    Args:
+        app_name: Application name (e.g., "flask-app").
+        model_name: Juju model name (e.g., "my-model").
+        target: Target string possibly containing @scheduler placeholder.
+
+    Returns:
+        Target with @scheduler replaced by scheduler unit's Kubernetes DNS FQDN,
+        or unchanged target if no @scheduler placeholder present.
+
+    Note:
+        This uses Kubernetes DNS service discovery and only works in K8s environments.
+        The FQDN format is: {app-name}-{SCHEDULER_UNIT_NUMBER}.{app-name}-endpoints.
+        {model-name}.svc.cluster.local
+    """
+    if target.startswith("@scheduler:"):
+        port = target.split(":", 1)[1]
+        scheduler_fqdn = (
+            f"{app_name}-{SCHEDULER_UNIT_NUMBER}.{app_name}-endpoints."
+            f"{model_name}.svc.cluster.local"
+        )
+        return f"{scheduler_fqdn}:{port}"
+    return target
+
+
 def build_prometheus_jobs(
     metrics_target: str | None,
     metrics_path: str | None,
     prometheus_config: PrometheusConfig | None,
+    app_name: str,
+    model_name: str,
 ) -> list[dict[str, typing.Any]]:
     """Build Prometheus scrape jobs list from framework defaults and custom config.
 
@@ -107,6 +139,8 @@ def build_prometheus_jobs(
         metrics_target: Default framework metrics target (e.g., "*:8000").
         metrics_path: Default framework metrics path (e.g., "/metrics").
         prometheus_config: Custom Prometheus configuration from paas-config.yaml.
+        app_name: Application name for @scheduler resolution.
+        model_name: Juju model name for @scheduler resolution.
 
     Returns:
         List of Prometheus job configurations (empty list if no jobs are configured).
@@ -115,8 +149,9 @@ def build_prometheus_jobs(
 
     # Add default framework job if configured. The library adds a default job_name.
     if metrics_path and metrics_target:
+        resolved_target = _resolve_scheduler_placeholder(app_name, model_name, metrics_target)
         jobs.append(
-            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
+            {"metrics_path": metrics_path, "static_configs": [{"targets": [resolved_target]}]}
         )
 
     # Add custom jobs from paas-config.yaml
@@ -128,9 +163,20 @@ def build_prometheus_jobs(
                     "metrics_path": scrape_config.metrics_path,
                     "static_configs": [
                         (
-                            {"targets": sc.targets, "labels": sc.labels}
+                            {
+                                "targets": [
+                                    _resolve_scheduler_placeholder(app_name, model_name, target)
+                                    for target in sc.targets
+                                ],
+                                "labels": sc.labels,
+                            }
                             if sc.labels
-                            else {"targets": sc.targets}
+                            else {
+                                "targets": [
+                                    _resolve_scheduler_placeholder(app_name, model_name, target)
+                                    for target in sc.targets
+                                ]
+                            }
                         )
                         for sc in scrape_config.static_configs
                     ],
