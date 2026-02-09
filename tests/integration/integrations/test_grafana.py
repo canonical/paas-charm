@@ -36,7 +36,7 @@ def test_grafana_integration(
     dashboard_name: str,
     juju: jubilant.Juju,
     cos_apps: dict[str:App],
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -58,12 +58,14 @@ def test_grafana_integration(
         .units[f"{cos_apps['grafana_app'].name}/0"]
         .address
     )
-    http.post(
+    session_with_retry.post(
         f"http://{grafana_ip}:3000/login",
         json={
             "user": "admin",
             "password": password,
         },
     ).raise_for_status()
-    check_grafana_datasource_types_patiently(http, grafana_ip, ["prometheus", "loki"])
-    check_grafana_dashboards_patiently(http, grafana_ip, dashboard_name)
+    check_grafana_datasource_types_patiently(
+        session_with_retry, grafana_ip, ["prometheus", "loki"]
+    )
+    check_grafana_dashboards_patiently(session_with_retry, grafana_ip, dashboard_name)

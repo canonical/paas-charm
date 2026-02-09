@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+* feat: Add `paas-config.yaml` support for custom Prometheus scrape configurations.
+
 ## 2026-01-12
 
 * docs: Maintenance of the landing pages, including some reorganization of content.
