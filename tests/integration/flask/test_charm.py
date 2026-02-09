@@ -233,9 +233,7 @@ def test_app_peer_address(
 
     # Scale back to 1 unit
     juju.remove_unit(flask_app.name, num_units=1)
-    juju.wait(
-        lambda status: status.apps[flask_app.name].is_active, delay=5
-    )
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, delay=5)
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
         unit_url = f"http://{unit.address}:{WORKLOAD_PORT}/env"
