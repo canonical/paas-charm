@@ -81,6 +81,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage.get_peer_unit_fdqns.return_value = None
     harness.update_config(config)
     charm_state = CharmState.from_charm(
+        charm=harness.charm,
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),
@@ -189,6 +190,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     config["webserver-worker-class"] = "gevent"
     harness.update_config(config)
     charm_state = CharmState.from_charm(
+        charm=harness.charm,
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),

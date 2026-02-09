@@ -25,7 +25,13 @@ from tests.unit.go.constants import GO_CONTAINER_NAME
 
 @pytest.mark.parametrize(
     "blocked_harness_fixture",
-    ["flask_harness", "go_harness", "fastapi_harness", "django_harness", "expressjs_harness"],
+    [
+        "flask_harness",
+        "go_harness",
+        "fastapi_harness",
+        "django_harness",
+        "expressjs_harness",
+    ],
 )
 @pytest.mark.parametrize(
     "required_configs, expected_status_message_substrs, unexpected_status_message_substrs, expected_log_message_substrs",
@@ -348,7 +354,12 @@ def _test_app_config_parameters():
 
     all_options = implicit_optional_options + explicit_optional_options + non_optional_options
     return [
-        pytest.param(option["name"], option["type_dict"], option["type_result"], id=option["name"])
+        pytest.param(
+            option["name"],
+            option["type_dict"],
+            option["type_result"],
+            id=option["name"],
+        )
         for option in all_options
     ]
 
@@ -415,8 +426,11 @@ def test_app_config_class_factory(
         unittest.mock.MagicMock(return_value=mock_yaml),
     )
 
+    mock_charm = unittest.mock.MagicMock()
+    mock_charm.charm_dir = pathlib.Path(".")
+
     assert (
-        paas_charm.charm_state.app_config_class_factory(framework).__annotations__
+        paas_charm.charm_state.app_config_class_factory(mock_charm, framework).__annotations__
         == expected_output
     )
 
