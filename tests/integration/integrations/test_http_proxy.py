@@ -26,7 +26,7 @@ def test_proxy_integration(
     http_proxy_app: App,
     port,
     request: pytest.FixtureRequest,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: Deploy 12-factor app and http proxy configurator correctly configured.
@@ -45,7 +45,7 @@ def test_proxy_integration(
         status = juju.status()
         unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-        json_response = http.get(f"http://{unit_ip}:{port}/env", timeout=10).json()
+        json_response = session_with_retry.get(f"http://{unit_ip}:{port}/env", timeout=10).json()
         assert json_response["HTTPS_PROXY"] == "http://proxy.example.com:3128/"
         assert json_response["HTTP_PROXY"] == "http://proxy.example.com:3128/"
     finally:

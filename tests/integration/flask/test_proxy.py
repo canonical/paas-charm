@@ -15,7 +15,7 @@ def test_proxy(
     juju: jubilant.Juju,
     pytestconfig: pytest.Config,
     tmp_path_factory,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """Build and deploy the flask charm."""
     app_name = "flask-k8s"
@@ -66,7 +66,7 @@ def test_proxy(
 
     status = juju.status()
     for unit in status.apps[app_name].units.values():
-        response = http.get(f"http://{unit.address}:8000/env", timeout=5)
+        response = session_with_retry.get(f"http://{unit.address}:8000/env", timeout=5)
         assert response.status_code == 200
         env = response.json()
         assert env["http_proxy"] == http_proxy

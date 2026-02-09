@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def test_db_migration(
     flask_db_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -31,13 +31,18 @@ def test_db_migration(
 
     status = juju.status()
     for unit in status.apps[flask_db_app.name].units.values():
-        assert http.head(f"http://{unit.address}:8000/tables/users", timeout=5).status_code == 200
+        assert (
+            session_with_retry.head(
+                f"http://{unit.address}:8000/tables/users", timeout=5
+            ).status_code
+            == 200
+        )
         user_creation_request = {"username": "foo", "password": "bar"}
-        response = http.post(
+        response = session_with_retry.post(
             f"http://{unit.address}:8000/users", json=user_creation_request, timeout=5
         )
         assert response.status_code == 201
-        response = http.post(
+        response = session_with_retry.post(
             f"http://{unit.address}:8000/users", json=user_creation_request, timeout=5
         )
         assert response.status_code == 400
