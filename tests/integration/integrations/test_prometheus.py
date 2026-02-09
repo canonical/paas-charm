@@ -32,7 +32,7 @@ def test_prometheus_integration(
     metrics_path: str,
     juju: jubilant.Juju,
     prometheus_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: after 12-Factor charm has been deployed.
@@ -50,7 +50,9 @@ def test_prometheus_integration(
         status = juju.status()
         app_unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-        prometheus_unit_ip, active_targets = get_prometheus_targets(juju, prometheus_app, http)
+        prometheus_unit_ip, active_targets = get_prometheus_targets(
+            juju, prometheus_app, session_with_retry
+        )
 
         assert len(active_targets)
         for active_target in active_targets:
@@ -60,7 +62,8 @@ def test_prometheus_integration(
                 and metrics_path in scrape_url
                 and app_unit_ip in scrape_url
             ):
-                response = http.get(scrape_url, timeout=10)
+                # scrape the url directly to see if it works
+                response = session_with_retry.get(scrape_url, timeout=10)
                 response.raise_for_status()
                 break
         else:
@@ -76,7 +79,7 @@ def test_prometheus_custom_scrape_configs(
     flask_app: App,
     prometheus_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: flask charm with paas-config.yaml containing custom scrape_configs.
@@ -93,7 +96,9 @@ def test_prometheus_custom_scrape_configs(
 
         status = juju.status()
         app_unit_ip = status.apps[flask_app.name].units[flask_app.name + "/0"].address
-        prometheus_unit_ip, active_targets = get_prometheus_targets(juju, prometheus_app, http)
+        prometheus_unit_ip, active_targets = get_prometheus_targets(
+            juju, prometheus_app, session_with_retry
+        )
 
         framework_targets = [
             t
@@ -134,7 +139,7 @@ def test_prometheus_custom_scrape_configs(
 def get_prometheus_targets(
     juju: jubilant.Juju,
     prometheus_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ) -> tuple[str, list[dict]]:
     """Get active scrape targets from Prometheus.
 
@@ -148,5 +153,7 @@ def get_prometheus_targets(
     """
     status = juju.status()
     prometheus_unit_ip = status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].address
-    query_targets = http.get(f"http://{prometheus_unit_ip}:9090/api/v1/targets", timeout=10).json()
+    query_targets = session_with_retry.get(
+        f"http://{prometheus_unit_ip}:9090/api/v1/targets", timeout=10
+    ).json()
     return prometheus_unit_ip, query_targets["data"]["activeTargets"]

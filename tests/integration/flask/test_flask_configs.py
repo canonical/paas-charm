@@ -39,7 +39,7 @@ WORKLOAD_PORT = 8000
 def test_flask_config(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
     expected_config: dict,
 ):
     """
@@ -51,7 +51,7 @@ def test_flask_config(
     for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in expected_config.items():
             assert (
-                http.get(
+                session_with_retry.get(
                     f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
@@ -78,7 +78,7 @@ def test_flask_config(
 def test_flask_secret_config(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
     expected_config: dict,
 ):
     """
@@ -90,7 +90,7 @@ def test_flask_secret_config(
     for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in expected_config.items():
             assert (
-                http.get(
+                session_with_retry.get(
                     f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
@@ -150,7 +150,7 @@ def test_invalid_flask_config(
 def test_app_config(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
     expected_config: dict[str, str | int | bool],
 ):
     """
@@ -162,7 +162,7 @@ def test_app_config(
     for unit in status.apps[flask_app.name].units.values():
         for config_key, config_value in expected_config.items():
             assert (
-                http.get(
+                session_with_retry.get(
                     f"http://{unit.address}:{WORKLOAD_PORT}/config/{config_key}", timeout=10
                 ).json()
                 == config_value
