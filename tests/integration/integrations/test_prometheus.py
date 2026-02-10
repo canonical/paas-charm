@@ -105,19 +105,26 @@ def test_prometheus_custom_scrape_configs(
             juju, prometheus_app, session_with_retry
         )
 
+        unit_0_ip = status.apps[flask_app.name].units[f"{flask_app.name}/0"].address
+        unit_1_ip = status.apps[flask_app.name].units[f"{flask_app.name}/1"].address
+
         framework_targets = [t for t in active_targets if ":9102" in t["scrapeUrl"]]
         custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
         scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
 
-        _assert_scrape_targets_for_app(framework_targets, flask_app.name, [0, 1], 9102)
-
+        # Wildcard targets use pod IPs
+        _assert_scrape_targets_for_app(framework_targets, [unit_0_ip, unit_1_ip], 9102)
         _assert_scrape_targets_for_app(
-            custom_targets, flask_app.name, [0, 1], 8081, {"app": "flask", "env": "example"}
+            custom_targets, [unit_0_ip, unit_1_ip], 8081, {"app": "flask", "env": "example"}
         )
         assert "flask-app-custom" in custom_targets[0]["labels"]["job"]
 
+        # @scheduler placeholder uses FQDN
+        scheduler_fqdn = (
+            f"{flask_app.name}-0.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
+        )
         scheduler = _assert_scrape_targets_for_app(
-            scheduler_targets, flask_app.name, [0], 8082, {"role": "scheduler"}
+            scheduler_targets, [scheduler_fqdn], 8082, {"role": "scheduler"}
         )
         assert "flask-scheduler-metrics" in scheduler[0]["labels"]["job"]
 
@@ -142,17 +149,15 @@ def _get_prometheus_targets(
 
 def _assert_scrape_targets_for_app(
     targets: list[dict],
-    app_name: str,
-    units: list[int],
+    identifiers: list[str],
     port: int,
     labels: dict[str, str] | None = None,
 ) -> list[dict]:
-    """Verify targets match expected units, port, and labels for an app.
+    """Verify targets match expected identifiers, port, and labels.
 
     Args:
         targets: List of scrape target dicts from Prometheus.
-        app_name: Application name to verify in URLs.
-        units: List of unit numbers expected to be scraped.
+        identifiers: List of IPs or FQDNs expected in target URLs.
         port: Port number expected in all targets.
         labels: Optional dict of labels that each target must have.
 
@@ -160,15 +165,15 @@ def _assert_scrape_targets_for_app(
         The targets list for further assertions.
     """
     urls = [t["scrapeUrl"] for t in targets]
-    assert len(targets) == len(units), (
-        f"Expected {len(units)} target(s) on port {port} for units {units}, "
+    assert len(targets) == len(identifiers), (
+        f"Expected {len(identifiers)} target(s) on port {port}, "
         f"found {len(targets)}. URLs: {urls}"
     )
 
-    for unit_num in units:
+    for identifier in identifiers:
         assert any(
-            f"{app_name}-{unit_num}" in url for url in urls
-        ), f"Expected target for {app_name}-{unit_num} on port {port}, got: {urls}"
+            identifier in url for url in urls
+        ), f"Expected target with '{identifier}' on port {port}, got: {urls}"
 
     if labels:
         for target in targets:
