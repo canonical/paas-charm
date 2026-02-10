@@ -31,7 +31,7 @@ class StaticConfig(BaseModel):
 
     Attributes:
         targets: List of target hosts to scrape (e.g., ["*:8000", "localhost:9090"]).
-                 Supports @scheduler:PORT placeholder for targeting scheduler unit (unit 0).
+                 Supports @scheduler placeholder for targeting scheduler unit (unit 0).
         labels: Optional labels to assign to all metrics from these targets.
         model_config: Pydantic model configuration.
     """
