@@ -33,7 +33,7 @@ def test_smtp_integrations(
     port,
     request: pytest.FixtureRequest,
     mailcatcher,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: Build and deploy the charm. Integrate the charm with the smtp-integrator.
@@ -80,7 +80,7 @@ def test_smtp_integrations(
         return proc.stdout or proc.stderr
 
     try:
-        response = http.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
+        response = session_with_retry.get(f"http://{unit_ip}:{port}/send_mail", timeout=5)
     except requests.exceptions.ConnectionError:
         logger.warning(f"kubectl exec output:\n{get_pebble_logs(juju, app)}")
     if response.status_code != 200:

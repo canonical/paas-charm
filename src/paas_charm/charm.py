@@ -85,7 +85,7 @@ try:
     from paas_charm.oauth import PaaSOAuthRequirer
 except ImportError:
     logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
+        "Missing charm library, please run `charmcraft fetch-lib charms.hydra.v0.oauth`"
     )
 
 try:
@@ -419,7 +419,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(_oauth.on.oauth_info_removed, self._on_oauth_info_removed)
         except NameError:
             logger.exception(
-                "Missing charm library, please run `charmcraft fetch-lib charms.hydra_k8s.v0.oauth`"
+                "Missing charm library, please run `charmcraft fetch-lib charms.hydra.v0.oauth`"
             )
             return None
         return _oauth
