@@ -10,7 +10,6 @@ import jubilant
 import pytest
 import requests
 
-from paas_charm.utils import build_k8s_unit_fqdn
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -138,7 +137,9 @@ def test_prometheus_custom_scrape_configs(
         )
 
         scheduler_job = scheduler_targets[0]
-        expected_fqdn = build_k8s_unit_fqdn(flask_app.name, "0", model_name)
+        expected_fqdn = (
+            f"{flask_app.name}-0.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
+        )
         assert expected_fqdn in scheduler_job["scrapeUrl"], (
             f"Expected scheduler target to use unit 0 FQDN '{expected_fqdn}', "
             f"got: {scheduler_job['scrapeUrl']}"
