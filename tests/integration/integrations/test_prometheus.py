@@ -123,10 +123,10 @@ def test_prometheus_custom_scrape_configs(
         scheduler_fqdn = (
             f"{flask_app.name}-0.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
         )
-        scheduler = _assert_scrape_targets_for_app(
+        _assert_scrape_targets_for_app(
             scheduler_targets, [scheduler_fqdn], 8082, {"role": "scheduler"}
         )
-        assert "flask-scheduler-metrics" in scheduler[0]["labels"]["job"]
+        assert "flask-scheduler-metrics" in scheduler_targets[0]["labels"]["job"]
 
     finally:
         juju.remove_unit(flask_app.name, num_units=1)
@@ -152,7 +152,7 @@ def _assert_scrape_targets_for_app(
     identifiers: list[str],
     port: int,
     labels: dict[str, str] | None = None,
-) -> list[dict]:
+) -> None:
     """Verify targets match expected identifiers, port, and labels.
 
     Args:
@@ -160,9 +160,6 @@ def _assert_scrape_targets_for_app(
         identifiers: List of IPs or FQDNs expected in target URLs.
         port: Port number expected in all targets.
         labels: Optional dict of labels that each target must have.
-
-    Returns:
-        The targets list for further assertions.
     """
     urls = [t["scrapeUrl"] for t in targets]
     assert len(targets) == len(identifiers), (
@@ -182,5 +179,3 @@ def _assert_scrape_targets_for_app(
                 assert (
                     actual_value == expected_value
                 ), f"Expected {key}={expected_value}, got {key}={actual_value}"
-
-    return targets
