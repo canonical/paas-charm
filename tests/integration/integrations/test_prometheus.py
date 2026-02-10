@@ -3,12 +3,14 @@
 
 """Integration tests for 12Factor charms Prometheus integration."""
 
+import json
 import logging
 
 import jubilant
 import pytest
 import requests
 
+from paas_charm.utils import build_k8s_unit_fqdn
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -82,12 +84,16 @@ def test_prometheus_custom_scrape_configs(
     session_with_retry: requests.Session,
 ):
     """
-    arrange: flask charm with paas-config.yaml containing custom scrape_configs.
+    arrange: flask charm with paas-config.yaml containing custom scrape_configs, scaled to 2 units.
     act: establish relation with prometheus charm.
-    assert: prometheus scrapes both framework default job (port 9102) and custom job
-        (port 8081) from paas-config.yaml, and custom labels are present on the custom job.
+    assert: prometheus scrapes framework default jobs (port 9102 on 2 units), custom jobs
+        (port 8081 on 2 units using wildcard), and scheduler-only job (port 8082 on unit 0 only
+        using @scheduler placeholder). Verify custom labels and @scheduler resolves to unit 0 FQDN.
     """
     try:
+        juju.add_unit(flask_app.name)
+        juju.wait(lambda status: status.apps[flask_app.name].is_active)
+
         juju.integrate(flask_app.name, prometheus_app.name)
         juju.wait(
             lambda status: jubilant.all_active(status, flask_app.name, prometheus_app.name),
@@ -95,29 +101,22 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        app_unit_ip = status.apps[flask_app.name].units[flask_app.name + "/0"].address
+        model_name = juju.model
         prometheus_unit_ip, active_targets = get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
 
-        framework_targets = [
-            t
-            for t in active_targets
-            if app_unit_ip in t["scrapeUrl"] and ":9102" in t["scrapeUrl"]
-        ]
-        custom_targets = [
-            t
-            for t in active_targets
-            if app_unit_ip in t["scrapeUrl"] and ":8081" in t["scrapeUrl"]
-        ]
+        framework_targets = [t for t in active_targets if ":9102" in t["scrapeUrl"]]
+        custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
+        scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
 
-        assert len(framework_targets) == 1, (
-            f"Expected 1 framework default job on port 9102, found {len(framework_targets)}. "
-            f"All targets: {active_targets}"
+        assert len(framework_targets) == 2, (
+            f"Expected 2 framework default jobs on port 9102 (wildcard expanded for 2 units), "
+            f"found {len(framework_targets)}. All targets: {active_targets}"
         )
 
-        assert len(custom_targets) == 1, (
-            f"Expected 1 custom job on port 8081 from paas-config.yaml, "
+        assert len(custom_targets) == 2, (
+            f"Expected 2 custom jobs on port 8081 (wildcard '*:8081' expanded for 2 units), "
             f"found {len(custom_targets)}. All targets: {active_targets}"
         )
 
@@ -131,6 +130,27 @@ def test_prometheus_custom_scrape_configs(
         assert (
             custom_job["labels"]["env"] == "example"
         ), f"Expected label env=example on custom job, got: {custom_job['labels']}"
+
+        assert len(scheduler_targets) == 1, (
+            f"Expected exactly 1 scheduler target on port 8082 (@scheduler:8082 targets only unit 0), "
+            f"found {len(scheduler_targets)}. This proves @scheduler doesn't expand like wildcard. "
+            f"All targets: {active_targets}"
+        )
+
+        scheduler_job = scheduler_targets[0]
+        expected_fqdn = build_k8s_unit_fqdn(flask_app.name, "0", model_name)
+        assert expected_fqdn in scheduler_job["scrapeUrl"], (
+            f"Expected scheduler target to use unit 0 FQDN '{expected_fqdn}', "
+            f"got: {scheduler_job['scrapeUrl']}"
+        )
+
+        assert "flask-scheduler-metrics" in scheduler_job["labels"]["job"], (
+            f"Expected job_name='flask-scheduler-metrics', "
+            f"got: {scheduler_job['labels']['job']}"
+        )
+        assert scheduler_job["labels"]["role"] == "scheduler", (
+            f"Expected label role=scheduler on scheduler job, " f"got: {scheduler_job['labels']}"
+        )
 
     finally:
         juju.remove_relation(flask_app.name, prometheus_app.name)
