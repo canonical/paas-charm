@@ -114,10 +114,28 @@ def test_prometheus_custom_scrape_configs(
             f"found {len(framework_targets)}. All targets: {active_targets}"
         )
 
+        # Verify framework targets include both unit 0 and unit 1
+        framework_urls = [t["scrapeUrl"] for t in framework_targets]
+        assert any(
+            f"{flask_app.name}-0" in url for url in framework_urls
+        ), f"Expected framework target for unit 0, got: {framework_urls}"
+        assert any(
+            f"{flask_app.name}-1" in url for url in framework_urls
+        ), f"Expected framework target for unit 1, got: {framework_urls}"
+
         assert len(custom_targets) == 2, (
             f"Expected 2 custom jobs on port 8081 (wildcard '*:8081' expanded for 2 units), "
             f"found {len(custom_targets)}. All targets: {active_targets}"
         )
+
+        # Verify custom targets include both unit 0 and unit 1
+        custom_urls = [t["scrapeUrl"] for t in custom_targets]
+        assert any(
+            f"{flask_app.name}-0" in url for url in custom_urls
+        ), f"Expected custom target for unit 0, got: {custom_urls}"
+        assert any(
+            f"{flask_app.name}-1" in url for url in custom_urls
+        ), f"Expected custom target for unit 1, got: {custom_urls}"
 
         custom_job = custom_targets[0]
         assert (
