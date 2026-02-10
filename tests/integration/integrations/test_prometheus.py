@@ -109,17 +109,17 @@ def test_prometheus_custom_scrape_configs(
         custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
         scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
 
-        _verify_targets_for_both_units(framework_targets, flask_app.name, 9102, "framework")
+        _assert_scrape_targets_for_app(framework_targets, flask_app.name, [0, 1], 9102)
 
-        _verify_targets_for_both_units(custom_targets, flask_app.name, 8081, "custom")
-        _verify_labels(custom_targets[0], {"app": "flask", "env": "example"})
+        _assert_scrape_targets_for_app(
+            custom_targets, flask_app.name, [0, 1], 8081, {"app": "flask", "env": "example"}
+        )
         assert "flask-app-custom" in custom_targets[0]["labels"]["job"]
 
-        scheduler_job = _verify_single_target_for_unit(
-            scheduler_targets, flask_app.name, 0, 8082, "scheduler"
+        scheduler = _assert_scrape_targets_for_app(
+            scheduler_targets, flask_app.name, [0], 8082, {"role": "scheduler"}
         )
-        _verify_labels(scheduler_job, {"role": "scheduler"})
-        assert "flask-scheduler-metrics" in scheduler_job["labels"]["job"]
+        assert "flask-scheduler-metrics" in scheduler[0]["labels"]["job"]
 
     finally:
         juju.remove_unit(flask_app.name, num_units=1)
@@ -140,38 +140,42 @@ def _get_prometheus_targets(
     return prometheus_unit_ip, query_targets["data"]["activeTargets"]
 
 
-def _verify_targets_for_both_units(
-    targets: list[dict], app_name: str, port: int, target_type: str
-) -> None:
-    """Verify targets list contains exactly 2 targets for unit 0 and unit 1."""
+def _assert_scrape_targets_for_app(
+    targets: list[dict],
+    app_name: str,
+    units: list[int],
+    port: int,
+    labels: dict[str, str] | None = None,
+) -> list[dict]:
+    """Verify targets match expected units, port, and labels for an app.
+
+    Args:
+        targets: List of scrape target dicts from Prometheus.
+        app_name: Application name to verify in URLs.
+        units: List of unit numbers expected to be scraped.
+        port: Port number expected in all targets.
+        labels: Optional dict of labels that each target must have.
+
+    Returns:
+        The targets list for further assertions.
+    """
     urls = [t["scrapeUrl"] for t in targets]
-    assert (
-        len(targets) == 2
-    ), f"Expected 2 {target_type} targets on port {port}, found {len(targets)}. URLs: {urls}"
-    for unit_num in [0, 1]:
+    assert len(targets) == len(units), (
+        f"Expected {len(units)} target(s) on port {port} for units {units}, "
+        f"found {len(targets)}. URLs: {urls}"
+    )
+
+    for unit_num in units:
         assert any(
             f"{app_name}-{unit_num}" in url for url in urls
-        ), f"Expected {target_type} target for unit {unit_num}, got: {urls}"
+        ), f"Expected target for {app_name}-{unit_num} on port {port}, got: {urls}"
 
+    if labels:
+        for target in targets:
+            for key, expected_value in labels.items():
+                actual_value = target["labels"].get(key)
+                assert (
+                    actual_value == expected_value
+                ), f"Expected {key}={expected_value}, got {key}={actual_value}"
 
-def _verify_labels(target: dict, expected_labels: dict[str, str]) -> None:
-    """Verify target has expected labels."""
-    for key, expected_value in expected_labels.items():
-        actual_value = target["labels"].get(key)
-        assert (
-            actual_value == expected_value
-        ), f"Expected {key}={expected_value}, got {key}={actual_value}"
-
-
-def _verify_single_target_for_unit(
-    targets: list[dict], app_name: str, unit: int, port: int, target_type: str
-) -> dict:
-    """Verify exactly one target exists for specific unit."""
-    assert (
-        len(targets) == 1
-    ), f"Expected exactly 1 {target_type} target on port {port}, found {len(targets)}"
-    target = targets[0]
-    assert (
-        f"{app_name}-{unit}" in target["scrapeUrl"]
-    ), f"Expected {target_type} for {app_name}-{unit}, got: {target['scrapeUrl']}"
-    return target
+    return targets
