@@ -47,7 +47,7 @@ def retry_on_assert(max_attempts=5, delay=10):
 def test_flask_is_up(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -56,7 +56,7 @@ def test_flask_is_up(
     """
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
-        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
+        response = session_with_retry.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
 
@@ -74,7 +74,7 @@ def test_flask_is_up(
 def test_flask_webserver_timeout(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
     timeout: int,
 ):
     """
@@ -85,11 +85,11 @@ def test_flask_webserver_timeout(
     safety_timeout = timeout + 3
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
-        assert http.get(
+        assert session_with_retry.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/sleep?duration={timeout - 1}",
             timeout=safety_timeout,
         ).ok
-        assert not http.get(
+        assert not session_with_retry.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/sleep?duration={timeout + 1}",
             timeout=safety_timeout,
         ).ok
@@ -98,7 +98,7 @@ def test_flask_webserver_timeout(
 def test_default_secret_key(
     flask_app: App,
     juju: jubilant.Juju,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -107,7 +107,9 @@ def test_default_secret_key(
     """
     status = juju.status()
     secret_keys = [
-        http.get(f"http://{unit.address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10).json()
+        session_with_retry.get(
+            f"http://{unit.address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
+        ).json()
         for unit in status.apps[flask_app.name].units.values()
     ]
     assert len(set(secret_keys)) == 1
@@ -117,7 +119,7 @@ def test_default_secret_key(
 def test_rotate_secret_key(
     juju: jubilant.Juju,
     flask_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -126,7 +128,7 @@ def test_rotate_secret_key(
     """
     status = juju.status()
     units = list(status.apps[flask_app.name].units.values())
-    secret_key = http.get(
+    secret_key = session_with_retry.get(
         f"http://{units[0].address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
     ).json()
 
@@ -143,7 +145,7 @@ def test_rotate_secret_key(
 
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
-        new_secret_key = http.get(
+        new_secret_key = session_with_retry.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/config/SECRET_KEY", timeout=10
         ).json()
         assert len(new_secret_key) > 10
@@ -153,7 +155,7 @@ def test_rotate_secret_key(
 def test_port_without_ingress(
     juju: jubilant.Juju,
     flask_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm without ingress. Get the service ip
@@ -171,7 +173,7 @@ def test_port_without_ingress(
     assert task.return_code == 0
     service_ip = task.stdout.split()[0]
 
-    response = http.get(f"http://{service_ip}:{WORKLOAD_PORT}/env", timeout=30)
+    response = session_with_retry.get(f"http://{service_ip}:{WORKLOAD_PORT}/env", timeout=30)
 
     assert response.status_code == 200
     env_vars = response.json()
@@ -184,7 +186,7 @@ def test_with_ingress(
     traefik_app: App,
     traefik_app_name: str,
     external_hostname: str,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm, and deploy the ingress.
@@ -197,16 +199,21 @@ def test_with_ingress(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name), delay=5
+    )
 
     status = juju.status()
     model_name = status.model.name
     traefik_unit = list(status.apps[traefik_app_name].units.values())[0]
     traefik_ip = traefik_unit.address
 
-    response = http.get(
-        f"http://{traefik_ip}/config/BASE_URL",
-        headers={"Host": f"{model_name}-{flask_app.name}.{external_hostname}"},
+    url = f"http://{traefik_ip}/config/BASE_URL"
+    hostname = f"{model_name}-{flask_app.name}.{external_hostname}"
+    logger.info("checking endpoint: %s with hostname %s", url, hostname)
+    response = session_with_retry.get(
+        url,
+        headers={"Host": hostname},
         timeout=5,
     )
     assert response.status_code == 200
@@ -216,7 +223,7 @@ def test_with_ingress(
 def test_app_peer_address(
     juju: jubilant.Juju,
     flask_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm.
@@ -225,7 +232,7 @@ def test_app_peer_address(
     """
     # Add a unit
     juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=10)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
 
     status = juju.status()
     model_name = status.model.name
@@ -255,8 +262,7 @@ def test_app_peer_address(
 
     # Scale back to 1 unit
     juju.remove_unit(flask_app.name, num_units=1)
-    juju.wait(lambda status: status.apps[flask_app.name].units[f"{flask_app.name}/0"].is_active)
-
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, delay=5)
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
         check_peer_fqdns(unit, actual_result, is_in=False)

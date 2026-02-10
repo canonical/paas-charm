@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 def test_with_database(
     juju: jubilant.Juju,
     flask_app: App,
-    http: requests.Session,
+    session_with_retry: requests.Session,
     endpoint: str,
     db_name: str,
     db_channel: str,
@@ -59,7 +59,7 @@ def test_with_database(
     for unit in status.apps[flask_app.name].units.values():
         # Retry up to 10 times with 60 second delay
         for _ in range(10):
-            response = http.get(f"http://{unit.address}:8000/{endpoint}", timeout=5)
+            response = session_with_retry.get(f"http://{unit.address}:8000/{endpoint}", timeout=5)
             if "SUCCESS" == response.text:
                 return
             time.sleep(60)
