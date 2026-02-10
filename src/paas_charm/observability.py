@@ -99,29 +99,6 @@ class Observability(ops.Object):
         )
 
 
-def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) -> str:
-    """Replace @scheduler placeholder with scheduler unit FQDN.
-
-    Args:
-        app_name: Application name (e.g., "flask-app").
-        model_name: Juju model name (e.g., "my-model").
-        target: Target string possibly containing @scheduler placeholder.
-
-    Returns:
-        Target with @scheduler replaced by scheduler unit's Kubernetes DNS FQDN,
-        or unchanged target if no @scheduler placeholder present.
-
-    Note:
-        This uses Kubernetes DNS service discovery and only works in K8s environments.
-        The FQDN is built using build_k8s_unit_fqdn utility.
-    """
-    if target.startswith("@scheduler:"):
-        port = target.split(":", 1)[1]
-        scheduler_fqdn = build_k8s_unit_fqdn(app_name, SCHEDULER_UNIT_NUMBER, model_name)
-        return f"{scheduler_fqdn}:{port}"
-    return target
-
-
 def build_prometheus_jobs(
     metrics_target: str | None,
     metrics_path: str | None,
@@ -180,3 +157,26 @@ def build_prometheus_jobs(
             )
 
     return jobs
+
+
+def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) -> str:
+    """Replace @scheduler placeholder with scheduler unit FQDN.
+
+    Args:
+        app_name: Application name (e.g., "flask-app").
+        model_name: Juju model name (e.g., "my-model").
+        target: Target string possibly containing @scheduler placeholder.
+
+    Returns:
+        Target with @scheduler replaced by scheduler unit's Kubernetes DNS FQDN,
+        or unchanged target if no @scheduler placeholder present.
+
+    Note:
+        This uses Kubernetes DNS service discovery. An alternative could be to use the
+        pod IP directly from a peer relation.
+    """
+    if target.startswith("@scheduler:"):
+        port = target.split(":", 1)[1]
+        scheduler_fqdn = build_k8s_unit_fqdn(app_name, SCHEDULER_UNIT_NUMBER, model_name)
+        return f"{scheduler_fqdn}:{port}"
+    return target
