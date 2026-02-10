@@ -10,6 +10,7 @@ import jubilant
 import pytest
 import requests
 
+from paas_charm.utils import build_k8s_unit_fqdn
 from tests.integration.types import App
 
 # caused by pytest fixtures
@@ -225,10 +226,7 @@ def test_app_peer_address(
 
     expected_result = set()
     for unit_name in status.apps[flask_app.name].units.keys():
-        # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
-        expected_result.add(
-            f"{unit_name.replace('/', '-')}.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
-        )
+        expected_result.add(build_k8s_unit_fqdn(flask_app.name, unit_name, model_name))
     assert actual_result == expected_result
 
     # Scale back to 1 unit

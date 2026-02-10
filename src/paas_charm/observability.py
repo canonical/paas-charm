@@ -14,7 +14,7 @@ from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
 from paas_charm.app import SCHEDULER_UNIT_NUMBER
 from paas_charm.paas_config import PrometheusConfig
-from paas_charm.utils import enable_pebble_log_forwarding
+from paas_charm.utils import build_k8s_unit_fqdn, enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
 
@@ -113,15 +113,11 @@ def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) 
 
     Note:
         This uses Kubernetes DNS service discovery and only works in K8s environments.
-        The FQDN format is: {app-name}-{SCHEDULER_UNIT_NUMBER}.{app-name}-endpoints.
-        {model-name}.svc.cluster.local
+        The FQDN is built using build_k8s_unit_fqdn utility.
     """
     if target.startswith("@scheduler:"):
         port = target.split(":", 1)[1]
-        scheduler_fqdn = (
-            f"{app_name}-{SCHEDULER_UNIT_NUMBER}.{app_name}-endpoints."
-            f"{model_name}.svc.cluster.local"
-        )
+        scheduler_fqdn = build_k8s_unit_fqdn(app_name, SCHEDULER_UNIT_NUMBER, model_name)
         return f"{scheduler_fqdn}:{port}"
     return target
 
