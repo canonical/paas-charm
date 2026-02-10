@@ -35,7 +35,7 @@ from typing import NamedTuple
 from ops import CharmBase, HookEvent
 from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
@@ -97,7 +97,7 @@ class PaaSRabbitMQRelationData(BaseModel):
     hostname: str
     username: str
     password: str
-    hostnames: list[str] = []
+    hostnames: list[str] = Field(default_factory=list)
 
     @property
     def amqp_uri(self) -> str:

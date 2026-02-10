@@ -386,7 +386,7 @@ func initTracer(ctx context.Context) error {
 	return nil
 }
 
-func (h mainHandler) serveRabbitMQ(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) serveRabbitMQ(w http.ResponseWriter, r *http.Request) {
 	err := h.service.CheckRabbitMQStatus()
 	if err != nil {
 		log.Printf("RabbitMQ Error: %v", err)
@@ -396,7 +396,7 @@ func (h mainHandler) serveRabbitMQ(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "RabbitMQ Connection SUCCESS")
 }
 
-func (h mainHandler) serveRabbitMQSend(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) serveRabbitMQSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -411,7 +411,7 @@ func (h mainHandler) serveRabbitMQSend(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "SUCCESS")
 }
 
-func (h mainHandler) serveRabbitMQReceive(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) serveRabbitMQReceive(w http.ResponseWriter, r *http.Request) {
 	result, err := h.service.RabbitMQReceive()
 	if err != nil {
 		log.Printf("Receive error: %v", err)
@@ -419,7 +419,7 @@ func (h mainHandler) serveRabbitMQReceive(w http.ResponseWriter, r *http.Request
 	fmt.Fprint(w, result)
 }
 
-func (h mainHandler) serveRabbitMQSendHA(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) serveRabbitMQSendHA(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -445,7 +445,7 @@ func (h mainHandler) serveRabbitMQSendHA(w http.ResponseWriter, r *http.Request)
 	fmt.Fprint(w, "SUCCESS")
 }
 
-func (h mainHandler) serveRabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) serveRabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
