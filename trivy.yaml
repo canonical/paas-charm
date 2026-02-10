@@ -27,3 +27,4 @@ scan:
     - usr/lib/python3.12/site-packages/protobuf-6.33.4.dist-info/METADATA
     - lib/python3.10/site-packages/setuptools-59.6.0.dist-info/METADATA
     - app/spring-boot-0.0.1.jar
+    - usr/local/bin/go-app
