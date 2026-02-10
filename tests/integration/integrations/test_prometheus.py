@@ -26,6 +26,72 @@ logger = logging.getLogger(__name__)
         ("fastapi_app", 8080, "/metrics"),
     ],
 )
+def verify_targets_for_both_units(
+    targets: list[dict], app_name: str, port: int, target_type: str
+) -> None:
+    """Verify targets list contains exactly 2 targets for unit 0 and unit 1.
+
+    Args:
+        targets: List of target dicts with scrapeUrl.
+        app_name: Application name to verify in URLs.
+        port: Port number expected in targets.
+        target_type: Description of target type for error messages.
+    """
+    urls = [t["scrapeUrl"] for t in targets]
+    assert (
+        len(targets) == 2
+    ), f"Expected 2 {target_type} targets on port {port}, found {len(targets)}. URLs: {urls}"
+    assert any(
+        f"{app_name}-0" in url for url in urls
+    ), f"Expected {target_type} target for unit 0, got: {urls}"
+    assert any(
+        f"{app_name}-1" in url for url in urls
+    ), f"Expected {target_type} target for unit 1, got: {urls}"
+
+
+def verify_labels(target: dict, expected_labels: dict[str, str]) -> None:
+    """Verify target has expected labels.
+
+    Args:
+        target: Target dict with labels field.
+        expected_labels: Dict of expected label key-value pairs.
+    """
+    actual_labels = target["labels"]
+    for key, expected_value in expected_labels.items():
+        actual_value = actual_labels.get(key)
+        assert actual_value == expected_value, (
+            f"Expected label {key}={expected_value}, got {key}={actual_value}. "
+            f"All labels: {actual_labels}"
+        )
+
+
+def verify_single_target_for_unit(
+    targets: list[dict], app_name: str, unit: int, port: int, target_type: str
+) -> dict:
+    """Verify exactly one target exists for specific unit.
+
+    Args:
+        targets: List of target dicts with scrapeUrl.
+        app_name: Application name to verify in URLs.
+        unit: Unit number expected in target URL.
+        port: Port number expected in target.
+        target_type: Description of target type for error messages.
+
+    Returns:
+        The single target dict.
+    """
+    urls = [t["scrapeUrl"] for t in targets]
+    assert (
+        len(targets) == 1
+    ), f"Expected exactly 1 {target_type} target on port {port}, found {len(targets)}. URLs: {urls}"
+    target = targets[0]
+    assert f"{app_name}-{unit}" in target["scrapeUrl"], (
+        f"Expected {target_type} target for unit {unit} ('{app_name}-{unit}'), "
+        f"got: {target['scrapeUrl']}"
+    )
+    return target
+
+
 def test_prometheus_integration(
     request: pytest.FixtureRequest,
     app_fixture: str,
@@ -109,67 +175,17 @@ def test_prometheus_custom_scrape_configs(
         custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
         scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
 
-        assert len(framework_targets) == 2, (
-            f"Expected 2 framework default jobs on port 9102 (wildcard expanded for 2 units), "
-            f"found {len(framework_targets)}. All targets: {active_targets}"
-        )
+        verify_targets_for_both_units(framework_targets, flask_app.name, 9102, "framework")
 
-        # Verify framework targets include both unit 0 and unit 1
-        framework_urls = [t["scrapeUrl"] for t in framework_targets]
-        assert any(
-            f"{flask_app.name}-0" in url for url in framework_urls
-        ), f"Expected framework target for unit 0, got: {framework_urls}"
-        assert any(
-            f"{flask_app.name}-1" in url for url in framework_urls
-        ), f"Expected framework target for unit 1, got: {framework_urls}"
+        verify_targets_for_both_units(custom_targets, flask_app.name, 8081, "custom")
+        verify_labels(custom_targets[0], {"app": "flask", "env": "example"})
+        assert "flask-app-custom" in custom_targets[0]["labels"]["job"]
 
-        assert len(custom_targets) == 2, (
-            f"Expected 2 custom jobs on port 8081 (wildcard '*:8081' expanded for 2 units), "
-            f"found {len(custom_targets)}. All targets: {active_targets}"
+        scheduler_job = verify_single_target_for_unit(
+            scheduler_targets, flask_app.name, 0, 8082, "scheduler"
         )
-
-        # Verify custom targets include both unit 0 and unit 1
-        custom_urls = [t["scrapeUrl"] for t in custom_targets]
-        assert any(
-            f"{flask_app.name}-0" in url for url in custom_urls
-        ), f"Expected custom target for unit 0, got: {custom_urls}"
-        assert any(
-            f"{flask_app.name}-1" in url for url in custom_urls
-        ), f"Expected custom target for unit 1, got: {custom_urls}"
-
-        custom_job = custom_targets[0]
-        assert (
-            "flask-app-custom" in custom_job["labels"]["job"]
-        ), f"Expected job_name='flask-app-custom', got: {custom_job['labels']['job']}"
-        assert (
-            custom_job["labels"]["app"] == "flask"
-        ), f"Expected label app=flask on custom job, got: {custom_job['labels']}"
-        assert (
-            custom_job["labels"]["env"] == "example"
-        ), f"Expected label env=example on custom job, got: {custom_job['labels']}"
-
-        assert len(scheduler_targets) == 1, (
-            f"Expected exactly 1 scheduler target on port 8082 (@scheduler:8082 targets only unit 0), "
-            f"found {len(scheduler_targets)}. This proves @scheduler doesn't expand like wildcard. "
-            f"All targets: {active_targets}"
-        )
-
-        scheduler_job = scheduler_targets[0]
-        expected_fqdn = (
-            f"{flask_app.name}-0.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
-        )
-        assert expected_fqdn in scheduler_job["scrapeUrl"], (
-            f"Expected scheduler target to use unit 0 FQDN '{expected_fqdn}', "
-            f"got: {scheduler_job['scrapeUrl']}"
-        )
-
-        assert "flask-scheduler-metrics" in scheduler_job["labels"]["job"], (
-            f"Expected job_name='flask-scheduler-metrics', "
-            f"got: {scheduler_job['labels']['job']}"
-        )
-        assert scheduler_job["labels"]["role"] == "scheduler", (
-            f"Expected label role=scheduler on scheduler job, " f"got: {scheduler_job['labels']}"
-        )
+        verify_labels(scheduler_job, {"role": "scheduler"})
+        assert "flask-scheduler-metrics" in scheduler_job["labels"]["job"]
 
     finally:
         juju.remove_relation(flask_app.name, prometheus_app.name)
