@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Place any unreleased changes here, that are subject to release in coming versions :).
 
 * feat: Add `paas-config.yaml` support for custom Prometheus scrape configurations.
-* feat: Add `@scheduler:PORT` placeholder support in Prometheus targets for unit 0 scraping.
+* feat: Add `@scheduler` placeholder support in Prometheus targets for unit 0 scraping.
 
 ## 2026-01-12
 
