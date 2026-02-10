@@ -130,29 +130,22 @@ def build_prometheus_jobs(
     # Add custom jobs from paas-config.yaml
     if prometheus_config and prometheus_config.scrape_configs:
         for scrape_config in prometheus_config.scrape_configs:
+            static_configs = []
+            for sc in scrape_config.static_configs:
+                resolved_targets = [
+                    _resolve_scheduler_placeholder(app_name, model_name, target)
+                    for target in sc.targets
+                ]
+                config: dict[str, typing.Any] = {"targets": resolved_targets}
+                if sc.labels:
+                    config["labels"] = sc.labels
+                static_configs.append(config)
+
             jobs.append(
                 {
                     "job_name": scrape_config.job_name,
                     "metrics_path": scrape_config.metrics_path,
-                    "static_configs": [
-                        (
-                            {
-                                "targets": [
-                                    _resolve_scheduler_placeholder(app_name, model_name, target)
-                                    for target in sc.targets
-                                ],
-                                "labels": sc.labels,
-                            }
-                            if sc.labels
-                            else {
-                                "targets": [
-                                    _resolve_scheduler_placeholder(app_name, model_name, target)
-                                    for target in sc.targets
-                                ]
-                            }
-                        )
-                        for sc in scrape_config.static_configs
-                    ],
+                    "static_configs": static_configs,
                 }
             )
 

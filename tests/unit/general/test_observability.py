@@ -184,12 +184,14 @@ class TestBuildPrometheusJobs:
         assert jobs[0]["static_configs"][0]["targets"] == [expected_target]
 
     def test_scheduler_placeholder_in_custom_job(self):
-        """Test @scheduler placeholder in custom job."""
+        """Test @scheduler placeholder in custom job with labels."""
         prom_config = PrometheusConfig(
             scrape_configs=[
                 ScrapeConfig(
                     job_name="scheduler-metrics",
-                    static_configs=[StaticConfig(targets=["@scheduler:8081"])],
+                    static_configs=[
+                        StaticConfig(targets=["@scheduler:8081"], labels={"role": "scheduler"})
+                    ],
                 )
             ]
         )
@@ -197,6 +199,7 @@ class TestBuildPrometheusJobs:
         assert len(jobs) == 1
         expected_target = "django-0.django-endpoints.production.svc.cluster.local:8081"
         assert jobs[0]["static_configs"][0]["targets"] == [expected_target]
+        assert jobs[0]["static_configs"][0]["labels"] == {"role": "scheduler"}
 
     def test_scheduler_placeholder_mixed_with_other_targets(self):
         """Test @scheduler mixed with wildcard and regular targets."""
@@ -217,21 +220,3 @@ class TestBuildPrometheusJobs:
             "app-0.app-endpoints.model.svc.cluster.local:8081",
             "localhost:9090",
         ]
-
-    def test_scheduler_placeholder_with_labels(self):
-        """Test @scheduler placeholder with labels."""
-        prom_config = PrometheusConfig(
-            scrape_configs=[
-                ScrapeConfig(
-                    job_name="scheduler-with-labels",
-                    static_configs=[
-                        StaticConfig(targets=["@scheduler:8081"], labels={"role": "scheduler"})
-                    ],
-                )
-            ]
-        )
-        jobs = build_prometheus_jobs(None, None, prom_config, "app", "model")
-        assert len(jobs) == 1
-        assert jobs[0]["static_configs"][0]["labels"] == {"role": "scheduler"}
-        expected_target = "app-0.app-endpoints.model.svc.cluster.local:8081"
-        assert jobs[0]["static_configs"][0]["targets"] == [expected_target]
