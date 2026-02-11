@@ -1,10 +1,10 @@
 .. _ref_paas_config_prometheus:
 
-Prometheus Configuration
+Prometheus configuration
 ========================
 
 The ``prometheus`` section in ``paas-config.yaml`` allows you to define custom
-Prometheus scrape targets for metrics collection. This is useful when the default
+Prometheus scrape targets for metrics collection. This configuration is useful when the default
 framework metrics are insufficient for your use case or you want to
 expose additional metrics endpoints.
 
@@ -68,12 +68,12 @@ Each static configuration defines a set of targets and optional labels.
      - Dictionary
      - Key-value pairs of labels to attach to all metrics from these targets. Optional.
 
-Target Formats
+Target formats
 --------------
 
 The ``targets`` field supports several formats:
 
-Wildcard Targets
+Wildcard targets
 ~~~~~~~~~~~~~~~~
 
 Use ``*:PORT`` to target all units in the application on the specified port:
@@ -85,7 +85,7 @@ Use ``*:PORT`` to target all units in the application on the specified port:
 
 This target expands to the pod IP addresses of all units.
 
-Scheduler-Only Targets
+Scheduler-only targets
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Use ``@scheduler:PORT`` to target only the scheduler services:
@@ -101,13 +101,10 @@ Scheduler services are guaranteed to run in only one unit. See
 The ``@scheduler`` placeholder resolves to the fully qualified domain name (FQDN)
 of the scheduler unit.
 
-Specific Hosts
+Specific hosts
 ~~~~~~~~~~~~~~
 
-You can also specify exact hostnames or IP addresses in the targets section.
-
-Example
--------
+You can also specify exact hostnames or IP addresses in the targets section. For example:
 
 .. code-block:: yaml
 
@@ -132,12 +129,12 @@ Example
              labels:
                role: "scheduler"
 
-Validation Rules
+Validation rules
 ----------------
 
 The Prometheus configuration validates the following rules:
 
-1. The schema. No extra fields are allowed.
+1. No extra fields are allowed in the schema.
 2. Each ``job_name`` must be unique across all scrape configs.
 3. Targets using the ``@scheduler:PORT`` format will require a numeric port.
 

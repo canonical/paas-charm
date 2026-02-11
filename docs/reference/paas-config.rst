@@ -6,11 +6,11 @@ paas-config.yaml
 The ``paas-config.yaml`` file is an optional configuration file that charm developers
 can include in their charm to customize runtime behavior of 12-factor app charms.
 
-The ``paas-config.yaml`` file must be placed in the charm root directory,
-alongside your ``charmcraft.yaml`` file and has to be included in the packed
+The ``paas-config.yaml`` file must be placed in the charm root directory
+alongside your ``charmcraft.yaml`` file, and the file has to be included in the packed
 charm file.
 
-File Structure
+File structure
 --------------
 
 The ``paas-config.yaml`` file uses YAML format and follows a structured schema.
@@ -44,4 +44,4 @@ For the detailed configuration schema and detailed examples, see:
 .. toctree::
    :maxdepth: 1
 
-   Prometheus Configuration <paas-config-prometheus>
+   Prometheus configuration <paas-config-prometheus>
