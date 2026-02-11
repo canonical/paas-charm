@@ -239,7 +239,7 @@ def test_app_peer_address(
 
     @retry_on_assert(max_attempts=5, delay=10)
     def check_peer_fqdns(unit, actual_result: set, is_in: bool = True):
-        response = http.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
+        response = session_with_retry.get(f"http://{unit.address}:{WORKLOAD_PORT}/env", timeout=30)
         assert response.status_code == 200
         env_vars = response.json()
         if is_in:
