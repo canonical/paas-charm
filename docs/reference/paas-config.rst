@@ -35,7 +35,7 @@ Common validation errors include:
 Functionality provided
 ----------------------
 
-The file ``paas-config.yaml`` allows to:
+The file ``paas-config.yaml`` allows you to:
 
 * Define custom Prometheus scrape targets for metrics collection
 
