@@ -11,7 +11,7 @@ expose additional metrics endpoints.
 The custom scrape configurations are merged with the default framework
 metrics job (if defined), so both can be active when you integrate with Prometheus.
 
-Configuration Schema
+Configuration schema
 --------------------
 
 prometheus
