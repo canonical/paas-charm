@@ -95,11 +95,11 @@ Use ``@scheduler:PORT`` to target only the scheduler services:
    targets:
      - "@scheduler:8082"  # Scrapes only scheduler service on port 8082
 
-Schedulers services are guaranteed to run in only one unit. See
+Scheduler services are guaranteed to run in only one unit. See
 :ref:`Worker and Scheduler Services <charmcraft:django-framework-extension-worker-scheduler-services>`.
 
 The ``@scheduler`` placeholder resolves to the fully qualified domain name (FQDN)
-of unit scheduler unit.
+of the scheduler unit.
 
 Specific Hosts
 ~~~~~~~~~~~~~~
