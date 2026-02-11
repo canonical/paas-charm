@@ -22,8 +22,8 @@ Validation
 ----------
 
 The ``paas-config.yaml`` file is validated when the charm is deployed.
-If validation fails, the charm will raise an error and stop working. The
-``paas-config.yaml`` has to be fixed and the charm packed again.
+If validation fails, the charm will go into error state and will not work. The
+``paas-config.yaml`` file has to be fixed and the charm packed and deployed again.
 
 Common validation errors include:
 
