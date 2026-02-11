@@ -9,7 +9,6 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -65,37 +64,25 @@ def test_rabbitmq_ha_integration(
     juju: jubilant.Juju,
     go_app: App,
     rabbitmq_server_app: App,
-    lxd_controller,
-    lxd_model,
 ):
     """
     arrange: The app and rabbitmq deployed
     act: Integrate the app with rabbitmq
     assert: Assert that RabbitMQ works correctly
     """
-    try:
-        juju.integrate(go_app.name, rabbitmq_server_app.name)
-        juju.wait(
-            lambda status: jubilant.all_active(status, go_app.name),
-            timeout=(10 * 60),
-            delay=30,
-        )
-        status = juju.status()
-        unit_ip = status.apps[go_app.name].units[go_app.name + "/0"].address
+    juju.integrate(go_app.name, rabbitmq_server_app.name)
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name),
+        timeout=(10 * 60),
+        delay=30,
+    )
+    status = juju.status()
+    unit_ip = status.apps[go_app.name].units[go_app.name + "/0"].address
 
-        response = requests.post(f"http://{unit_ip}:8080/rabbitmq/send_ha?unit=1", timeout=5)
-        assert response.status_code == 200
-        assert "SUCCESS" == response.text
+    response = requests.post(f"http://{unit_ip}:8080/rabbitmq/send_ha?unit=1", timeout=5)
+    assert response.status_code == 200
+    assert "SUCCESS" == response.text
 
-        response = requests.get(f"http://{unit_ip}:8080/rabbitmq/receive_ha?unit=1", timeout=5)
-        assert response.status_code == 200
-        assert "SUCCESS" == response.text
-    finally:
-        with jubilant_temp_controller(juju, lxd_controller, lxd_model):
-            juju.add_unit(rabbitmq_server_app.name, num_units=1)
-            juju.wait(
-                lambda status: jubilant.all_active(status, rabbitmq_server_app.name),
-                timeout=6 * 60,
-                delay=10,
-            )
-        juju.remove_relation(go_app.name, rabbitmq_server_app.name)
+    response = requests.get(f"http://{unit_ip}:8080/rabbitmq/receive_ha?unit=1", timeout=5)
+    assert response.status_code == 200
+    assert "SUCCESS" == response.text
