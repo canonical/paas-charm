@@ -3,6 +3,7 @@
 
 """Integration tests for 12Factor charms Prometheus integration."""
 
+import json
 import logging
 
 import jubilant
@@ -50,7 +51,7 @@ def test_prometheus_integration(
         status = juju.status()
         app_unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-        prometheus_unit_ip, active_targets = get_prometheus_targets(
+        prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
 
@@ -82,12 +83,16 @@ def test_prometheus_custom_scrape_configs(
     session_with_retry: requests.Session,
 ):
     """
-    arrange: flask charm with paas-config.yaml containing custom scrape_configs.
+    arrange: flask charm with paas-config.yaml containing custom scrape_configs, scaled to 2 units.
     act: establish relation with prometheus charm.
-    assert: prometheus scrapes both framework default job (port 9102) and custom job
-        (port 8081) from paas-config.yaml, and custom labels are present on the custom job.
+    assert: prometheus scrapes framework default jobs (port 9102 on 2 units), custom jobs
+        (port 8081 on 2 units using wildcard), and scheduler-only job (port 8082 on unit 0 only
+        using @scheduler placeholder). Verify custom labels and @scheduler resolves to unit 0 FQDN.
     """
     try:
+        juju.add_unit(flask_app.name)
+        juju.wait(lambda status: status.apps[flask_app.name].is_active)
+
         juju.integrate(flask_app.name, prometheus_app.name)
         juju.wait(
             lambda status: jubilant.all_active(status, flask_app.name, prometheus_app.name),
@@ -95,65 +100,82 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        app_unit_ip = status.apps[flask_app.name].units[flask_app.name + "/0"].address
-        prometheus_unit_ip, active_targets = get_prometheus_targets(
+        model_name = juju.model
+        prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
 
-        framework_targets = [
-            t
-            for t in active_targets
-            if app_unit_ip in t["scrapeUrl"] and ":9102" in t["scrapeUrl"]
-        ]
-        custom_targets = [
-            t
-            for t in active_targets
-            if app_unit_ip in t["scrapeUrl"] and ":8081" in t["scrapeUrl"]
-        ]
+        unit_0_ip = status.apps[flask_app.name].units[f"{flask_app.name}/0"].address
+        unit_1_ip = status.apps[flask_app.name].units[f"{flask_app.name}/1"].address
 
-        assert len(framework_targets) == 1, (
-            f"Expected 1 framework default job on port 9102, found {len(framework_targets)}. "
-            f"All targets: {active_targets}"
+        framework_targets = [t for t in active_targets if ":9102" in t["scrapeUrl"]]
+        custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
+        scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
+
+        # Wildcard targets use pod IPs
+        _assert_scrape_targets_for_app(framework_targets, [unit_0_ip, unit_1_ip], 9102)
+        _assert_scrape_targets_for_app(
+            custom_targets, [unit_0_ip, unit_1_ip], 8081, {"app": "flask", "env": "example"}
         )
+        assert "flask-app-custom" in custom_targets[0]["labels"]["job"]
 
-        assert len(custom_targets) == 1, (
-            f"Expected 1 custom job on port 8081 from paas-config.yaml, "
-            f"found {len(custom_targets)}. All targets: {active_targets}"
+        # @scheduler placeholder uses FQDN
+        scheduler_fqdn = (
+            f"{flask_app.name}-0.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
         )
-
-        custom_job = custom_targets[0]
-        assert (
-            "flask-app-custom" in custom_job["labels"]["job"]
-        ), f"Expected job_name='flask-app-custom', got: {custom_job['labels']['job']}"
-        assert (
-            custom_job["labels"]["app"] == "flask"
-        ), f"Expected label app=flask on custom job, got: {custom_job['labels']}"
-        assert (
-            custom_job["labels"]["env"] == "example"
-        ), f"Expected label env=example on custom job, got: {custom_job['labels']}"
+        _assert_scrape_targets_for_app(
+            scheduler_targets, [scheduler_fqdn], 8082, {"role": "scheduler"}
+        )
+        assert "flask-scheduler-metrics" in scheduler_targets[0]["labels"]["job"]
 
     finally:
+        juju.remove_unit(flask_app.name, num_units=1)
         juju.remove_relation(flask_app.name, prometheus_app.name)
 
 
-def get_prometheus_targets(
+def _get_prometheus_targets(
     juju: jubilant.Juju,
     prometheus_app: App,
     session_with_retry: requests.Session,
 ) -> tuple[str, list[dict]]:
-    """Get active scrape targets from Prometheus.
-
-    Args:
-        juju: Juju controller interface.
-        prometheus_app: Prometheus application.
-        http: HTTP session for making requests.
-
-    Returns:
-        Tuple of (prometheus_unit_ip, active_targets_list).
-    """
+    """Get active scrape targets from Prometheus."""
     status = juju.status()
     prometheus_unit_ip = status.apps[prometheus_app.name].units[prometheus_app.name + "/0"].address
     query_targets = session_with_retry.get(
         f"http://{prometheus_unit_ip}:9090/api/v1/targets", timeout=10
     ).json()
     return prometheus_unit_ip, query_targets["data"]["activeTargets"]
+
+
+def _assert_scrape_targets_for_app(
+    targets: list[dict],
+    identifiers: list[str],
+    port: int,
+    labels: dict[str, str] | None = None,
+) -> None:
+    """Verify targets match expected identifiers, port, and labels.
+
+    Args:
+        targets: List of scrape target dicts from Prometheus.
+        identifiers: List of IPs or FQDNs expected in target URLs.
+        port: Port number expected in all targets.
+        labels: Optional dict of labels that each target must have.
+    """
+    urls = [t["scrapeUrl"] for t in targets]
+    assert len(targets) == len(identifiers), (
+        f"Expected {len(identifiers)} target(s) on port {port}, "
+        f"found {len(targets)}. URLs: {urls}"
+    )
+
+    for identifier in identifiers:
+        assert any(
+            identifier in url for url in urls
+        ), f"Expected target with '{identifier}' on port {port}, got: {urls}"
+
+    if labels:
+        for target in targets:
+            for key, expected_value in labels.items():
+                actual_value = target["labels"].get(key)
+                assert (
+                    actual_value == expected_value
+                ), f"Expected {key}={expected_value}, got {key}={actual_value}"

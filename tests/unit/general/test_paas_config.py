@@ -193,6 +193,37 @@ class TestStaticConfig:
         errors = exc_info.value.errors()
         assert any("extra" in str(err["type"]) for err in errors)
 
+    def test_valid_scheduler_placeholder(self):
+        """Test valid @scheduler placeholder with port."""
+        static_config = StaticConfig(targets=["@scheduler:8081"])
+        assert static_config.targets == ["@scheduler:8081"]
+
+    def test_valid_scheduler_placeholder_mixed(self):
+        """Test @scheduler placeholder mixed with other targets."""
+        static_config = StaticConfig(targets=["*:8000", "@scheduler:8081", "localhost:9090"])
+        assert static_config.targets == ["*:8000", "@scheduler:8081", "localhost:9090"]
+
+    def test_invalid_scheduler_no_port(self):
+        """Test @scheduler without port is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            StaticConfig(targets=["@scheduler"])
+        errors = exc_info.value.errors()
+        assert any("must include port" in str(err["msg"]) for err in errors)
+
+    def test_invalid_scheduler_non_numeric_port(self):
+        """Test @scheduler with non-numeric port is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            StaticConfig(targets=["@scheduler:abc"])
+        errors = exc_info.value.errors()
+        assert any("numeric" in str(err["msg"]) for err in errors)
+
+    def test_invalid_scheduler_empty_port(self):
+        """Test @scheduler with empty port is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            StaticConfig(targets=["@scheduler:"])
+        errors = exc_info.value.errors()
+        assert any("numeric" in str(err["msg"]) for err in errors)
+
 
 class TestScrapeConfig:
     """Tests for ScrapeConfig Pydantic model."""
