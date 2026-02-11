@@ -42,11 +42,9 @@ def test_charm_state_integration_state_build_error(error):
     """Test invalid relation data errors."""
     saml_mock = MagicMock()
     saml_mock.to_relation_data.side_effect = error
-    charm_mock = MagicMock()
-    charm_mock.charm_dir = f"{PROJECT_ROOT}/examples/flask/charm"
     with pytest.raises(RelationDataError):
         CharmState.from_charm(
-            charm=charm_mock,
+            charm_dir=f"{PROJECT_ROOT}/examples/flask/charm",
             config=MagicMock(),
             framework="test",
             framework_config=MagicMock(),

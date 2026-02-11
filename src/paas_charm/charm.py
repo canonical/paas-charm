@@ -691,7 +691,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             },
         )
         return CharmState.from_charm(
-            charm=self,
+            charm_dir=self.charm_dir,
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),

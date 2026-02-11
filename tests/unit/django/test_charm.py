@@ -81,7 +81,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     secret_storage.get_peer_unit_fdqns.return_value = None
     harness.update_config(config)
     charm_state = CharmState.from_charm(
-        charm=harness.charm,
+        charm_dir=harness.charm.charm_dir,
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),
@@ -90,7 +90,9 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
     workload_config = create_workload_config(
-        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+        framework_name="django",
+        unit_name="django/0",
+        state_dir=harness.charm._state_dir,
     )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
@@ -146,7 +148,9 @@ def test_django_create_super_user(harness: Harness) -> None:
         return ExecResult(stdout="OK")
 
     harness.handle_exec(
-        container, ["python3", "manage.py", "createsuperuser", "--noinput"], handler=handler
+        container,
+        ["python3", "manage.py", "createsuperuser", "--noinput"],
+        handler=handler,
     )
 
     output = harness.run_action(
@@ -190,7 +194,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     config["webserver-worker-class"] = "gevent"
     harness.update_config(config)
     charm_state = CharmState.from_charm(
-        charm=harness.charm,
+        charm_dir=harness.charm.charm_dir,
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),
@@ -199,7 +203,9 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
     workload_config = create_workload_config(
-        framework_name="django", unit_name="django/0", state_dir=harness.charm._state_dir
+        framework_name="django",
+        unit_name="django/0",
+        state_dir=harness.charm._state_dir,
     )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
