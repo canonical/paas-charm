@@ -9,7 +9,14 @@ import typing
 from collections import Counter
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
@@ -24,6 +31,7 @@ class StaticConfig(BaseModel):
 
     Attributes:
         targets: List of target hosts to scrape (e.g., ["*:8000", "localhost:9090"]).
+                 Supports @scheduler placeholder for targeting scheduler unit (unit 0).
         labels: Optional labels to assign to all metrics from these targets.
         model_config: Pydantic model configuration.
     """
@@ -34,6 +42,31 @@ class StaticConfig(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("targets")
+    @classmethod
+    def validate_scheduler_format(cls, targets: typing.List[str]) -> typing.List[str]:
+        """Validate @scheduler placeholder format.
+
+        Args:
+            targets: List of target strings to validate.
+
+        Returns:
+            The validated targets list.
+
+        Raises:
+            ValueError: If @scheduler format is invalid (must be @scheduler:PORT).
+        """
+        for target in targets:
+            if target.startswith("@scheduler"):
+                if not target.startswith("@scheduler:"):
+                    raise ValueError(
+                        f"Invalid @scheduler format '{target}': must include port (@scheduler:PORT)"
+                    )
+                port_str = target.split(":", 1)[1]
+                if not port_str or not port_str.isdigit():
+                    raise ValueError(f"Invalid @scheduler format '{target}': port must be numeric")
+        return targets
 
 
 class ScrapeConfig(BaseModel):
