@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
+SCHEDULER_UNIT_NUMBER = "0"
 
 
 @dataclass(kw_only=True)
@@ -79,7 +80,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
             True if the unit should run scheduler processes, False otherwise.
         """
         unit_id = self.unit_name.split("/")[1]
-        return unit_id == "0"
+        return unit_id == SCHEDULER_UNIT_NUMBER
 
 
 def generate_openfga_env(relation_data: "OpenfgaProviderAppData | None" = None) -> dict[str, str]:

@@ -4,9 +4,10 @@
 # Configuration file for the paas-charm library
 
 # Prometheus scrape configuration
-# This demonstrates adding a custom scrape job alongside the framework default (port 9102)
+# This demonstrates adding custom scrape jobs alongside the framework default (port 9102)
 prometheus:
   scrape_configs:
+    # Custom job scraping all units on port 8081
     - job_name: "flask-app-custom"
       metrics_path: "/metrics"
       static_configs:
@@ -15,3 +16,12 @@ prometheus:
           labels:
             app: "flask"
             env: "example"
+    
+    # Scheduler-only job using @scheduler placeholder
+    - job_name: "flask-scheduler-metrics"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets:
+            - "@scheduler:8082"  # Only scrapes scheduler unit (unit 0)
+          labels:
+            role: "scheduler"

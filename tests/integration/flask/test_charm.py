@@ -254,7 +254,6 @@ def test_app_peer_address(
 
     expected_result = set()
     for unit_name in status.apps[flask_app.name].units.keys():
-        # <unit-name>.<app-name>-endpoints.<model-name>.svc.cluster.local
         expected_result.add(
             f"{unit_name.replace('/', '-')}.{flask_app.name}-endpoints.{model_name}.svc.cluster.local"
         )
@@ -262,7 +261,7 @@ def test_app_peer_address(
 
     # Scale back to 1 unit
     juju.remove_unit(flask_app.name, num_units=1)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, delay=5)
+    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
         check_peer_fqdns(unit, actual_result, is_in=False)

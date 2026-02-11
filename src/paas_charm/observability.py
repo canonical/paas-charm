@@ -12,8 +12,9 @@ import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 
+from paas_charm.app import SCHEDULER_UNIT_NUMBER
 from paas_charm.paas_config import PrometheusConfig
-from paas_charm.utils import enable_pebble_log_forwarding
+from paas_charm.utils import build_k8s_unit_fqdn, enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,9 @@ class Observability(ops.Object):
         """
         super().__init__(charm, "observability")
         self._charm = charm
-        jobs = build_prometheus_jobs(metrics_target, metrics_path, prometheus_config)
+        jobs = build_prometheus_jobs(
+            metrics_target, metrics_path, prometheus_config, charm.app.name, charm.model.name
+        )
         self._metrics_endpoint = MetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
@@ -100,6 +103,8 @@ def build_prometheus_jobs(
     metrics_target: str | None,
     metrics_path: str | None,
     prometheus_config: PrometheusConfig | None,
+    app_name: str,
+    model_name: str,
 ) -> list[dict[str, typing.Any]]:
     """Build Prometheus scrape jobs list from framework defaults and custom config.
 
@@ -107,6 +112,8 @@ def build_prometheus_jobs(
         metrics_target: Default framework metrics target (e.g., "*:8000").
         metrics_path: Default framework metrics path (e.g., "/metrics").
         prometheus_config: Custom Prometheus configuration from paas-config.yaml.
+        app_name: Application name for @scheduler resolution.
+        model_name: Juju model name for @scheduler resolution.
 
     Returns:
         List of Prometheus job configurations (empty list if no jobs are configured).
@@ -115,26 +122,54 @@ def build_prometheus_jobs(
 
     # Add default framework job if configured. The library adds a default job_name.
     if metrics_path and metrics_target:
+        resolved_target = _resolve_scheduler_placeholder(app_name, model_name, metrics_target)
         jobs.append(
-            {"metrics_path": metrics_path, "static_configs": [{"targets": [metrics_target]}]}
+            {"metrics_path": metrics_path, "static_configs": [{"targets": [resolved_target]}]}
         )
 
     # Add custom jobs from paas-config.yaml
     if prometheus_config and prometheus_config.scrape_configs:
         for scrape_config in prometheus_config.scrape_configs:
+            static_configs = []
+            for sc in scrape_config.static_configs:
+                resolved_targets = [
+                    _resolve_scheduler_placeholder(app_name, model_name, target)
+                    for target in sc.targets
+                ]
+                config: dict[str, typing.Any] = {"targets": resolved_targets}
+                if sc.labels:
+                    config["labels"] = sc.labels
+                static_configs.append(config)
+
             jobs.append(
                 {
                     "job_name": scrape_config.job_name,
                     "metrics_path": scrape_config.metrics_path,
-                    "static_configs": [
-                        (
-                            {"targets": sc.targets, "labels": sc.labels}
-                            if sc.labels
-                            else {"targets": sc.targets}
-                        )
-                        for sc in scrape_config.static_configs
-                    ],
+                    "static_configs": static_configs,
                 }
             )
 
     return jobs
+
+
+def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) -> str:
+    """Replace @scheduler placeholder with scheduler unit FQDN.
+
+    Args:
+        app_name: Application name (e.g., "flask-app").
+        model_name: Juju model name (e.g., "my-model").
+        target: Target string possibly containing @scheduler placeholder.
+
+    Returns:
+        Target with @scheduler replaced by scheduler unit's Kubernetes DNS FQDN,
+        or unchanged target if no @scheduler placeholder present.
+
+    Note:
+        This uses Kubernetes DNS service discovery. An alternative could be to use the
+        pod IP directly from a peer relation.
+    """
+    if target.startswith("@scheduler:"):
+        port = target.split(":", 1)[1]
+        scheduler_fqdn = build_k8s_unit_fqdn(app_name, SCHEDULER_UNIT_NUMBER, model_name)
+        return f"{scheduler_fqdn}:{port}"
+    return target
