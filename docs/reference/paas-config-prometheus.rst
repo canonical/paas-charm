@@ -9,7 +9,7 @@ framework metrics are insufficient for your use case or you want to
 expose additional metrics endpoints.
 
 The custom scrape configurations are merged with the default framework
-metrics job (if defined), so both can  be active when you integrate with Prometheus.
+metrics job (if defined), so both can be active when you integrate with Prometheus.
 
 Configuration Schema
 --------------------
