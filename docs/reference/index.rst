@@ -52,13 +52,9 @@ The following table contains links to pages for the individual extensions.
 
 The following pages provide more information about the software operator built with Charmcraft.
 
-* :ref:`Metrics and relations <ref_metrics_relations>`: A list of pages with technical descriptions
-  about the enabled metrics and relations supported in the 12-factor app support in Charmcraft.
-* :ref:`Charm architecture <ref_charm_architecture>`: An overview of the architecture,
-  components, and source code.
 * :ref:`paas-config.yaml <ref_paas_config>`: Configuration file for customizing charm runtime behavior.
 * :ref:`Metrics and relations <ref_metrics_relations>`: A list of pages with technical descriptions
-  about the enabled metrics and relations supported in the 12-factor app support in Charmcraft.
+about the enabled metrics and relations supported in the 12-factor app support in Charmcraft.
 * :ref:`Charm architecture <ref_charm_architecture>`: An overview of the architecture,
   components, and source code.
 
