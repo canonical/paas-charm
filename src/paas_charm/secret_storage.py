@@ -9,6 +9,8 @@ import typing
 
 import ops
 
+from paas_charm.utils import build_k8s_unit_fqdn
+
 
 class SecretStorage(ops.Object, abc.ABC):
     """A class that manages secret keys required for charms.
@@ -75,11 +77,7 @@ class SecretStorage(ops.Object, abc.ABC):
         )
         unit_names = [unit.name for unit in peer_relation.units]
         for unit_name in sorted(unit_names):
-            unit_fqdn = (
-                f"{unit_name.replace('/', '-')}."
-                f"{self.model.app.name}-endpoints."
-                f"{self.model.name}.svc.cluster.local"
-            )
+            unit_fqdn = build_k8s_unit_fqdn(self.model.app.name, unit_name, self.model.name)
             unit_fqdns.append(unit_fqdn)
         if not unit_fqdns:
             return None

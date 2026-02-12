@@ -161,3 +161,31 @@ def get_endpoints_by_interface_name(
         for endpoint_name, endpoint in requires.items()
         if endpoint.interface_name == interface_name
     ]
+
+
+def build_k8s_unit_fqdn(app_name: str, unit_identifier: str, model_name: str) -> str:
+    """Build Kubernetes FQDN for a unit using service discovery.
+
+    Args:
+        app_name: Application name (e.g., "flask-app").
+        unit_identifier: Unit identifier - can be unit number ("0"), unit name with slash
+            ("flask-app/0"), or unit name with dash ("flask-app-0").
+        model_name: Juju model name.
+
+    Returns:
+        Full Kubernetes FQDN for the unit.
+
+    Example:
+        >>> build_k8s_unit_fqdn("flask-app", "0", "my-model")
+        "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local"
+        >>> build_k8s_unit_fqdn("flask-app", "flask-app/0", "my-model")
+        "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local"
+    """
+    if "/" in unit_identifier:
+        normalized = unit_identifier.replace("/", "-")
+    elif not unit_identifier.startswith(app_name):
+        normalized = f"{app_name}-{unit_identifier}"
+    else:
+        normalized = unit_identifier
+
+    return f"{normalized}.{app_name}-endpoints.{model_name}.svc.cluster.local"

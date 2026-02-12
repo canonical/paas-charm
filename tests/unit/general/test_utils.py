@@ -9,7 +9,11 @@ import pytest
 from ops import RelationMeta, RelationRole
 
 from paas_charm.charm_state import is_user_defined_config
-from paas_charm.utils import build_validation_error_message, get_endpoints_by_interface_name
+from paas_charm.utils import (
+    build_k8s_unit_fqdn,
+    build_validation_error_message,
+    get_endpoints_by_interface_name,
+)
 
 
 def _test_build_validation_error_message_parameters():
@@ -295,3 +299,49 @@ def test_get_relations_by_interface(requires, interface_name, expected_relation_
     """Test the get_endpoints_by_interface_name function."""
     result = get_endpoints_by_interface_name(requires, interface_name)
     assert result == expected_relation_list
+
+
+@pytest.mark.parametrize(
+    "app_name, unit_identifier, model_name, expected",
+    [
+        pytest.param(
+            "flask-app",
+            "0",
+            "my-model",
+            "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local",
+            id="unit number only",
+        ),
+        pytest.param(
+            "flask-app",
+            "flask-app/0",
+            "production",
+            "flask-app-0.flask-app-endpoints.production.svc.cluster.local",
+            id="unit name with slash",
+        ),
+        pytest.param(
+            "app",
+            "app-1",
+            "test",
+            "app-1.app-endpoints.test.svc.cluster.local",
+            id="unit name with dash",
+        ),
+        pytest.param(
+            "my-service",
+            "2",
+            "dev-model",
+            "my-service-2.my-service-endpoints.dev-model.svc.cluster.local",
+            id="hyphenated app name",
+        ),
+        pytest.param(
+            "app",
+            "app/10",
+            "model",
+            "app-10.app-endpoints.model.svc.cluster.local",
+            id="double digit unit number",
+        ),
+    ],
+)
+def test_build_k8s_unit_fqdn(app_name, unit_identifier, model_name, expected):
+    """Test build_k8s_unit_fqdn generates correct Kubernetes FQDN."""
+    result = build_k8s_unit_fqdn(app_name, unit_identifier, model_name)
+    assert result == expected

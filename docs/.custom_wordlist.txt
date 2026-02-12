@@ -23,6 +23,8 @@ filesystem
 FQDN
 Gradle
 Gunicorn
+hostname
+hostnames
 init
 Jinja
 kubectl
