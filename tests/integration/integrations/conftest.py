@@ -534,18 +534,6 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     return rabbitmq_k8s
 
 
-@pytest.fixture(scope="module", name="rabbitmq_k8s_ha_app")
-def deploy_rabbitmq_k8s_ha_fixture(juju: jubilant.Juju, rabbitmq_k8s_app) -> App:
-    """Deploy rabbitmq-k8s app in ha mode."""
-    juju.add_unit(rabbitmq_k8s_app.name, num_units=2)
-    juju.wait(
-        lambda status: jubilant.all_active(status, rabbitmq_k8s_app.name),
-        timeout=6 * 60,
-        delay=10,
-    )
-    return rabbitmq_k8s_app
-
-
 @pytest.fixture(scope="module", name="identity_bundle")
 def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     """Deploy Canonical identity bundle."""

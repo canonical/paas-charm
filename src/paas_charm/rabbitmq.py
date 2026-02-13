@@ -90,6 +90,7 @@ class PaaSRabbitMQRelationData(BaseModel):
         password: password to use for RabbitMQ.
         amqp_uri: amqp uri for connecting to RabbitMQ server.
         hostnames: a list of hostnames of the RabbitMQ server units.
+        amqp_uris: a list of amqp uris for connecting to RabbitMQ server units.
     """
 
     vhost: str
