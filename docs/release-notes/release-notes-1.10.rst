@@ -47,6 +47,7 @@ Relevant links:
 * `Pull request #236 <https://github.com/canonical/paas-charm/pull/236>`_
 * `Pull request #242 <https://github.com/canonical/paas-charm/pull/242>`_
 * `Pull request #243 <https://github.com/canonical/paas-charm/pull/243>`_
+* :ref:`Documentation <ref_paas_config>`
 
 New http-proxy integration support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
