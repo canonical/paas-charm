@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"strings"
 
@@ -165,37 +164,22 @@ func (s *Service) RabbitMQSend() error {
 }
 
 func (s *Service) RabbitMQSendToUnit(unitIndex int) error {
-	hostnames := os.Getenv("RABBITMQ_HOSTNAMES")
-	if hostnames == "" {
-		return fmt.Errorf("RABBITMQ_HOSTNAMES not set")
+	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
+	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
+	if uris == "" {
+		return fmt.Errorf("RABBITMQ_CONNECTION_STRINGS not set")
 	}
-	units := strings.Split(hostnames, ",")
+
+	units := strings.Split(uris, ",")
 	if unitIndex < 0 || unitIndex >= len(units) {
 		return fmt.Errorf("unit index %d out of range", unitIndex)
 	}
-	ip := strings.TrimSpace(units[unitIndex])
-	if ip == "" {
+	addr := strings.TrimSpace(units[unitIndex])
+	if addr == "" {
 		return fmt.Errorf("unit index %d has empty hostname", unitIndex)
 	}
 
-	user := os.Getenv("RABBITMQ_USERNAME")
-	pass := os.Getenv("RABBITMQ_PASSWORD")
-	if user == "" || pass == "" {
-		return fmt.Errorf("RABBITMQ_USERNAME or RABBITMQ_PASSWORD not set")
-	}
-
-	port := os.Getenv("RABBITMQ_PORT")
-	if port == "" {
-		port = "5672"
-	}
-	vc := os.Getenv("RABBITMQ_VHOST")
-	if vc == "" {
-		vc = "/"
-	}
-	vhost := url.PathEscape(vc)
-	addr := fmt.Sprintf("amqp://%s:%s@%s:%s/%s", user, pass, ip, port, vhost)
-
-	log.Printf("Attempting to connect to unit index %d at %s", unitIndex, ip)
+	log.Printf("Attempting to connect to unit index %d at %s", unitIndex, addr)
 	conn, err := amqp.Dial(addr)
 	if err != nil {
 		return err
@@ -257,37 +241,22 @@ func (s *Service) RabbitMQReceive() (string, error) {
 }
 
 func (s *Service) RabbitMQReceiveFromUnit(unitIndex int) (string, error) {
-	hostnames := os.Getenv("RABBITMQ_HOSTNAMES")
-	if hostnames == "" {
-		return "FAIL. NO HOSTNAMES.", fmt.Errorf("RABBITMQ_HOSTNAMES not set")
+	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
+	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
+	if uris == "" {
+		return "FAIL. NO CONNECTION.", fmt.Errorf("RABBITMQ_CONNECTION_STRINGS not set")
 	}
-	units := strings.Split(hostnames, ",")
+
+	units := strings.Split(uris, ",")
 	if unitIndex < 0 || unitIndex >= len(units) {
-		return "FAIL. BAD UNIT.", fmt.Errorf("unit index %d out of range", unitIndex)
+		return "FAIL. NO CONNECTION.", fmt.Errorf("unit index %d out of range", unitIndex)
 	}
-	ip := strings.TrimSpace(units[unitIndex])
-	if ip == "" {
-		return "FAIL. BAD UNIT.", fmt.Errorf("unit index %d has empty hostname", unitIndex)
-	}
-
-	user := os.Getenv("RABBITMQ_USERNAME")
-	pass := os.Getenv("RABBITMQ_PASSWORD")
-	if user == "" || pass == "" {
-		return "FAIL. NO CREDS.", fmt.Errorf("RABBITMQ_USERNAME or RABBITMQ_PASSWORD not set")
+	addr := strings.TrimSpace(units[unitIndex])
+	if addr == "" {
+		return "FAIL. NO CONNECTION.", fmt.Errorf("unit index %d has empty hostname", unitIndex)
 	}
 
-	port := os.Getenv("RABBITMQ_PORT")
-	if port == "" {
-		port = "5672"
-	}
-	vc := os.Getenv("RABBITMQ_VHOST")
-	if vc == "" {
-		vc = "/"
-	}
-	vhost := url.PathEscape(vc)
-	addr := fmt.Sprintf("amqp://%s:%s@%s:%s/%s", user, pass, ip, port, vhost)
-
-	log.Printf("Attempting to connect to unit index %d at %s", unitIndex, ip)
+	log.Printf("Attempting to connect to unit index %d at %s", unitIndex, addr)
 	conn, err := amqp.Dial(addr)
 	if err != nil {
 		return "FAIL. NO CONNECTION.", err
