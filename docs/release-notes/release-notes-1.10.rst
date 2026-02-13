@@ -68,8 +68,8 @@ Bug fixes
 ~~~~~~~~~~~~~~
 
 * fix: Fix bug in the Grafana Dashboards of Django, Express, FastAPI and Flask
-where when all the variables hold the value `All` (which it does in default), Loki
-throws an error.
+  where when all the variables hold the value `All` (which it does in default), Loki
+  throws an error.
 * fix: Fixed FastAPI example and changed to use edge PostgreSQL for integration tests.
 
 Known issues in ``paas-charm``
