@@ -219,7 +219,7 @@ templates_path = [".sphinx/_templates"]
 #       the sphinx_reredirects extension will be disabled.
 
 redirects = {
-    'explanation/charm-architecture': '../../reference/charm-architecture', 
+    'explanation/charm-architecture': '/reference/charm-architecture', 
 }
 
 
@@ -362,7 +362,6 @@ if os.path.exists('./reuse/substitutions.yaml'):
 # Add configuration for intersphinx mapping
 
 intersphinx_mapping = {
-    'starter-pack': ('https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest', None),
     'sphinxcontrib-mermaid': ('https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest', None),
     'juju': ("https://documentation.ubuntu.com/juju/3.6/", None),
     'charmcraft': ("https://documentation.ubuntu.com/charmcraft/latest/", None),
