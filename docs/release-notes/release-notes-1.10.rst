@@ -60,7 +60,7 @@ New grafana dashboard for FastAPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Pull request #177 <https://github.com/canonical/paas-charm/pull/177>`_
-  
+
 Bug fixes
 ---------
 
