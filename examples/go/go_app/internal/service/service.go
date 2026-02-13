@@ -83,16 +83,13 @@ func (s *Service) GetRabbitMQConnection() (*amqp.Connection, error) {
 		log.Printf("Primary connection failed: %v", err)
 	}
 
-	// Fallback to RABBITMQ_HOSTNAMES if primary fails
-	hostnames := os.Getenv("RABBITMQ_HOSTNAMES")
-	if hostnames == "" {
-		return nil, fmt.Errorf("no fallback hostnames available in RABBITMQ_HOSTNAMES")
+	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
+	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
+	if uris == "" {
+		return nil, fmt.Errorf("no fallback uris available in RABBITMQ_CONNECTION_STRINGS")
 	}
 
-	// Use credentials from the primary URL or other env vars if needed
-	// For this example, we assume hostnames are IPs and we reuse the URI format
-	// Example format of RABBITMQ_HOSTNAMES: "10.0.0.1,10.0.0.2,10.0.0.3"
-	units := strings.Split(hostnames, ",")
+	units := strings.Split(uris, ",")
 	for _, ip := range units {
 		log.Printf("Attempting to connect to fallback unit: %s", ip)
 		conn, err := amqp.Dial(ip)

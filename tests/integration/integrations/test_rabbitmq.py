@@ -63,14 +63,14 @@ def test_rabbitmq_server_integration(
 def test_rabbitmq_ha_integration(
     juju: jubilant.Juju,
     go_app: App,
-    rabbitmq_server_app: App,
+    rabbitmq_server_ha_app: App,
 ):
     """
     arrange: The app and rabbitmq deployed
     act: Integrate the app with rabbitmq
     assert: Assert that RabbitMQ works correctly
     """
-    juju.integrate(go_app.name, rabbitmq_server_app.name)
+    juju.integrate(go_app.name, rabbitmq_server_ha_app.name)
     juju.wait(
         lambda status: jubilant.all_active(status, go_app.name),
         timeout=(10 * 60),

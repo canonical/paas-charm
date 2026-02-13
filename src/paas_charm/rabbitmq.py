@@ -107,6 +107,17 @@ class PaaSRabbitMQRelationData(BaseModel):
         vhost = urllib.parse.quote(self.vhost, safe="")
         return f"amqp://{self.username}:{self.password}@{self.hostname}:{self.port}/{vhost}"
 
+    @property
+    def amqp_uris(self) -> list[str]:
+        """AMQP URI's for rabbitmq units from parameters."""
+        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
+        # vhost component of a uri should be url encoded
+        uris: list[str] = []
+        for hostname in self.hostnames:
+            vhost = urllib.parse.quote(self.vhost, safe="")
+            uris.append(f"amqp://{self.username}:{self.password}@{hostname}:{self.port}/{vhost}")
+        return uris
+
 
 class Credentials(NamedTuple):
     """Credentials wrapper.
@@ -195,11 +206,8 @@ class RabbitMQRequires(Object):
         if not rel:
             return _hosts
         for unit in rel.units:
-            unit_data = rel.data[unit]
-            password = unit_data.get("password", None)
-            if ingress := rel.data[unit].get("hostname"):
-                vhost = urllib.parse.quote(self.vhost, safe="")
-                _hosts.append(f"amqp://{self.username}:{password}@{ingress}:{self.port}/{vhost}")
+            if hostname := rel.data[unit].get("hostname"):
+                _hosts.append(hostname)
         return _hosts
 
     @property
