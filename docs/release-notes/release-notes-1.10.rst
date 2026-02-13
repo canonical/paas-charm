@@ -62,6 +62,16 @@ New grafana dashboard for FastAPI
 
 * `Pull request #177 <https://github.com/canonical/paas-charm/pull/177>`_
 
+Rockcraft
+~~~~~~~~~
+
+No feature updates in this release.
+
+Charmcraft
+~~~~~~~~~~
+
+No feature updates in this release.
+
 Bug fixes
 ---------
 
