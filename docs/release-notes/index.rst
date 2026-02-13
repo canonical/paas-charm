@@ -30,3 +30,4 @@ Releases
 
     release-notes-1.8
     release-notes-1.9
+    release-notes-1.10
