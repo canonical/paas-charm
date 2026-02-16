@@ -28,3 +28,5 @@ scan:
     - lib/python3.10/site-packages/setuptools-59.6.0.dist-info/METADATA
     - app/spring-boot-0.0.1.jar
     - usr/local/bin/go-app
+  skip-dirs:
+    - "usr/**"
