@@ -122,6 +122,7 @@ def test_charm_state_invalid_flask_config(flask_base_state, charm_config: dict) 
 
     # Expect blocked status because invalid config
     assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "invalid option" in out.unit_status.message
 
 
 @pytest.mark.parametrize(
@@ -256,6 +257,7 @@ def test_flask_secret_key_id_no_value(flask_base_state):
     out = ctx.run(ctx.on.config_changed(), state)
 
     assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "invalid option" in out.unit_status.message
 
 
 def test_flask_secret_key_id_duplication(flask_base_state):
@@ -276,3 +278,4 @@ def test_flask_secret_key_id_duplication(flask_base_state):
     out = ctx.run(ctx.on.config_changed(), state)
 
     assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "invalid option" in out.unit_status.message
