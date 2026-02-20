@@ -163,15 +163,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._oauth = self._init_oauth(requires)
 
         paas_config = read_paas_config()
-        self._observability = Observability(
-            charm=self,
-            log_files=self._workload_config.log_files,
-            container_name=self._workload_config.container_name,
-            cos_dir=self.build_cos_dir(),
-            metrics_target=self._workload_config.metrics_target,
-            metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus,
-        )
+        try:
+            self._observability = Observability(
+                charm=self,
+                log_files=self._workload_config.log_files,
+                container_name=self._workload_config.container_name,
+                cos_dir=self.build_cos_dir(),
+                metrics_target=self._workload_config.metrics_target,
+                metrics_path=self._workload_config.metrics_path,
+                prometheus_config=paas_config.prometheus,
+            )
+            logger.info(f"custom COS directory {self.get_cos_custom_dir()} is valid")
+        except InvalidCustomCOSDirectoryError as exc:
+            logger.error(str(exc))
+            logger.info(f"custom COS directory {self.get_cos_custom_dir()} is invalid")
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
@@ -924,6 +929,7 @@ def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
         InvalidCustomCOSDirectoryError: if the custom COS directory is invalid.
     """
     if custom_dir.is_dir():
+        logger.info(f"validating custom COS directory {custom_dir}")
         for p in custom_dir.iterdir():
             if p.is_file():
                 raise InvalidCustomCOSDirectoryError(f"custom COS directory cannot contain a file named {p.name}")
@@ -932,3 +938,5 @@ def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
                     raise InvalidCustomCOSDirectoryError(
                         f"custom COS directory cannot contain a subdirectory named {p.name}"
                     )
+    else:
+        logger.info(f"custom COS directory {custom_dir} does not exist, skipping")
