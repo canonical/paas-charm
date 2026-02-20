@@ -480,7 +480,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             Return the custom directory with COS related files.
         """
-        return (pathlib.Path(__file__).parent / self._framework_name / "cos_custom").absolute()
+        return (self.charm_dir / "cos_custom").absolute()
 
     @property
     def _container(self) -> Container:
