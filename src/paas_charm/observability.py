@@ -3,11 +3,10 @@
 
 """Provide the Observability class to represent the observability stack for charms."""
 
-from collections.abc import Iterable
 import logging
 import os.path
-import pathlib
 import typing
+from collections.abc import Iterable
 
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider

@@ -163,15 +163,18 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._oauth = self._init_oauth(requires)
 
         paas_config = read_paas_config()
-        self._observability = Observability(
-            charm=self,
-            log_files=self._workload_config.log_files,
-            container_name=self._workload_config.container_name,
-            cos_dir=self.build_cos_dir(),
-            metrics_target=self._workload_config.metrics_target,
-            metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus,
-        )
+        try:
+            self._observability = Observability(
+                charm=self,
+                log_files=self._workload_config.log_files,
+                container_name=self._workload_config.container_name,
+                cos_dir=self.build_cos_dir(),
+                metrics_target=self._workload_config.metrics_target,
+                metrics_path=self._workload_config.metrics_path,
+                prometheus_config=paas_config.prometheus,
+            )
+        except InvalidCustomCOSDirectoryError as exc:
+            logger.error(f"custom COS directory {self.get_cos_custom_dir()} is invalid")
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
@@ -458,7 +461,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             Return the directory with COS related files.
         """
-        merged_cos_dir = (pathlib.Path(__file__).parent / self._framework_name / "cos_merged").absolute()
+        merged_cos_dir = (
+            pathlib.Path(__file__).parent / self._framework_name / "cos_merged"
+        ).absolute()
         merge_cos_directories(
             self.get_cos_default_dir(),
             self.get_cos_custom_dir(),
@@ -886,9 +891,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle http-proxy relation changed."""
         self.restart()
 
+
 COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
 
-def merge_cos_directories(default_dir: pathlib.Path, custom_dir: pathlib.Path, merged_dir: pathlib.Path) -> None:
+
+def merge_cos_directories(
+    default_dir: pathlib.Path, custom_dir: pathlib.Path, merged_dir: pathlib.Path
+) -> None:
     """Merge the default COS directory with the custom COS directory.
 
     Files in the custom COS directory will have `custom_` prefix to avoid conflicts with default COS files.
@@ -898,7 +907,6 @@ def merge_cos_directories(default_dir: pathlib.Path, custom_dir: pathlib.Path, m
         custom_dir: the custom COS directory.
         merged_dir: the output merged COS directory.
     """
-
 
     if merged_dir.is_dir():
         shutil.rmtree(merged_dir)
@@ -926,7 +934,9 @@ def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
     if custom_dir.is_dir():
         for p in custom_dir.iterdir():
             if p.is_file():
-                raise InvalidCustomCOSDirectoryError(f"custom COS directory cannot contain a file named {p.name}")
+                raise InvalidCustomCOSDirectoryError(
+                    f"custom COS directory cannot contain a file named {p.name}"
+                )
             elif p.is_dir():
                 if p.name not in COS_SUBDIRS:
                     raise InvalidCustomCOSDirectoryError(
