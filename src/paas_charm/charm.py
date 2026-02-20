@@ -6,6 +6,7 @@
 import abc
 import logging
 import pathlib
+import shutil
 import typing
 
 import ops
@@ -21,7 +22,7 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import CharmConfigInvalidError, InvalidCustomCOSDirectoryError
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.paas_config import read_paas_config
@@ -166,7 +167,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             charm=self,
             log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
-            cos_dir=self.get_cos_dir(),
+            cos_dir=self.build_cos_dir(),
             metrics_target=self._workload_config.metrics_target,
             metrics_path=self._workload_config.metrics_path,
             prometheus_config=paas_config.prometheus,
@@ -451,13 +452,35 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
+    def build_cos_dir(self) -> pathlib.Path:
+        """Build and return the merged directory with COS related files.
 
         Returns:
             Return the directory with COS related files.
         """
-        return str((pathlib.Path(__file__).parent / f"{self._framework_name}/cos").absolute())
+        merged_cos_dir = (pathlib.Path(__file__).parent / self._framework_name / "cos_merged").absolute()
+        merge_cos_directories(
+            self.get_cos_default_dir(),
+            self.get_cos_custom_dir(),
+            merged_cos_dir,
+        )
+        return merged_cos_dir
+
+    def get_cos_default_dir(self) -> pathlib.Path:
+        """Return the default directory with COS related files.
+
+        Returns:
+            Return the default directory with COS related files.
+        """
+        return (pathlib.Path(__file__).parent / self._framework_name / "cos").absolute()
+
+    def get_cos_custom_dir(self) -> pathlib.Path:
+        """Return the custom directory with COS related files.
+
+        Returns:
+            Return the custom directory with COS related files.
+        """
+        return (pathlib.Path(__file__).parent / self._framework_name / "cos_custom").absolute()
 
     @property
     def _container(self) -> Container:
@@ -862,3 +885,50 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
         """Handle http-proxy relation changed."""
         self.restart()
+
+COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
+
+def merge_cos_directories(default_dir: pathlib.Path, custom_dir: pathlib.Path, merged_dir: pathlib.Path) -> None:
+    """Merge the default COS directory with the custom COS directory.
+
+    Files in the custom COS directory will have `custom_` prefix to avoid conflicts with default COS files.
+
+    Args:
+        default_dir: the default COS directory.
+        custom_dir: the custom COS directory.
+        merged_dir: the output merged COS directory.
+    """
+
+
+    if merged_dir.is_dir():
+        shutil.rmtree(merged_dir)
+
+    shutil.copytree(default_dir, merged_dir)
+
+    validate_cos_custom_dir(custom_dir)
+
+    if custom_dir.is_dir():
+        for subdir in custom_dir.iterdir():
+            for file in subdir.iterdir():
+                if file.is_file():
+                    shutil.copy(file, merged_dir / subdir.name / f"custom_{file.name}")
+
+
+def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
+    """Validate the custom COS directory.
+
+    Args:
+        custom_dir: the custom COS directory.
+
+    Raises:
+        InvalidCustomCOSDirectoryError: if the custom COS directory is invalid.
+    """
+    if custom_dir.is_dir():
+        for p in custom_dir.iterdir():
+            if p.is_file():
+                raise InvalidCustomCOSDirectoryError(f"custom COS directory cannot contain a file named {p.name}")
+            elif p.is_dir():
+                if p.name not in COS_SUBDIRS:
+                    raise InvalidCustomCOSDirectoryError(
+                        f"custom COS directory cannot contain a subdirectory named {p.name}"
+                    )
