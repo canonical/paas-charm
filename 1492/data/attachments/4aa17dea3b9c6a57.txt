@@ -1,0 +1,2 @@
+15:21:02 [32mINFO[0m cli: juju status --model testing --format json
+15:21:02 [32mINFO[0m cli: juju run --model testing --format json django-k8s/0 create-superuser --params /home/runner/snap/juju/common/tmpuevyda9c
