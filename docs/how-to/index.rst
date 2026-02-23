@@ -39,6 +39,10 @@ configuring, integrating, and using a 12-factor app charm.
    * :ref:`Usage <charmcraft:use-12-factor-charms>`:
      Learn more about tasks such as migrations and troubleshooting.
 
+* :ref:`Provide custom COS dashboards and alert rules <how_to_custom_cos_assets>`:
+  Add your own Grafana dashboards and Loki/Prometheus alert rules by shipping a
+  ``cos_custom/`` directory with the charm.
+
 Manage a deployment
 -------------------
 
@@ -67,5 +71,6 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
    Upgrade <upgrade>
    Get support <get-support>
+  Provide custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
    Contribute <contributing>
