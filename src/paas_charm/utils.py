@@ -17,6 +17,8 @@ from pydantic import ValidationError
 
 from paas_charm.exceptions import InvalidCustomCOSDirectoryError
 
+COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
+
 
 class ValidationErrorMessage(typing.NamedTuple):
     """Class carrying status message and error log for pydantic validation errors.
@@ -231,8 +233,6 @@ def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
     Raises:
         InvalidCustomCOSDirectoryError: if the custom COS directory is invalid.
     """
-
-    COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
 
     if custom_dir.is_dir():
         for p in custom_dir.iterdir():
