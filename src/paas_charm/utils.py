@@ -202,14 +202,13 @@ def merge_cos_directories(
 ) -> None:
     """Merge the default COS directory with the custom COS directory.
 
-    Files in the custom COS directory will have `custom_` prefix to avoid conflicts with default COS files.
+    Files in the custom COS directory will have `custom_` prefix.
 
     Args:
         default_dir: the default COS directory.
         custom_dir: the custom COS directory.
         merged_dir: the output merged COS directory.
     """
-
     if merged_dir.is_dir():
         shutil.rmtree(merged_dir)
 
@@ -233,14 +232,13 @@ def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
     Raises:
         InvalidCustomCOSDirectoryError: if the custom COS directory is invalid.
     """
-
     if custom_dir.is_dir():
         for p in custom_dir.iterdir():
             if p.is_file():
                 raise InvalidCustomCOSDirectoryError(
                     f"custom COS directory cannot contain a file named {p.name}"
                 )
-            elif p.is_dir():
+            if p.is_dir():
                 if p.name not in COS_SUBDIRS:
                     raise InvalidCustomCOSDirectoryError(
                         f"custom COS directory cannot contain a subdirectory named {p.name}"

@@ -165,18 +165,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._oauth = self._init_oauth(requires)
 
         paas_config = read_paas_config()
-        try:
-            self._observability = Observability(
-                charm=self,
-                log_files=self._workload_config.log_files,
-                container_name=self._workload_config.container_name,
-                cos_dir=self.build_cos_dir(),
-                metrics_target=self._workload_config.metrics_target,
-                metrics_path=self._workload_config.metrics_path,
-                prometheus_config=paas_config.prometheus,
-            )
-        except InvalidCustomCOSDirectoryError as exc:
-            logger.error(f"custom COS directory {self.get_cos_custom_dir()} is invalid")
+        self._observability = Observability(
+            charm=self,
+            log_files=self._workload_config.log_files,
+            container_name=self._workload_config.container_name,
+            cos_dir=self.build_cos_dir(),
+            metrics_target=self._workload_config.metrics_target,
+            metrics_path=self._workload_config.metrics_path,
+            prometheus_config=paas_config.prometheus,
+        )
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
@@ -463,7 +460,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             Return the directory with COS related files.
         """
-
         default_cos_dir = self.get_cos_default_dir()
         custom_cos_dir = self.get_cos_custom_dir()
         merged_cos_dir = (
@@ -473,15 +469,17 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         if not custom_cos_dir.is_dir():
             logger.error(
-                f"Custom COS directory {custom_cos_dir} does not exist, using default COS directory",
+                "Custom COS directory %s does not exist, using default COS directory",
+                custom_cos_dir,
             )
             return default_cos_dir
 
         try:
             validate_cos_custom_dir(custom_cos_dir)
-        except InvalidCustomCOSDirectoryError as exc:
+        except InvalidCustomCOSDirectoryError:
             logger.error(
-                f"Custom COS directory {custom_cos_dir} is invalid, using default COS directory"
+                "Custom COS directory %s is invalid, using default COS directory",
+                custom_cos_dir,
             )
             return default_cos_dir
 
