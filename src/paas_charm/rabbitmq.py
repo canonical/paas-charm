@@ -209,6 +209,9 @@ class RabbitMQRequires(Object):
         for unit in rel.units:
             if hostname := rel.data[unit].get("hostname"):
                 _hosts.append(hostname)
+        if not rel.units:
+            _hosts.append(str(rel.data[rel.app].get("hostname")))
+
         return _hosts
 
     @property
