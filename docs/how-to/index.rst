@@ -49,7 +49,7 @@ Manage a deployment
 The pages below describe general tasks related to managing a deployment:
 
 * :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
-  charm, or ``paas-charm`` version. 
+  charm, or ``paas-charm`` version.
 * :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
 
 
@@ -71,6 +71,6 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
    Upgrade <upgrade>
    Get support <get-support>
-  Provide custom COS dashboards and alert rules <custom-cos-assets>
+   Custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
    Contribute <contributing>

@@ -1,6 +1,6 @@
-.. _how_to_custom_cos_assets:
+.. _how_to_add_custom_cos_assets:
 
-Provide custom COS dashboards and alert rules
+Custom COS dashboards and alert rules
 =============================================
 
 The 12-factor charms ship with default observability assets used by the
