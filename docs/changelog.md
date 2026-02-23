@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2026-02-23
+
+* feat: Add support for custom COS directories,
+allowing users to provide their own Grafana dashboards,
+Loki alert rules and Prometheus alert rules.
+
 ## 2026-02-13
 
 * feat: Add `paas-config.yaml` support for custom Prometheus scrape configurations.
@@ -169,14 +175,14 @@ throws an error.
 
 ## v1.5.3 - 2025-05-08
 
-* feat: Added support for 
+* feat: Added support for
 [rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027#rootless-charms-on-k8s-3).
 
 ## v1.5.2 - 2025-04-29
 
-* fix: Properly update ingress integration and opened ports when 
+* fix: Properly update ingress integration and opened ports when
   configuration changes.
-* fix: Ensure Prometheus scraping information refreshes correctly on 
+* fix: Ensure Prometheus scraping information refreshes correctly on
   configuration changes.
 * docs: Updated README and contributing guide. Added links to Charmcraft and Rockcraft.
 
@@ -205,7 +211,7 @@ throws an error.
 
 ## v1.4.1 - 2025-03.25
 
-* fix: Added event handler for `secret_storage_relation_changed` 
+* fix: Added event handler for `secret_storage_relation_changed`
   event.
 
 ## v1.4.0 - 2025-03-04
