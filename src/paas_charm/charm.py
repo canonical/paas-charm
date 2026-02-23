@@ -6,7 +6,6 @@
 import abc
 import logging
 import pathlib
-import shutil
 import typing
 
 import ops
@@ -33,6 +32,7 @@ from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
     get_endpoints_by_interface_name,
+    merge_cos_directories,
 )
 
 logger = logging.getLogger(__name__)
@@ -890,55 +890,3 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
         """Handle http-proxy relation changed."""
         self.restart()
-
-
-COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
-
-
-def merge_cos_directories(
-    default_dir: pathlib.Path, custom_dir: pathlib.Path, merged_dir: pathlib.Path
-) -> None:
-    """Merge the default COS directory with the custom COS directory.
-
-    Files in the custom COS directory will have `custom_` prefix to avoid conflicts with default COS files.
-
-    Args:
-        default_dir: the default COS directory.
-        custom_dir: the custom COS directory.
-        merged_dir: the output merged COS directory.
-    """
-
-    if merged_dir.is_dir():
-        shutil.rmtree(merged_dir)
-
-    shutil.copytree(default_dir, merged_dir)
-
-    validate_cos_custom_dir(custom_dir)
-
-    if custom_dir.is_dir():
-        for subdir in custom_dir.iterdir():
-            for file in subdir.iterdir():
-                if file.is_file():
-                    shutil.copy(file, merged_dir / subdir.name / f"custom_{file.name}")
-
-
-def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:
-    """Validate the custom COS directory.
-
-    Args:
-        custom_dir: the custom COS directory.
-
-    Raises:
-        InvalidCustomCOSDirectoryError: if the custom COS directory is invalid.
-    """
-    if custom_dir.is_dir():
-        for p in custom_dir.iterdir():
-            if p.is_file():
-                raise InvalidCustomCOSDirectoryError(
-                    f"custom COS directory cannot contain a file named {p.name}"
-                )
-            elif p.is_dir():
-                if p.name not in COS_SUBDIRS:
-                    raise InvalidCustomCOSDirectoryError(
-                        f"custom COS directory cannot contain a subdirectory named {p.name}"
-                    )
