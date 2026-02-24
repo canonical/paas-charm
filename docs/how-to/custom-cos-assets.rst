@@ -29,6 +29,21 @@ Create the following directory structure in your charm project:
     Any other subdirectory name is considered invalid.
 
 
+Add dashboards
+--------------
+
+Custom dashboards are loaded from ``cos_custom/grafana_dashboards/``.
+
+Save each dashboard as a ``.json`` file, for example:
+
+* ``cos_custom/grafana_dashboards/app-overview.json``
+
+For dashboard authoring guidance and JSON structure reference, see:
+
+* `Build dashboards <https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/>`_
+* `Dashboard JSON model <https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/view-dashboard-json-model/>`_
+
+
 Add alert rules
 ---------------
 
