@@ -38,10 +38,15 @@ Save each dashboard as a ``.json`` file, for example:
 
 * ``cos_custom/grafana_dashboards/app-overview.json``
 
+When creating a dashboard, use variables for your datasources and name them
+``prometheusds`` and ``lokids``. You can make use of the Juju topology variables
+(``$juju_model``, ``$juju_model_uuid``, ``$juju_application``, ``$juju_unit``).
+
 For dashboard authoring guidance and JSON structure reference, see:
 
 * `Build dashboards <https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/>`_
 * `Dashboard JSON model <https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/view-dashboard-json-model/>`_
+* `Grafana dashboard library documentation <https://charmhub.io/grafana-k8s/libraries/grafana_dashboard>`_.
 
 
 Add alert rules
@@ -70,7 +75,12 @@ A minimal alert rule file looks like:
      summary: Target missing (instance {{ $labels.instance }})
      description: Prometheus target disappeared.
 
-Save the rule as a ``.rule`` file, for example:
+Prometheus charm libraries document these formats in the
+`prometheus_scrape <https://charmhub.io/prometheus-k8s/libraries/prometheus_scrape>`_ reference.
+Loki alert rules must include the ``%%juju_topology%%`` placeholder
+(as described in the `loki_push_api library <https://charmhub.io/loki-k8s/libraries/loki_push_api>`_).
+
+Save the rule as a ``.rule`` / ``.rules`` / ``.yml`` / ``.yaml`` file, for example:
 
 * ``cos_custom/prometheus_alert_rules/app.rule``
 * ``cos_custom/loki_alert_rules/app.rule``
