@@ -468,7 +468,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         shutil.rmtree(merged_cos_dir, ignore_errors=True)
 
         if not custom_cos_dir.is_dir():
-            logger.error(
+            logger.info(
                 "Custom COS directory %s does not exist, using default COS directory",
                 custom_cos_dir,
             )

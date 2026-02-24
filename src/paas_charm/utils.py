@@ -209,12 +209,7 @@ def merge_cos_directories(
         custom_dir: the custom COS directory.
         merged_dir: the output merged COS directory.
     """
-    if merged_dir.is_dir():
-        shutil.rmtree(merged_dir)
-
     shutil.copytree(default_dir, merged_dir)
-
-    validate_cos_custom_dir(custom_dir)
 
     if custom_dir.is_dir():
         for subdir in custom_dir.iterdir():
