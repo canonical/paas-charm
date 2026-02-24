@@ -22,7 +22,7 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError, InvalidCustomCOSDirectoryError
+from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.paas_config import read_paas_config
