@@ -116,9 +116,7 @@ class PaaSRabbitMQRelationData(BaseModel):
         uris: list[str] = []
         for hostname in self.hostnames:
             vhost = urllib.parse.quote(self.vhost, safe="")
-            uris.append(
-                f"amqp://{self.username}:{self.password}@{hostname}:{self.port}/{vhost}"
-            )
+            uris.append(f"amqp://{self.username}:{self.password}@{hostname}:{self.port}/{vhost}")
         return uris
 
 
@@ -288,9 +286,7 @@ class RabbitMQRequires(Object):
         # Validation error cannot happen unless there's an issue in code as only hostname and
         # password values come from the relation data.
         except ValidationError as exc:  # pragma: nocover
-            error_messages = build_validation_error_message(
-                exc, underscore_to_dash=True
-            )
+            error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidRabbitMQRelationDataError(
                 f"Invalid {PaaSRabbitMQRelationData.__name__}: {error_messages.short}"
