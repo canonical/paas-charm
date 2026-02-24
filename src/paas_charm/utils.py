@@ -7,6 +7,8 @@ import functools
 import itertools
 import os
 import pathlib
+
+import logging
 import shutil
 import typing
 
@@ -19,6 +21,7 @@ from paas_charm.exceptions import InvalidCustomCOSDirectoryError
 
 COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
 
+logger = logging.getLogger(__name__)
 
 class ValidationErrorMessage(typing.NamedTuple):
     """Class carrying status message and error log for pydantic validation errors.
@@ -209,13 +212,31 @@ def merge_cos_directories(
         custom_dir: the custom COS directory.
         merged_dir: the output merged COS directory.
     """
-    shutil.copytree(default_dir, merged_dir)
+    shutil.rmtree(merged_dir, ignore_errors=True)
 
-    if custom_dir.is_dir():
-        for subdir in custom_dir.iterdir():
-            for file in subdir.iterdir():
-                if file.is_file():
-                    shutil.copy(file, merged_dir / subdir.name / f"custom_{file.name}")
+    if default_dir.is_dir():
+        shutil.copytree(default_dir, merged_dir)
+    else:
+        logger.warning("Default COS directory %s does not exist", default_dir)
+        merged_dir.mkdir()
+
+    if not custom_dir.is_dir():
+        logger.info("Custom COS directory %s does not exist, merged default COS only at %s", custom_dir, merged_dir)
+        return
+
+    try:
+        validate_cos_custom_dir(custom_dir)
+    except InvalidCustomCOSDirectoryError:
+        logger.error("Custom COS directory %s is invalid, merged default COS only at %s", custom_dir, merged_dir)
+        return
+
+    for subdir in custom_dir.iterdir():
+        if not subdir.is_dir():
+            continue
+        for file in subdir.iterdir():
+            if file.is_file():
+                (merged_dir / subdir.name).mkdir(exist_ok=True)
+                shutil.copy(file, merged_dir / subdir.name / f"custom_{file.name}")
 
 
 def validate_cos_custom_dir(custom_dir: pathlib.Path) -> None:

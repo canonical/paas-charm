@@ -425,3 +425,56 @@ def test_merge_cos_directories_merges_default_and_custom(tmp_path: pathlib.Path)
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
     assert (merged_dir / "grafana_dashboards" / "custom_extra.json").read_text() == "custom"
+
+
+def test_merge_cos_directories_uses_default_only_when_custom_missing(
+    tmp_path: pathlib.Path,
+) -> None:
+    """
+    arrange: Create default COS tree and point custom COS to a missing path.
+    act: Call merge_cos_directories.
+    assert: Merged directory contains only default files.
+    """
+
+    default_dir = tmp_path / "default"
+    (default_dir / "grafana_dashboards").mkdir(parents=True)
+    (default_dir / "loki_alert_rules").mkdir(parents=True)
+    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
+    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
+
+    custom_dir = tmp_path / "custom_missing"
+    merged_dir = tmp_path / "merged"
+
+    merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
+
+    assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
+    assert list((merged_dir / "grafana_dashboards").glob("custom_*")) == []
+
+
+def test_merge_cos_directories_uses_default_only_when_custom_invalid(
+    tmp_path: pathlib.Path,
+) -> None:
+    """
+    arrange: Create default COS tree and invalid custom COS tree.
+    act: Call merge_cos_directories.
+    assert: Merged directory contains only default files.
+    """
+
+    default_dir = tmp_path / "default"
+    (default_dir / "grafana_dashboards").mkdir(parents=True)
+    (default_dir / "loki_alert_rules").mkdir(parents=True)
+    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
+    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
+
+    custom_dir = tmp_path / "custom_invalid"
+    custom_dir.mkdir()
+    (custom_dir / "grafana_dashboards").mkdir(parents=True)
+    (custom_dir / "grafana_dashboards" / "extra.json").write_text("custom")
+    (custom_dir / "invalid.txt").write_text("invalid")
+
+    merged_dir = tmp_path / "merged"
+
+    merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
+
+    assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
+    assert not (merged_dir / "grafana_dashboards" / "custom_extra.json").exists()

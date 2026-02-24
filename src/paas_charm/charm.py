@@ -6,7 +6,7 @@
 import abc
 import logging
 import pathlib
-import shutil
+import tempfile
 import typing
 
 import ops
@@ -34,7 +34,6 @@ from paas_charm.utils import (
     config_get_with_secret,
     get_endpoints_by_interface_name,
     merge_cos_directories,
-    validate_cos_custom_dir,
 )
 
 logger = logging.getLogger(__name__)
@@ -455,33 +454,16 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             raise CharmConfigInvalidError(error_messages.short) from exc
 
     def build_cos_dir(self) -> pathlib.Path:
-        """Build and return the merged directory with COS related files.
+        """Build and return a temporary merged directory with COS files.
 
         Returns:
-            Return the directory with COS related files.
+            Return the temporary directory with merged COS related files.
         """
         default_cos_dir = self.get_cos_default_dir()
         custom_cos_dir = self.get_cos_custom_dir()
         merged_cos_dir = (
-            pathlib.Path(__file__).parent / self._framework_name / "cos_merged"
+            pathlib.Path(tempfile.gettempdir()) / f"cos-merged-{self._framework_name}"
         ).absolute()
-        shutil.rmtree(merged_cos_dir, ignore_errors=True)
-
-        if not custom_cos_dir.is_dir():
-            logger.info(
-                "Custom COS directory %s does not exist, using default COS directory",
-                custom_cos_dir,
-            )
-            return default_cos_dir
-
-        try:
-            validate_cos_custom_dir(custom_cos_dir)
-        except InvalidCustomCOSDirectoryError:
-            logger.error(
-                "Custom COS directory %s is invalid, using default COS directory",
-                custom_cos_dir,
-            )
-            return default_cos_dir
 
         merge_cos_directories(default_cos_dir, custom_cos_dir, merged_cos_dir)
         return merged_cos_dir
