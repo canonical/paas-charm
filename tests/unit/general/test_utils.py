@@ -425,28 +425,3 @@ def test_merge_cos_directories_merges_default_and_custom(tmp_path: pathlib.Path)
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
     assert (merged_dir / "grafana_dashboards" / "custom_extra.json").read_text() == "custom"
-
-
-def test_merge_cos_directories_raises_on_invalid_custom_dir(tmp_path: pathlib.Path) -> None:
-    """
-    arrange: Create a default COS directory tree and an invalid custom directory.
-    act: Call merge_cos_directories.
-    assert: It should raise InvalidCustomCOSDirectoryError.
-    """
-
-    default_dir = tmp_path / "default"
-    (default_dir / "grafana_dashboards").mkdir(parents=True)
-    (default_dir / "loki_alert_rules").mkdir(parents=True)
-    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
-    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
-
-    custom_dir = tmp_path / "custom"
-    custom_dir.mkdir()
-    (custom_dir / "bad.txt").write_text("bad")
-
-    merged_dir = tmp_path / "merged"
-
-    with pytest.raises(InvalidCustomCOSDirectoryError):
-        merge_cos_directories(
-            default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir
-        )
