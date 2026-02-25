@@ -38,7 +38,7 @@ Save each dashboard as a ``.json`` file, for example:
 
 * ``cos_custom/grafana_dashboards/app-overview.json``
 
-When creating a dashboard, use variables for your datasources and name them
+When creating a dashboard, use variables for your data sources and name them
 ``prometheusds`` and ``lokids``. You can make use of the Juju topology variables
 (``$juju_model``, ``$juju_model_uuid``, ``$juju_application``, ``$juju_unit``).
 
