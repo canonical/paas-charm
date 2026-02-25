@@ -39,7 +39,7 @@ configuring, integrating, and using a 12-factor app charm.
    * :ref:`Usage <charmcraft:use-12-factor-charms>`:
      Learn more about tasks such as migrations and troubleshooting.
 
-* :ref:`Provide custom COS dashboards and alert rules <how_to_custom_cos_assets>`:
+* :ref:`Provide custom COS dashboards and alert rules <how_to_add_custom_cos_assets>`:
   Add your own Grafana dashboards and Loki/Prometheus alert rules by shipping a
   ``cos_custom/`` directory with the charm.
 
