@@ -1,12 +1,12 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Provide the Observability class to represent the observability stack for charms."""
 
 import logging
 import os.path
-import pathlib
 import typing
+from collections.abc import Iterable
 
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
@@ -27,8 +27,8 @@ class Observability(ops.Object):
         *,
         charm: ops.CharmBase,
         container_name: str,
-        cos_dir: str,
-        log_files: list[pathlib.Path],
+        cos_dir: str | os.PathLike[str],
+        log_files: Iterable[str] | Iterable[os.PathLike[str]],
         metrics_target: str | None,
         metrics_path: str | None,
         prometheus_config: PrometheusConfig | None = None,

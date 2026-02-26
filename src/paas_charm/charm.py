@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """The base charm class for all application charms."""
@@ -6,6 +6,7 @@
 import abc
 import logging
 import pathlib
+import tempfile
 import typing
 
 import ops
@@ -32,6 +33,7 @@ from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
     get_endpoints_by_interface_name,
+    merge_cos_directories,
 )
 
 logger = logging.getLogger(__name__)
@@ -166,7 +168,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             charm=self,
             log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
-            cos_dir=self.get_cos_dir(),
+            cos_dir=self.build_cos_dir(),
             metrics_target=self._workload_config.metrics_target,
             metrics_path=self._workload_config.metrics_path,
             prometheus_config=paas_config.prometheus,
@@ -451,13 +453,36 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
-    def get_cos_dir(self) -> str:
-        """Return the directory with COS related files.
+    def build_cos_dir(self) -> pathlib.Path:
+        """Build and return a temporary merged directory with COS files.
 
         Returns:
-            Return the directory with COS related files.
+            Return the temporary directory with merged COS related files.
         """
-        return str((pathlib.Path(__file__).parent / f"{self._framework_name}/cos").absolute())
+        default_cos_dir = self.get_cos_default_dir()
+        custom_cos_dir = self.get_cos_custom_dir()
+        merged_cos_dir = (
+            pathlib.Path(tempfile.gettempdir()) / f"cos-merged-{self._framework_name}"
+        ).absolute()
+
+        merge_cos_directories(default_cos_dir, custom_cos_dir, merged_cos_dir)
+        return merged_cos_dir
+
+    def get_cos_default_dir(self) -> pathlib.Path:
+        """Return the default directory with COS related files.
+
+        Returns:
+            Return the default directory with COS related files.
+        """
+        return (pathlib.Path(__file__).parent / self._framework_name / "cos").absolute()
+
+    def get_cos_custom_dir(self) -> pathlib.Path:
+        """Return the custom directory with COS related files.
+
+        Returns:
+            Return the custom directory with COS related files.
+        """
+        return (self.charm_dir / "cos_custom").absolute()
 
     @property
     def _container(self) -> Container:
