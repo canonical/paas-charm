@@ -14,7 +14,7 @@ from paas_charm.redis import InvalidRedisRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
 from paas_charm.saml import InvalidSAMLRelationDataError
 
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent.parent
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 
 @pytest.mark.parametrize(
@@ -42,9 +42,9 @@ def test_charm_state_integration_state_build_error(error):
     """Test invalid relation data errors."""
     saml_mock = MagicMock()
     saml_mock.to_relation_data.side_effect = error
-
     with pytest.raises(RelationDataError):
         CharmState.from_charm(
+            charm_dir=f"{PROJECT_ROOT}/examples/flask/charm",
             config=MagicMock(),
             framework="test",
             framework_config=MagicMock(),

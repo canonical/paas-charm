@@ -143,7 +143,7 @@ def config_get_with_secret(
     Returns:
         The configuration value.
     """
-    metadata = config_metadata(pathlib.Path(os.getcwd()))
+    metadata = config_metadata(pathlib.Path(charm.charm_dir))
     config_type = metadata["options"][key]["type"]
     if config_type != "secret":
         return charm.config.get(key)

@@ -86,6 +86,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         *,
+        charm_dir: pathlib.Path,
         config: dict[str, bool | int | float | str | dict[str, str]],
         framework: str,
         framework_config: BaseModel,
@@ -96,6 +97,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         """Initialize a new instance of the CharmState class from the associated charm.
 
         Args:
+            charm_dir: The charm directory.
             config: The charm configuration.
             framework: The framework name.
             framework_config: The framework specific configurations.
@@ -119,7 +121,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             k: v for k, v in user_defined_config.items() if k not in framework_config.dict().keys()
         }
 
-        app_config_class = app_config_class_factory(framework)
+        app_config_class = app_config_class_factory(charm_dir, framework)
         try:
             app_config_class(**user_defined_config)
         except ValidationError as exc:
@@ -403,16 +405,17 @@ def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple
     return (option_name, type_tuple)
 
 
-def app_config_class_factory(framework: str) -> type[BaseModel]:
+def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[BaseModel]:
     """App config class factory.
 
     Args:
+        charm_dir: The charm directory.
         framework: The framework name.
 
     Returns:
         Constructed app config class.
     """
-    config_options = config_metadata(pathlib.Path(os.getcwd()))["options"]
+    config_options = config_metadata(pathlib.Path(charm_dir))["options"]
     model_attributes = dict(
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
