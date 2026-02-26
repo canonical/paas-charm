@@ -64,3 +64,7 @@ class RelationDataError(Exception):
 
 class InvalidRelationDataError(RelationDataError):
     """Raised when a relation data is invalid."""
+
+
+class InvalidCustomCOSDirectoryError(Exception):
+    """Raised when the custom COS directory is invalid."""

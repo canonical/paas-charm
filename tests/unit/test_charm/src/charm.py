@@ -4,6 +4,7 @@
 """Go Charm service."""
 
 import pathlib
+import tempfile
 import typing
 
 import ops
@@ -12,6 +13,7 @@ from pydantic import ConfigDict, Field
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
+from paas_charm.utils import COS_SUBDIRS
 
 
 class TestConfig(FrameworkConfig):
