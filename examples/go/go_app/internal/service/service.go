@@ -72,25 +72,14 @@ func (s *Service) GetRabbitMQConnectionFromURI() (*amqp.Connection, error) {
 
 // GetRabbitMQConnection handles multiple unit addresses by parsing hostnames
 func (s *Service) GetRabbitMQConnection() (*amqp.Connection, error) {
-	// First, attempt the primary connection string
-	if s.RabbitMQURL != "" {
-		log.Printf("Attempting primary connection: %s", s.RabbitMQURL)
-		conn, err := amqp.Dial(s.RabbitMQURL)
-		if err == nil {
-			return conn, nil
-		}
-		log.Printf("Primary connection failed: %v", err)
-	}
-
-	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
 	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
 	if uris == "" {
-		return nil, fmt.Errorf("no fallback uris available in RABBITMQ_CONNECTION_STRINGS")
+		return nil, fmt.Errorf("no uris available in RABBITMQ_CONNECTION_STRINGS")
 	}
 
 	units := strings.Split(uris, ",")
 	for _, ip := range units {
-		log.Printf("Attempting to connect to fallback unit: %s", ip)
+		log.Printf("Attempting to connect to unit: %s", ip)
 		conn, err := amqp.Dial(ip)
 		if err == nil {
 			log.Printf("Successfully connected to unit: %s", ip)
