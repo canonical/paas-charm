@@ -35,7 +35,7 @@ from typing import NamedTuple
 from ops import CharmBase, HookEvent
 from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
@@ -89,6 +89,8 @@ class PaaSRabbitMQRelationData(BaseModel):
         username: username to use for RabbitMQ.
         password: password to use for RabbitMQ.
         amqp_uri: amqp uri for connecting to RabbitMQ server.
+        hostnames: a list of hostnames of the RabbitMQ server units.
+        amqp_uris: a list of amqp uris for connecting to RabbitMQ server units.
     """
 
     vhost: str
@@ -96,6 +98,7 @@ class PaaSRabbitMQRelationData(BaseModel):
     hostname: str
     username: str
     password: str
+    hostnames: list[str] = Field(default_factory=list)
 
     @property
     def amqp_uri(self) -> str:
@@ -104,6 +107,17 @@ class PaaSRabbitMQRelationData(BaseModel):
         # vhost component of a uri should be url encoded
         vhost = urllib.parse.quote(self.vhost, safe="")
         return f"amqp://{self.username}:{self.password}@{self.hostname}:{self.port}/{vhost}"
+
+    @property
+    def amqp_uris(self) -> list[str]:
+        """AMQP URI's for rabbitmq units from parameters."""
+        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
+        # vhost component of a uri should be url encoded
+        uris: list[str] = []
+        for hostname in self.hostnames:
+            vhost = urllib.parse.quote(self.vhost, safe="")
+            uris.append(f"amqp://{self.username}:{self.password}@{hostname}:{self.port}/{vhost}")
+        return uris
 
 
 class Credentials(NamedTuple):
@@ -124,6 +138,7 @@ class RabbitMQRequires(Object):
     Attributes:
         on: ObjectEvents for RabbitMQRequires
         port: amqp port
+        hostnames: The hostnames for the RabbitMQ units
     """
 
     on = RabbitMQServerEvents()
@@ -185,6 +200,21 @@ class RabbitMQRequires(Object):
         return self.framework.model.get_relation(self.relation_name)
 
     @property
+    def hostnames(self) -> list[str]:
+        """Return a list of remote RMQ hosts from the RabbitMQ relation."""
+        _hosts: list[str] = []
+        rel = self._rabbitmq_rel
+        if not rel:
+            return _hosts
+        for unit in rel.units:
+            if hostname := rel.data[unit].get("hostname"):
+                _hosts.append(hostname)
+        if not _hosts:
+            _hosts.append(str(rel.data[rel.app].get("hostname")))
+
+        return _hosts
+
+    @property
     def _rabbitmq_server_connection_params(self) -> Credentials | None:
         """The RabbitMQ hostname, password."""
         if not self._rabbitmq_rel:
@@ -243,6 +273,7 @@ class RabbitMQRequires(Object):
             password = self._rabbitmq_server_connection_params.password
         if not password or not hostname:
             return None
+
         try:
             return PaaSRabbitMQRelationData(
                 username=self.username,
@@ -250,6 +281,7 @@ class RabbitMQRequires(Object):
                 hostname=hostname,
                 port=self.port,
                 vhost=self.vhost,
+                hostnames=self.hostnames,
             )
         # Validation error cannot happen unless there's an issue in code as only hostname and
         # password values come from the relation data.

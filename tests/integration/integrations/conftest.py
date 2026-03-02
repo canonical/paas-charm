@@ -469,7 +469,7 @@ def lxd_model_fixture(
 
 
 @pytest.fixture(scope="session", name="rabbitmq_server_app")
-def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_model) -> str:
+def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_model) -> App:
     """Deploy rabbitmq server machine charm."""
     rabbitmq_server_name = "rabbitmq-server"
 
@@ -496,6 +496,21 @@ def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_mode
     # contain the controller or model. Other apps can integrate to rabbitmq using this
     # name as there is a local offer with this name.
     return App(rabbitmq_server_name)
+
+
+@pytest.fixture(scope="session", name="rabbitmq_server_ha_app")
+def deploy_rabbitmq_server_ha_fixture(
+    juju: jubilant.Juju, lxd_controller, lxd_model, rabbitmq_server_app
+) -> App:
+    """Deploy rabbitmq server machine charm in ha mode."""
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        juju.add_unit(rabbitmq_server_app.name, num_units=2)
+        juju.wait(
+            lambda status: jubilant.all_active(status, rabbitmq_server_app.name),
+            timeout=6 * 60,
+            delay=10,
+        )
+    return rabbitmq_server_app
 
 
 @pytest.fixture(scope="module", name="rabbitmq_k8s_app")

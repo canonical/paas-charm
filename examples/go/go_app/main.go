@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -385,6 +386,88 @@ func initTracer(ctx context.Context) error {
 	return nil
 }
 
+func (h *mainHandler) serveRabbitMQ(w http.ResponseWriter, r *http.Request) {
+	err := h.service.CheckRabbitMQStatus()
+	if err != nil {
+		log.Printf("RabbitMQ Error: %v", err)
+		http.Error(w, "RabbitMQ Connection Failure", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "RabbitMQ Connection SUCCESS")
+}
+
+func (h *mainHandler) RabbitMQSend(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	err := h.service.RabbitMQSend()
+	if err != nil {
+		log.Printf("Send error: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "FAIL")
+		return
+	}
+	fmt.Fprint(w, "SUCCESS")
+}
+
+func (h *mainHandler) RabbitMQReceive(w http.ResponseWriter, r *http.Request) {
+	result, err := h.service.RabbitMQReceive()
+	if err != nil {
+		log.Printf("Receive error: %v", err)
+	}
+	fmt.Fprint(w, result)
+}
+
+func (h *mainHandler) RabbitMQSendHA(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	unitStr := r.URL.Query().Get("unit")
+	if unitStr == "" {
+		http.Error(w, "Missing unit query parameter", http.StatusBadRequest)
+		return
+	}
+	unit, err := strconv.Atoi(unitStr)
+	if err != nil || unit < 0 {
+		http.Error(w, "Invalid unit query parameter", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.RabbitMQSendToUnit(unit)
+	if err != nil {
+		log.Printf("Send HA error: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "FAIL")
+		return
+	}
+	fmt.Fprint(w, "SUCCESS")
+}
+
+func (h *mainHandler) RabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	unitStr := r.URL.Query().Get("unit")
+	if unitStr == "" {
+		http.Error(w, "Missing unit query parameter", http.StatusBadRequest)
+		return
+	}
+	unit, err := strconv.Atoi(unitStr)
+	if err != nil || unit < 0 {
+		http.Error(w, "Invalid unit query parameter", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.service.RabbitMQReceiveFromUnit(unit)
+	if err != nil {
+		log.Printf("Receive HA error: %v", err)
+	}
+	fmt.Fprint(w, result)
+}
+
 func main() {
 	// Load all configuration from environment variables at startup.
 	config, err := NewConfig()
@@ -459,19 +542,30 @@ func main() {
 			Help: "No of request handled",
 		})
 	postgresqlURL := os.Getenv("POSTGRESQL_DB_CONNECT_STRING")
+	rabbitmqURL := os.Getenv("RABBITMQ_CONNECT_STRING")
+	rabbitmqURLS := strings.Split(os.Getenv("RABBITMQ_CONNECT_STRINGS"), ",")
 
 	mux := http.NewServeMux()
 	mainHandler := mainHandler{
 		counter: requestCounter,
-		service: service.Service{PostgresqlURL: postgresqlURL},
-		config:  config,
-		store:   store,
+		service: service.Service{
+			PostgresqlURL: postgresqlURL,
+			RabbitMQURL:   rabbitmqURL,
+			RabbitMQURLS:  rabbitmqURLS,
+		},
+		config: config,
+		store:  store,
 	}
 	mux.HandleFunc("/{$}", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
 	mux.HandleFunc("/openfga/list-authorization-models", mainHandler.serveOpenFgaListAuthorizationModels)
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
+	mux.HandleFunc("/rabbitmq/status", mainHandler.serveRabbitMQ) // New route
+	mux.HandleFunc("/rabbitmq/send", mainHandler.RabbitMQSend)
+	mux.HandleFunc("/rabbitmq/receive", mainHandler.RabbitMQReceive)
+	mux.HandleFunc("/rabbitmq/send_ha", mainHandler.RabbitMQSendHA)
+	mux.HandleFunc("/rabbitmq/receive_ha", mainHandler.RabbitMQReceiveHA)
 
 	// OIDC-specific: Add OIDC routes
 	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)
