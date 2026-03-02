@@ -3,16 +3,20 @@
 
 """Utils unit tests."""
 
+import pathlib
 from unittest.mock import MagicMock
 
 import pytest
 from ops import RelationMeta, RelationRole
 
 from paas_charm.charm_state import is_user_defined_config
+from paas_charm.exceptions import InvalidCustomCOSDirectoryError
 from paas_charm.utils import (
     build_k8s_unit_fqdn,
     build_validation_error_message,
     get_endpoints_by_interface_name,
+    merge_cos_directories,
+    validate_cos_custom_dir,
 )
 
 
@@ -345,3 +349,132 @@ def test_build_k8s_unit_fqdn(app_name, unit_identifier, model_name, expected):
     """Test build_k8s_unit_fqdn generates correct Kubernetes FQDN."""
     result = build_k8s_unit_fqdn(app_name, unit_identifier, model_name)
     assert result == expected
+
+
+def test_validate_cos_custom_dir_accepts_empty_dir(tmp_path: pathlib.Path) -> None:
+    """
+    arrange: Create an empty directory.
+    act: Call validate_cos_custom_dir.
+    assert: It should not raise.
+    """
+
+    custom_dir = tmp_path / "cos_custom"
+    custom_dir.mkdir()
+
+    validate_cos_custom_dir(custom_dir)
+
+
+def test_validate_cos_custom_dir_rejects_file_in_root(tmp_path: pathlib.Path) -> None:
+    """
+    arrange: Create a custom COS directory with a file in its root.
+    act: Call validate_cos_custom_dir.
+    assert: It should raise InvalidCustomCOSDirectoryError.
+    """
+
+    custom_dir = tmp_path / "cos_custom"
+    custom_dir.mkdir()
+    forbidden = custom_dir / "forbidden.txt"
+    forbidden.write_text("nope")
+
+    with pytest.raises(InvalidCustomCOSDirectoryError) as exc:
+        validate_cos_custom_dir(custom_dir)
+
+    assert "cannot contain a file" in str(exc.value).lower()
+    assert forbidden.name in str(exc.value)
+
+
+def test_validate_cos_custom_dir_rejects_unknown_subdir(tmp_path: pathlib.Path) -> None:
+    """
+    arrange: Create a custom COS directory with an unexpected subdirectory.
+    act: Call validate_cos_custom_dir.
+    assert: It should raise InvalidCustomCOSDirectoryError.
+    """
+
+    custom_dir = tmp_path / "cos_custom"
+    custom_dir.mkdir()
+    unknown = custom_dir / "unknown"
+    unknown.mkdir()
+
+    with pytest.raises(InvalidCustomCOSDirectoryError) as exc:
+        validate_cos_custom_dir(custom_dir)
+
+    assert "cannot contain a subdirectory" in str(exc.value).lower()
+    assert unknown.name in str(exc.value)
+
+
+def test_merge_cos_directories_merges_default_and_custom(tmp_path: pathlib.Path) -> None:
+    """
+    arrange: Create default and custom COS directory trees with files.
+    act: Call merge_cos_directories.
+    assert: Default and custom files are merged correctly.
+    """
+
+    default_dir = tmp_path / "default"
+    (default_dir / "grafana_dashboards").mkdir(parents=True)
+    (default_dir / "loki_alert_rules").mkdir(parents=True)
+    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
+    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
+
+    custom_dir = tmp_path / "custom"
+    (custom_dir / "grafana_dashboards").mkdir(parents=True)
+    (custom_dir / "grafana_dashboards" / "extra.json").write_text("custom")
+
+    merged_dir = tmp_path / "merged"
+
+    merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
+
+    assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
+    assert (merged_dir / "grafana_dashboards" / "custom_extra.json").read_text() == "custom"
+
+
+def test_merge_cos_directories_uses_default_only_when_custom_missing(
+    tmp_path: pathlib.Path,
+) -> None:
+    """
+    arrange: Create default COS tree and point custom COS to a missing path.
+    act: Call merge_cos_directories.
+    assert: Merged directory contains only default files.
+    """
+
+    default_dir = tmp_path / "default"
+    (default_dir / "grafana_dashboards").mkdir(parents=True)
+    (default_dir / "loki_alert_rules").mkdir(parents=True)
+    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
+    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
+
+    custom_dir = tmp_path / "custom_missing"
+    merged_dir = tmp_path / "merged"
+
+    merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
+
+    assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
+    assert list((merged_dir / "grafana_dashboards").glob("custom_*")) == []
+
+
+def test_merge_cos_directories_uses_default_only_when_custom_invalid(
+    tmp_path: pathlib.Path,
+) -> None:
+    """
+    arrange: Create default COS tree and invalid custom COS tree.
+    act: Call merge_cos_directories.
+    assert: Merged directory contains only default files.
+    """
+
+    default_dir = tmp_path / "default"
+    (default_dir / "grafana_dashboards").mkdir(parents=True)
+    (default_dir / "loki_alert_rules").mkdir(parents=True)
+    (default_dir / "prometheus_alert_rules").mkdir(parents=True)
+    (default_dir / "grafana_dashboards" / "default.json").write_text("default")
+
+    custom_dir = tmp_path / "custom_invalid"
+    custom_dir.mkdir()
+    (custom_dir / "grafana_dashboards").mkdir(parents=True)
+    (custom_dir / "grafana_dashboards" / "extra.json").write_text("custom")
+    (custom_dir / "invalid.txt").write_text("invalid")
+
+    merged_dir = tmp_path / "merged"
+
+    merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
+
+    assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
+    assert not (merged_dir / "grafana_dashboards" / "custom_extra.json").exists()

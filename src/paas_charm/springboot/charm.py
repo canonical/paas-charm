@@ -437,10 +437,10 @@ class Charm(PaasCharm):
             framework_config_prefix="",
         )
 
-    def get_cos_dir(self) -> str:
+    def get_cos_default_dir(self) -> pathlib.Path:
         """Return the directory with COS related files.
 
         Returns:
             Return the directory with COS related files.
         """
-        return str((pathlib.Path(__file__).parent / "cos").absolute())
+        return (pathlib.Path(__file__).parent / "cos").absolute()
