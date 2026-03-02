@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -35,7 +34,7 @@ func SubOperation(ctx context.Context) error {
 type Service struct {
 	PostgresqlURL string
 	RabbitMQURL   string
-	RabbitMQURLS   []string
+	RabbitMQURLS  []string
 }
 
 func (s *Service) CheckPostgresqlMigrateStatus() (err error) {
