@@ -35,6 +35,7 @@ func SubOperation(ctx context.Context) error {
 type Service struct {
 	PostgresqlURL string
 	RabbitMQURL   string
+	RabbitMQURLS   []string
 }
 
 func (s *Service) CheckPostgresqlMigrateStatus() (err error) {
@@ -65,20 +66,18 @@ func (s *Service) CheckPostgresqlMigrateStatus() (err error) {
 // GetRabbitMQConnectionFromURI matches the Flask get_rabbitmq_connection_from_uri logic
 func (s *Service) GetRabbitMQConnectionFromURI() (*amqp.Connection, error) {
 	if s.RabbitMQURL == "" {
-		return nil, fmt.Errorf("RABBITMQ_CONNECT_STRING not set")
+		return nil, fmt.Errorf("RABBITMQ_CONNECT_STRINGS not set")
 	}
 	return amqp.Dial(s.RabbitMQURL)
 }
 
 // GetRabbitMQConnection handles multiple unit addresses by parsing hostnames
 func (s *Service) GetRabbitMQConnection() (*amqp.Connection, error) {
-	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
-	if uris == "" {
-		return nil, fmt.Errorf("no uris available in RABBITMQ_CONNECTION_STRINGS")
+	if len(s.RabbitMQURLS) == 0 {
+		return nil, fmt.Errorf("no uris available in RABBITMQ_CONNECT_STRINGS")
 	}
 
-	units := strings.Split(uris, ",")
-	for _, ip := range units {
+	for _, ip := range s.RabbitMQURLS {
 		log.Printf("Attempting to connect to unit: %s", ip)
 		conn, err := amqp.Dial(ip)
 		if err == nil {
@@ -153,17 +152,15 @@ func (s *Service) RabbitMQSend() error {
 }
 
 func (s *Service) RabbitMQSendToUnit(unitIndex int) error {
-	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
-	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
-	if uris == "" {
-		return fmt.Errorf("RABBITMQ_CONNECTION_STRINGS not set")
+	// Fallback to RABBITMQ_CONNECT_STRINGS if primary fails
+	if len(s.RabbitMQURLS) == 0 {
+		return fmt.Errorf("RABBITMQ_CONNECT_STRINGS not set")
 	}
 
-	units := strings.Split(uris, ",")
-	if unitIndex < 0 || unitIndex >= len(units) {
+	if unitIndex < 0 || unitIndex >= len(s.RabbitMQURLS) {
 		return fmt.Errorf("unit index %d out of range", unitIndex)
 	}
-	addr := strings.TrimSpace(units[unitIndex])
+	addr := strings.TrimSpace(s.RabbitMQURLS[unitIndex])
 	if addr == "" {
 		return fmt.Errorf("unit index %d has empty hostname", unitIndex)
 	}
@@ -230,17 +227,15 @@ func (s *Service) RabbitMQReceive() (string, error) {
 }
 
 func (s *Service) RabbitMQReceiveFromUnit(unitIndex int) (string, error) {
-	// Fallback to RABBITMQ_CONNECTION_STRINGS if primary fails
-	uris := os.Getenv("RABBITMQ_CONNECTION_STRINGS")
-	if uris == "" {
-		return "FAIL. NO CONNECTION.", fmt.Errorf("RABBITMQ_CONNECTION_STRINGS not set")
+	// Fallback to RABBITMQ_CONNECT_STRINGS if primary fails
+	if len(s.RabbitMQURLS) == 0 {
+		return "FAIL. NO CONNECTION.", fmt.Errorf("RABBITMQ_CONNECT_STRINGS not set")
 	}
 
-	units := strings.Split(uris, ",")
-	if unitIndex < 0 || unitIndex >= len(units) {
+	if unitIndex < 0 || unitIndex >= len(s.RabbitMQURLS) {
 		return "FAIL. NO CONNECTION.", fmt.Errorf("unit index %d out of range", unitIndex)
 	}
-	addr := strings.TrimSpace(units[unitIndex])
+	addr := strings.TrimSpace(s.RabbitMQURLS[unitIndex])
 	if addr == "" {
 		return "FAIL. NO CONNECTION.", fmt.Errorf("unit index %d has empty hostname", unitIndex)
 	}

@@ -396,7 +396,7 @@ func (h *mainHandler) serveRabbitMQ(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "RabbitMQ Connection SUCCESS")
 }
 
-func (h *mainHandler) serveRabbitMQSend(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) RabbitMQSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -411,7 +411,7 @@ func (h *mainHandler) serveRabbitMQSend(w http.ResponseWriter, r *http.Request) 
 	fmt.Fprint(w, "SUCCESS")
 }
 
-func (h *mainHandler) serveRabbitMQReceive(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) RabbitMQReceive(w http.ResponseWriter, r *http.Request) {
 	result, err := h.service.RabbitMQReceive()
 	if err != nil {
 		log.Printf("Receive error: %v", err)
@@ -419,7 +419,7 @@ func (h *mainHandler) serveRabbitMQReceive(w http.ResponseWriter, r *http.Reques
 	fmt.Fprint(w, result)
 }
 
-func (h *mainHandler) serveRabbitMQSendHA(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) RabbitMQSendHA(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -445,7 +445,7 @@ func (h *mainHandler) serveRabbitMQSendHA(w http.ResponseWriter, r *http.Request
 	fmt.Fprint(w, "SUCCESS")
 }
 
-func (h *mainHandler) serveRabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) {
+func (h *mainHandler) RabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -543,6 +543,7 @@ func main() {
 		})
 	postgresqlURL := os.Getenv("POSTGRESQL_DB_CONNECT_STRING")
 	rabbitmqURL := os.Getenv("RABBITMQ_CONNECT_STRING")
+	rabbitmqURLS := strings.Split(os.Getenv("RABBITMQ_CONNECT_STRINGS"), ",")
 
 	mux := http.NewServeMux()
 	mainHandler := mainHandler{
@@ -550,6 +551,7 @@ func main() {
 		service: service.Service{
 			PostgresqlURL: postgresqlURL,
 			RabbitMQURL:   rabbitmqURL,
+			RabbitMQURLS:  rabbitmqURLS,
 		},
 		config: config,
 		store:  store,
@@ -560,10 +562,10 @@ func main() {
 	mux.HandleFunc("/env/user-defined-config", mainHandler.serveUserDefinedConfig)
 	mux.HandleFunc("/postgresql/migratestatus", mainHandler.servePostgresql)
 	mux.HandleFunc("/rabbitmq/status", mainHandler.serveRabbitMQ) // New route
-	mux.HandleFunc("/rabbitmq/send", mainHandler.serveRabbitMQSend)
-	mux.HandleFunc("/rabbitmq/receive", mainHandler.serveRabbitMQReceive)
-	mux.HandleFunc("/rabbitmq/send_ha", mainHandler.serveRabbitMQSendHA)
-	mux.HandleFunc("/rabbitmq/receive_ha", mainHandler.serveRabbitMQReceiveHA)
+	mux.HandleFunc("/rabbitmq/send", mainHandler.RabbitMQSend)
+	mux.HandleFunc("/rabbitmq/receive", mainHandler.RabbitMQReceive)
+	mux.HandleFunc("/rabbitmq/send_ha", mainHandler.RabbitMQSendHA)
+	mux.HandleFunc("/rabbitmq/receive_ha", mainHandler.RabbitMQReceiveHA)
 
 	// OIDC-specific: Add OIDC routes
 	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)
