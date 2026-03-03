@@ -1,0 +1,58 @@
+``paas-charm`` 1.11 release notes
+=================================
+
+3 March 2026
+
+These release notes cover new features and changes in ``paas-charm``
+version 1.11 and its extended support into Charmcraft and Rockcraft.
+
+See our :ref:`Release policy and schedule <release_policy_schedule>`.
+
+Requirements and compatibility
+------------------------------
+
+Using ``paas-charm`` requires the following software:
+
+* ``cosl``
+* ``Jinja2`` 3.1.6
+* ``jsonschema`` 4.25 or greater
+*  ``ops`` 2.6 or greater
+* ``pydantic`` 2.11.9
+
+The ``paas-charm`` library is used with Juju charms and runs on a Kubernetes cloud.
+For development and testing purposes, a machine or VM with a minimum of 4 CPUs, 4GB RAM,
+and a 20GB disk is required.
+In production, at least 16GB RAM and 3 high-availability nodes are recommended.
+
+Updates
+-------
+
+``paas-charm``
+~~~~~~~~~~~~~~
+
+Support for custom COS directories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Users can now provide their own Grafana dashboards, Loki alert rules,
+and Prometheus alert rules through custom COS directories.
+
+Rockcraft
+~~~~~~~~~
+
+No feature updates in this release.
+
+Charmcraft
+~~~~~~~~~~
+
+No feature updates in this release.
+
+Bug fixes
+---------
+
+No bug fixes in this release.
+
+Known issues in ``paas-charm``
+------------------------------
+
+* `Per Route Metrics <https://github.com/canonical/paas-charm/issues/98>`_
+* `Migrate paas-charm to use ops.charm_dir instead of os.getcwd <https://github.com/canonical/paas-charm/issues/166>`_

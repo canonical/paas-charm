@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.11.0 - 2026-03-03
+
+* feat: Add support for custom COS directories,
+allowing users to provide their own Grafana dashboards,
+Loki alert rules and Prometheus alert rules.
+
 ## 2026-02-23
 
 * feat: Add support for custom COS directories,
