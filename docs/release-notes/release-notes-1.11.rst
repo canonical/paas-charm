@@ -36,7 +36,7 @@ Support for custom COS directories
 Users can now provide their own Grafana dashboards, Loki alert rules,
 and Prometheus alert rules through custom COS directories.
 
-* `Pull request #257 <https://github.com/canonical/paas-charm/pull/257>`_
+* `Pull request #250 <https://github.com/canonical/paas-charm/pull/250>`_
 
 RabbitMQ HA support
 ~~~~~~~~~~~~~~~~~~~~
@@ -74,3 +74,8 @@ Known issues in ``paas-charm``
 ------------------------------
 
 * `Per Route Metrics <https://github.com/canonical/paas-charm/issues/98>`_
+
+Thanks to our contributors
+--------------------------
+
+``@f-atwi``, ``@alithethird``
