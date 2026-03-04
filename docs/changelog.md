@@ -18,6 +18,7 @@ Place any unreleased changes here, that are subject to release in coming version
 * feat: Add support for custom COS directories,
 allowing users to provide their own Grafana dashboards,
 Loki alert rules and Prometheus alert rules.
+* feat: Add RabbitMQ HA support with a new `RABBITMQ_HOSTNAMES` environment variable.
 
 ## 2026-02-23
 
