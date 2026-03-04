@@ -6,7 +6,6 @@
 import functools
 import itertools
 import logging
-import os
 import pathlib
 import shutil
 import typing
@@ -51,7 +50,7 @@ def build_validation_error_message(
     fields = set(
         (
             (
-                f'{prefix if prefix else ""}{".".join(str(loc) for loc in error["loc"])}'
+                f"{prefix if prefix else ''}{'.'.join(str(loc) for loc in error['loc'])}"
                 if error["loc"]
                 else ""
             ),
