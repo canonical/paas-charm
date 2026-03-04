@@ -15,9 +15,9 @@ Using ``paas-charm`` requires the following software:
 
 * ``cosl``
 * ``Jinja2`` 3.1.6
-* ``jsonschema`` 4.25 or greater
+* ``jsonschema`` >=4.26,<4.27
 *  ``ops`` 2.6 or greater
-* ``pydantic`` 2.11.9
+* ``pydantic`` 2.12.5
 
 The ``paas-charm`` library is used with Juju charms and runs on a Kubernetes cloud.
 For development and testing purposes, a machine or VM with a minimum of 4 CPUs, 4GB RAM,
@@ -46,6 +46,15 @@ applications that use RabbitMQ, enabling high-availability configurations.
 
 * `Pull request #230 <https://github.com/canonical/paas-charm/pull/230>`_
 
+Use ``ops.charm_dir`` instead of ``os.getcwd``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Applications using ``paas-charm`` can now run scenario tests correctly.
+The framework now uses ``ops.charm_dir`` to locate charm configuration files
+instead of relying on ``os.getcwd()``.
+
+* `Pull request #241 <https://github.com/canonical/paas-charm/pull/241>`_
+
 Rockcraft
 ~~~~~~~~~
 
@@ -65,4 +74,3 @@ Known issues in ``paas-charm``
 ------------------------------
 
 * `Per Route Metrics <https://github.com/canonical/paas-charm/issues/98>`_
-* `Migrate paas-charm to use ops.charm_dir instead of os.getcwd <https://github.com/canonical/paas-charm/issues/166>`_
