@@ -21,6 +21,7 @@ Place any unreleased changes here, that are subject to release in coming version
 allowing users to provide their own Grafana dashboards,
 Loki alert rules and Prometheus alert rules.
 * feat: Add RabbitMQ HA support with a new `RABBITMQ_CONNECT_STRINGS` environment variable.
+* fix: Use `ops.charm_dir` instead of `os.getcwd()` for locating charm configuration files, enabling scenario tests to work correctly.
 
 ## 2026-02-23
 
