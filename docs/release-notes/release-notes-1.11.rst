@@ -41,7 +41,7 @@ and Prometheus alert rules through custom COS directories.
 RabbitMQ HA support
 ~~~~~~~~~~~~~~~~~~~~
 
-A new ``RABBITMQ_HOSTNAMES`` environment variable is now available for
+A new ``RABBITMQ_CONNECT_STRINGS`` environment variable is now available for
 applications that use RabbitMQ, enabling high-availability configurations.
 
 * `Pull request #230 <https://github.com/canonical/paas-charm/pull/230>`_
