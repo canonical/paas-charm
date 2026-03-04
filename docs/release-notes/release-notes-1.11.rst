@@ -36,6 +36,16 @@ Support for custom COS directories
 Users can now provide their own Grafana dashboards, Loki alert rules,
 and Prometheus alert rules through custom COS directories.
 
+* `Pull request #257 <https://github.com/canonical/paas-charm/pull/257>`_
+
+RabbitMQ HA support
+~~~~~~~~~~~~~~~~~~~~
+
+A new ``RABBITMQ_HOSTNAMES`` environment variable is now available for
+applications that use RabbitMQ, enabling high-availability configurations.
+
+* `Pull request #230 <https://github.com/canonical/paas-charm/pull/230>`_
+
 Rockcraft
 ~~~~~~~~~
 
