@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "paas-config.yaml"
 
+# Mapping of logging format name to the set of frameworks that support it.
+FRAMEWORKS_SUPPORTING_LOGGING_FORMAT: dict[str, set[str]] = {
+    "json": {"fastapi"},
+}
+
 
 class StaticConfig(BaseModel):
     """Prometheus static configuration for scrape targets.
@@ -134,11 +139,17 @@ class PaasConfig(BaseModel):
 
     Attributes:
         prometheus: Prometheus-related configuration.
+        framework_logging_format: Optional structured logging format for the framework server.
+            Currently only "json" is supported, and only for FastAPI.
         model_config: Pydantic model configuration.
     """
 
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
+    )
+    framework_logging_format: typing.Literal["json"] | None = Field(
+        default=None,
+        description="Structured logging format for the framework server (e.g. 'json').",
     )
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
