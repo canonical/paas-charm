@@ -24,7 +24,6 @@ from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationSt
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
-from paas_charm.openfga import STORE_NAME
 from paas_charm.paas_config import read_paas_config
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
@@ -385,7 +384,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         openfga = None
         if "openfga" in requires and requires["openfga"].interface_name == "openfga":
             try:
-                openfga = OpenFGARequires(self, STORE_NAME)
+                openfga = OpenFGARequires(self, self.app.name)
                 self.framework.observe(
                     openfga.on.openfga_store_created, self._on_openfga_store_created
                 )
