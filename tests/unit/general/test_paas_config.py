@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
+    FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     PaasConfig,
     PrometheusConfig,
     ScrapeConfig,
@@ -29,6 +30,7 @@ class TestPaasConfig:
         """Test valid minimal configuration (empty)."""
         config = PaasConfig()
         assert config.prometheus is None
+        assert config.framework_logging_format is None
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""
@@ -44,12 +46,28 @@ class TestPaasConfig:
         assert len(config.prometheus.scrape_configs) == 1
         assert config.prometheus.scrape_configs[0].job_name == "test"
 
+    def test_valid_logging_format_json(self):
+        """Test that framework_logging_format='json' is accepted."""
+        config = PaasConfig(framework_logging_format="json")
+        assert config.framework_logging_format == "json"
+
+    def test_invalid_logging_format_rejected(self):
+        """Test that an unsupported logging format value is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            PaasConfig(framework_logging_format="xml")
+        assert exc_info.value.errors()
+
     def test_extra_fields_forbidden(self):
         """Test that extra fields are not allowed."""
         with pytest.raises(ValidationError) as exc_info:
             PaasConfig(unknown_field="value")
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
+
+    def test_frameworks_supporting_logging_format_constant(self):
+        """Test the FRAMEWORKS_SUPPORTING_LOGGING_FORMAT constant has expected shape."""
+        assert "json" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
+        assert "fastapi" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT["json"]
 
 
 class TestReadPaasConfig:
