@@ -48,6 +48,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     secret_storage.get_secret_key.return_value = test_key
     secret_storage.get_peer_unit_fdqns.return_value = None
     charm_state = CharmState.from_charm(
+        charm_dir=harness.charm.charm_dir,
         framework_config=Charm.get_framework_config(harness.charm),
         config=harness.charm.config,
         framework="flask",
@@ -261,7 +262,9 @@ def test_rabbitmq_remove_integration(harness: Harness):
     assert: The relation should not have the env variables related to RabbitMQ.
     """
     relation_id = harness.add_relation(
-        "rabbitmq", "rabbitmq", app_data={"hostname": "example.com", "password": token_hex(16)}
+        "rabbitmq",
+        "rabbitmq",
+        app_data={"hostname": "example.com", "password": token_hex(16)},
     )
     container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
@@ -316,7 +319,9 @@ def test_missing_integrations(harness: Harness, integrate_to, required_integrati
         assert integration not in harness.model.unit.status.message
 
 
-def test_missing_required_integration_stops_all_and_sets_migration_to_pending(harness: Harness):
+def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
+    harness: Harness,
+):
     """
     arrange: Prepare the harness. Instantiate the charm with all the required integrations
         so it is active. Include a migrate.sh file so migrations run.

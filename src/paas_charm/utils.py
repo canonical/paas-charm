@@ -6,7 +6,6 @@
 import functools
 import itertools
 import logging
-import os
 import pathlib
 import shutil
 import typing
@@ -51,7 +50,7 @@ def build_validation_error_message(
     fields = set(
         (
             (
-                f'{prefix if prefix else ""}{".".join(str(loc) for loc in error["loc"])}'
+                f"{prefix if prefix else ''}{'.'.join(str(loc) for loc in error['loc'])}"
                 if error["loc"]
                 else ""
             ),
@@ -143,7 +142,7 @@ def config_get_with_secret(
     Returns:
         The configuration value.
     """
-    metadata = config_metadata(pathlib.Path(os.getcwd()))
+    metadata = config_metadata(pathlib.Path(charm.charm_dir))
     config_type = metadata["options"][key]["type"]
     if config_type != "secret":
         return charm.config.get(key)

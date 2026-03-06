@@ -129,6 +129,10 @@ requires:
     interface: http_proxy
     optional: True
     limit: 1
+  rabbitmq:
+    interface: rabbitmq
+    optional: True
+    limit: 1
 
 resources:
   app-image:
