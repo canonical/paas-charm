@@ -90,12 +90,14 @@ def test_json_logging_format(
 
     json_lines = []
     for line in raw_logs.splitlines():
-        line = line.strip()
-        if line.startswith("{"):
-            try:
-                json_lines.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
+        # Pebble prefixes service output with "TIMESTAMP [service-name] "
+        idx = line.find("{")
+        if idx == -1:
+            continue
+        try:
+            json_lines.append(json.loads(line[idx:]))
+        except json.JSONDecodeError:
+            pass
 
     access_logs = [log for log in json_lines if log.get("log.logger") == "uvicorn.access"]
     assert access_logs, (
