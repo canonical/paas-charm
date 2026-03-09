@@ -12,14 +12,34 @@ only when already installed by the user.
 import json
 import logging
 import time
+from contextvars import ContextVar
 from typing import Any
+
+# Stores the last known {trace.id, span.id} for the current async context.
+# Populated by OtelCorrelationFilter whenever a valid span is active (access log path).
+# Read as fallback when the span has already ended (error log path).
+#
+# Caveat: on HTTP/1.1 keep-alive connections, multiple requests share the same asyncio
+# task, so the contextvar persists across requests in that task.  If a later request
+# has no OTEL span (e.g. dropped by a ratio sampler), its error logs will fall back to
+# the previous request's trace.id — incorrect but benign in practice, because mixed-
+# sampling scenarios are uncommon and the access log for the new request always
+# overwrites the contextvar when a span IS present.
+_span_context_var: ContextVar[dict[str, str]] = ContextVar("_span_context_var", default={})
 
 
 class OtelCorrelationFilter(logging.Filter):
-    """Add OpenTelemetry trace/span IDs to log records when an active span exists.
+    """Add OpenTelemetry trace/span IDs to log records.
 
-    If opentelemetry-api is not installed, or no span is active, the record is
-    passed through unchanged (trace.id and span.id are simply absent).
+    When a valid OTEL span is active, injects ``trace.id`` and ``span.id``
+    into the record **and** saves them to a ``ContextVar`` for later use.
+
+    When no span is active (e.g. error logs emitted after the span has ended),
+    falls back to the value saved in the ``ContextVar`` so that error logs
+    emitted in the same async task are still correlated to the request.
+
+    If opentelemetry-api is not installed at all, records are passed through
+    unchanged (``trace.id`` and ``span.id`` are simply absent).
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -31,16 +51,28 @@ class OtelCorrelationFilter(logging.Filter):
         Returns:
             Always True (records are never suppressed).
         """
+        ids: dict[str, str] = {}
         try:
             from opentelemetry import trace  # type: ignore[import-not-found]
 
             span = trace.get_current_span()
             ctx = span.get_span_context()
             if ctx and ctx.is_valid:
-                record.__dict__["trace.id"] = format(ctx.trace_id, "032x")
-                record.__dict__["span.id"] = format(ctx.span_id, "016x")
+                ids = {
+                    "trace.id": format(ctx.trace_id, "032x"),
+                    "span.id": format(ctx.span_id, "016x"),
+                }
+                # Save for error logs emitted after this span ends.
+                _span_context_var.set(ids)
+            else:
+                # Span gone — fall back to whatever was saved in this async context.
+                ids = _span_context_var.get()
         except ImportError:
             pass
+
+        for key, value in ids.items():
+            record.__dict__[key] = value
+
         return True
 
 

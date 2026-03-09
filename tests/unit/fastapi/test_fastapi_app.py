@@ -62,7 +62,7 @@ def _run_pebble_ready(state: testing.State) -> tuple[testing.Context, testing.St
     ],
 )
 def test_fastapi_logging_environment(
-    base_state: testing.State,
+    base_state: testing.State,  # pylint: disable=redefined-outer-name
     logging_format: str | None,
     expected: list[str],
     absent: list[str],
@@ -95,7 +95,7 @@ def test_fastapi_logging_environment(
 
 
 def test_fastapi_json_logging_files_pushed(
-    base_state: testing.State,
+    base_state: testing.State,  # pylint: disable=redefined-outer-name
 ) -> None:
     """
     arrange: set framework_logging_format=json.
@@ -118,7 +118,7 @@ def test_fastapi_json_logging_files_pushed(
 
 
 def test_fastapi_no_files_pushed_without_json_logging(
-    base_state: testing.State,
+    base_state: testing.State,  # pylint: disable=redefined-outer-name
 ) -> None:
     """
     arrange: no framework_logging_format set (default).
