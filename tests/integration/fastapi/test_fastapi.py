@@ -99,7 +99,11 @@ def test_json_logging_format(
         except json.JSONDecodeError:
             pass
 
-    access_logs = [log for log in json_lines if log.get("log.logger") == "uvicorn.access"]
+    access_logs = [
+        log
+        for log in json_lines
+        if log.get("attributes", {}).get("logger.name") == "uvicorn.access"
+    ]
     assert access_logs, (
         "No JSON access log lines found in container logs.\n"
         "Raw output (last 20 lines):\n" + "\n".join(raw_logs.splitlines()[-20:])
@@ -107,13 +111,15 @@ def test_json_logging_format(
 
     sample = access_logs[0]
     for field in (
-        "@timestamp",
-        "log.level",
-        "log.logger",
-        "message",
-        "http.request.method",
-        "url.path",
+        "timestamp",
+        "severityText",
+        "body",
+        "attributes",
     ):
         assert (
             field in sample
-        ), f"Expected ECS field '{field}' missing from JSON access log: {sample}"
+        ), f"Expected OTEL field '{field}' missing from JSON access log: {sample}"
+    for attr in ("logger.name", "http.request.method", "url.path"):
+        assert attr in sample.get(
+            "attributes", {}
+        ), f"Expected OTEL attribute '{attr}' missing from JSON access log attributes: {sample}"

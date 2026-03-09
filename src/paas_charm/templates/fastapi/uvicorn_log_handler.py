@@ -7,6 +7,10 @@ This file is pushed by the charm into /opt/paas_charm/ inside the application
 container and loaded by Uvicorn via the UVICORN_LOG_CONFIG environment variable.
 It must only depend on the Python standard library; opentelemetry-api is used
 only when already installed by the user.
+
+Field names follow the OpenTelemetry Log Data Model and semantic conventions:
+https://opentelemetry.io/docs/specs/otel/logs/data-model/
+https://opentelemetry.io/docs/specs/semconv/general/logs/
 """
 
 import json
@@ -15,7 +19,7 @@ import time
 from contextvars import ContextVar
 from typing import Any
 
-# Stores the last known {trace.id, span.id} for the current async context.
+# Stores the last known {traceId, spanId} for the current async context.
 # Populated by OtelCorrelationFilter whenever a valid span is active (access log path).
 # Read as fallback when the span has already ended (error log path).
 #
@@ -26,11 +30,20 @@ from typing import Any
 # subsequent untraced requests.
 _span_context_var: ContextVar[dict[str, str]] = ContextVar("_span_context_var", default={})
 
+# Map Python log level names to OTEL severityText values.
+_SEVERITY_MAP = {
+    "DEBUG": "DEBUG",
+    "INFO": "INFO",
+    "WARNING": "WARN",
+    "ERROR": "ERROR",
+    "CRITICAL": "FATAL",
+}
+
 
 class OtelCorrelationFilter(logging.Filter):
     """Add OpenTelemetry trace/span IDs to log records.
 
-    When a valid OTEL span is active, injects ``trace.id`` and ``span.id``
+    When a valid OTEL span is active, injects ``traceId`` and ``spanId``
     into the record **and** saves them to a ``ContextVar`` for later use.
 
     When no span is active (e.g. error logs emitted after the span has ended),
@@ -38,7 +51,7 @@ class OtelCorrelationFilter(logging.Filter):
     emitted in the same async task are still correlated to the request.
 
     If opentelemetry-api is not installed at all, records are passed through
-    unchanged (``trace.id`` and ``span.id`` are simply absent).
+    unchanged (``traceId`` and ``spanId`` are simply absent).
     """
 
     # Uvicorn logger name for access logs.  Used to detect request boundaries
@@ -62,8 +75,8 @@ class OtelCorrelationFilter(logging.Filter):
             ctx = span.get_span_context()
             if ctx and ctx.is_valid:
                 ids = {
-                    "trace.id": format(ctx.trace_id, "032x"),
-                    "span.id": format(ctx.span_id, "016x"),
+                    "traceId": format(ctx.trace_id, "032x"),
+                    "spanId": format(ctx.span_id, "016x"),
                 }
                 # Save for error logs emitted after this span ends.
                 _span_context_var.set(ids)
@@ -85,12 +98,16 @@ class OtelCorrelationFilter(logging.Filter):
 
 
 class UvicornJsonFormatter(logging.Formatter):
-    """Format log records as single-line JSON with ECS-aligned field names.
+    """Format log records as single-line JSON following the OTEL Log Data Model.
+
+    Top-level fields (``timestamp``, ``severityText``, ``body``, ``traceId``,
+    ``spanId``) follow the OTEL log record schema.  All domain-specific fields
+    (logger name, HTTP attributes, exception) are placed inside ``attributes``
+    following OTEL semantic conventions.
 
     Access log records produced by uvicorn carry the raw request/response
     values as a 5-tuple in ``record.args``; this formatter extracts them
-    into dedicated HTTP fields.  All other records are formatted with only
-    the common fields.
+    into the ``attributes`` dict.
     """
 
     def format(self, record: logging.LogRecord) -> str:
@@ -103,26 +120,29 @@ class UvicornJsonFormatter(logging.Formatter):
             A single-line JSON string.
         """
         payload: dict[str, Any] = {
-            "@timestamp": _iso_timestamp(record.created),
-            "log.level": record.levelname.lower(),
-            "log.logger": record.name,
-            "message": record.getMessage(),
+            "timestamp": _iso_timestamp(record.created),
+            "severityText": _SEVERITY_MAP.get(record.levelname, record.levelname),
+            "body": record.getMessage(),
         }
 
-        for field in ("trace.id", "span.id"):
+        for field in ("traceId", "spanId"):
             value = record.__dict__.get(field)
             if value:
                 payload[field] = value
 
+        attributes: dict[str, Any] = {"logger.name": record.name}
+
         # Uvicorn access records pass args as (client, method, path, version, status)
         if isinstance(record.args, tuple) and len(record.args) == 5:
             _client, method, path, _version, status_code = record.args
-            payload["http.request.method"] = method
-            payload["url.path"] = path
-            payload["http.response.status_code"] = status_code
+            attributes["http.request.method"] = method
+            attributes["url.path"] = path
+            attributes["http.response.status_code"] = status_code
 
         if record.exc_info:
-            payload["error.stack_trace"] = self.formatException(record.exc_info)
+            attributes["exception.stacktrace"] = self.formatException(record.exc_info)
+
+        payload["attributes"] = attributes
 
         return json.dumps(payload, default=str)
 

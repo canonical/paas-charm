@@ -10,8 +10,8 @@ with ``opentelemetry-instrumentation-fastapi``.
 
 Two behaviours are verified:
 
-1. Access logs receive ``trace.id`` / ``span.id`` while the OTEL span is active.
-2. Error logs ("Exception in ASGI application") also receive ``trace.id`` —
+1. Access logs receive ``traceId`` / ``spanId`` while the OTEL span is active.
+2. Error logs ("Exception in ASGI application") also receive ``traceId`` —
    injected via the ``ContextVar`` fallback in ``OtelCorrelationFilter`` because
    the OTEL ASGI middleware ends the span before Uvicorn emits the error log.
 """
@@ -205,21 +205,22 @@ def test_access_log_has_trace_id(  # pylint: disable=redefined-outer-name
     """
     arrange: OTEL-instrumented FastAPI app running under Uvicorn with JSON log config.
     act:     make a GET /ok request.
-    assert:  the access log line for that request includes trace.id and span.id.
+    assert:  the access log line for that request includes traceId and spanId.
     """
     access_logs = uvicorn_logs["stdout"]
     ok_access = [
         log
         for log in access_logs
-        if log.get("log.logger") == "uvicorn.access" and "/ok" in log.get("url.path", "")
+        if log.get("attributes", {}).get("logger.name") == "uvicorn.access"
+        and "/ok" in log.get("attributes", {}).get("url.path", "")
     ]
     assert ok_access, "No access log found for /ok"
     record = ok_access[0]
 
-    assert "trace.id" in record, f"trace.id missing from /ok access log: {record}"
-    assert "span.id" in record, f"span.id missing from /ok access log: {record}"
-    assert len(record["trace.id"]) == 32, "trace.id should be 32-char hex"
-    assert len(record["span.id"]) == 16, "span.id should be 16-char hex"
+    assert "traceId" in record, f"traceId missing from /ok access log: {record}"
+    assert "spanId" in record, f"spanId missing from /ok access log: {record}"
+    assert len(record["traceId"]) == 32, "traceId should be 32-char hex"
+    assert len(record["spanId"]) == 16, "spanId should be 16-char hex"
 
 
 def test_exception_error_log_has_trace_id(  # pylint: disable=redefined-outer-name
@@ -228,37 +229,38 @@ def test_exception_error_log_has_trace_id(  # pylint: disable=redefined-outer-na
     """
     arrange: OTEL-instrumented FastAPI app running under Uvicorn with JSON log config.
     act:     make a GET /fail request (raises ValueError → 500).
-    assert:  the "Exception in ASGI application" error log has trace.id correlated
+    assert:  the "Exception in ASGI application" error log has traceId correlated
              to the same request via the contextvar fallback in OtelCorrelationFilter.
 
     Why the contextvar is needed:
       The OTEL ASGI middleware ends the span when the exception propagates through it.
       Uvicorn only logs "Exception in ASGI application" after catching the exception
       from the ASGI call — at that point the span context has already been detached.
-      OtelCorrelationFilter saves trace.id to a ContextVar when the access log fires
+      OtelCorrelationFilter saves traceId to a ContextVar when the access log fires
       (span still live) and reads it back as fallback for the error log.
     """
     error_logs = uvicorn_logs["stderr"]
     exception_logs = [
-        log for log in error_logs if "Exception in ASGI application" in log.get("message", "")
+        log for log in error_logs if "Exception in ASGI application" in log.get("body", "")
     ]
     assert exception_logs, "No 'Exception in ASGI application' log found for /fail"
     record = exception_logs[0]
 
-    assert "trace.id" in record, (
-        "trace.id should be present in exception log (saved via contextvar). "
+    assert "traceId" in record, (
+        "traceId should be present in exception log (saved via contextvar). "
         "If this fails, the contextvar in OtelCorrelationFilter is not working."
     )
-    # The error log and the access log for the same request must share trace.id.
+    # The error log and the access log for the same request must share traceId.
     fail_access = [
         log
         for log in uvicorn_logs["stdout"]
-        if log.get("log.logger") == "uvicorn.access" and "/fail" in log.get("url.path", "")
+        if log.get("attributes", {}).get("logger.name") == "uvicorn.access"
+        and "/fail" in log.get("attributes", {}).get("url.path", "")
     ]
     if fail_access:
         assert (
-            record["trace.id"] == fail_access[0]["trace.id"]
-        ), "Error log and access log should share the same trace.id"
+            record["traceId"] == fail_access[0]["traceId"]
+        ), "Error log and access log should share the same traceId"
 
 
 def test_keep_alive_no_span_leak(  # pylint: disable=redefined-outer-name
@@ -268,10 +270,10 @@ def test_keep_alive_no_span_leak(  # pylint: disable=redefined-outer-name
     arrange: two requests on the same HTTP keep-alive connection; /traced is OTEL-
              instrumented (has a span), /untraced is excluded from OTEL (no span).
     act:     make GET /traced then GET /untraced on the same persistent connection.
-    assert:  the access log for /untraced does NOT carry trace.id from /traced.
+    assert:  the access log for /untraced does NOT carry traceId from /traced.
 
     Without the fix, OtelCorrelationFilter would read the stale contextvar saved by
-    the /traced request and incorrectly inject its trace.id into the /untraced log.
+    the /traced request and incorrectly inject its traceId into the /untraced log.
     The fix detects the access-log boundary (record.name == "uvicorn.access") and
     clears the contextvar when no span is active, preventing the leak.
     """
@@ -281,23 +283,25 @@ def test_keep_alive_no_span_leak(  # pylint: disable=redefined-outer-name
         (
             log
             for log in access_logs
-            if log.get("log.logger") == "uvicorn.access" and "/traced" in log.get("url.path", "")
+            if log.get("attributes", {}).get("logger.name") == "uvicorn.access"
+            and "/traced" in log.get("attributes", {}).get("url.path", "")
         ),
         None,
     )
     assert traced_log is not None, "No access log found for /traced"
-    assert "trace.id" in traced_log, f"trace.id missing from /traced access log: {traced_log}"
+    assert "traceId" in traced_log, f"traceId missing from /traced access log: {traced_log}"
 
     untraced_log = next(
         (
             log
             for log in access_logs
-            if log.get("log.logger") == "uvicorn.access" and "/untraced" in log.get("url.path", "")
+            if log.get("attributes", {}).get("logger.name") == "uvicorn.access"
+            and "/untraced" in log.get("attributes", {}).get("url.path", "")
         ),
         None,
     )
     assert untraced_log is not None, "No access log found for /untraced"
-    assert "trace.id" not in untraced_log, (
-        f"trace.id from /traced leaked into /untraced access log: {untraced_log}. "
+    assert "traceId" not in untraced_log, (
+        f"traceId from /traced leaked into /untraced access log: {untraced_log}. "
         "OtelCorrelationFilter should have cleared the contextvar at the /untraced boundary."
     )
