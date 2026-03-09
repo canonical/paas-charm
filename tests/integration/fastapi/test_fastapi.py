@@ -63,14 +63,12 @@ def test_migration(fastapi_app: App, juju: jubilant.Juju):
         assert "SUCCESS" in response.text
 
 
-@pytest.mark.parametrize("update_config", [{"framework_logging_format": "json"}], indirect=True)
 def test_json_logging_format(
     fastapi_app: App,
     juju: jubilant.Juju,
-    update_config: dict,  # pylint: disable=unused-argument
 ):
     """
-    arrange: deploy the FastAPI charm and set framework_logging_format=json.
+    arrange: deploy the FastAPI charm (built with framework_logging_format=json in paas-config.yaml).
     act:     make several GET / requests to generate access logs.
     assert:  the container stdout contains valid JSON log lines with ECS fields.
     """

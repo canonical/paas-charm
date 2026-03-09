@@ -666,7 +666,8 @@ def generate_app_fixture(
         image_name = f"{framework}-app-image"
     use_existing = pytestconfig.getoption("--use-existing")
     if use_existing:
-        return App(app_name)
+        yield App(app_name)
+        return
     if resources is None:
         resources = {
             "app-image": pytestconfig.getoption(f"--{image_name}"),
