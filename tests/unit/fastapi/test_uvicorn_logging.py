@@ -16,6 +16,7 @@ Two behaviours are verified:
    the OTEL ASGI middleware ends the span before Uvicorn emits the error log.
 """
 
+import http.client
 import json
 import os
 import pathlib
@@ -34,6 +35,7 @@ _LOG_CONFIG = _TEMPLATES_DIR / "uvicorn-log-config.json"
 
 _APP_HOST = "127.0.0.1"
 _APP_PORT = 18082
+_APP_PORT_KEEPALIVE = 18083
 
 # Minimal FastAPI app with OTEL instrumentation.
 # /ok returns 200; /fail raises ValueError → 500.
@@ -57,82 +59,144 @@ def fail():
     raise ValueError("intentional error")
 """
 
+# App for the keep-alive leak test.
+# /traced is instrumented; /untraced is excluded from OTEL so it has no span.
+_APP_CODE_KEEPALIVE = """
+from fastapi import FastAPI
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+trace.set_tracer_provider(TracerProvider())
+
+app = FastAPI()
+FastAPIInstrumentor.instrument_app(app, excluded_urls="untraced")
+
+@app.get("/traced")
+def traced():
+    return {"ok": True}
+
+@app.get("/untraced")
+def untraced():
+    return {"ok": True}
+"""
+
 
 @pytest.fixture(scope="module")
 def uvicorn_logs() -> Iterator[dict[str, list[dict]]]:
     """Start Uvicorn, make one /ok and one /fail request, yield parsed log lines."""
-    with tempfile.TemporaryDirectory() as d:
-        app_file = pathlib.Path(d) / "app.py"
-        app_file.write_text(_APP_CODE)
+    proc = _start_uvicorn(_APP_CODE, _APP_PORT)
+    try:
+        _wait_ready(_APP_HOST, _APP_PORT, "/ok")
 
-        env = os.environ.copy()
-        existing_pythonpath = env.get("PYTHONPATH", "")
-        env["PYTHONPATH"] = (
-            f"{_TEMPLATES_DIR}:{existing_pythonpath}"
-            if existing_pythonpath
-            else str(_TEMPLATES_DIR)
-        )
-
-        proc = subprocess.Popen(  # pylint: disable=consider-using-with
-            [
-                sys.executable,
-                "-m",
-                "uvicorn",
-                "app:app",
-                "--host",
-                _APP_HOST,
-                "--port",
-                str(_APP_PORT),
-                "--log-config",
-                str(_LOG_CONFIG),
-            ],
-            cwd=d,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        try:
-            # Poll for readiness instead of a fixed sleep.
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                try:
-                    with urllib.request.urlopen(f"http://{_APP_HOST}:{_APP_PORT}/ok", timeout=1):
-                        break
-                except (urllib.error.URLError, OSError):
-                    time.sleep(0.2)
-            else:
-                raise RuntimeError("Uvicorn did not start within 10 seconds")
-
-            for path in ["/ok", "/fail"]:
-                try:
-                    with urllib.request.urlopen(
-                        f"http://{_APP_HOST}:{_APP_PORT}{path}", timeout=2
-                    ):
-                        pass
-                except urllib.error.HTTPError:
-                    pass  # 500 from /fail is expected
-
-            time.sleep(0.5)
-        finally:
-            proc.terminate()
-            out, err = proc.communicate(timeout=5)
-
-    def _parse(stream: bytes) -> list[dict]:
-        lines = []
-        for line in stream.decode().splitlines():
-            line = line.strip()
-            if line.startswith("{"):
-                try:
-                    lines.append(json.loads(line))
-                except json.JSONDecodeError:
+        for path in ["/ok", "/fail"]:
+            try:
+                with urllib.request.urlopen(f"http://{_APP_HOST}:{_APP_PORT}{path}", timeout=2):
                     pass
-        return lines
+            except urllib.error.HTTPError:
+                pass  # 500 from /fail is expected
+
+        time.sleep(0.5)
+    finally:
+        proc.terminate()
+        out, err = proc.communicate(timeout=5)
 
     yield {
-        "stdout": _parse(out),  # uvicorn.access logs
-        "stderr": _parse(err),  # uvicorn.error logs (startup, exceptions)
+        "stdout": _parse_logs(out),  # uvicorn.access logs
+        "stderr": _parse_logs(err),  # uvicorn.error logs (startup, exceptions)
     }
+
+
+def _start_uvicorn(
+    app_code: str, port: int
+) -> "subprocess.Popen[bytes]":  # type: ignore[type-arg]
+    """Write *app_code* to a temp dir and start Uvicorn on *port*.
+
+    Returns the running process; the caller is responsible for terminating it.
+    The temp dir is embedded in the process environment and will persist until
+    the process is terminated.
+    """
+    tmp = tempfile.mkdtemp()
+    app_file = pathlib.Path(tmp) / "app.py"
+    app_file.write_text(app_code)
+
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        f"{_TEMPLATES_DIR}:{existing_pythonpath}" if existing_pythonpath else str(_TEMPLATES_DIR)
+    )
+
+    return subprocess.Popen(  # pylint: disable=consider-using-with
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "app:app",
+            "--host",
+            _APP_HOST,
+            "--port",
+            str(port),
+            "--log-config",
+            str(_LOG_CONFIG),
+        ],
+        cwd=tmp,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def _wait_ready(host: str, port: int, path: str = "/", timeout: float = 10) -> None:
+    """Poll until the server is accepting connections or *timeout* is reached."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(f"http://{host}:{port}{path}", timeout=1):
+                return
+        except (urllib.error.URLError, OSError):
+            time.sleep(0.2)
+    raise RuntimeError(f"Server on {host}:{port} did not start within {timeout}s")
+
+
+def _parse_logs(stream: bytes) -> list[dict]:
+    """Return JSON log records from *stream*, skipping non-JSON lines."""
+    lines = []
+    for line in stream.decode().splitlines():
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                lines.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return lines
+
+
+@pytest.fixture(scope="module")
+def uvicorn_logs_keepalive() -> Iterator[list[dict]]:
+    """Start Uvicorn with the keep-alive app, make a traced then an untraced request.
+
+    Both requests are made through the same ``http.client.HTTPConnection`` to
+    ensure they reuse the same TCP connection (HTTP/1.1 keep-alive), which means
+    they share the same asyncio task and therefore the same ContextVar namespace.
+    """
+    proc = _start_uvicorn(_APP_CODE_KEEPALIVE, _APP_PORT_KEEPALIVE)
+    try:
+        _wait_ready(_APP_HOST, _APP_PORT_KEEPALIVE, "/traced")
+
+        # Use a single persistent connection to guarantee keep-alive reuse.
+        conn = http.client.HTTPConnection(_APP_HOST, _APP_PORT_KEEPALIVE)
+        conn.request("GET", "/traced")
+        conn.getresponse().read()
+        conn.request("GET", "/untraced")
+        conn.getresponse().read()
+        conn.close()
+
+        time.sleep(0.5)
+    finally:
+        proc.terminate()
+        out, _ = proc.communicate(timeout=5)
+
+    yield _parse_logs(out)
 
 
 def test_access_log_has_trace_id(  # pylint: disable=redefined-outer-name
@@ -195,3 +259,45 @@ def test_exception_error_log_has_trace_id(  # pylint: disable=redefined-outer-na
         assert (
             record["trace.id"] == fail_access[0]["trace.id"]
         ), "Error log and access log should share the same trace.id"
+
+
+def test_keep_alive_no_span_leak(  # pylint: disable=redefined-outer-name
+    uvicorn_logs_keepalive: list,
+) -> None:
+    """
+    arrange: two requests on the same HTTP keep-alive connection; /traced is OTEL-
+             instrumented (has a span), /untraced is excluded from OTEL (no span).
+    act:     make GET /traced then GET /untraced on the same persistent connection.
+    assert:  the access log for /untraced does NOT carry trace.id from /traced.
+
+    Without the fix, OtelCorrelationFilter would read the stale contextvar saved by
+    the /traced request and incorrectly inject its trace.id into the /untraced log.
+    The fix detects the access-log boundary (record.name == "uvicorn.access") and
+    clears the contextvar when no span is active, preventing the leak.
+    """
+    access_logs = uvicorn_logs_keepalive
+
+    traced_log = next(
+        (
+            log
+            for log in access_logs
+            if log.get("log.logger") == "uvicorn.access" and "/traced" in log.get("url.path", "")
+        ),
+        None,
+    )
+    assert traced_log is not None, "No access log found for /traced"
+    assert "trace.id" in traced_log, f"trace.id missing from /traced access log: {traced_log}"
+
+    untraced_log = next(
+        (
+            log
+            for log in access_logs
+            if log.get("log.logger") == "uvicorn.access" and "/untraced" in log.get("url.path", "")
+        ),
+        None,
+    )
+    assert untraced_log is not None, "No access log found for /untraced"
+    assert "trace.id" not in untraced_log, (
+        f"trace.id from /traced leaked into /untraced access log: {untraced_log}. "
+        "OtelCorrelationFilter should have cleared the contextvar at the /untraced boundary."
+    )

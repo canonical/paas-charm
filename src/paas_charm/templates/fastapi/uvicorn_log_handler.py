@@ -19,12 +19,11 @@ from typing import Any
 # Populated by OtelCorrelationFilter whenever a valid span is active (access log path).
 # Read as fallback when the span has already ended (error log path).
 #
-# Caveat: on HTTP/1.1 keep-alive connections, multiple requests share the same asyncio
-# task, so the contextvar persists across requests in that task.  If a later request
-# has no OTEL span (e.g. dropped by a ratio sampler), its error logs will fall back to
-# the previous request's trace.id — incorrect but benign in practice, because mixed-
-# sampling scenarios are uncommon and the access log for the new request always
-# overwrites the contextvar when a span IS present.
+# Keep-alive note: on HTTP/1.1 connections, multiple requests share the same asyncio
+# task and therefore the same ContextVar.  OtelCorrelationFilter detects request
+# boundaries via the "uvicorn.access" logger name: if an access log arrives with no
+# active span the contextvar is cleared, preventing stale IDs from leaking into
+# subsequent untraced requests.
 _span_context_var: ContextVar[dict[str, str]] = ContextVar("_span_context_var", default={})
 
 
@@ -41,6 +40,10 @@ class OtelCorrelationFilter(logging.Filter):
     If opentelemetry-api is not installed at all, records are passed through
     unchanged (``trace.id`` and ``span.id`` are simply absent).
     """
+
+    # Uvicorn logger name for access logs.  Used to detect request boundaries
+    # so the contextvar can be cleared when an untraced request starts.
+    _ACCESS_LOGGER = "uvicorn.access"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Enrich *record* with OTEL context if available.
@@ -64,8 +67,13 @@ class OtelCorrelationFilter(logging.Filter):
                 }
                 # Save for error logs emitted after this span ends.
                 _span_context_var.set(ids)
+            elif record.name == self._ACCESS_LOGGER:
+                # New request boundary with no active span — this request is not
+                # traced.  Clear the contextvar so subsequent error logs for this
+                # request do not inherit the previous request's trace IDs.
+                _span_context_var.set({})
             else:
-                # Span gone — fall back to whatever was saved in this async context.
+                # Error/other log — span may have just ended; use the fallback.
                 ids = _span_context_var.get()
         except ImportError:
             pass
