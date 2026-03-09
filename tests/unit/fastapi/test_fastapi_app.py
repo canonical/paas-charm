@@ -63,6 +63,8 @@ def _run_pebble_ready(state: testing.State) -> tuple[testing.Context, testing.St
 )
 def test_fastapi_logging_environment(
     base_state: testing.State,  # pylint: disable=redefined-outer-name
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
     logging_format: str | None,
     expected: list[str],
     absent: list[str],
@@ -72,14 +74,13 @@ def test_fastapi_logging_environment(
     act: run pebble-ready.
     assert: UVICORN_LOG_CONFIG / PYTHONPATH are present (or absent) as expected.
     """
-    # Write paas-config.yaml in the cwd that read_paas_config() uses.
-    content = f"framework_logging_format: {logging_format}\n" if logging_format else ""
-    cfg = pathlib.Path("paas-config.yaml")
-    cfg.write_text(content, encoding="utf-8")
-    try:
-        _, state_out = _run_pebble_ready(base_state)
-    finally:
-        cfg.unlink(missing_ok=True)
+    monkeypatch.chdir(tmp_path)
+    if logging_format:
+        (tmp_path / "paas-config.yaml").write_text(
+            f"framework_logging_format: {logging_format}\n", encoding="utf-8"
+        )
+
+    _, state_out = _run_pebble_ready(base_state)
 
     plan = state_out.get_container(FASTAPI_CONTAINER_NAME).plan
     env = plan.services["fastapi"].environment if plan and "fastapi" in plan.services else {}
@@ -96,20 +97,22 @@ def test_fastapi_logging_environment(
 
 def test_fastapi_json_logging_files_pushed(
     base_state: testing.State,  # pylint: disable=redefined-outer-name
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
 ) -> None:
     """
     arrange: set framework_logging_format=json.
     act: run pebble-ready.
     assert: formatter and log-config files are pushed to /opt/paas_charm/ in the container.
     """
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "paas-config.yaml").write_text(
+        "framework_logging_format: json\n", encoding="utf-8"
+    )
+
     ctx = testing.Context(FastAPICharm)
-    cfg = pathlib.Path("paas-config.yaml")
-    cfg.write_text("framework_logging_format: json\n", encoding="utf-8")
-    try:
-        container = base_state.get_container(FASTAPI_CONTAINER_NAME)
-        state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
-    finally:
-        cfg.unlink(missing_ok=True)
+    container = base_state.get_container(FASTAPI_CONTAINER_NAME)
+    state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
 
     container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
     fs = container_out.get_filesystem(ctx)
@@ -119,12 +122,16 @@ def test_fastapi_json_logging_files_pushed(
 
 def test_fastapi_no_files_pushed_without_json_logging(
     base_state: testing.State,  # pylint: disable=redefined-outer-name
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
 ) -> None:
     """
     arrange: no framework_logging_format set (default).
     act: run pebble-ready.
     assert: /opt/paas_charm/ is not created in the container.
     """
+    monkeypatch.chdir(tmp_path)
+
     ctx = testing.Context(FastAPICharm)
     container = base_state.get_container(FASTAPI_CONTAINER_NAME)
     state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
