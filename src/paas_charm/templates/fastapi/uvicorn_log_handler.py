@@ -3,7 +3,7 @@
 
 """JSON log formatter and OTEL correlation filter for Uvicorn.
 
-This file is pushed by the charm into /opt/paas_charm/ inside the application
+This file is pushed by the charm into /tmp/fastapi/log_config/ inside the application
 container and loaded by Uvicorn via the UVICORN_LOG_CONFIG environment variable.
 It must only depend on the Python standard library; opentelemetry-api is used
 only when already installed by the user.

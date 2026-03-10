@@ -12,7 +12,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 
 from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
 
-_OPT_DIR = "/opt/paas_charm"
+_OPT_DIR = "/tmp/fastapi/log_config"
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
@@ -103,7 +103,7 @@ def test_fastapi_json_logging_files_pushed(
     """
     arrange: set framework_logging_format=json.
     act: run pebble-ready.
-    assert: formatter and log-config files are pushed to /opt/paas_charm/ in the container.
+    assert: formatter and log-config files are pushed to /tmp/fastapi/log_config/ in the container.
     """
     monkeypatch.chdir(tmp_path)
     (tmp_path / "paas-config.yaml").write_text(
@@ -128,7 +128,7 @@ def test_fastapi_no_files_pushed_without_json_logging(
     """
     arrange: no framework_logging_format set (default).
     act: run pebble-ready.
-    assert: /opt/paas_charm/ is not created in the container.
+    assert: /tmp/fastapi/log_config/ is not created in the container.
     """
     monkeypatch.chdir(tmp_path)
 
@@ -138,4 +138,4 @@ def test_fastapi_no_files_pushed_without_json_logging(
 
     container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
     fs = container_out.get_filesystem(ctx)
-    assert not (fs / _OPT_DIR.lstrip("/")).exists(), "/opt/paas_charm should not be created"
+    assert not (fs / _OPT_DIR.lstrip("/")).exists(), "/tmp/fastapi/log_config should not be created"

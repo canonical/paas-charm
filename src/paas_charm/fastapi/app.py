@@ -15,7 +15,7 @@ from paas_charm.database_migration import DatabaseMigration
 
 logger = logging.getLogger(__name__)
 
-_OPT_DIR = pathlib.PurePosixPath("/opt/paas_charm")
+_OPT_DIR = pathlib.PurePosixPath("/tmp/fastapi/log_config")  # nosec: B108
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
@@ -26,7 +26,7 @@ class FastAPIApp(App):
     Extends the base :class:`~paas_charm.app.App` with structured JSON logging
     support.  When ``workload_config.logging_format == "json"`` the charm pushes
     a JSON formatter module and a uvicorn ``dictConfig`` logging configuration
-    file into ``/opt/paas_charm/`` inside the container, then activates them
+    file into ``/tmp/fastapi/log_config/`` inside the container, then activates them
     via ``PYTHONPATH`` and ``UVICORN_LOG_CONFIG`` environment variables.
     """
 
