@@ -42,14 +42,6 @@ def base_state_fixture() -> testing.State:
     )
 
 
-def _run_pebble_ready(state: testing.State) -> tuple[testing.Context, testing.State]:
-    """Run the pebble-ready event for the app container; return (ctx, output state)."""
-    ctx = testing.Context(FastAPICharm)
-    container = state.get_container(FASTAPI_CONTAINER_NAME)
-    state_out = ctx.run(ctx.on.pebble_ready(container=container), state)
-    return ctx, state_out
-
-
 @pytest.mark.parametrize(
     "logging_format, expected, absent",
     [
@@ -83,7 +75,9 @@ def test_fastapi_logging_environment(
             f"framework_logging_format: {logging_format}\n", encoding="utf-8"
         )
 
-    _, state_out = _run_pebble_ready(base_state)
+    ctx = testing.Context(FastAPICharm)
+    container = base_state.get_container(FASTAPI_CONTAINER_NAME)
+    state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
 
     plan = state_out.get_container(FASTAPI_CONTAINER_NAME).plan
     env = plan.services["fastapi"].environment if plan and "fastapi" in plan.services else {}
