@@ -1,10 +1,7 @@
 cosl == 0.1.0
 coverage[toml]
-fastapi
 opentelemetry-api
-opentelemetry-instrumentation-fastapi
 opentelemetry-sdk
 ops[testing]==2.21.1
 pydantic[email]==2.12.5
 pytest
-uvicorn[standard]

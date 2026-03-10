@@ -159,8 +159,8 @@ def _extract_http_attributes(record: logging.LogRecord) -> dict[str, Any]:
                            http_version, status_code)
 
     The logger name (``uvicorn.access``) is the stable contract; the positional
-    args shape is an implementation detail, so extraction is bounds-checked and
-    wrapped in a broad except to be forward-compatible with Uvicorn changes.
+    args shape is an implementation detail, so extraction is bounds-checked via
+    ``len()`` to be forward-compatible with Uvicorn changes.
 
     Args:
         record: A log record whose ``name`` is ``uvicorn.access``.

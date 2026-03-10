@@ -86,7 +86,7 @@ def test_json_logging_format(
         text=True,
         check=False,
     )
-    raw_logs = result.stdout or result.stderr
+    raw_logs = result.stdout
 
     json_lines = []
     for line in raw_logs.splitlines():

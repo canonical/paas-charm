@@ -21,9 +21,7 @@ _CONFIG_FILE = "uvicorn-log-config.json"
 _PEER_APP_DATA = {"fastapi_secret_key": "test-secret-key"}
 
 
-pytest.fixture(scope="function", name="base_state")
-
-
+@pytest.fixture(scope="function", name="base_state")
 def base_state_fixture() -> testing.State:
     """Return a minimal State with the app container connected and peer relation initialised."""
     container = testing.Container(
