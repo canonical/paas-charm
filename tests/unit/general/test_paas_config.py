@@ -14,7 +14,6 @@ from pydantic import ValidationError
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
-    FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     LoggingFormat,
     PaasConfig,
     PrometheusConfig,

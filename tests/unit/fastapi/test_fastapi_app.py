@@ -46,7 +46,7 @@ def base_state_fixture() -> testing.State:
             LoggingFormat.NONE, [], ["UVICORN_LOG_CONFIG", "PYTHONPATH"], id="no-json-logging"
         ),
         pytest.param(
-            "json",
+            LoggingFormat.JSON,
             ["UVICORN_LOG_CONFIG", "PYTHONPATH"],
             [],
             id="json-logging-enabled",
@@ -69,7 +69,7 @@ def test_fastapi_logging_environment(
     monkeypatch.chdir(tmp_path)
     if logging_format != LoggingFormat.NONE:
         (tmp_path / "paas-config.yaml").write_text(
-            f"framework_logging_format: {logging_format}\n", encoding="utf-8"
+            f"framework_logging_format: {logging_format.value}\n", encoding="utf-8"
         )
 
     ctx = testing.Context(FastAPICharm)
