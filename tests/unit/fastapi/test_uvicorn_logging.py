@@ -18,6 +18,7 @@ Two behaviours are verified:
 
 import http.client
 import json
+import logging
 import os
 import pathlib
 import subprocess
@@ -28,6 +29,7 @@ import urllib.request
 from typing import Iterator
 
 import pytest
+from uvicorn_log_handler import UvicornJsonFormatter  # pylint: disable=import-error
 
 _PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 _TEMPLATES_DIR = _PROJECT_ROOT / "src" / "paas_charm" / "templates" / "fastapi"
@@ -305,3 +307,45 @@ def test_keep_alive_no_span_leak(  # pylint: disable=redefined-outer-name
         f"traceId from /traced leaked into /untraced access log: {untraced_log}. "
         "OtelCorrelationFilter should have cleared the contextvar at the /untraced boundary."
     )
+
+
+# ---------------------------------------------------------------------------
+# Direct formatter unit tests (no subprocess)
+# ---------------------------------------------------------------------------
+
+
+def _make_record(
+    name: str = "uvicorn.error",
+    level: int = logging.ERROR,
+    msg: str = "test",
+    exc_info: bool = False,
+) -> logging.LogRecord:
+    """Return a LogRecord, optionally with exc_info from a live exception."""
+    logger = logging.getLogger(name)
+    record = logger.makeRecord(name, level, "<test>", 0, msg, (), None)
+    if exc_info:
+        try:
+            raise ValueError("bad input")
+        except ValueError:
+            record.exc_info = sys.exc_info()
+    return record
+
+
+def test_exception_fields_present() -> None:
+    """exception.type and exception.message are set from record.exc_info."""
+    record = _make_record(exc_info=True)
+    payload = json.loads(UvicornJsonFormatter().format(record))
+    attrs = payload["attributes"]
+    assert attrs["exception.type"] == "ValueError"
+    assert attrs["exception.message"] == "bad input"
+    assert "exception.stacktrace" in attrs
+
+
+def test_no_exception_fields_without_exc_info() -> None:
+    """exception fields are absent when no exception is attached."""
+    record = _make_record(exc_info=False)
+    payload = json.loads(UvicornJsonFormatter().format(record))
+    attrs = payload["attributes"]
+    assert "exception.type" not in attrs
+    assert "exception.message" not in attrs
+    assert "exception.stacktrace" not in attrs

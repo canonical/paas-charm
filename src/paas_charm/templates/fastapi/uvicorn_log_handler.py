@@ -44,7 +44,7 @@ class OtelCorrelationFilter(logging.Filter):
     """Add OpenTelemetry trace/span IDs to log records.
 
     When a valid OTEL span is active, injects ``traceId`` and ``spanId``
-    into the record **and** saves them to a ``ContextVar`` for later use.
+    into the record and saves them to a ``ContextVar`` for later use.
 
     When no span is active (e.g. error logs emitted after the span has ended),
     falls back to the value saved in the ``ContextVar`` so that error logs
@@ -59,7 +59,7 @@ class OtelCorrelationFilter(logging.Filter):
     _ACCESS_LOGGER = "uvicorn.access"
 
     def filter(self, record: logging.LogRecord) -> bool:
-        """Enrich *record* with OTEL context if available.
+        """Enrich record with OTEL context if available.
 
         Args:
             record: The log record to enrich.
@@ -105,9 +105,10 @@ class UvicornJsonFormatter(logging.Formatter):
     (logger name, HTTP attributes, exception) are placed inside ``attributes``
     following OTEL semantic conventions.
 
-    Access log records produced by uvicorn carry the raw request/response
-    values as a 5-tuple in ``record.args``; this formatter extracts them
-    into the ``attributes`` dict.
+    Access log records produced by Uvicorn carry request/response values as
+    positional args; this formatter extracts them into the ``attributes`` dict
+    as ``http.request.method``, ``url.path``, ``url.query`` (when present),
+    ``client.address``, and ``http.response.status_code``.
     """
 
     def format(self, record: logging.LogRecord) -> str:
@@ -132,19 +133,65 @@ class UvicornJsonFormatter(logging.Formatter):
 
         attributes: dict[str, Any] = {"logger.name": record.name}
 
-        # Uvicorn access records pass args as (client, method, path, version, status)
-        if isinstance(record.args, tuple) and len(record.args) == 5:
-            _client, method, path, _version, status_code = record.args
-            attributes["http.request.method"] = method
-            attributes["url.path"] = path
-            attributes["http.response.status_code"] = status_code
+        if record.name == "uvicorn.access":
+            attributes.update(_extract_http_attributes(record))
 
         if record.exc_info:
+            exc_type, exc_value, _ = record.exc_info
+            if exc_type is not None:
+                attributes["exception.type"] = exc_type.__qualname__
+            if exc_value is not None:
+                attributes["exception.message"] = str(exc_value)
             attributes["exception.stacktrace"] = self.formatException(record.exc_info)
 
         payload["attributes"] = attributes
 
         return json.dumps(payload, default=str)
+
+
+def _extract_http_attributes(record: logging.LogRecord) -> dict[str, Any]:
+    """Extract HTTP semantic-convention attributes from a Uvicorn access log record.
+
+    Uvicorn emits access logs as::
+
+        access_logger.info('%s - "%s %s HTTP/%s" %d',
+                           client_addr, method, path_with_query,
+                           http_version, status_code)
+
+    The logger name (``uvicorn.access``) is the stable contract; the positional
+    args shape is an implementation detail, so extraction is bounds-checked and
+    wrapped in a broad except to be forward-compatible with Uvicorn changes.
+
+    Args:
+        record: A log record whose ``name`` is ``uvicorn.access``.
+
+    Returns:
+        Dict of OTEL HTTP semantic-convention fields, possibly empty.
+    """
+    attrs: dict[str, Any] = {}
+    args = record.args if isinstance(record.args, (tuple, list)) else ()
+    client_addr = str(args[0]) if len(args) > 0 else None
+    method = str(args[1]) if len(args) > 1 else None
+    path_with_query = str(args[2]) if len(args) > 2 else None
+    status_code = args[4] if len(args) > 4 else None
+
+    if method:
+        attrs["http.request.method"] = method
+    if path_with_query:
+        path, _, query = path_with_query.partition("?")
+        attrs["url.path"] = path
+        if query:
+            attrs["url.query"] = query
+    if client_addr:
+        # Uvicorn produces "host:port" via get_client_addr(); strip the port.
+        host, _, _port = client_addr.rpartition(":")
+        attrs["client.address"] = host if host else client_addr
+    if status_code is not None:
+        try:
+            attrs["http.response.status_code"] = int(str(status_code))
+        except (ValueError, TypeError):
+            attrs["http.response.status_code"] = status_code
+    return attrs
 
 
 def _iso_timestamp(epoch: float) -> str:

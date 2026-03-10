@@ -82,7 +82,7 @@ class FastAPIApp(App):
         """Return the application environment, adding logging vars when JSON is configured.
 
         Returns:
-            A dictionary of environment variable name → value.
+            A dictionary representing the application environment variables.
         """
         env = super().gen_environment()
         if self._workload_config.logging_format == LoggingFormat.JSON:
@@ -93,13 +93,6 @@ class FastAPIApp(App):
 
 
 def _read_template(filename: str) -> str:
-    """Read a file from the fastapi templates directory bundled with paas_charm.
-
-    Args:
-        filename: Bare filename to read from ``templates/fastapi/``.
-
-    Returns:
-        The file contents as a string.
-    """
+    """Read a file from the fastapi templates directory bundled with paas_charm."""
     package = importlib.resources.files("paas_charm") / "templates" / "fastapi"
     return (package / filename).read_text(encoding="utf-8")
