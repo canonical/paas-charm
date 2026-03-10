@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Provide the FastAPIApp class to manage the FastAPI/Uvicorn application."""

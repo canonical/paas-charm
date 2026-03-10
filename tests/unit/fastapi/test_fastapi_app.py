@@ -1,4 +1,4 @@
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Scenario-style unit tests for FastAPIApp structured logging integration."""
@@ -17,9 +17,6 @@ _OPT_DIR = "/tmp/fastapi/log_config"
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
-# Peer relation data satisfying KeySecretStorage.is_initialized (key = fastapi_secret_key)
-_PEER_APP_DATA = {"fastapi_secret_key": "test-secret-key"}
-
 
 @pytest.fixture(scope="function", name="base_state")
 def base_state_fixture() -> testing.State:
@@ -32,7 +29,7 @@ def base_state_fixture() -> testing.State:
     )
     peer_rel = testing.PeerRelation(
         "secret-storage",
-        local_app_data=_PEER_APP_DATA,
+        local_app_data={"fastapi_secret_key": "test-secret-key"},
     )
     return testing.State(
         containers=[container],

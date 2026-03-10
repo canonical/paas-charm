@@ -68,7 +68,7 @@ def test_json_logging(
 ):
     """
     arrange: deploy the FastAPI charm with framework_logging_format=json in paas-config.yaml.
-    act: make GET / requests (access logs + tracing) and GET /boom (error log with exception).
+    act: make a request to GET /boom (access log + error log with exception).
     assert: container logs contain valid JSON with OTEL fields, trace correlation, and exception info.
     """
     status = juju.status()
