@@ -6,7 +6,6 @@
 import abc
 import logging
 import pathlib
-import tempfile
 import typing
 
 import ops
@@ -454,19 +453,28 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             raise CharmConfigInvalidError(error_messages.short) from exc
 
     def build_cos_dir(self) -> pathlib.Path:
-        """Build and return a temporary merged directory with COS files.
+        """Build and return a merged directory with COS files.
 
         Returns:
-            Return the temporary directory with merged COS related files.
+            Return the merged directory with COS related files.
         """
         default_cos_dir = self.get_cos_default_dir()
         custom_cos_dir = self.get_cos_custom_dir()
-        merged_cos_dir = (
-            pathlib.Path(tempfile.gettempdir()) / f"cos-merged-{self._framework_name}"
-        ).absolute()
+        merged_cos_dir = self.get_cos_merged_dir()
+
+        if merged_cos_dir.is_dir():
+            return merged_cos_dir
 
         merge_cos_directories(default_cos_dir, custom_cos_dir, merged_cos_dir)
         return merged_cos_dir
+
+    def get_cos_merged_dir(self) -> pathlib.Path:
+        """Return the persistent merged directory with COS related files.
+
+        Returns:
+            Return the persistent merged directory with merged COS related files.
+        """
+        return (self.charm_dir / "cos_merged").absolute()
 
     def get_cos_default_dir(self) -> pathlib.Path:
         """Return the default directory with COS related files.

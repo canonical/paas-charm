@@ -168,3 +168,6 @@ examples/**/lib
 
 # Flask minimal libs
 examples/flask-minimal/charm/lib
+
+# Generated merged COS assets
+examples/**/charm/cos_merged/
