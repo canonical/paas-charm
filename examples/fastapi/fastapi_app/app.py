@@ -162,6 +162,11 @@ def list_authorization_models():
         return f"Failed to list authorization models: {e}"
 
 
+@app.get("/boom")
+async def boom():
+    raise RuntimeError("intentional error for log testing")
+
+
 @app.get("/table/{table}")
 def test_table(table: str):
     if inspect(engine).has_table(table):
