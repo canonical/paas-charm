@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # The directory where logging files will be pushed inside the container.
 # The logging related files are pushed again if the container is recreated, and must
 # be in a place where the pebble user (that could be non-root) has write permissions.
-_OPT_DIR = pathlib.PurePosixPath("/tmp/fastapi/log_config")  # nosec: B108
+_LOG_CONFIG_DIR = pathlib.PurePosixPath("/tmp/fastapi/log_config")  # nosec: B108
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
@@ -63,7 +63,7 @@ class FastAPIApp(App):
         if self._workload_config.logging_format != LoggingFormat.JSON:
             return
         self._container.make_dir(
-            str(_OPT_DIR),
+            str(_LOG_CONFIG_DIR),
             make_parents=True,
             user=self._workload_config.user,
             group=self._workload_config.group,
@@ -71,7 +71,7 @@ class FastAPIApp(App):
         for filename in (_HANDLER_FILE, _CONFIG_FILE):
             content = _read_template(filename)
             self._container.push(
-                str(_OPT_DIR / filename),
+                str(_LOG_CONFIG_DIR / filename),
                 content,
                 user=self._workload_config.user,
                 group=self._workload_config.group,
@@ -87,8 +87,10 @@ class FastAPIApp(App):
         env = super().gen_environment()
         if self._workload_config.logging_format == LoggingFormat.JSON:
             existing = env.get("PYTHONPATH", "")
-            env["PYTHONPATH"] = f"{_OPT_DIR}:{existing}" if existing else str(_OPT_DIR)
-            env["UVICORN_LOG_CONFIG"] = str(_OPT_DIR / _CONFIG_FILE)
+            env["PYTHONPATH"] = (
+                f"{_LOG_CONFIG_DIR}:{existing}" if existing else str(_LOG_CONFIG_DIR)
+            )
+            env["UVICORN_LOG_CONFIG"] = str(_LOG_CONFIG_DIR / _CONFIG_FILE)
         return env
 
 

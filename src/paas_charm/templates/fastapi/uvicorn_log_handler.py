@@ -39,6 +39,8 @@ _SEVERITY_MAP = {
     "CRITICAL": "FATAL",
 }
 
+_ACCESS_LOGGER = "uvicorn.access"
+
 
 class OtelCorrelationFilter(logging.Filter):
     """Add OpenTelemetry trace/span IDs to log records.
@@ -53,10 +55,6 @@ class OtelCorrelationFilter(logging.Filter):
     If opentelemetry-api is not installed at all, records are passed through
     unchanged (``traceId`` and ``spanId`` are simply absent).
     """
-
-    # Uvicorn logger name for access logs.  Used to detect request boundaries
-    # so the contextvar can be cleared when an untraced request starts.
-    _ACCESS_LOGGER = "uvicorn.access"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Enrich record with OTEL context if available.
@@ -80,7 +78,7 @@ class OtelCorrelationFilter(logging.Filter):
                 }
                 # Save for error logs emitted after this span ends.
                 _span_context_var.set(ids)
-            elif record.name == self._ACCESS_LOGGER:
+            elif record.name == _ACCESS_LOGGER:
                 # New request boundary with no active span — this request is not
                 # traced.  Clear the contextvar so subsequent error logs for this
                 # request do not inherit the previous request's trace IDs.
@@ -133,7 +131,7 @@ class UvicornJsonFormatter(logging.Formatter):
 
         attributes: dict[str, Any] = {"logger.name": record.name}
 
-        if record.name == "uvicorn.access":
+        if record.name == _ACCESS_LOGGER:
             attributes.update(_extract_http_attributes(record))
 
         if record.exc_info:

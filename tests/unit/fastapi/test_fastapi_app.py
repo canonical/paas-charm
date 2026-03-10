@@ -13,7 +13,7 @@ from paas_charm.paas_config import LoggingFormat
 
 from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
 
-_OPT_DIR = "/tmp/fastapi/log_config"
+_LOG_CONFIG_DIR = "/tmp/fastapi/log_config"
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
@@ -85,8 +85,8 @@ def test_fastapi_logging_environment(
         assert key not in env, f"Unexpected env var {key!r} present"
 
     if logging_format == LoggingFormat.JSON:
-        assert env["UVICORN_LOG_CONFIG"] == f"{_OPT_DIR}/{_CONFIG_FILE}"
-        assert env["PYTHONPATH"].startswith(_OPT_DIR)
+        assert env["UVICORN_LOG_CONFIG"] == f"{_LOG_CONFIG_DIR}/{_CONFIG_FILE}"
+        assert env["PYTHONPATH"].startswith(_LOG_CONFIG_DIR)
 
 
 def test_fastapi_json_logging_files_pushed(
@@ -110,8 +110,10 @@ def test_fastapi_json_logging_files_pushed(
 
     container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
     fs = container_out.get_filesystem(ctx)
-    assert (fs / _OPT_DIR.lstrip("/") / _HANDLER_FILE).exists(), f"{_HANDLER_FILE} not pushed"
-    assert (fs / _OPT_DIR.lstrip("/") / _CONFIG_FILE).exists(), f"{_CONFIG_FILE} not pushed"
+    assert (
+        fs / _LOG_CONFIG_DIR.lstrip("/") / _HANDLER_FILE
+    ).exists(), f"{_HANDLER_FILE} not pushed"
+    assert (fs / _LOG_CONFIG_DIR.lstrip("/") / _CONFIG_FILE).exists(), f"{_CONFIG_FILE} not pushed"
 
 
 def test_fastapi_no_files_pushed_without_json_logging(
@@ -133,5 +135,5 @@ def test_fastapi_no_files_pushed_without_json_logging(
     container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
     fs = container_out.get_filesystem(ctx)
     assert not (
-        fs / _OPT_DIR.lstrip("/")
+        fs / _LOG_CONFIG_DIR.lstrip("/")
     ).exists(), "/tmp/fastapi/log_config should not be created"
