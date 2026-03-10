@@ -138,4 +138,6 @@ def test_fastapi_no_files_pushed_without_json_logging(
 
     container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
     fs = container_out.get_filesystem(ctx)
-    assert not (fs / _OPT_DIR.lstrip("/")).exists(), "/tmp/fastapi/log_config should not be created"
+    assert not (
+        fs / _OPT_DIR.lstrip("/")
+    ).exists(), "/tmp/fastapi/log_config should not be created"
