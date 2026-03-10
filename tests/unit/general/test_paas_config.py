@@ -15,6 +15,7 @@ from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
+    LoggingFormat,
     PaasConfig,
     PrometheusConfig,
     ScrapeConfig,
@@ -47,9 +48,9 @@ class TestPaasConfig:
         assert config.prometheus.scrape_configs[0].job_name == "test"
 
     def test_valid_logging_format_json(self):
-        """Test that framework_logging_format='json' is accepted."""
+        """Test that framework_logging_format='json' is accepted and coerced to LoggingFormat."""
         config = PaasConfig(framework_logging_format="json")
-        assert config.framework_logging_format == "json"
+        assert config.framework_logging_format == LoggingFormat.JSON
 
     def test_invalid_logging_format_rejected(self):
         """Test that an unsupported logging format value is rejected."""
@@ -66,8 +67,8 @@ class TestPaasConfig:
 
     def test_frameworks_supporting_logging_format_constant(self):
         """Test the FRAMEWORKS_SUPPORTING_LOGGING_FORMAT constant has expected shape."""
-        assert "json" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
-        assert "fastapi" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT["json"]
+        assert LoggingFormat.JSON in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
+        assert "fastapi" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT[LoggingFormat.JSON]
 
 
 class TestReadPaasConfig:

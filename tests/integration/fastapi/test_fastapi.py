@@ -70,7 +70,7 @@ def test_json_logging_format(
     """
     arrange: deploy the FastAPI charm (built with framework_logging_format=json in paas-config.yaml).
     act:     make several GET / requests to generate access logs.
-    assert:  the container stdout contains valid JSON log lines with ECS fields.
+    assert:  the container stdout contains valid JSON log lines with OTEL semantic convention fields.
     """
     status = juju.status()
     unit = next(iter(status.apps[fastapi_app.name].units.values()))

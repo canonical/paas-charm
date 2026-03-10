@@ -12,9 +12,13 @@ import ops
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.paas_config import LoggingFormat
 
 logger = logging.getLogger(__name__)
 
+# The directory where logging files will be pushed inside the container.
+# The logging related files are pushed again if the container is recreated, and must
+# be in a place where the pebble user (that could be non-root) has write permissions.
 _OPT_DIR = pathlib.PurePosixPath("/tmp/fastapi/log_config")  # nosec: B108
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
@@ -24,7 +28,7 @@ class FastAPIApp(App):
     """FastAPI/Uvicorn application manager.
 
     Extends the base :class:`~paas_charm.app.App` with structured JSON logging
-    support.  When ``workload_config.logging_format == "json"`` the charm pushes
+    support.  When ``workload_config.logging_format == LoggingFormat.JSON`` the charm pushes
     a JSON formatter module and a uvicorn ``dictConfig`` logging configuration
     file into ``/tmp/fastapi/log_config/`` inside the container, then activates them
     via ``PYTHONPATH`` and ``UVICORN_LOG_CONFIG`` environment variables.
@@ -56,7 +60,7 @@ class FastAPIApp(App):
 
     def _prepare_service_for_restart(self) -> None:
         """Push structured logging files to the container when JSON logging is configured."""
-        if self._workload_config.logging_format != "json":
+        if self._workload_config.logging_format != LoggingFormat.JSON:
             return
         self._container.make_dir(
             str(_OPT_DIR),
@@ -81,7 +85,7 @@ class FastAPIApp(App):
             A dictionary of environment variable name → value.
         """
         env = super().gen_environment()
-        if self._workload_config.logging_format == "json":
+        if self._workload_config.logging_format == LoggingFormat.JSON:
             existing = env.get("PYTHONPATH", "")
             env["PYTHONPATH"] = f"{_OPT_DIR}:{existing}" if existing else str(_OPT_DIR)
             env["UVICORN_LOG_CONFIG"] = str(_OPT_DIR / _CONFIG_FILE)

@@ -9,6 +9,7 @@ import pytest
 from ops import pebble, testing
 
 from examples.fastapi.charm.src.charm import FastAPICharm
+from paas_charm.paas_config import LoggingFormat
 
 from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
 
@@ -65,7 +66,7 @@ def test_fastapi_logging_environment(
     base_state: testing.State,  # pylint: disable=redefined-outer-name
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
-    logging_format: str | None,
+    logging_format: LoggingFormat | None,
     expected: list[str],
     absent: list[str],
 ) -> None:
@@ -90,7 +91,7 @@ def test_fastapi_logging_environment(
     for key in absent:
         assert key not in env, f"Unexpected env var {key!r} present"
 
-    if logging_format == "json":
+    if logging_format == LoggingFormat.JSON:
         assert env["UVICORN_LOG_CONFIG"] == f"{_OPT_DIR}/{_CONFIG_FILE}"
         assert env["PYTHONPATH"].startswith(_OPT_DIR)
 

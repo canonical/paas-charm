@@ -3,6 +3,7 @@
 
 """Module for reading and validating the paas-config.yaml configuration file."""
 
+import enum
 import logging
 import pathlib
 import typing
@@ -25,9 +26,24 @@ logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "paas-config.yaml"
 
-# Mapping of logging format name to the set of frameworks that support it.
-FRAMEWORKS_SUPPORTING_LOGGING_FORMAT: dict[str, set[str]] = {
-    "json": {"fastapi"},
+
+class LoggingFormat(str, enum.Enum):
+    """Valid values for the ``framework_logging_format`` paas-config option.
+
+    Inherits from ``str`` so that Pydantic can coerce plain YAML strings (e.g.
+    ``"json"``) into enum members, and so that enum values compare equal to
+    their string equivalents.
+
+    Attributes:
+        JSON: Structured JSON logging using OTEL semantic conventions.
+    """
+
+    JSON = "json"
+
+
+# Mapping of LoggingFormat to the set of frameworks that support it.
+FRAMEWORKS_SUPPORTING_LOGGING_FORMAT: dict[LoggingFormat, set[str]] = {
+    LoggingFormat.JSON: {"fastapi"},
 }
 
 
@@ -140,14 +156,14 @@ class PaasConfig(BaseModel):
     Attributes:
         prometheus: Prometheus-related configuration.
         framework_logging_format: Optional structured logging format for the framework server.
-            Currently only "json" is supported, and only for FastAPI.
+            Currently only ``LoggingFormat.JSON`` ("json") is supported, and only for FastAPI.
         model_config: Pydantic model configuration.
     """
 
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
-    framework_logging_format: typing.Literal["json"] | None = Field(
+    framework_logging_format: LoggingFormat | None = Field(
         default=None,
         description="Structured logging format for the framework server (e.g. 'json').",
     )
