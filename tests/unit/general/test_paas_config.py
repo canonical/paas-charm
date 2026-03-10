@@ -31,7 +31,7 @@ class TestPaasConfig:
         """Test valid minimal configuration (empty)."""
         config = PaasConfig()
         assert config.prometheus is None
-        assert config.framework_logging_format is None
+        assert config.framework_logging_format is LoggingFormat.NONE
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""

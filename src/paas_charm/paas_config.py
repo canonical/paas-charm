@@ -35,9 +35,11 @@ class LoggingFormat(str, enum.Enum):
     their string equivalents.
 
     Attributes:
+        NONE: No structured logging format; use the framework default.
         JSON: Structured JSON logging using OTEL semantic conventions.
     """
 
+    NONE = "none"
     JSON = "json"
 
 
@@ -155,7 +157,8 @@ class PaasConfig(BaseModel):
 
     Attributes:
         prometheus: Prometheus-related configuration.
-        framework_logging_format: Optional structured logging format for the framework server.
+        framework_logging_format: Structured logging format for the framework server.
+            Defaults to ``LoggingFormat.NONE`` (framework default logging).
             Currently only ``LoggingFormat.JSON`` ("json") is supported, and only for FastAPI.
         model_config: Pydantic model configuration.
     """
@@ -163,10 +166,24 @@ class PaasConfig(BaseModel):
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
-    framework_logging_format: LoggingFormat | None = Field(
-        default=None,
+    framework_logging_format: LoggingFormat = Field(
+        default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",
     )
+
+    @field_validator("framework_logging_format", mode="before")
+    @classmethod
+    def _coerce_none_to_logging_format_none(cls, v: object) -> object:
+        """Coerce a missing/null YAML value to ``LoggingFormat.NONE``.
+
+        Args:
+            v: The raw field value from YAML (may be ``None`` when the key is
+               absent or explicitly set to ``null``).
+
+        Returns:
+            ``LoggingFormat.NONE`` if *v* is ``None``, otherwise *v* unchanged.
+        """
+        return LoggingFormat.NONE if v is None else v
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 

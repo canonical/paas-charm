@@ -21,8 +21,10 @@ _CONFIG_FILE = "uvicorn-log-config.json"
 _PEER_APP_DATA = {"fastapi_secret_key": "test-secret-key"}
 
 
-@pytest.fixture
-def base_state() -> testing.State:
+pytest.fixture(scope="function", name="base_state")
+
+
+def base_state_fixture() -> testing.State:
     """Return a minimal State with the app container connected and peer relation initialised."""
     container = testing.Container(
         name=FASTAPI_CONTAINER_NAME,
@@ -53,7 +55,9 @@ def _run_pebble_ready(state: testing.State) -> tuple[testing.Context, testing.St
 @pytest.mark.parametrize(
     "logging_format, expected, absent",
     [
-        pytest.param(None, [], ["UVICORN_LOG_CONFIG", "PYTHONPATH"], id="no-json-logging"),
+        pytest.param(
+            LoggingFormat.NONE, [], ["UVICORN_LOG_CONFIG", "PYTHONPATH"], id="no-json-logging"
+        ),
         pytest.param(
             "json",
             ["UVICORN_LOG_CONFIG", "PYTHONPATH"],
@@ -63,10 +67,10 @@ def _run_pebble_ready(state: testing.State) -> tuple[testing.Context, testing.St
     ],
 )
 def test_fastapi_logging_environment(
-    base_state: testing.State,  # pylint: disable=redefined-outer-name
+    base_state: testing.State,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
-    logging_format: LoggingFormat | None,
+    logging_format: LoggingFormat,
     expected: list[str],
     absent: list[str],
 ) -> None:
@@ -76,7 +80,7 @@ def test_fastapi_logging_environment(
     assert: UVICORN_LOG_CONFIG / PYTHONPATH are present (or absent) as expected.
     """
     monkeypatch.chdir(tmp_path)
-    if logging_format:
+    if logging_format != LoggingFormat.NONE:
         (tmp_path / "paas-config.yaml").write_text(
             f"framework_logging_format: {logging_format}\n", encoding="utf-8"
         )
@@ -97,7 +101,7 @@ def test_fastapi_logging_environment(
 
 
 def test_fastapi_json_logging_files_pushed(
-    base_state: testing.State,  # pylint: disable=redefined-outer-name
+    base_state: testing.State,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -122,7 +126,7 @@ def test_fastapi_json_logging_files_pushed(
 
 
 def test_fastapi_no_files_pushed_without_json_logging(
-    base_state: testing.State,  # pylint: disable=redefined-outer-name
+    base_state: testing.State,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
