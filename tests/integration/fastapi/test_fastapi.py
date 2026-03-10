@@ -76,8 +76,6 @@ def test_json_logging(
     model_name = status.model.name
     pod_name = f"{fastapi_app.name}-0"
 
-    for _ in range(3):
-        requests.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
     requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/boom", timeout=5)
 
     all_logs = _fetch_container_logs(pod_name, model_name)

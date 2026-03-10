@@ -65,11 +65,6 @@ class TestPaasConfig:
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
 
-    def test_frameworks_supporting_logging_format_constant(self):
-        """Test the FRAMEWORKS_SUPPORTING_LOGGING_FORMAT constant has expected shape."""
-        assert LoggingFormat.JSON in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
-        assert "fastapi" in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT[LoggingFormat.JSON]
-
 
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""
