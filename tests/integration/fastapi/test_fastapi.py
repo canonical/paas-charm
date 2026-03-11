@@ -115,7 +115,7 @@ def _fetch_container_logs(pod_name: str, model_name: str) -> list[dict]:
         ["kubectl", "logs", pod_name, "-c", "app", "-n", model_name],
         capture_output=True,
         text=True,
-        check=False,
+        check=True,
     )
     parsed = []
     for line in result.stdout.splitlines():
