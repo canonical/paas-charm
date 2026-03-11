@@ -6,8 +6,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from ops.testing import Harness
 import pytest
+from ops.testing import Harness
 
 from paas_charm.charm import PaasCharm
 
