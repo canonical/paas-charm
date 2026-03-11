@@ -98,7 +98,7 @@ def postgresql_relation(db_name):
 def temp_cos_merged_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Store merged COS assets in a test temporary directory."""
 
-    def _get_cos_merged_dir(self: PaasCharm) -> Path:
+    def _get_cos_merged_dir(_: PaasCharm) -> Path:
         return (tmp_path / "cos_merged").absolute()
 
     monkeypatch.setattr(PaasCharm, "get_cos_merged_dir", _get_cos_merged_dir)
