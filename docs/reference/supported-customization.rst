@@ -14,6 +14,7 @@ in a 12-factor app rock and charm:
 * :ref:`Enabling supported relations <charmcraft:integrate-12-factor-charms>`
 * :ref:`Handling secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
 * :ref:`Overriding commands <rockcraft:set-up-web-app-rock-override-commands>`
+* Structured framework logging in JSON via ``framework_logging_format: json`` in ``paas-config.yaml``
 * Task manager and scheduler
     .. tabs::
 
