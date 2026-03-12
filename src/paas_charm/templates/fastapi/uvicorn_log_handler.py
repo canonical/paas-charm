@@ -32,10 +32,7 @@ _span_context_var: ContextVar[dict[str, str]] = ContextVar("_span_context_var", 
 
 # Map Python log level names to OTEL severityText values.
 _SEVERITY_MAP = {
-    "DEBUG": "DEBUG",
-    "INFO": "INFO",
     "WARNING": "WARN",
-    "ERROR": "ERROR",
     "CRITICAL": "FATAL",
 }
 
