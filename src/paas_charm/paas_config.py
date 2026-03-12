@@ -45,7 +45,7 @@ class LoggingFormat(str, enum.Enum):
 
 # Mapping of LoggingFormat to the set of frameworks that support it.
 FRAMEWORKS_SUPPORTING_LOGGING_FORMAT: dict[LoggingFormat, set[str]] = {
-    LoggingFormat.JSON: {"fastapi"},
+    LoggingFormat.JSON: {"fastapi", "flask", "django"},
 }
 
 
@@ -159,7 +159,7 @@ class PaasConfig(BaseModel):
         prometheus: Prometheus-related configuration.
         framework_logging_format: Structured logging format for the framework server.
             Defaults to ``LoggingFormat.NONE`` (framework default logging).
-            Currently only ``LoggingFormat.JSON`` ("json") is supported, and only for FastAPI.
+            ``LoggingFormat.JSON`` ("json") is supported for FastAPI, Flask, and Django.
         model_config: Pydantic model configuration.
     """
 

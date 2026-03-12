@@ -3,13 +3,12 @@
 
 """Integration tests for FastAPI charm."""
 
-import json
 import logging
-import subprocess
 
 import jubilant
 import requests
 
+from tests.integration.helpers import fetch_container_json_logs, logs_for_logger
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -78,9 +77,9 @@ def test_json_logging(
 
     requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/boom", timeout=5)
 
-    all_logs = _fetch_container_logs(pod_name, model_name)
+    all_logs = fetch_container_json_logs(pod_name, model_name, "app")
 
-    access_logs = _logs_for_logger(all_logs, "uvicorn.access")
+    access_logs = logs_for_logger(all_logs, "uvicorn.access")
     assert access_logs, "No JSON access log lines found in uvicorn.access logger."
     sample = access_logs[0]
     for field in ("timestamp", "severityText", "body", "attributes"):
@@ -92,7 +91,7 @@ def test_json_logging(
     assert "traceId" in sample, f"traceId missing from access log: {sample}"
     assert "spanId" in sample, f"spanId missing from access log: {sample}"
 
-    error_logs = _logs_for_logger(all_logs, "uvicorn.error")
+    error_logs = logs_for_logger(all_logs, "uvicorn.error")
     assert error_logs, "No JSON error log lines found in container logs after hitting /boom."
     err = error_logs[-1]
     attrs = err.get("attributes", {})
@@ -103,32 +102,3 @@ def test_json_logging(
     assert "exception.stacktrace" in attrs, f"exception.stacktrace missing from error log: {err}"
     assert "traceId" in err, f"traceId missing from error log: {err}"
     assert "spanId" in err, f"spanId missing from error log: {err}"
-
-
-def _fetch_container_logs(pod_name: str, model_name: str) -> list[dict]:
-    """Fetch and parse JSON log lines from the app container.
-
-    Pebble prefixes each line with a timestamp and service name before the JSON
-    payload; this function strips the prefix and returns only parseable objects.
-    """
-    result = subprocess.run(
-        ["kubectl", "logs", pod_name, "-c", "app", "-n", model_name],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    parsed = []
-    for line in result.stdout.splitlines():
-        idx = line.find("{")
-        if idx == -1:
-            continue
-        try:
-            parsed.append(json.loads(line[idx:]))
-        except json.JSONDecodeError:
-            pass
-    return parsed
-
-
-def _logs_for_logger(logs: list[dict], logger_name: str) -> list[dict]:
-    """Return log records emitted by the given logger name."""
-    return [log for log in logs if log.get("attributes", {}).get("logger.name") == logger_name]

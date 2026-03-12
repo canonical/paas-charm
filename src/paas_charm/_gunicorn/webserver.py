@@ -23,6 +23,7 @@ from paas_charm._gunicorn.workload_config import (
 )
 from paas_charm.app import WorkloadConfig
 from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.paas_config import LoggingFormat
 from paas_charm.utils import enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
@@ -173,6 +174,7 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             error_log=error_log,
             statsd_host=str(STATSD_HOST),
             enable_tracing=self._workload_config.tracing_enabled,
+            enable_json_logging=self._workload_config.logging_format == LoggingFormat.JSON,
             config_entries=config_entries,
         )
         return config
