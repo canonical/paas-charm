@@ -47,10 +47,10 @@ def test_filter_injects_trace_ids_when_span_active() -> None:
     record = _make_record()
     with _TRACER.start_as_current_span("req"):
         flt.filter(record)
-    assert "traceId" in record.__dict__, "traceId should be injected"
-    assert "spanId" in record.__dict__, "spanId should be injected"
-    assert len(record.__dict__["traceId"]) == 32
-    assert len(record.__dict__["spanId"]) == 16
+    assert hasattr(record, "traceId"), "traceId should be injected"
+    assert hasattr(record, "spanId"), "spanId should be injected"
+    assert len(getattr(record, "traceId")) == 32
+    assert len(getattr(record, "spanId")) == 16
 
 
 def test_filter_contextvar_fallback_for_error_log() -> None:
@@ -66,12 +66,12 @@ def test_filter_contextvar_fallback_for_error_log() -> None:
     with _TRACER.start_as_current_span("req"):
         flt.filter(access_record)
 
-    saved_trace_id = access_record.__dict__.get("traceId")
+    saved_trace_id = getattr(access_record, "traceId")
     assert saved_trace_id, "traceId should have been injected into access record"
 
     flt.filter(error_record)
     assert (
-        error_record.__dict__.get("traceId") == saved_trace_id
+        getattr(error_record, "traceId") == saved_trace_id
     ), "Error log should carry traceId from contextvar fallback"
 
 
@@ -96,8 +96,9 @@ def test_filter_clears_contextvar_on_untraced_access_log() -> None:
     error_record = _make_record(name="uvicorn.error")
     flt.filter(error_record)
     assert (
-        "traceId" not in error_record.__dict__
-    ), "traceId from previous traced request must not leak into untraced error log"
+        not hasattr(error_record, "traceId"),
+        "traceId from previous traced request must not leak into untraced error log"
+    )
 
 
 def test_filter_passthrough_without_otel() -> None:
@@ -112,8 +113,8 @@ def test_filter_passthrough_without_otel() -> None:
         sys.modules, {"opentelemetry": None, "opentelemetry.trace": None}
     ):
         flt.filter(record)
-    assert "traceId" not in record.__dict__, "traceId should be absent without OTEL"
-    assert "spanId" not in record.__dict__, "spanId should be absent without OTEL"
+    assert not hasattr(record, "traceId"), "traceId should be absent without OTEL"
+    assert not hasattr(record, "spanId"), "spanId should be absent without OTEL"
 
 
 def test_exception_fields_present() -> None:

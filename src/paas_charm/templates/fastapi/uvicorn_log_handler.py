@@ -65,10 +65,10 @@ class OtelCorrelationFilter(logging.Filter):
         Returns:
             Always True (records are never suppressed).
         """
-        ids: dict[str, str] = {}
         try:
             from opentelemetry import trace  # type: ignore[import-not-found]
 
+            ids: dict[str, str] = {}
             span = trace.get_current_span()
             ctx = span.get_span_context()
             if ctx and ctx.is_valid:
@@ -86,11 +86,12 @@ class OtelCorrelationFilter(logging.Filter):
             else:
                 # Error/other log — span may have just ended; use the fallback.
                 ids = _span_context_var.get()
+
+            for key, value in ids.items():
+                setattr(record, key, value)
+
         except ImportError:
             pass
-
-        for key, value in ids.items():
-            record.__dict__[key] = value
 
         return True
 
@@ -125,7 +126,7 @@ class UvicornJsonFormatter(logging.Formatter):
         }
 
         for field in ("traceId", "spanId"):
-            value = record.__dict__.get(field)
+            value = getattr(record, field, None)
             if value:
                 payload[field] = value
 
