@@ -80,7 +80,7 @@ def test_json_logging(
 
     all_logs = _fetch_container_logs(pod_name, model_name)
 
-    access_logs = _logs_for(all_logs, "uvicorn.access")
+    access_logs = _logs_for_logger(all_logs, "uvicorn.access")
     assert access_logs, "No JSON access log lines found in container logs."
     sample = access_logs[0]
     for field in ("timestamp", "severityText", "body", "attributes"):
@@ -92,7 +92,7 @@ def test_json_logging(
     assert "traceId" in sample, f"traceId missing from access log: {sample}"
     assert "spanId" in sample, f"spanId missing from access log: {sample}"
 
-    error_logs = _logs_for(all_logs, "uvicorn.error")
+    error_logs = _logs_for_logger(all_logs, "uvicorn.error")
     assert error_logs, "No JSON error log lines found in container logs after hitting /boom."
     err = error_logs[-1]
     attrs = err.get("attributes", {})
@@ -129,6 +129,6 @@ def _fetch_container_logs(pod_name: str, model_name: str) -> list[dict]:
     return parsed
 
 
-def _logs_for(logs: list[dict], logger_name: str) -> list[dict]:
+def _logs_for_logger(logs: list[dict], logger_name: str) -> list[dict]:
     """Return log records emitted by the given logger name."""
     return [log for log in logs if log.get("attributes", {}).get("logger.name") == logger_name]
