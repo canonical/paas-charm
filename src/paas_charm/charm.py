@@ -140,7 +140,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             framework_name: framework name.
 
         Raises:
-            CharmConfigInvalidError: if framework_logging_format is set for an unsupported
+            CharmConfigInvalidError: if ``framework_logging_format`` is set for an unsupported
                 framework.
         """
         super().__init__(framework)
