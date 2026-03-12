@@ -26,6 +26,9 @@ Applicable spec: <link>
 - [ ] The [contributing guide](https://github.com/canonical/is-charms-contributing-guide) was applied
 - [ ] The changes are compliant with [ISD054 - Managing Charm Complexity](https://discourse.charmhub.io/t/specification-isd014-managing-charm-complexity/11619)
 - [ ] The RTD documentation is updated
+    - [ ] Changes were previewed locally with `make run`
+    - [ ] Documentation checks were run locally with `make spelling` and `make linkcheck`
+    - [ ] An HTML metadata description has been added to newly created pages
 - [ ] The PR is tagged with appropriate label (`urgent`, `trivial`, `complex`)
 - [ ] The [changelog](../docs/changelog.md) is updated with user-relevant changes in the format of [keep a changelog v1.1.0](https://keepachangelog.com/en/1.1.0/)
 
