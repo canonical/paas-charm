@@ -81,7 +81,7 @@ def test_json_logging(
     all_logs = _fetch_container_logs(pod_name, model_name)
 
     access_logs = _logs_for_logger(all_logs, "uvicorn.access")
-    assert access_logs, "No JSON access log lines found in container logs."
+    assert access_logs, "No JSON access log lines found in uvicorn.access logger."
     sample = access_logs[0]
     for field in ("timestamp", "severityText", "body", "attributes"):
         assert field in sample, f"Expected OTEL field {field!r} missing: {sample}"
