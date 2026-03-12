@@ -95,10 +95,9 @@ def test_filter_clears_contextvar_on_untraced_access_log() -> None:
 
     error_record = _make_record(name="uvicorn.error")
     flt.filter(error_record)
-    assert (
-        not hasattr(error_record, "traceId"),
-        "traceId from previous traced request must not leak into untraced error log",
-    )
+    assert not hasattr(
+        error_record, "traceId"
+    ), "traceId from previous traced request must not leak into untraced error log"
 
 
 def test_filter_passthrough_without_otel() -> None:
