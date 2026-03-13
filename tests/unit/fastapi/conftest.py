@@ -5,6 +5,7 @@
 
 import os
 import pathlib
+import sys
 import typing
 
 import pytest
@@ -15,6 +16,10 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from .constants import FASTAPI_CONTAINER_NAME
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+_TEMPLATES_DIR = PROJECT_ROOT / "src" / "paas_charm" / "templates" / "fastapi"
+
+if str(_TEMPLATES_DIR) not in sys.path:
+    sys.path.insert(0, str(_TEMPLATES_DIR))
 
 
 @pytest.fixture(autouse=True, scope="package")

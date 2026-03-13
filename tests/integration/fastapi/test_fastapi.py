@@ -3,7 +3,9 @@
 
 """Integration tests for FastAPI charm."""
 
+import json
 import logging
+import subprocess
 
 import jubilant
 import requests
@@ -58,3 +60,75 @@ def test_migration(fastapi_app: App, juju: jubilant.Juju):
         response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" in response.text
+
+
+def test_json_logging(
+    fastapi_app: App,
+    juju: jubilant.Juju,
+):
+    """
+    arrange: deploy the FastAPI charm with framework_logging_format=json in paas-config.yaml.
+    act: make a request to GET /boom (access log + error log with exception).
+    assert: container logs contain valid JSON with OTEL fields, trace correlation, and exception info.
+    """
+    status = juju.status()
+    unit = next(iter(status.apps[fastapi_app.name].units.values()))
+    model_name = status.model.name
+    pod_name = f"{fastapi_app.name}-0"
+
+    requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/boom", timeout=5)
+
+    all_logs = _fetch_container_logs(pod_name, model_name)
+
+    access_logs = _logs_for_logger(all_logs, "uvicorn.access")
+    assert access_logs, "No JSON access log lines found in uvicorn.access logger."
+    sample = access_logs[0]
+    for field in ("timestamp", "severityText", "body", "attributes"):
+        assert field in sample, f"Expected OTEL field {field!r} missing: {sample}"
+    for attr in ("logger.name", "http.request.method", "url.path", "http.response.status_code"):
+        assert attr in sample.get(
+            "attributes", {}
+        ), f"Expected OTEL attribute {attr!r} missing from access log: {sample}"
+    assert "traceId" in sample, f"traceId missing from access log: {sample}"
+    assert "spanId" in sample, f"spanId missing from access log: {sample}"
+
+    error_logs = _logs_for_logger(all_logs, "uvicorn.error")
+    assert error_logs, "No JSON error log lines found in container logs after hitting /boom."
+    err = error_logs[-1]
+    attrs = err.get("attributes", {})
+    assert "exception.type" in attrs, f"exception.type missing from error log: {err}"
+    assert (
+        attrs.get("exception.message") == "intentional error for log testing"
+    ), f"Unexpected exception.message: {attrs.get('exception.message')}"
+    assert "exception.stacktrace" in attrs, f"exception.stacktrace missing from error log: {err}"
+    assert "traceId" in err, f"traceId missing from error log: {err}"
+    assert "spanId" in err, f"spanId missing from error log: {err}"
+
+
+def _fetch_container_logs(pod_name: str, model_name: str) -> list[dict]:
+    """Fetch and parse JSON log lines from the app container.
+
+    Pebble prefixes each line with a timestamp and service name before the JSON
+    payload; this function strips the prefix and returns only parseable objects.
+    """
+    result = subprocess.run(
+        ["kubectl", "logs", pod_name, "-c", "app", "-n", model_name],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    parsed = []
+    for line in result.stdout.splitlines():
+        idx = line.find("{")
+        if idx == -1:
+            continue
+        try:
+            parsed.append(json.loads(line[idx:]))
+        except json.JSONDecodeError:
+            pass
+    return parsed
+
+
+def _logs_for_logger(logs: list[dict], logger_name: str) -> list[dict]:
+    """Return log records emitted by the given logger name."""
+    return [log for log in logs if log.get("attributes", {}).get("logger.name") == logger_name]
