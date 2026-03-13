@@ -3,9 +3,9 @@
 
 """Unit tests for Gunicorn JSON logging (GunicornJsonLogger, GunicornJsonFormatter).
 
-The logger classes are defined inline in the gunicorn.conf.py.j2 Jinja2 template.
-Tests render the template with enable_json_logging=True, exec() the output to
-obtain the classes, then exercise them directly — no Juju/charm machinery needed.
+Most tests execute the extracted `_gunicorn_json_logging.py` snippet directly so
+coverage is attributed to the snippet source file. A small template-level test
+still verifies behavior when `enable_json_logging` is disabled.
 """
 
 import datetime
@@ -21,6 +21,16 @@ import pytest
 _TEMPLATES_DIR = (
     pathlib.Path(__file__).parent.parent.parent.parent / "src" / "paas_charm" / "templates"
 )
+_JSON_LOGGING_SNIPPET = _TEMPLATES_DIR / "_gunicorn_json_logging.py"
+
+
+def _load_json_logging_namespace() -> dict:
+    """Load and execute the extracted JSON logging snippet directly."""
+    source = _JSON_LOGGING_SNIPPET.read_text()
+    code = compile(source, str(_JSON_LOGGING_SNIPPET), "exec")
+    ns: dict = {}
+    exec(code, ns)  # nosec: B102  # pylint: disable=exec-used
+    return ns
 
 
 def _render_template(enable_tracing: bool = False, enable_json_logging: bool = True) -> dict:
@@ -70,8 +80,8 @@ class FakeResp:  # pylint: disable=too-few-public-methods
 
 @pytest.fixture(name="logger_ns")
 def logger_ns_fixture():
-    """Render template and return the exec namespace."""
-    return _render_template()
+    """Execute the JSON logging snippet and return the resulting namespace."""
+    return _load_json_logging_namespace()
 
 
 @pytest.fixture(name="gunicorn_logger")
