@@ -25,7 +25,11 @@ from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
-from paas_charm.paas_config import read_paas_config
+from paas_charm.paas_config import (
+    FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
+    LoggingFormat,
+    read_paas_config,
+)
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
 from paas_charm.secret_storage import KeySecretStorage
@@ -134,6 +138,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Args:
             framework: operator framework.
             framework_name: framework name.
+
+        Raises:
+            CharmConfigInvalidError: if ``framework_logging_format`` is set for an unsupported
+                framework.
         """
         super().__init__(framework)
         self._framework_name = framework_name
@@ -164,6 +172,16 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._oauth = self._init_oauth(requires)
 
         paas_config = read_paas_config()
+        if paas_config.framework_logging_format != LoggingFormat.NONE:
+            supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
+                paas_config.framework_logging_format, set()
+            )
+            if self._framework_name not in supported:
+                raise CharmConfigInvalidError(
+                    f"framework_logging_format '{paas_config.framework_logging_format}' "
+                    f"is not supported for the '{self._framework_name}' framework. "
+                    f"Supported frameworks: {sorted(supported) or 'none'}."
+                )
         self._observability = Observability(
             charm=self,
             log_files=self._workload_config.log_files,

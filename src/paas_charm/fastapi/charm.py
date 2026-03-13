@@ -11,7 +11,9 @@ from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
+from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.framework import FrameworkConfig
+from paas_charm.paas_config import read_paas_config
 
 
 class FastAPIConfig(FrameworkConfig):
@@ -65,6 +67,7 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
+        paas_config = read_paas_config()
         return WorkloadConfig(
             framework=framework_name,
             port=framework_config.uvicorn_port,
@@ -76,6 +79,7 @@ class Charm(PaasCharm):
             metrics_target=f"*:{framework_config.metrics_port}",
             metrics_path=framework_config.metrics_path,
             unit_name=self.unit.name,
+            logging_format=paas_config.framework_logging_format,
         )
 
     def _create_app(self) -> App:
@@ -85,10 +89,9 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        return App(
+        return FastAPIApp(
             container=self._container,
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
-            framework_config_prefix="",
         )

@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
+    LoggingFormat,
     PaasConfig,
     PrometheusConfig,
     ScrapeConfig,
@@ -29,6 +30,7 @@ class TestPaasConfig:
         """Test valid minimal configuration (empty)."""
         config = PaasConfig()
         assert config.prometheus is None
+        assert config.framework_logging_format is LoggingFormat.NONE
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""
@@ -43,6 +45,17 @@ class TestPaasConfig:
         assert config.prometheus.scrape_configs is not None
         assert len(config.prometheus.scrape_configs) == 1
         assert config.prometheus.scrape_configs[0].job_name == "test"
+
+    def test_valid_logging_format_json(self):
+        """Test that framework_logging_format='json' is accepted and coerced to LoggingFormat."""
+        config = PaasConfig(framework_logging_format="json")
+        assert config.framework_logging_format == LoggingFormat.JSON
+
+    def test_invalid_logging_format_rejected(self):
+        """Test that an unsupported logging format value is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            PaasConfig(framework_logging_format="xml")
+        assert exc_info.value.errors()
 
     def test_extra_fields_forbidden(self):
         """Test that extra fields are not allowed."""

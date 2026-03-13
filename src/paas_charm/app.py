@@ -15,6 +15,7 @@ import ops
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.paas_config import LoggingFormat
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         metrics_path: path to scrape for metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
         tracing_enabled: True if tracing should be enabled.
+        logging_format: Structured logging format to use; ``LoggingFormat.NONE`` for default.
     """
 
     framework: str
@@ -72,6 +74,7 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     metrics_path: str | None = "/metrics"
     unit_name: str
     tracing_enabled: bool = False
+    logging_format: LoggingFormat = LoggingFormat.NONE
 
     def should_run_scheduler(self) -> bool:
         """Return if the unit should run scheduler processes.

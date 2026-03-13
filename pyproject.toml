@@ -26,7 +26,7 @@ Repository = "https://github.com/canonical/paas-charm"
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.package-data]
-paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2"]
+paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2", "**/templates/**/*.py", "**/templates/**/*.json"]
 
 # Testing tools configuration
 [tool.coverage.run]
