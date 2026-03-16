@@ -219,7 +219,8 @@ templates_path = [".sphinx/_templates"]
 #       the sphinx_reredirects extension will be disabled.
 
 redirects = {
-    'explanation/charm-architecture': '/reference/charm-architecture', 
+    'explanation/charm-architecture': '/reference/charm-architecture',
+    'reference/metrics-relations': '/reference/observability-relations',
 }
 
 
@@ -370,4 +371,3 @@ intersphinx_mapping = {
     'cos': ("https://documentation.ubuntu.com/observability/latest/", None),
     'ops': ("https://documentation.ubuntu.com/ops/latest/", None),
 }
-
