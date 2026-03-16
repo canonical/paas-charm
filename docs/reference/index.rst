@@ -81,7 +81,7 @@ The following pages provide more information about the 12-factor project.
     Rockcraft extensions <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/>
     Charmcraft extensions <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/>
     paas-config
-    metrics-relations
+    observability-relations
     charm-architecture
     juju-events
     Customizable features <supported-customization>

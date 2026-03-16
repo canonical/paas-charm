@@ -1,4 +1,4 @@
-.. _ref_metrics_relations:
+.. _ref_observability_relations:
 
 Observability and relations
 =====================
