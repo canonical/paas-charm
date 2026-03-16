@@ -1,3 +1,6 @@
+.. meta::
+   :description: Technical details on configuring structured JSON logging. Covers supported frameworks (FastAPI, Flask, Django), behavior, and validation.
+
 .. _ref_paas_config_structured_logging:
 
 Structured logging configuration

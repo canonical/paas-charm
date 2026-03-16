@@ -38,9 +38,9 @@ Logging recommendations
 
 For production deployments, prefer this logging setup:
 
-* Write application logs to standard output and standard error (avoid writing logs to local files).
+* Write application logs to standard output and standard error. Avoid writing logs to local files.
 * Pebble log forwarding is enabled automatically by the ``logging`` relation endpoint.
   Users do not need to configure it manually.
-  See the `Pebble documentation <https://documentation.ubuntu.com/pebble/reference/log-forwarding/>`_.
+  See the :ref:`Pebble documentation <pebble:log_forwarding_usage>`.
 * For structured framework server logs, see
   :ref:`ref_paas_config_structured_logging`.
