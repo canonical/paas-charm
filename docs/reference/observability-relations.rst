@@ -32,3 +32,15 @@ the relevant Charmcraft documentation for each web app framework:
   * - Spring Boot
     - :ref:`Spring Boot extension | Grafana dashboard graphs <charmcraft:spring-boot-grafana-graphs>`
     - :ref:`Spring Boot extension | Relations <charmcraft:spring-boot-framework-extension-relations>`
+
+Logging recommendations
+-----------------------
+
+For production deployments, prefer this logging setup:
+
+* Write application logs to standard output and standard error (avoid writing logs to local files).
+* Pebble log forwarding is enabled automatically by the ``logging`` relation endpoint.
+  Users do not need to configure it manually.
+  See the `Pebble documentation <https://documentation.ubuntu.com/pebble/reference/log-forwarding/>`_.
+* For structured framework server logs, see
+  :ref:`ref_paas_config_structured_logging`.
