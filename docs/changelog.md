@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 2026-03-16
+
+* fix: Fix an issue where the custom COS directory was merged on all events instead of just once.
+
 ## 1.11.0 - 2026-03-16
 
 * feat: Add structured logs to FastAPI (Uvicorn).

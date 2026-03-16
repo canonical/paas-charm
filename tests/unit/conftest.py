@@ -5,12 +5,14 @@
 
 import io
 import json
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import ops
 import pytest
 from ops import testing
 
+from paas_charm.charm import PaasCharm
 from paas_charm.database_migration import DatabaseMigrationStatus
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
@@ -90,3 +92,13 @@ def postgresql_relation(db_name):
         interface="postgresql_client",
         remote_app_data=relation_data,
     )
+
+
+@pytest.fixture(autouse=True)
+def temp_cos_merged_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Store merged COS assets in a test temporary directory."""
+
+    def _get_cos_merged_dir(_: PaasCharm) -> Path:
+        return (tmp_path / "cos_merged").absolute()
+
+    monkeypatch.setattr(PaasCharm, "get_cos_merged_dir", _get_cos_merged_dir)
