@@ -55,6 +55,16 @@ instead of relying on ``os.getcwd()``.
 
 * `Pull request #241 <https://github.com/canonical/paas-charm/pull/241>`_
 
+Structured logging and trace correlation for FastAPI (Uvicorn)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+FastAPI applications now support structured logging in JSON format via Uvicorn.
+When the application is instrumented with OpenTelemetry, trace context is
+automatically correlated in both access and error logs. The logging format
+can be configured using the ``paas-config.yaml`` file.
+
+* `Pull request #255 <https://github.com/canonical/paas-charm/pull/255>`_
+
 Rockcraft
 ~~~~~~~~~
 
@@ -78,4 +88,4 @@ Known issues in ``paas-charm``
 Thanks to our contributors
 --------------------------
 
-``@f-atwi``, ``@alithethird``
+``@f-atwi``, ``@alithethird``, ``@javierdelapuente``
