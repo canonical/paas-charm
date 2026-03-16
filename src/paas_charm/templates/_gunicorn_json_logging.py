@@ -106,7 +106,7 @@ class GunicornJsonLogger(glogging.Logger):
         client = environ.get("REMOTE_ADDR", "")
         duration_ms = request_time.seconds * 1000 + request_time.microseconds / 1000
         body = (
-            f'{client} - "{method} {path} {environ.get("SERVER_PROTOCOL", "")}"' f" {status_code}"
+            f'{client} - "{method} {path} {environ.get("SERVER_PROTOCOL", "")}" {status_code}'
         )
         try:
             if self.cfg.access_log_format is not None:
