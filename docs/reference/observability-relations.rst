@@ -1,7 +1,7 @@
 .. _ref_observability_relations:
 
 Observability and relations
-=====================
+===========================
 
 The 12-factor framework support in Charmcraft comes with enabled observability
 and relations depending on the extension. The following table contains links to
