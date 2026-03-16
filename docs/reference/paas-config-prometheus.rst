@@ -141,4 +141,4 @@ The Prometheus configuration validates the following rules:
 .. seealso::
 
     * :ref:`ref_paas_config`
-    * :ref:`Metrics and relations <ref_metrics_relations>`
+    * :ref:`Observability and relations <ref_observability_relations>`

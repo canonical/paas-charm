@@ -1,9 +1,9 @@
 .. _ref_metrics_relations:
 
-Metrics and relations
+Observability and relations
 =====================
 
-The 12-factor framework support in Charmcraft comes with enabled metrics
+The 12-factor framework support in Charmcraft comes with enabled observability
 and relations depending on the extension. The following table contains links to
 the relevant Charmcraft documentation for each web app framework:
 
