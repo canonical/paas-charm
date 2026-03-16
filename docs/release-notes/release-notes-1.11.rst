@@ -66,7 +66,7 @@ can be configured using the ``paas-config.yaml`` file.
 * `Pull request #255 <https://github.com/canonical/paas-charm/pull/255>`_
 
 Structured logging and trace correlation for Django and Flask (Gunicorn)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Django and Flask applications now support structured logging in JSON format
 via Gunicorn. When the application is instrumented with OpenTelemetry, trace
