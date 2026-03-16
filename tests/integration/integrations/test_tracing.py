@@ -9,7 +9,7 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.helpers import get_traces_patiently
+from tests.integration.helpers import fetch_container_json_logs, get_traces_patiently
 
 logger = logging.getLogger(__name__)
 
@@ -60,3 +60,47 @@ def test_workload_tracing(
 
     # verify workload traces are ingested into Tempo
     assert get_traces_patiently(tempo_host, app.name)
+
+
+def test_flask_access_logs_have_trace_correlation(
+    juju: jubilant.Juju,
+    flask_app,
+    tempo_app,
+    session_with_retry: requests.Session,
+):
+    """
+    arrange: deploy Flask and Tempo, and relate tracing.
+    act: send requests to Flask root endpoint.
+    assert: gunicorn access logs include traceId and spanId.
+    """
+    try:
+        juju.integrate(f"{flask_app.name}:tracing", f"{tempo_app.name}:tracing")
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise err
+
+    juju.wait(
+        lambda status: jubilant.all_active(status, flask_app.name, tempo_app.name),
+        timeout=10 * 60,
+        delay=10,
+    )
+    status = juju.status()
+    unit_ip = status.apps[flask_app.name].units[f"{flask_app.name}/0"].address
+    model_name = status.model.name
+    pod_name = f"{flask_app.name}-0"
+
+    for _ in range(5):
+        response = session_with_retry.get(f"http://{unit_ip}:8000", timeout=5)
+        assert response.status_code == 200
+
+    all_logs = fetch_container_json_logs(pod_name, model_name, "flask-app")
+    access_logs = [
+        log
+        for log in all_logs
+        if log.get("attributes", {}).get("logger.name") == "gunicorn.access"
+        and log.get("attributes", {}).get("url.path") == "/"
+    ]
+    assert access_logs, "No gunicorn.access log records for / found."
+    assert any(
+        "traceId" in log and "spanId" in log for log in access_logs[-20:]
+    ), f"No trace correlation fields found in recent gunicorn.access logs: {access_logs[-5:]}"

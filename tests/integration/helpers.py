@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import pathlib
+import subprocess
 import uuid
 import zipfile
 from typing import Generator
@@ -17,6 +18,31 @@ from jubilant import Juju
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 logger = logging.getLogger(__name__)
+
+
+def fetch_container_json_logs(pod_name: str, model_name: str, container_name: str) -> list[dict]:
+    """Fetch and parse JSON log lines from a Kubernetes container."""
+    result = subprocess.run(
+        ["kubectl", "logs", pod_name, "-c", container_name, "-n", model_name],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    parsed = []
+    for line in (result.stdout + result.stderr).splitlines():
+        idx = line.find("{")
+        if idx == -1:
+            continue
+        try:
+            parsed.append(json.loads(line[idx:]))
+        except json.JSONDecodeError:
+            pass
+    return parsed
+
+
+def logs_for_logger(logs: list[dict], logger_name: str) -> list[dict]:
+    """Return log records emitted by the given logger name."""
+    return [log for log in logs if log.get("attributes", {}).get("logger.name") == logger_name]
 
 
 def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):

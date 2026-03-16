@@ -13,7 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
+## 1.11.0 - 2026-03-16
+
 * feat: Add structured logs to FastAPI (Uvicorn).
+* feat: Add structured logs to Django and Flask (Gunicorn).
+* feat: Add support for custom COS directories,
+allowing users to provide their own Grafana dashboards,
+Loki alert rules and Prometheus alert rules.
+* feat: Add RabbitMQ HA support with a new `RABBITMQ_CONNECT_STRINGS` environment variable.
+* fix: Use `ops.charm_dir` instead of `os.getcwd()` for locating charm configuration files, enabling scenario tests to work correctly.
 
 ## 2026-02-23
 

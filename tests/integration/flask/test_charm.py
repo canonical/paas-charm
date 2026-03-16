@@ -12,6 +12,7 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.helpers import fetch_container_json_logs, logs_for_logger
 from tests.integration.types import App
 
 # caused by pytest fixtures
@@ -59,6 +60,42 @@ def test_flask_is_up(
         response = session_with_retry.get(f"http://{unit.address}:{WORKLOAD_PORT}", timeout=5)
         assert response.status_code == 200
         assert "Hello, World!" in response.text
+
+
+def test_json_logging(flask_app: App, juju: jubilant.Juju):
+    """
+    arrange: deploy the Flask charm with framework_logging_format=json in paas-config.yaml.
+    act: make a request to GET /.
+    assert: container logs contain valid JSON with OTEL fields for access and error logs.
+    """
+    status = juju.status()
+    unit = next(iter(status.apps[flask_app.name].units.values()))
+    model_name = status.model.name
+    pod_name = f"{flask_app.name}-0"
+
+    requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/", timeout=5)
+
+    all_logs = fetch_container_json_logs(pod_name, model_name, "flask-app")
+
+    access_logs = logs_for_logger(all_logs, "gunicorn.access")
+    assert access_logs, "No JSON access log lines found in container logs."
+    root_access = [log for log in access_logs if log.get("attributes", {}).get("url.path") == "/"]
+    assert root_access, "No JSON access log for / found."
+    sample = root_access[-1]
+    for field in ("timestamp", "severityText", "body", "attributes"):
+        assert field in sample, f"Expected OTEL field {field!r} missing: {sample}"
+    attrs = sample.get("attributes", {})
+    for attr in ("logger.name", "http.request.method", "url.path", "http.response.status_code"):
+        assert attr in attrs, f"Expected OTEL attribute {attr!r} missing from access log: {sample}"
+    assert attrs["http.response.status_code"] == 200, f"Expected 200 from /: {sample}"
+
+    error_logs = logs_for_logger(all_logs, "gunicorn.error")
+    assert error_logs, "No JSON error log lines found in container logs."
+    sample_error = error_logs[-1]
+    for field in ("timestamp", "severityText", "body", "attributes"):
+        assert (
+            field in sample_error
+        ), f"Expected OTEL field {field!r} missing from error log: {sample_error}"
 
 
 @pytest.mark.parametrize(

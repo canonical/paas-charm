@@ -6,6 +6,7 @@
 import pathlib
 
 from paas_charm.app import WorkloadConfig
+from paas_charm.paas_config import LoggingFormat
 
 STATSD_HOST = "localhost:9125"
 APPLICATION_LOG_FILE_FMT = "/var/log/{framework}/access.log"
@@ -13,7 +14,11 @@ APPLICATION_ERROR_LOG_FILE_FMT = "/var/log/{framework}/error.log"
 
 
 def create_workload_config(
-    framework_name: str, unit_name: str, state_dir: pathlib.Path, tracing_enabled: bool = False
+    framework_name: str,
+    unit_name: str,
+    state_dir: pathlib.Path,
+    tracing_enabled: bool = False,
+    logging_format: LoggingFormat = LoggingFormat.NONE,
 ) -> WorkloadConfig:
     """Create an WorkloadConfig for Gunicorn.
 
@@ -22,6 +27,7 @@ def create_workload_config(
         unit_name: name of the app unit.
         state_dir: state folder directory.
         tracing_enabled: if True, tracing is enabled.
+        logging_format: structured logging format; defaults to LoggingFormat.NONE.
 
     Returns:
        new WorkloadConfig
@@ -42,4 +48,5 @@ def create_workload_config(
         metrics_target="*:9102",
         unit_name=unit_name,
         tracing_enabled=tracing_enabled,
+        logging_format=logging_format,
     )
