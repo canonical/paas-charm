@@ -105,9 +105,7 @@ class GunicornJsonLogger(glogging.Logger):
         method = environ.get("REQUEST_METHOD", "")
         client = environ.get("REMOTE_ADDR", "")
         duration_ms = request_time.seconds * 1000 + request_time.microseconds / 1000
-        body = (
-            f'{client} - "{method} {path} {environ.get("SERVER_PROTOCOL", "")}" {status_code}'
-        )
+        body = f'{client} - "{method} {path} {environ.get("SERVER_PROTOCOL", "")}" {status_code}'
         try:
             if self.cfg.access_log_format is not None:
                 safe_atoms = self.atoms_wrapper_class(self.atoms(resp, req, environ, request_time))
