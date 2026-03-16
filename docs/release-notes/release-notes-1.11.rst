@@ -1,7 +1,7 @@
 ``paas-charm`` 1.11 release notes
 =================================
 
-3 March 2026
+16 March 2026
 
 These release notes cover new features and changes in ``paas-charm``
 version 1.11 and its extended support into Charmcraft and Rockcraft.
