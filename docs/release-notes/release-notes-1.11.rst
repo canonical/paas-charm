@@ -99,3 +99,20 @@ Thanks to our contributors
 --------------------------
 
 ``@f-atwi``, ``@alithethird``, ``@javierdelapuente``
+
+1.11.1 patch release — 17 March 2026
+-------------------------------------
+
+``paas-charm`` bug fixes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The custom COS directory was previously being merged on every charm event,
+causing unnecessary overhead. It is now merged only once, skipping the
+operation if the merged directory already exists.
+
+* `Pull request #256 <https://github.com/canonical/paas-charm/pull/256>`_
+
+``paas-charm`` 1.11.1 contributors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``@f-atwi``, ``@alithethird``

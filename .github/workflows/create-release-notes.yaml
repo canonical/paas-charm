@@ -1,0 +1,114 @@
+name: Create release notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to create release notes for (e.g. 1.12.0)"
+        required: true
+        type: string
+
+jobs:
+  create-release-notes-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create Copilot issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = "${{ inputs.version }}";
+            const [major, minor, patch] = version.split('.').map(Number);
+            const isPatch = patch > 0;
+            const minorVersion = `${major}.${minor}`;
+            const rstFile = isPatch
+              ? `docs/release-notes/release-notes-${minorVersion}.rst`
+              : `docs/release-notes/release-notes-${minorVersion}.rst`;
+
+            const body = `## Task
+
+            Open a pull request that adds release notes for \`paas-charm\` version **${version}** and bumps the package version.
+
+            ## Steps
+
+            ### 1. Determine what changed
+
+            Run \`git log\` (or inspect merged pull requests) to find every commit merged since the previous release tag. Cross-reference with \`CHANGELOG.md\` — the entries listed under the **\`[Unreleased]\`** section and any dated sections that appear above the last versioned entry are the changes that belong to this release.
+
+            ### 2. Update \`pyproject.toml\`
+
+            Bump the \`version\` field to \`${version}\`.
+
+            ### 3. Update \`CHANGELOG.md\`
+
+            Move the relevant unreleased/dated entries into a new versioned section:
+
+            \`\`\`markdown
+            ## ${version} - YYYY-MM-DD
+
+            * <entries>
+            \`\`\`
+
+            Leave the \`[Unreleased]\` section empty (with only its placeholder text).
+
+            ### 4. Update the RST release notes
+
+            ${isPatch ? `
+            This is a **patch release**. Update the existing \`${rstFile}\` file — do **not** create a new file. Add a patch-release section at the bottom of the file following this structure:
+
+            \`\`\`rst
+            ${version} patch release — DD Month YYYY
+            ${'-'.repeat(version.length + ' patch release — DD Month YYYY'.length)}
+
+            \`\`paas-charm\`\` bug fixes
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            <Description of the fix.>
+
+            * \`Pull request #NNN <https://github.com/canonical/paas-charm/pull/NNN>\`_
+
+            \`\`paas-charm\`\` X.Y.Z contributors
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            \`\`@contributor1\`\`, \`\`@contributor2\`\`
+            \`\`\`
+            ` : `
+            This is a **minor release**. Create a new file \`${rstFile}\` using the template at \`docs/reuse/release-notes-template.rst\` as a guide. Also add the new file to the toctree in \`docs/release-notes/index.rst\`.
+            `}
+
+            ### 5. Requirements section
+
+            Read the exact dependency versions from \`requirements.txt\` and make sure the **Requirements and compatibility** section of the RST file lists them accurately.
+
+            ### 6. Contributors
+
+            Look up each pull request included in this release and collect the GitHub usernames of every author (not just the merger). Include them all in the **Thanks to our contributors** section.
+
+            ## ⚠️ Learnings from previous release-notes PRs
+
+            These are known pitfalls — read them carefully before opening the PR:
+
+            1. **Do not skip any feature or fix.** Scan every merged PR since the last release. The v1.11.0 PR initially omitted the structured-logging feature for FastAPI (PR #255) because it was merged after the first draft was written. Always do a final diff between the previous tag and \`main\` before submitting.
+
+            2. **Update requirements versions from \`requirements.txt\`**, not from memory or the previous release notes. The exact pinned versions in the file are the source of truth.
+
+            3. **Patch vs minor releases use the same RST file.** Patch releases (x.y.Z where Z > 0) add a section to the existing \`release-notes-x.y.rst\` rather than creating a new file.
+
+            4. **Include every contributor**, including people who authored PRs that were merged by someone else. Check the \`user.login\` field of each merged PR.
+
+            5. **CHANGELOG.md format.** The version heading must follow the pattern \`## X.Y.Z - YYYY-MM-DD\` (dash-separated, no \`v\` prefix). The previous unreleased dated sections (e.g. \`## 2026-03-16\`) that correspond to this release should be removed once their content is moved under the versioned heading.
+
+            6. **pyproject.toml is the single source of truth for the version.** Update only the \`version =\` line in \`[project]\`.
+            `;
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Add release notes for v${version}`,
+              body: body.replace(/^ {12}/gm, ''),
+              assignees: ['copilot'],
+              labels: [],
+            });
+
+            core.notice(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
