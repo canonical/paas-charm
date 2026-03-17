@@ -100,7 +100,9 @@ jobs:
             5. **CHANGELOG.md format.** The version heading must follow the pattern \`## X.Y.Z - YYYY-MM-DD\` (dash-separated, no \`v\` prefix). The previous unreleased dated sections (e.g. \`## 2026-03-16\`) that correspond to this release should be removed once their content is moved under the versioned heading.
 
             6. **pyproject.toml is the single source of truth for the version.** Update only the \`version =\` line in \`[project]\`.
-            `;
+
+            7. **RST section underlines must exactly match the header length.** Every \`-\`, \`~\`, or \`=\` underline must be the same number of characters as the heading text above it (including any inline markup such as \`\`backticks\`\`). Off-by-one underlines cause Sphinx/docutils warnings. Count carefully — em dashes (—) count as one character.
+            \`;
 
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,

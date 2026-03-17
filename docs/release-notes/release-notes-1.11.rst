@@ -31,7 +31,7 @@ Updates
 ~~~~~~~~~~~~~~
 
 Support for custom COS directories
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users can now provide their own Grafana dashboards, Loki alert rules,
 and Prometheus alert rules through custom COS directories.
@@ -39,7 +39,7 @@ and Prometheus alert rules through custom COS directories.
 * `Pull request #250 <https://github.com/canonical/paas-charm/pull/250>`_
 
 RabbitMQ HA support
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 A new ``RABBITMQ_CONNECT_STRINGS`` environment variable is now available for
 applications that use RabbitMQ, enabling high-availability configurations.
@@ -47,7 +47,7 @@ applications that use RabbitMQ, enabling high-availability configurations.
 * `Pull request #230 <https://github.com/canonical/paas-charm/pull/230>`_
 
 Use ``ops.charm_dir`` instead of ``os.getcwd``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Applications using ``paas-charm`` can now run scenario tests correctly.
 The framework now uses ``ops.charm_dir`` to locate charm configuration files
@@ -101,10 +101,10 @@ Thanks to our contributors
 ``@f-atwi``, ``@alithethird``, ``@javierdelapuente``
 
 1.11.1 patch release — 17 March 2026
--------------------------------------
+------------------------------------
 
 ``paas-charm`` bug fixes
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The custom COS directory was previously being merged on every charm event,
 causing unnecessary overhead. It is now merged only once, skipping the
@@ -113,6 +113,6 @@ operation if the merged directory already exists.
 * `Pull request #256 <https://github.com/canonical/paas-charm/pull/256>`_
 
 ``paas-charm`` 1.11.1 contributors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``@f-atwi``, ``@alithethird``
