@@ -1,15 +1,100 @@
-# Copyright 2025 Canonical Ltd.
-# See LICENSE file for licensing details.
 name: flask-minimal-app
+title: flask-minimal-app
+version: '0.1'
 summary: A flask test app
 description: OCI image for the test flask app
-version: "0.1"
 base: bare
 build-base: ubuntu@22.04
-license: Apache-2.0
 platforms:
   amd64:
-
-extensions:
-  - flask-framework
-
+    build-on:
+    - amd64
+    build-for:
+    - amd64
+license: Apache-2.0
+parts:
+  flask-framework/dependencies:
+    plugin: python
+    stage-packages:
+    - python3.10-venv_ensurepip
+    source: .
+    python-packages:
+    - gunicorn~=23.0
+    python-requirements:
+    - requirements.txt
+    build-environment:
+    - PARTS_PYTHON_INTERPRETER: python3.10
+  flask-framework/install-app:
+    plugin: dump
+    source: .
+    organize:
+      app.py: flask/app/app.py
+    stage:
+    - flask/app/app.py
+    prime:
+    - flask/app/app.py
+    permissions:
+    - owner: 584792
+      group: 584792
+  flask-framework/config-files:
+    plugin: dump
+    source: /snap/rockcraft/4238/share/rockcraft/extensions/flask-framework
+    organize:
+      gunicorn.conf.py: flask/gunicorn.conf.py
+    permissions:
+    - path: flask/gunicorn.conf.py
+      owner: 584792
+      group: 584792
+  flask-framework/statsd-exporter:
+    build-snaps:
+    - go
+    source-tag: v0.29.0
+    plugin: go
+    source: https://github.com/prometheus/statsd_exporter.git
+  flask-framework/logging:
+    plugin: nil
+    override-build: |-
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/opt/promtail
+      mkdir -p $CRAFT_PART_INSTALL/etc/promtail
+      mkdir -p $CRAFT_PART_INSTALL/var/log/flask
+    permissions:
+    - path: opt/promtail
+      owner: 584792
+      group: 584792
+    - path: etc/promtail
+      owner: 584792
+      group: 584792
+    - path: var/log/flask
+      owner: 584792
+      group: 584792
+  flask-framework/runtime:
+    plugin: nil
+    override-build: |-
+      mkdir -m 777 ${CRAFT_PART_INSTALL}/tmp
+      ln -sf /usr/bin/bash ${CRAFT_PART_INSTALL}/usr/bin/sh
+    stage-packages:
+    - bash_bins
+    - coreutils_bins
+    - ca-certificates_data
+  flask-framework/runtime-libs:
+    plugin: nil
+    stage-packages:
+    - libstdc++6
+run-user: _daemon_
+services:
+  flask:
+    override: replace
+    command: /bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync
+      ]
+    startup: enabled
+    after:
+    - statsd-exporter
+    user: _daemon_
+  statsd-exporter:
+    override: merge
+    command: /bin/statsd_exporter --statsd.mapping-config=/statsd-mapping.conf --statsd.listen-udp=localhost:9125
+      --statsd.listen-tcp=localhost:9125
+    summary: statsd exporter service
+    startup: enabled
+    user: _daemon_
