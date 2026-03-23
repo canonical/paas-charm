@@ -355,7 +355,7 @@ def expressjs_app_fixture(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="16/edge",
         base="ubuntu@22.04",
         trust=True,
         config={
@@ -363,6 +363,7 @@ def expressjs_app_fixture(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        force=True,
     )
 
     resources = {
@@ -421,7 +422,7 @@ def spring_boot_app_fixture(
     try:
         juju.deploy(
             "postgresql-k8s",
-            channel="14/edge",
+            channel="16/edge",
             base="ubuntu@22.04",
             trust=True,
             config={
@@ -429,6 +430,7 @@ def spring_boot_app_fixture(
                 "plugin_hstore_enable": "true",
                 "plugin_pg_trgm_enable": "true",
             },
+            force=True,
         )
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
@@ -715,7 +717,7 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="16/edge",
         base="ubuntu@22.04",
         trust=True,
         config={
@@ -723,6 +725,7 @@ def deploy_postgresql(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        force=True,
     )
 
 
