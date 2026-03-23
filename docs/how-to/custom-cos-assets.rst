@@ -9,7 +9,9 @@ Grafana, Loki, and Prometheus integrations (dashboards and alert rules).
 You can add your own assets by placing a ``cos_custom/``
 directory at the root of your charm source tree.
 
-The default assets will be merged with the custom assets at runtime.
+The default assets are merged with custom assets on first charm start.
+The merged result is stored in a persistent merged directory and reused on
+subsequent hook executions.
 
 Directory layout
 ----------------
@@ -85,7 +87,8 @@ Save the rule as a ``.rule`` / ``.rules`` / ``.yml`` / ``.yaml`` file, for examp
 * ``cos_custom/prometheus_alert_rules/app.rule``
 * ``cos_custom/loki_alert_rules/app.rule``
 
-When the charm starts, custom assets are merged with the default assets.
+On first charm start, custom assets are merged with the default assets and the
+merged result is reused afterwards.
 
 For rule syntax and advanced examples, see the official documentation:
 

@@ -14,9 +14,10 @@ File structure
 --------------
 
 The ``paas-config.yaml`` file uses YAML format and follows a structured schema.
-Currently, the file supports the ``prometheus`` top key.
+Currently, the file supports the ``prometheus`` and ``framework_logging_format`` top keys.
 
 See :ref:`ref_paas_config_prometheus` for detailed Prometheus configuration options.
+See :ref:`ref_paas_config_structured_logging` for detailed structured logging options.
 
 Validation
 ----------
@@ -38,6 +39,7 @@ Functionality provided
 The file ``paas-config.yaml`` allows you to:
 
 * Define custom Prometheus scrape targets for metrics collection
+* Enable structured framework logs in JSON format
 
 For the detailed configuration schema and detailed examples, see:
 
@@ -45,3 +47,4 @@ For the detailed configuration schema and detailed examples, see:
    :maxdepth: 1
 
    Prometheus configuration <paas-config-prometheus>
+   Structured logging configuration <paas-config-structured-logging>

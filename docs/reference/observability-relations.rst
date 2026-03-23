@@ -1,9 +1,9 @@
-.. _ref_metrics_relations:
+.. _ref_observability_relations:
 
-Metrics and relations
-=====================
+Observability and relations
+===========================
 
-The 12-factor framework support in Charmcraft comes with enabled metrics
+The 12-factor framework support in Charmcraft comes with enabled observability
 and relations depending on the extension. The following table contains links to
 the relevant Charmcraft documentation for each web app framework:
 
@@ -32,3 +32,15 @@ the relevant Charmcraft documentation for each web app framework:
   * - Spring Boot
     - :ref:`Spring Boot extension | Grafana dashboard graphs <charmcraft:spring-boot-grafana-graphs>`
     - :ref:`Spring Boot extension | Relations <charmcraft:spring-boot-framework-extension-relations>`
+
+Logging recommendations
+-----------------------
+
+For production deployments, prefer this logging setup:
+
+* Write application logs to standard output and standard error. Avoid writing logs to local files.
+* Pebble log forwarding is enabled automatically by the ``logging`` relation endpoint.
+  Users do not need to configure it manually.
+  See the :ref:`Pebble documentation <pebble:log_forwarding_usage>`.
+* For structured framework server logs, see
+  :ref:`ref_paas_config_structured_logging`.

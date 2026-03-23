@@ -57,6 +57,15 @@ class TestPaasConfig:
             PaasConfig(framework_logging_format="xml")
         assert exc_info.value.errors()
 
+    def test_frameworks_supporting_json_logging(self):
+        """Test that flask, django, and fastapi are in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT."""
+        from paas_charm.paas_config import FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
+
+        supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT[LoggingFormat.JSON]
+        assert "fastapi" in supported
+        assert "flask" in supported
+        assert "django" in supported
+
     def test_extra_fields_forbidden(self):
         """Test that extra fields are not allowed."""
         with pytest.raises(ValidationError) as exc_info:

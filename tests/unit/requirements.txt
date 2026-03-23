@@ -1,5 +1,6 @@
 cosl == 0.1.0
 coverage[toml]
+gunicorn
 opentelemetry-api
 opentelemetry-sdk
 ops[testing]==2.21.1

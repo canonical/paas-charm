@@ -5,6 +5,10 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 {% endif -%}
+{%- if enable_json_logging %}
+{% include "_gunicorn_json_logging.py" %}
+logger_class = GunicornJsonLogger
+{% endif -%}
 bind = ['0.0.0.0:{{ workload_port }}']
 chdir = '{{ workload_app_dir }}'
 accesslog = '{{ access_log }}'
@@ -15,10 +19,21 @@ statsd_host = '{{ statsd_host }}'
 {%- endfor -%}
 {%- if enable_tracing %}
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %({x-request-id}o)s'
-
+{% endif -%}
+{%- if enable_tracing or enable_json_logging %}
 
 def post_fork(server, worker):
+{%- if enable_tracing %}
     trace.set_tracer_provider(TracerProvider())
     span_processor = BatchSpanProcessor(OTLPSpanExporter())
     trace.get_tracer_provider().add_span_processor(span_processor)
+{%- endif %}
+{%- if enable_json_logging %}
+    _original_wsgi = worker.app.wsgi
+
+    def _patched_wsgi():
+        return OtelSpanMiddleware(_original_wsgi())
+
+    worker.app.wsgi = _patched_wsgi
+{%- endif %}
 {% endif -%}

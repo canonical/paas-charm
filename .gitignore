@@ -168,3 +168,4 @@ examples/**/lib
 
 # Flask minimal libs
 examples/flask-minimal/charm/lib
+
