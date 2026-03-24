@@ -356,7 +356,7 @@ def expressjs_app_fixture(
     juju.deploy(
         "postgresql-k8s",
         channel="16/edge",
-        base="ubuntu@22.04",
+        base="ubuntu@24.04",
         trust=True,
         config={
             "profile": "testing",
@@ -423,7 +423,7 @@ def spring_boot_app_fixture(
         juju.deploy(
             "postgresql-k8s",
             channel="16/edge",
-            base="ubuntu@22.04",
+            base="ubuntu@24.04",
             trust=True,
             config={
                 "profile": "testing",
@@ -718,7 +718,7 @@ def deploy_postgresql(
     juju.deploy(
         "postgresql-k8s",
         channel="16/edge",
-        base="ubuntu@22.04",
+        base="ubuntu@24.04",
         trust=True,
         config={
             "profile": "testing",
