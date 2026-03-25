@@ -360,8 +360,6 @@ def expressjs_app_fixture(
         trust=True,
         config={
             "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
         },
         force=True,
     )
@@ -427,8 +425,6 @@ def spring_boot_app_fixture(
             trust=True,
             config={
                 "profile": "testing",
-                "plugin_hstore_enable": "true",
-                "plugin_pg_trgm_enable": "true",
             },
             force=True,
         )
@@ -722,8 +718,6 @@ def deploy_postgresql(
         trust=True,
         config={
             "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
         },
         force=True,
     )
