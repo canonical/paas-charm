@@ -170,6 +170,7 @@ def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
             channel="8.0/stable",
             revision=140,
             trust=True,
+            force=True,
         )
 
     return App(mysql_app_name)

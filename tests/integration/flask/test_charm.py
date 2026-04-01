@@ -269,7 +269,16 @@ def test_app_peer_address(
     """
     # Add a unit
     juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
+
+    # Wait for 2 units to be active
+    def two_units_active(status):
+        app = status.apps.get(flask_app.name)
+        if not app:
+            return False
+        if len(app.units) < 2:
+            return False
+        return jubilant.all_active(status)
+    juju.wait(two_units_active, successes=5, delay=5, timeout=600)
 
     status = juju.status()
     model_name = status.model.name
