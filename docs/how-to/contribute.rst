@@ -145,53 +145,48 @@ To add signatures on your commits, follow the
 `GitHub documentation <https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits>`_.
 
 
-Code
-----
+AI usage
+~~~~~~~~
 
-Formatting and linting
-~~~~~~~~~~~~~~~~~~~~~~
+You are free to use any tools you want while preparing your contribution, including
+AI, provided that you do so lawfully and ethically. 
 
-This project uses ``tox`` for managing test environments. There are some pre-configured environments
-that can be used for linting and formatting code when you're preparing contributions to the charm:
+Avoid using AI to complete issues marked with "good first issues" label or
+`Canonical Open Documentation Academy issues <https://github.com/canonical/open-documentation-academy/issues>`_.
+The purpose of these issues is to provide newcomers with opportunities to
+contribute to our projects and gain coding and documentation skills. Using AI to
+complete these tasks undermines their purpose.
 
-* ``tox``: Executes all of the basic checks and tests (``lint``, ``unit``, ``static``, and ``coverage-report``).
-* ``tox -e fmt``: Runs formatting using ``black`` and ``isort``.
-* ``tox -e lint``: Runs a range of static code analysis to check the code.
-* ``tox -e static``: Runs other checks such as ``bandit`` for security issues.
+If you use AI to help with your PRs, be mindful. Avoid submitting contributions
+with entirely AI-generated documentation. The human aspect of documentation is
+important to us, and that includes tone, syntax, perspectives, and the
+occasional typo. 
 
-Structure
-~~~~~~~~~
+Some examples of valid AI assistance includes:
 
-- **Check linked code elements**:
-  Check that coupled code elements, files and directories are adjacent.
-  For instance, store test data close to the corresponding test code.
+* Checking for spelling or grammar errors
+* Drafting plans or outlines
+* Checking that your contribution aligns with the Canonical style guide
 
-- **Group variable declaration and initialization**:
-  Declare and initialize variables together
-  to improve code organization and readability.
+We have created instructions and tools that you can provide AI while preparing
+your contribution in `copilot-collections <https://github.com/canonical/copilot-collections>`_: 
 
-- **Split large expressions**:
-  Break down large expressions
-  into smaller self-explanatory parts.
-  Use multiple variables where appropriate
-  to make the code more understandable
-  and choose names that reflect their purpose.
+* `Documentation instructions <https://github.com/canonical/copilot-collections/tree/main/assets/instructions/documentation>`_
+* `Documentation skills <https://github.com/canonical/copilot-collections/tree/main/assets/skills>`_
 
-- **Use blank lines for logical separation**:
-  Insert a blank line between two logically separate sections of code.
-  This improves its structure and makes it easier to understand.
+While it isn't necessary to use ``copilot-collections`` while preparing your
+contribution, these files contain details about our documentation standards and
+practices that will help the AI avoid common pitfalls when interacting with our
+projects. By using these tools, you can avoid longer review times and nitpicks.
 
-- **Avoid nested conditions**:
-  Avoid nesting conditions to improve readability and maintainability.
+If you choose to use AI, please disclose this information to us by indicating
+AI usage in the PR description (for instance, marking the checklist item about
+AI usage). You don't need to go into explicit details about how and where you used AI.
 
-- **Remove dead code and redundant comments**:
-  Drop unused or obsolete code and comments.
-  This promotes a cleaner code base and reduces confusion.
-
-- **Normalize symmetries**:
-  Treat identical operations consistently, using a uniform approach.
-  This also improves consistency and readability.
-
+Avoid submitting contributions that you don't fully understand.
+You are responsible for the entire contribution, including the AI-assisted portions.
+You must be willing to engage in discussion and respond to any questions, comments,
+or suggestions we may have. 
 
 Documentation
 -------------
@@ -242,45 +237,50 @@ Optionally, if you are contributing documentation that's specific to a single
 framework (such as Flask), you can refer to the tooling as
 "Flask app support" or "Flask framework support". 
 
-AI usage
-~~~~~~~~
+Code
+----
 
-You are free to use any tools you want while preparing your contribution, including
-AI, provided that you do so lawfully and ethically. 
+Formatting and linting
+~~~~~~~~~~~~~~~~~~~~~~
 
-Avoid using AI to complete
-`Canonical Open Documentation Academy issues <https://github.com/canonical/open-documentation-academy/issues>`_.
-The purpose of these issues is to provide newcomers with opportunities to
-contribute to our projects and gain documentation skills. Using AI to
-complete these tasks undermines their purpose.
+This project uses ``tox`` for managing test environments. There are some pre-configured environments
+that can be used for linting and formatting code when you're preparing contributions to the charm:
 
-If you use AI to help with your PRs, be mindful. Avoid submitting contributions
-with entirely AI-generated documentation. The human aspect of documentation is
-important to us, and that includes tone, syntax, perspectives, and the
-occasional typo. 
+* ``tox``: Executes all of the basic checks and tests (``lint``, ``unit``, ``static``, and ``coverage-report``).
+* ``tox -e fmt``: Runs formatting using ``black`` and ``isort``.
+* ``tox -e lint``: Runs a range of static code analysis to check the code.
+* ``tox -e static``: Runs other checks such as ``bandit`` for security issues.
 
-Some examples of valid AI assistance includes:
+Structure
+~~~~~~~~~
 
-* Checking for spelling or grammar errors
-* Drafting plans or outlines
-* Checking that your contribution aligns with the Canonical style guide
+- **Check linked code elements**:
+  Check that coupled code elements, files and directories are adjacent.
+  For instance, store test data close to the corresponding test code.
 
-We have created instructions and tools that you can provide AI while preparing
-your contribution in `copilot-collections <https://github.com/canonical/copilot-collections>`_: 
+- **Group variable declaration and initialization**:
+  Declare and initialize variables together
+  to improve code organization and readability.
 
-* `Documentation instructions <https://github.com/canonical/copilot-collections/tree/main/assets/instructions/documentation>`_
-* `Documentation skills <https://github.com/canonical/copilot-collections/tree/main/assets/skills>`_
+- **Split large expressions**:
+  Break down large expressions
+  into smaller self-explanatory parts.
+  Use multiple variables where appropriate
+  to make the code more understandable
+  and choose names that reflect their purpose.
 
-While it isn't necessary to use ``copilot-collections`` while preparing your
-contribution, these files contain details about our documentation standards and
-practices that will help the AI avoid common pitfalls when interacting with our
-projects. By using these tools, you can avoid longer review times and nitpicks.
+- **Use blank lines for logical separation**:
+  Insert a blank line between two logically separate sections of code.
+  This improves its structure and makes it easier to understand.
 
-If you choose to use AI, please disclose this information to us by indicating
-AI usage in the PR description (for instance, marking the checklist item about
-AI usage). You don't need to go into explicit details about how and where you used AI.
+- **Avoid nested conditions**:
+  Avoid nesting conditions to improve readability and maintainability.
 
-Avoid submitting contributions that you don't fully understand.
-You are responsible for the entire contribution, including the AI-assisted portions.
-You must be willing to engage in discussion and respond to any questions, comments,
-or suggestions we may have. 
+- **Remove dead code and redundant comments**:
+  Drop unused or obsolete code and comments.
+  This promotes a cleaner code base and reduces confusion.
+
+- **Normalize symmetries**:
+  Treat identical operations consistently, using a uniform approach.
+  This also improves consistency and readability.
+
