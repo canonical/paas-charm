@@ -73,4 +73,4 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Get support <get-support>
    Custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
-   Contribute <contributing>
+   Contribute <contribute>
