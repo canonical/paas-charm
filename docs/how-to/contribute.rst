@@ -237,8 +237,40 @@ Optionally, if you are contributing documentation that's specific to a single
 framework (such as Flask), you can refer to the tooling as
 "Flask app support" or "Flask framework support". 
 
+Canonical Open Documentation Academy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Canonical Open Documentation Academy (CODA) is a place where writers and
+developers give hands-on help and mentoring to anyone wanting to participate
+in open source. It's an initiative led by the documentation team at Canonical.
+
+CODA provides:
+
+* A space to debut in the open source community
+* Guidance in choosing a first task in an open source project
+* Direct support for contributions in open source projects
+* Skill development in documentation and writing
+
+Contributors gain experience with open source software, add to their professional
+portfolio, connect with like-minded people, and receive recognition for giving back.
+
+We contribute `issues <https://github.com/canonical/open-documentation-academy/issues>`_
+to the CODA repository that you can volunteer for and complete. These issues touch
+documentation in this repository, `canonical/rockcraft <https://github.com/canonical/rockcraft>`_,
+and `canonical/charmcraft <https://github.com/canonical/charmcraft>`_. Before submitting your
+changes, review and follow the contributing guidelines in the specific repository.
+
+.. seealso::
+
+  :external+open-documentation-academy:doc:`Get started as a CODA contributor <docs/howto/get-started/index>`
+
 Code
 ----
+
+.. note::
+
+  See `CONTRIBUTING.md <https://github.com/canonical/paas-charm/blob/main/CONTRIBUTING.md>`_
+  for more information on contributing to the source code. 
 
 Formatting and linting
 ~~~~~~~~~~~~~~~~~~~~~~

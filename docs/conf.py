@@ -371,4 +371,5 @@ intersphinx_mapping = {
     'pebble': ("https://documentation.ubuntu.com/pebble/", None),
     'cos': ("https://documentation.ubuntu.com/observability/latest/", None),
     'ops': ("https://documentation.ubuntu.com/ops/latest/", None),
+    'open-documentation-academy': ("https://documentation.academy/", None),
 }
