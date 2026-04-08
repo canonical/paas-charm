@@ -84,7 +84,7 @@ we use the [Canonical contributor license agreement](https://assets.ubuntu.com/v
 
 #### Canonical contributor agreement
 
-Canonical welcomes contributions to the Paas Charm Operator. Please check out our
+Canonical welcomes contributions to the 12-Factor app support project. Please check out our
 [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
 
 The CLA sign-off is simple line at the
@@ -108,27 +108,18 @@ The code for this charm can be downloaded as follows:
 git clone https://github.com/canonical/paas-charm
 ```
 
-Make sure to install [`uv`](https://docs.astral.sh/uv/). For example, you can install `uv` on Ubuntu using:
+You can use the environments created by `tox` for development:
 
-```bash
-sudo snap install astral-uv --classic
+```shell
+tox --notest -e unit
+source .tox/unit/bin/activate
 ```
 
-For other systems, follow the [`uv` installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+You can create an environment for development with `tox`:
 
-Then install `tox` with its extensions, and install a range of Python versions:
-
-```bash
-uv python install
-uv tool install tox --with tox-uv
-uv tool update-shell
-```
-
-To create a development environment, run:
-
-```bash
-uv sync --all-groups
-source .venv/bin/activate
+```shell
+tox devenv -e integration
+source venv/bin/activate
 ```
 
 ### Test
@@ -136,50 +127,80 @@ source .venv/bin/activate
 This project uses `tox` for managing test environments. There are some pre-configured environments
 that can be used for linting and formatting code when you're preparing contributions to the charm:
 
-* ``tox``: Executes all of the basic checks and tests (``lint``, ``unit``, ``static``, and ``coverage-report``).
-* ``tox -e fmt``: Runs formatting using ``ruff``.
-* ``tox -e lint``: Runs a range of static code analysis to check the code.
-* ``tox -e static``: Runs other checks such as ``bandit`` for security issues.
-* ``tox -e unit``: Runs the unit tests.
-* ``tox -e integration``: Runs the integration tests.
+* `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
+* `tox -e fmt`: Runs formatting using `black` and `isort`.
+* `tox -e lint`: Runs a range of static code analysis to check the code.
+* `tox -e static`: Runs other checks such as `bandit` for security issues.
+* `tox -e unit`: Runs the unit tests.
+* `tox -e integration`: Runs the integration tests.
 
-### Build the rock and charm
+## Add an integration
 
-Use [Rockcraft](https://documentation.ubuntu.com/rockcraft/stable/) to create an
-OCI image for the Paas Charm app, and then upload the image to a MicroK8s registry,
-which stores OCI archives so they can be downloaded and deployed.
+There are a few recommended steps to add a new integration which we'll go
+through below.
 
-Enable the MicroK8s registry:
+1. Please write a proposal on the
+  [charm topic on Discourse](https://discourse.charmhub.io/c/charm/41). This
+  should cover things like:
 
-```bash
-microk8s enable registry
-```
+  * The integration you intend add.
+  * For each of the frameworks that PaaS Charm supports:
 
-The following commands pack the OCI image and push it into
-the MicroK8s registry:
+    - The commonly used package(s) to make use of the integration.
+    - The environment variables, configuration etc. that would be made available
+      to the app.
+    - An example for how to use the integration within an app.
 
-```bash
-cd <project_dir>
-rockcraft pack
-skopeo --insecure-policy copy --dest-tls-verify=false oci-archive:<rock-name>.rock docker://localhost:32000/<app-name>:latest
-```
+  * The proposed implementation in `paas-app`. Take a look at
+    [`charm.py`](paas_charm/_gunicorn/charm.py) for `gunicorn` based
+    frameworks for integration examples.
 
-Build the charm in this git repository using:
+1. Update the
+  [reference](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/extensions/)
+  with the new integration
+1. Raise a pull request to this repository adding support for the integration.
+1. Add a commented entry for `requires` to all the relevant Charmcraft
+  [templates](https://github.com/canonical/charmcraft/tree/main/charmcraft/templates)
+  for the new integration
 
-```shell
-charmcraft pack
-```
+## Add a framework
 
-### Deploy
+There are a few recommended steps to add a new framework which we'll go through
+below.
 
-```bash
-# Create a model
-juju add-model charm-dev
-# Enable DEBUG logging
-juju model-config logging-config="<root>=INFO;unit=DEBUG"
-# Deploy the charm
-juju deploy ./paas-charm*.charm 
-```
+1. Please write a proposal on the
+  [charm topic on Discourse](https://discourse.charmhub.io/c/charm/41). This
+  should cover things like:
 
+  * The programming language and framework you are thinking of
+  * Create an example `rockcraft.yaml` file and build a working OCI image. To
+    see an example for `flask`, install Rockcraft and run
+    `rockcraft init --profile flask-framework` and run
+    `rockcraft expand-extensions` and inspect the output.
+  * Create an example `charmcraft.yaml` file and build a working charm. To see
+    an example for `flask`, install Charmcraft and run
+    `charmcraft init --profile flask-framework` and run
+    `charmcraft expand-extensions` and inspect the output.
+  * How the configuration options of the charm map to environment variables,
+    configurations or another method of passing the information to the app
+  * The requirements and conventions for how users need to configure their app
+    to work with PaaS Charm
+  * Which web server to use
 
+1. Raise a pull request to [rockcraft](https://github.com/canonical/rockcraft)
+  adding a new extension and profile for the framework. This is the flask
+  [profile](https://github.com/canonical/rockcraft/blob/fdd2dee18c81b12f25e6624a5a48f9f1ac9fdb90/rockcraft/commands/init.py#L79)
+  and
+  [extension](https://github.com/canonical/rockcraft/blob/fdd2dee18c81b12f25e6624a5a48f9f1ac9fdb90/rockcraft/extensions/gunicorn.py#L176).
+  The OCI image should work standalone, not just with the charm for the
+  framework.
+1. Raise a pull request to this repository adding a new parent class that can be
+  used by the app charms. The following is the
+  [example for flask](./paas_charm/flask/charm.py).
+1. Raise a pull request to
+  [charmcraft](https://github.com/canonical/charmcraft) adding a new extension
+  and profile for the framework. This is the flask
+  [profile](https://github.com/canonical/charmcraft/tree/main/charmcraft/templates/init-flask-framework)
+  and
+  [extension](https://github.com/canonical/charmcraft/blob/b6baa10566e3f3933cbd42392a0fe62cc79d2b6b/charmcraft/extensions/gunicorn.py#L167).
 
