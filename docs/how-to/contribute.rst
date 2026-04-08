@@ -172,7 +172,7 @@ We have created instructions and tools that you can provide AI while preparing
 your contribution in `copilot-collections <https://github.com/canonical/copilot-collections>`_: 
 
 * `Documentation instructions <https://github.com/canonical/copilot-collections/tree/main/assets/instructions/documentation>`_
-* `Documentation skills <https://github.com/canonical/copilot-collections/tree/main/assets/skills>`_
+* `Documentation skills <https://github.com/canonical/copilot-collections/tree/main/skills>`_
 
 While it isn't necessary to use ``copilot-collections`` while preparing your
 contribution, these files contain details about our documentation standards and
