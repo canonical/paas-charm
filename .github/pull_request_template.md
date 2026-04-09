@@ -12,7 +12,6 @@
 - [ ] **If integration test modules are used:** I updated the workflow configuration  
       (e.g., in `.github/workflows/integration_tests.yaml`, ensure the `modules` list is correct)
 - [ ] **If this is a Grafana dashboard:** I added a screenshot of the dashboard
-- [ ] **If this is Rockcraft:** I updated the version
 
 <!--  
 You can adjust the checklist to match the project.
