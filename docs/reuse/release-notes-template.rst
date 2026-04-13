@@ -114,4 +114,9 @@ Thanks to our contributors
 
 <List the contributors who worked on ``paas-charm``>
 
+Canonical Open Documentation Academy contributors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<List the contributors who closed open-documentation-academy issues>
+
 
