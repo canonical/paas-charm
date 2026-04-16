@@ -195,7 +195,7 @@ def deploy_loki_fixture(
 ) -> App:
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
-        juju.deploy(loki_app_name, channel="1/stable", trust=True)
+        juju.deploy(loki_app_name, channel="1/stable", trust=True, log=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
@@ -363,16 +363,14 @@ def expressjs_app_fixture(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        log=False,
     )
 
     resources = {
         "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
     charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
-    juju.deploy(
-        charm=charm_file,
-        resources=resources,
-    )
+    juju.deploy(charm=charm_file, resources=resources, log=False)
 
     # Add required relations
     juju.integrate(app_name, "postgresql-k8s:database")
@@ -429,6 +427,7 @@ def spring_boot_app_fixture(
                 "plugin_hstore_enable": "true",
                 "plugin_pg_trgm_enable": "true",
             },
+            log=False,
         )
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
@@ -441,11 +440,7 @@ def spring_boot_app_fixture(
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
     try:
-        juju.deploy(
-            charm=charm_file,
-            app=app_name,
-            resources=resources,
-        )
+        juju.deploy(charm=charm_file, app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" in err.stderr:
             juju.refresh(app_name, path=charm_file, resources=resources)
@@ -505,11 +500,7 @@ def spring_boot_mysql_app_fixture(
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
     )
     try:
-        juju.deploy(
-            charm=charm_file,
-            app=app_name,
-            resources=resources,
-        )
+        juju.deploy(charm=charm_file, app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" in err.stderr:
             juju.refresh(app_name, path=charm_file, resources=resources)
@@ -560,6 +551,7 @@ def deploy_traefik_fixture(
                 "external_hostname": external_hostname,
                 "routing_mode": "subdomain",
             },
+            log=False,
         )
     juju.wait(
         lambda status: status.apps[traefik_app_name].is_active,
@@ -573,7 +565,7 @@ def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
     """Deploy Redis k8s charm using jubilant."""
     app_name = "redis-k8s"
     if not juju.status().apps.get(app_name):
-        juju.deploy(app_name, channel="edge")
+        juju.deploy(app_name, channel="edge", log=False)
     juju.wait(lambda status: status.apps[app_name].is_active, error=jubilant.any_blocked)
     return App(app_name)
 
@@ -681,10 +673,7 @@ def generate_app_fixture(
     )
     try:
         juju.deploy(
-            charm=charm_file,
-            app=f"{framework}-k8s",
-            resources=resources,
-            config=config,
+            charm=charm_file, app=f"{framework}-k8s", resources=resources, config=config, log=False
         )
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
@@ -723,6 +712,7 @@ def deploy_postgresql(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        log=False,
     )
 
 
@@ -813,7 +803,7 @@ def flask_blocked_app_fixture(
     )
 
     try:
-        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
@@ -846,6 +836,7 @@ def django_blocked_app_fixture(
             app=app_name,
             resources=resources,
             config={"django-allowed-hosts": "*"},
+            log=False,
         )
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
@@ -883,7 +874,7 @@ def fastapi_blocked_app_fixture(
     )
 
     try:
-        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
@@ -920,7 +911,7 @@ def go_blocked_app_fixture(
     )
 
     try:
-        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
@@ -957,7 +948,7 @@ def expressjs_blocked_app_fixture(
     )
 
     try:
-        juju.deploy(charm=str(charm_file), app=app_name, resources=resources)
+        juju.deploy(charm=str(charm_file), app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err

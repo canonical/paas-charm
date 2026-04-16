@@ -22,7 +22,7 @@ def redis_k8s_app_fixture(juju: jubilant.Juju):
     """Deploy Redis k8s charm."""
     redis_app_name = "redis-k8s"
     if not juju.status().apps.get(redis_app_name):
-        juju.deploy(redis_app_name, channel="edge")
+        juju.deploy(redis_app_name, channel="edge", log=False)
     juju.wait(lambda status: status.apps[redis_app_name].is_active)
     return App(redis_app_name)
 
@@ -118,7 +118,7 @@ def test_async_workers(
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    juju.config(flask_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.config(flask_async_app.name, {"webserver-worker-class": "gevent"}, log=False)
     juju.wait(lambda status: status.apps[flask_async_app.name].is_active, timeout=60)
 
     # the flask unit is not important. Take the first one

@@ -110,12 +110,7 @@ def s3_configuration_fixture(minio_app_name: str) -> dict:
 def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
     """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
     config = s3_credentials
-    juju.deploy(
-        minio_app_name,
-        channel="edge",
-        config=config,
-        trust=True,
-    )
+    juju.deploy(minio_app_name, channel="edge", config=config, trust=True, log=False)
 
     juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=60 * 30)
     return App(minio_app_name)
@@ -129,11 +124,7 @@ def redis_app_name_fixture() -> str:
 @pytest.fixture(scope="module", name="redis_app")
 def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
     """Deploy and set up Redis."""
-    juju.deploy(
-        redis_app_name,
-        channel="latest/edge",
-        trust=True,
-    )
+    juju.deploy(redis_app_name, channel="latest/edge", trust=True, log=False)
 
     return App(redis_app_name)
 
@@ -146,12 +137,7 @@ def mongodb_app_name_fixture() -> str:
 @pytest.fixture(scope="module", name="mongodb_app")
 def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
     """Deploy and set up Redis."""
-    juju.deploy(
-        mongodb_app_name,
-        channel="6/beta",
-        revision=61,
-        trust=True,
-    )
+    juju.deploy(mongodb_app_name, channel="6/beta", revision=61, trust=True, log=False)
 
     return App(mongodb_app_name)
 
@@ -165,12 +151,7 @@ def mysql_app_name_fixture() -> str:
 def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
     """Deploy and set up Redis."""
     if not juju.status().apps.get(mysql_app_name):
-        juju.deploy(
-            mysql_app_name,
-            channel="8.0/stable",
-            revision=140,
-            trust=True,
-        )
+        juju.deploy(mysql_app_name, channel="8.0/stable", revision=140, trust=True, log=False)
 
     return App(mysql_app_name)
 
@@ -178,10 +159,7 @@ def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
 @pytest.fixture(scope="module", name="s3_integrator_app")
 def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3_configuration):
     s3_integrator = "s3-integrator"
-    juju.deploy(
-        s3_integrator,
-        channel="edge",
-    )
+    juju.deploy(s3_integrator, channel="edge", log=False)
     juju.wait(
         lambda status: jubilant.all_blocked(status, s3_integrator),
         timeout=120,
@@ -203,10 +181,7 @@ def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3
         mc_client.make_bucket(bucket_name)
 
     # configure s3-integrator
-    juju.config(
-        "s3-integrator",
-        s3_configuration,
-    )
+    juju.config("s3-integrator", s3_configuration, log=False)
 
     task = juju.run(f"{s3_integrator}/0", "sync-s3-credentials", s3_credentials)
     assert task.status == "completed"
@@ -224,16 +199,14 @@ def tempo_app_fixture(
     tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "2/edge"
     tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "2/edge"
     juju.deploy(
-        tempo_worker_charm_url,
-        app=worker_app,
-        channel=worker_channel,
-        trust=True,
+        tempo_worker_charm_url, app=worker_app, channel=worker_channel, trust=True, log=False
     )
     juju.deploy(
         tempo_coordinator_charm_url,
         app=tempo_app,
         channel=coordinator_channel,
         trust=True,
+        log=False,
     )
     juju.integrate(f"{tempo_app}:s3", f"{s3_integrator_app.name}:s3-credentials")
     juju.integrate(f"{tempo_app}:tempo-cluster", f"{worker_app}:tempo-cluster")
@@ -337,6 +310,7 @@ def deploy_prometheus_fixture(
             revision=129,
             base="ubuntu@20.04",
             trust=True,
+            log=False,
         )
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
@@ -353,7 +327,7 @@ def deploy_loki_fixture(
 ) -> App:
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
-        juju.deploy(loki_app_name, channel="1/stable", trust=True)
+        juju.deploy(loki_app_name, channel="1/stable", trust=True, log=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
@@ -376,6 +350,7 @@ def deploy_cos_fixture(
             revision=82,
             base="ubuntu@20.04",
             trust=True,
+            log=False,
         )
         juju.wait(
             lambda status: jubilant.all_active(
@@ -406,7 +381,7 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
         return openfga_server_app
 
     deploy_postgresql(juju)
-    juju.deploy(openfga_server_app.name, channel="latest/stable")
+    juju.deploy(openfga_server_app.name, channel="latest/stable", log=False)
     juju.integrate(openfga_server_app.name, "postgresql-k8s:database")
     juju.wait(
         lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
@@ -478,10 +453,7 @@ def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_mode
             logger.info("rabbitmq server already deployed")
             return App(rabbitmq_server_name)
 
-        juju.deploy(
-            rabbitmq_server_name,
-            channel="edge",
-        )
+        juju.deploy(rabbitmq_server_name, channel="edge", log=False)
 
         juju.cli("offer", f"{rabbitmq_server_name}:amqp", include_model=False)
         juju.wait(
@@ -522,11 +494,7 @@ def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
         logger.info(f"{rabbitmq_k8s.name} is already deployed")
         return rabbitmq_k8s
 
-    juju.deploy(
-        rabbitmq_k8s.name,
-        channel="3.12/edge",
-        trust=True,
-    )
+    juju.deploy(rabbitmq_k8s.name, channel="3.12/edge", trust=True, log=False)
     juju.wait(
         lambda status: jubilant.all_active(status, rabbitmq_k8s.name),
         timeout=10 * 60,
@@ -540,14 +508,29 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     if juju.status().apps.get("hydra"):
         logger.info("identity-platform is already deployed")
         return
-    juju.deploy("hydra", channel="latest/edge", revision=399, trust=True)
-    juju.deploy("kratos", channel="latest/edge", revision=567, trust=True)
+    juju.deploy("hydra", channel="latest/edge", revision=399, trust=True, log=False)
+    juju.deploy("kratos", channel="latest/edge", revision=567, trust=True, log=False)
     juju.deploy(
-        "identity-platform-login-ui-operator", channel="latest/edge", revision=200, trust=True
+        "identity-platform-login-ui-operator",
+        channel="latest/edge",
+        revision=200,
+        trust=True,
+        log=False,
     )
-    juju.deploy("self-signed-certificates", channel="1/stable", revision=317, trust=True)
-    juju.deploy("traefik-k8s", "traefik-admin", channel="latest/stable", revision=176, trust=True)
-    juju.deploy("traefik-k8s", "traefik-public", channel="latest/edge", revision=270, trust=True)
+    juju.deploy(
+        "self-signed-certificates", channel="1/stable", revision=317, trust=True, log=False
+    )
+    juju.deploy(
+        "traefik-k8s",
+        "traefik-admin",
+        channel="latest/stable",
+        revision=176,
+        trust=True,
+        log=False,
+    )
+    juju.deploy(
+        "traefik-k8s", "traefik-public", channel="latest/edge", revision=270, trust=True, log=False
+    )
     deploy_postgresql(juju)
     # Integrations
     juju.integrate(
@@ -571,7 +554,7 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
         "traefik-public:traefik-route", "identity-platform-login-ui-operator:public-route"
     )
 
-    juju.config("kratos", {"enforce_mfa": False})
+    juju.config("kratos", {"enforce_mfa": False}, log=False)
 
 
 @pytest.fixture(scope="module", name="http_proxy_app")
@@ -584,9 +567,7 @@ def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_mod
             logger.info("squid server already deployed")
         else:
             juju.deploy(
-                squid_proxy,
-                channel="edge",
-                config={"hostname": "proxy.example.com"},
+                squid_proxy, channel="edge", config={"hostname": "proxy.example.com"}, log=False
             )
 
             juju.cli("offer", f"{squid_proxy}:http-proxy", include_model=False)
@@ -610,6 +591,7 @@ def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_mod
                 "http-proxy-auth": "none",
                 "http-proxy-domains": "www.example.com",
             },
+            log=False,
         )
         juju.integrate(http_proxy_configurator, squid_proxy)
     juju.wait(

@@ -39,7 +39,7 @@ def test_user_defined_config(
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
-    juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
+    juju.config(expressjs_app.name, {"user-defined-config": "newvalue"}, log=False)
     juju.wait(lambda status: jubilant.all_active(status, expressjs_app.name, "postgresql-k8s"))
 
     status = juju.status()

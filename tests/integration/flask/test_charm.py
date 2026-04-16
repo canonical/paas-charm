@@ -206,7 +206,9 @@ def test_port_without_ingress(
     service_hostname = f"{flask_app.name}.{model_name}"
     unit_name = list(status.apps[flask_app.name].units.keys())[0]
 
-    task = juju.exec(command=f"/usr/bin/getent hosts {service_hostname}", unit=unit_name)
+    task = juju.exec(
+        command=f"/usr/bin/getent hosts {service_hostname}", unit=unit_name, log=False
+    )
     assert task.return_code == 0
     service_ip = task.stdout.split()[0]
 

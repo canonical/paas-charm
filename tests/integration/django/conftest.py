@@ -27,10 +27,10 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
     This fixture must be parameterized with changing charm configurations.
     """
     app_name = django_app.name
-    orig_config = juju.config(app_name)
+    orig_config = juju.config(app_name, log=False)
 
     request_config = {k: str(v) for k, v in request.param.items()}
-    juju.config(app_name, request_config)
+    juju.config(app_name, request_config, log=False)
     juju.wait(lambda status: jubilant.all_active(status, app_name))
 
     yield request_config
@@ -38,4 +38,4 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
     # Restore original configuration
     restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
     reset_config = [k for k in request_config if orig_config.get(k) is None]
-    juju.config(app_name, restore_config, reset=reset_config)
+    juju.config(app_name, restore_config, reset=reset_config, log=False)

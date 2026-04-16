@@ -46,10 +46,7 @@ def test_saml_integration(
 
     saml_integrator_app_name = "saml-integrator"
     juju.deploy(
-        saml_integrator_app_name,
-        channel="latest/edge",
-        base="ubuntu@22.04",
-        trust=True,
+        saml_integrator_app_name, channel="latest/edge", base="ubuntu@22.04", trust=True, log=False
     )
 
     juju.wait(lambda status: jubilant.all_blocked(status, saml_integrator_app_name), timeout=600)
@@ -63,6 +60,7 @@ def test_saml_integration(
             "entity_id": saml_helper.entity_id,
             "metadata_url": saml_helper.metadata_url,
         },
+        log=False,
     )
 
     juju.integrate(saml_integrator_app_name, app.name)

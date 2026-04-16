@@ -36,7 +36,7 @@ def test_user_defined_config(
     act: call the endpoint to get the value of the env variable related to the config.
     assert: the value of the env variable and the config should match.
     """
-    juju.config(go_app.name, {"user-defined-config": "newvalue"})
+    juju.config(go_app.name, {"user-defined-config": "newvalue"}, log=False)
     juju.wait(lambda status: jubilant.all_active(status, go_app.name, "postgresql-k8s"))
 
     status = juju.status()
@@ -100,7 +100,7 @@ def test_open_ports(
 
     # Change port configuration
     new_port = WORKLOAD_PORT + 10
-    juju.config(go_app.name, {"app-port": str(new_port)})
+    juju.config(go_app.name, {"app-port": str(new_port)}, log=False)
     juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
@@ -115,7 +115,7 @@ def test_open_ports(
     )
 
     # Restore original port
-    juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
+    juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)}, log=False)
     juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")

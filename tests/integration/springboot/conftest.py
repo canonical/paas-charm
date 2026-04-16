@@ -113,5 +113,7 @@ def saml_integrator_fixture(juju: jubilant.Juju, simplesamlphp_ip: str):
         "entity_id": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
         "metadata_url": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
     }
-    juju.deploy("saml-integrator", channel="latest/stable", config=saml_config, trust=True)
+    juju.deploy(
+        "saml-integrator", channel="latest/stable", config=saml_config, trust=True, log=False
+    )
     yield App("saml-integrator")

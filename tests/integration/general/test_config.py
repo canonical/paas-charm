@@ -80,7 +80,7 @@ def test_non_optional(
             missing_config in app_status.app_status.message
         ), f"{missing_config} should not be set"
 
-    juju.config(blocked_app.name, first_non_optional_config)
+    juju.config(blocked_app.name, first_non_optional_config, log=False)
     juju.wait(lambda status: status.apps[blocked_app.name].is_blocked, timeout=5 * 60)
     status = juju.status()
     app_status = status.apps[blocked_app.name]
@@ -91,7 +91,7 @@ def test_non_optional(
     for config in first_non_optional_config.keys():
         assert config not in app_status.app_status.message, f"{config} should be set"
 
-    juju.config(blocked_app.name, remaining_non_optional_configs_dict)
+    juju.config(blocked_app.name, remaining_non_optional_configs_dict, log=False)
     juju.wait(lambda status: status.apps[blocked_app.name].is_active, timeout=5 * 60)
     status = juju.status()
     app_status = status.apps[blocked_app.name]

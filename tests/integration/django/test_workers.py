@@ -27,7 +27,7 @@ def test_async_workers(
     act: Do 15 requests that would take 2 seconds each.
     assert: All 15 requests should be served in under 3 seconds.
     """
-    juju.config(django_async_app.name, {"webserver-worker-class": "gevent"})
+    juju.config(django_async_app.name, {"webserver-worker-class": "gevent"}, log=False)
     juju.wait(lambda status: jubilant.all_active(status, django_async_app.name), timeout=60)
 
     # the django unit is not important. Take the first one

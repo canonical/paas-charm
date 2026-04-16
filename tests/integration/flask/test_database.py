@@ -42,7 +42,7 @@ def test_with_database(
     """
     # Deploy database if not already deployed
     if not juju.status().apps.get(db_name):
-        juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust)
+        juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust, log=False)
 
     juju.wait(lambda status: status.apps.get(db_name, False) and status.apps[db_name].is_active)
 

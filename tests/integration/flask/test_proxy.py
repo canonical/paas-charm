@@ -57,7 +57,7 @@ def test_proxy(
 
     # Deploy the charm
     try:
-        juju.deploy(charm=charm_file, app=app_name, resources=resources)
+        juju.deploy(charm=charm_file, app=app_name, resources=resources, log=False)
     except jubilant.CLIError as err:
         if "application already exists" not in err.stderr:
             raise err
