@@ -269,7 +269,7 @@ def test_app_peer_address(
     """
     # Add a unit
     juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name), successes=5, delay=5)
 
     status = juju.status()
     model_name = status.model.name
@@ -298,7 +298,7 @@ def test_app_peer_address(
 
     # Scale back to 1 unit
     juju.remove_unit(flask_app.name, num_units=1)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, successes=5, delay=5)
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name), successes=5, delay=5)
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
         check_peer_fqdns(unit, actual_result, is_in=False)
