@@ -40,7 +40,7 @@ Pack the charm, then upload it:
    charmcraft upload <charm-file>.charm
 
 On success, ``charmcraft upload`` prints the revision number assigned to the
-charm. Note this number — you'll need it when releasing.
+charm. Note this number — you'll need it when releasing the charm publicly.
 
 Identify the OCI image resource name
 -------------------------------------
