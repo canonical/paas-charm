@@ -118,7 +118,7 @@ For example:
        --image docker://ghcr.io/<org>/<image-name>:<image-tag>
 
 On success, ``charmcraft upload-resource`` prints the resource revision
-number. Note this number — you'll need it when releasing.
+number. Note this number — you'll need it when releasing the charm publicly.
 
 Release the charm
 -----------------
