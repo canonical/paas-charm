@@ -48,6 +48,8 @@ Manage a deployment
 
 The pages below describe general tasks related to managing a deployment:
 
+* :ref:`Publish a 12-factor app charm to Charmhub <how_to_publish_charm>`: How to upload your charm and OCI
+  image resource to Charmhub and release them to a channel.
 * :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
   charm, or ``paas-charm`` version.
 * :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
@@ -70,6 +72,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
    Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
    Upgrade <upgrade>
+   Publish a charm to Charmhub <publish-charm>
    Get support <get-support>
    Custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
