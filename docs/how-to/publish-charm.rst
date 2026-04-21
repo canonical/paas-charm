@@ -1,3 +1,6 @@
+.. meta::
+   :description: Learn about the process to publish your 12-factor app charm to Charmhub. 
+
 .. _how_to_publish_charm:
 
 How to publish a 12-factor app charm to Charmhub
