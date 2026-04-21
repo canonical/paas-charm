@@ -72,7 +72,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Manage a 12-factor app rock <https://documentation.ubuntu.com/rockcraft/en/latest/how-to/build-a-12-factor-app-rock/>
    Manage a 12-factor app charm <https://documentation.ubuntu.com/charmcraft/latest/howto/manage-web-app-charms/>
    Upgrade <upgrade>
-   Publish a 12-factor app charm to Charmhub <publish-charm>
+   Publish a charm to Charmhub <publish-charm>
    Get support <get-support>
    Custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
