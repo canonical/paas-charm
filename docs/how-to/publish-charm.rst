@@ -110,7 +110,7 @@ Pass the full registry reference with the ``docker://`` scheme:
    charmcraft upload-resource <charm-name> <resource-name> \
        --image docker://<registry-host>/<image-name>:<image-tag>
 
-For example:
+For example, if your OCI image is uploaded to the ``ghcr.io`` registry:
 
 .. code-block:: bash
 
