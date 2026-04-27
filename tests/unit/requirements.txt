@@ -4,5 +4,5 @@ gunicorn
 opentelemetry-api
 opentelemetry-sdk
 ops[testing]==2.21.1
-pydantic[email]==2.12.5
+pydantic[email]==2.13.3
 pytest
