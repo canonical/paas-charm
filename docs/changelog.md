@@ -13,16 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Place any unreleased changes here, that are subject to release in coming versions :).
 
-## 2026-04-28
+## 1.11.2 - 2026-04-30
 
 * fix: Remove trailing `/` character from the base URL when building the OIDC redirect URI.
-
-## 2026-04-20
-
 * docs: Add how-to guide for publishing a 12-factor app charm to Charmhub.
-
-## 2026-04-13
-
 * docs: Update release notes template and workflow to showcase CODA contributors.
 
 ## 1.11.1 - 2026-03-17
