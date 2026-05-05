@@ -116,3 +116,19 @@ operation if the merged directory already exists.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``@f-atwi``, ``@alithethird``
+
+1.11.2 patch release — 30 April 2026
+------------------------------------
+
+``paas-charm`` bug fixes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The trailing ``/`` character is now stripped from the base URL when building
+the OIDC redirect URI in ``ClientConfig``.
+
+* `Pull request #275 <https://github.com/canonical/paas-charm/pull/275>`_
+
+``paas-charm`` 1.11.2 contributors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``@RenanGreca``, ``@javierdelapuente``, ``@erinecon``

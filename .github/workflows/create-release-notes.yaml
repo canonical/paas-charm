@@ -15,7 +15,7 @@ jobs:
       issues: write
     steps:
       - name: Create Copilot issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const version = "${{ inputs.version }}";
@@ -83,8 +83,20 @@ jobs:
 
             ### 6. Contributors
 
-            Look up each pull request included in this release and collect the GitHub usernames of every author (not just the merger). Include them all in the **Thanks to our contributors** section.
+            Look up each pull request included in this release and collect the GitHub usernames of every author (not just the merger).
 
+            For each PR, read its body/description and check whether it contains the string \`open-documentation-academy\` in any form — for example:
+
+            * A cross-repo closing reference such as \`Closes canonical/open-documentation-academy#NNN\`
+            * A full GitHub URL such as \`https://github.com/canonical/open-documentation-academy/issues/NNN\`
+            * Any other mention of \`open-documentation-academy\`
+
+            Split the authors into two groups based on this check:
+
+            * **Regular contributors** — authors of PRs whose body does **not** mention \`open-documentation-academy\`. List these usernames in the main **Thanks to our contributors** section of the RST file.
+            * **CODA contributors** (Canonical Open Documentation Academy) — authors of PRs whose body **does** mention \`open-documentation-academy\`. List these usernames exclusively in the **Canonical Open Documentation Academy contributors** subsection. Do **not** duplicate them in the main list.
+
+            If no CODA contributors are found for this release, omit the **Canonical Open Documentation Academy contributors** subsection entirely from the RST file.
             ## ⚠️ Learnings from previous release-notes PRs
 
             These are known pitfalls — read them carefully before opening the PR:
