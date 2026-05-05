@@ -1,14 +1,88 @@
-# Copyright 2025 Canonical Ltd.
-# See LICENSE file for licensing details.
-
 name: django-async-app
+title: django-async-app
+version: '0.1'
 summary: Example Async Django application image.
 description: Example Async Django application image.
-version: "0.1"
 base: ubuntu@22.04
-license: Apache-2.0
 platforms:
   amd64:
-
-extensions:
-  - django-framework
+    build-on:
+    - amd64
+    build-for:
+    - amd64
+license: Apache-2.0
+parts:
+  django-framework/dependencies:
+    plugin: python
+    stage-packages:
+    - python3-venv
+    source: .
+    python-packages:
+    - gunicorn~=23.0
+    python-requirements:
+    - requirements.txt
+    build-environment: []
+  django-framework/install-app:
+    plugin: dump
+    source: django_async_app
+    organize:
+      '*': django/app/
+      .*: django/app/
+    stage:
+    - -django/app/db.sqlite3
+    permissions:
+    - owner: 584792
+      group: 584792
+  django-framework/config-files:
+    plugin: dump
+    source: /snap/rockcraft/4238/share/rockcraft/extensions/django-framework
+    organize:
+      gunicorn.conf.py: django/gunicorn.conf.py
+    permissions:
+    - path: django/gunicorn.conf.py
+      owner: 584792
+      group: 584792
+  django-framework/statsd-exporter:
+    build-snaps:
+    - go
+    source-tag: v0.29.0
+    plugin: go
+    source: https://github.com/prometheus/statsd_exporter.git
+  django-framework/logging:
+    plugin: nil
+    override-build: |-
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/opt/promtail
+      mkdir -p $CRAFT_PART_INSTALL/etc/promtail
+      mkdir -p $CRAFT_PART_INSTALL/var/log/django
+    permissions:
+    - path: opt/promtail
+      owner: 584792
+      group: 584792
+    - path: etc/promtail
+      owner: 584792
+      group: 584792
+    - path: var/log/django
+      owner: 584792
+      group: 584792
+  django-framework/runtime:
+    plugin: nil
+    stage-packages:
+    - ca-certificates_data
+run-user: _daemon_
+services:
+  django:
+    override: replace
+    command: /bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_async_app.wsgi:application
+      -k [ gevent ]
+    startup: enabled
+    after:
+    - statsd-exporter
+    user: _daemon_
+  statsd-exporter:
+    override: merge
+    command: /bin/statsd_exporter --statsd.mapping-config=/statsd-mapping.conf --statsd.listen-udp=localhost:9125
+      --statsd.listen-tcp=localhost:9125
+    summary: statsd exporter service
+    startup: enabled
+    user: _daemon_
