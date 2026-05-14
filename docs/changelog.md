@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Place any unreleased changes here, that are subject to release in coming versions :).
+* fix: Prevent duplicate allowed_hosts when ingress hostname matches charm config.
+  This avoids duplicating hostnames that were already configured by the user
+  via the `django-allowed-hosts` charm config option.
 
 ## 1.11.2 - 2026-04-30
 

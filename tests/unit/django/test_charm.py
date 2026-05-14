@@ -232,6 +232,43 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     }
 
 
+def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
+    harness: Harness,
+):
+    """
+    arrange: Configure the django charm with an allowed host that matches the ingress url hostname.
+    act: Start the django charm and add an ingress relation.
+    assert: The allowed hosts should not contain duplicates.
+    """
+    postgresql_relation_data = {
+        "database": "test-database",
+        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
+        "password": "test-password",
+        "username": "test-username",
+    }
+    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
+    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container.add_layer("a_layer", DEFAULT_LAYER)
+    harness.set_model_name("test-model")
+    harness.update_config({"django-allowed-hosts": "django-k8s.test-model"})
+    harness.begin_with_initial_hooks()
+
+    plan = container.get_plan()
+    env = plan.to_dict()["services"]["django"]["environment"]
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
+
+    harness.add_network("10.0.0.10", endpoint="ingress")
+    harness.add_relation(
+        "ingress",
+        "nginx-ingress-integrator",
+        app_data={"ingress": '{"url": "https://django-k8s.test-model/"}'},
+    )
+
+    plan = container.get_plan()
+    env = plan.to_dict()["services"]["django"]["environment"]
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
+
+
 def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness):
     """
     arrange: Deploy a Django charm without an ingress integration

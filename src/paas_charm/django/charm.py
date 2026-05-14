@@ -80,7 +80,8 @@ class Charm(GunicornBase):
         base_model = super().get_framework_config()
         url = urlsplit(self._base_url)
         # base_model can be downcasted to a DjangoConfig, and allowed_hosts is really a list.
-        base_model.allowed_hosts.append(url.hostname)  # type: ignore
+        if url.hostname not in base_model.allowed_hosts:  # type: ignore
+            base_model.allowed_hosts.append(url.hostname)  # type: ignore
         return base_model
 
     def is_ready(self) -> bool:
