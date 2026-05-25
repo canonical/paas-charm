@@ -7,6 +7,9 @@ on:
 
 jobs:
   integration-tests:
+    permissions:
+      packages: write
+      pull-requests: write
     strategy:
       matrix:
         juju-version: [3.6/stable]
