@@ -38,7 +38,7 @@ def fixture_session_with_retry():
         read=5,
         other=5,
         backoff_factor=5,
-        status_forcelist=[429, 500, 502, 503, 504],
+        status_forcelist=[404, 429, 500, 502, 503, 504],
         allowed_methods=["HEAD", "POST", "GET", "OPTIONS"],
         raise_on_status=False,
     )
