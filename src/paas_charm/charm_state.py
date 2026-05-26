@@ -24,16 +24,17 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
     from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
+    from dpcharmlibs.interfaces import ValkeyResponseModel
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
     from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
-    from paas_charm.valkey import PaaSValkeyRelationData, ValkeyClientRequirer
     from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
     from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
     from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
+    from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +354,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
     redis: "PaaSRedisRelationData | None" = None
-    valkey: "PaaSValkeyRelationData | None" = None
+    valkey: "ValkeyResponseModel | None" = None
     s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None

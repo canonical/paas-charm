@@ -3,9 +3,7 @@
 
 """Provide a wrapper around the valkey_client interface."""
 
-from dataclasses import dataclass
 import logging
-import typing
 
 import ops
 from dpcharmlibs.interfaces import (
@@ -23,17 +21,6 @@ logger = logging.getLogger(__name__)
 VALKEY_RELATION_NAME = "valkey"
 
 
-@dataclass
-class ValkeyClientRelationAppData:
-    """Represents the data provided by the Valkey relation provider
-    after fetching secret values for username as password.
-    """
-
-    valkey_client_response: ValkeyResponseModel
-    username: str
-    password: str
-
-
 class InvalidValkeyRelationDataError(InvalidRelationDataError):
     """Represents an error with invalid Valkey relation data.
 
@@ -44,15 +31,12 @@ class InvalidValkeyRelationDataError(InvalidRelationDataError):
     relation = VALKEY_RELATION_NAME
 
 
-class ValkeyClientRequirer:
+class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
     """Wrapper around ResourceRequirerEventHandler for Valkey."""
-
-    get_secret_callback: typing.Callable[[str], ops.Secret | None]
 
     def __init__(
         self,
         charm: ops.CharmBase,
-        get_secret_callback: typing.Callable[[str], ops.Secret | None],
         relation_name: str = VALKEY_RELATION_NAME,
     ) -> None:
         """Initialize the Valkey requirer.
@@ -67,45 +51,32 @@ class ValkeyClientRequirer:
             [RequirerCommonModel(resource="*")],
             response_model=ValkeyResponseModel,
         )
-        self.get_secret_callback = get_secret_callback
 
-    def to_relation_data(self) -> ValkeyClientRelationAppData | None:
+    def to_relation_data(self) -> ValkeyResponseModel | None:
         """Get Valkey relation data object.
+
+        The dpcharmlibs build_model resolves secret fields (username, password)
+        automatically via model validators when the repository context is provided.
 
         Raises:
             InvalidValkeyRelationDataError: If invalid Valkey connection parameters were provided.
 
         Returns:
-            Data required to integrate with Valkey, or None if not ready.
+            ValkeyResponseModel with resolved secrets, or None if not ready.
         """
         try:
             if len(self.valkey_interface.relations) == 1:
                 relation = self.valkey_interface.relations[0]
-                valkey_client_response = relation.load(ValkeyResponseModel, relation.app)
-                username = None
-                if (username_secret_id := valkey_client_response.username) and (
-                    secret := self.get_secret_callback(username_secret_id)
-                ):
-                    username = secret.get_content(refresh=True)["username"]
-                password = None
-                if (password_secret_id := valkey_client_response.password) and (
-                    secret := self.get_secret_callback(password_secret_id)
-                ):
-                    password = secret.get_content(refresh=True)["password"]
-                return ValkeyClientRelationAppData(
-                    valkey_client_response=valkey_client_response,
-                    username=username or "",
-                    password=password or "",
+                model = self.valkey_interface.interface.build_model(
+                    relation.id, component=relation.app
                 )
+                if not model.requests:
+                    return None
+                return model.requests[0]
             return None
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidValkeyRelationDataError(
-                f"Invalid {ValkeyClientRelationAppData.__name__}: {error_messages.short}"
-            ) from exc
-        except (ops.SecretNotFoundError, ops.ModelError) as exc:
-            logger.error("Failed to retrieve username/password for Valkey relation: %s", exc)
-            raise InvalidValkeyRelationDataError(
-                f"Failed to retrieve username/password for {ValkeyClientRelationAppData.__name__}"
+                f"Invalid ValkeyResponseModel: {error_messages.short}"
             ) from exc

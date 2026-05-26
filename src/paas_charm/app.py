@@ -12,11 +12,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
 import ops
+from dpcharmlibs.interfaces import ValkeyResponseModel
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.paas_config import LoggingFormat
-from paas_charm.valkey import ValkeyClientRelationAppData
 
 logger = logging.getLogger(__name__)
 
@@ -168,12 +168,12 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> 
 
 
 def generate_valkey_env(
-    relation_data: ValkeyClientRelationAppData | None = None,
+    relation_data: ValkeyResponseModel | None = None,
 ) -> dict[str, str]:
     """Generate environment variables from Valkey relation data.
 
     Args:
-        relation_data: The charm Valkey integration relation data.
+        relation_data: The ValkeyResponseModel from dpcharmlibs with resolved secrets.
 
     Returns:
         Valkey environment mappings if Valkey relation data is available, empty
@@ -183,13 +183,13 @@ def generate_valkey_env(
         return {}
     prefix = "VALKEY"
     return {
-        **_db_url_to_env_variables(prefix, str(relation_data.valkey_client_response.endpoints)),
-        f"{prefix}_USERNAME": relation_data.username,
-        f"{prefix}_PASSWORD": relation_data.password,
-        f"{prefix}_TLS": str(relation_data.valkey_client_response.tls).lower(),
-        f"{prefix}_MODE": relation_data.valkey_client_response.mode or "",
-        f"{prefix}_TLS_CA": relation_data.valkey_client_response.tls_ca or "",
-        f"{prefix}_VERSION": relation_data.valkey_client_response.version or "",
+        **_db_url_to_env_variables(prefix, str(relation_data.endpoints)),
+        f"{prefix}_USERNAME": relation_data.username or "",
+        f"{prefix}_PASSWORD": relation_data.password or "",
+        f"{prefix}_TLS": str(relation_data.tls).lower(),
+        f"{prefix}_MODE": relation_data.mode or "",
+        f"{prefix}_TLS_CA": relation_data.tls_ca or "",
+        f"{prefix}_VERSION": relation_data.version or "",
     }
 
 
@@ -589,9 +589,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         services[self._workload_config.service_name]["override"] = "replace"
         services[self._workload_config.service_name]["environment"] = self.gen_environment()
         if self._alternate_service_command:
-            services[self._workload_config.service_name]["command"] = (
-                self._alternate_service_command
-            )
+            services[self._workload_config.service_name][
+                "command"
+            ] = self._alternate_service_command
 
         for service_name, service in services.items():
             normalised_service_name = service_name.lower()

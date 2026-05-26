@@ -53,6 +53,7 @@ except ImportError as import_error:
         "`charmcraft fetch-lib charms.data_platform_libs.v0.data_interfaces`"
     ) from import_error
 import dpcharmlibs.interfaces  # noqa: F401
+
 try:
     import charms.redis_k8s.v0.redis  # noqa: F401
 except ImportError as import_error:
