@@ -102,6 +102,8 @@ except ImportError:
         "`charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
     )
 
+from paas_charm.valkey import ValkeyClientRequirer  # noqa: E402
+
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -150,6 +152,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         self._redis = self._init_redis(requires)
+        self._valkey = self._init_valkey(requires)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
@@ -246,6 +249,24 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _redis
+
+    def _init_valkey(self, requires: dict[str, RelationMeta]) -> "ValkeyClientRequirer | None":
+        """Initialize the Valkey relation if it is required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the Valkey relation or None
+        """
+        _valkey = None
+        if "valkey" in requires and requires["valkey"].interface_name == "valkey_client":
+            _valkey = ValkeyClientRequirer(
+                charm=self, relation_name="valkey", get_secret_callback=self._get_secret
+            )
+            self.framework.observe(_valkey.on.resource_created, self._on_valkey_resource_created)
+
+        return _valkey
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
@@ -750,6 +771,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 redis=self._redis,
+                valkey=self._valkey,
                 rabbitmq=self._rabbitmq,
                 s3=self._s3,
                 saml=self._saml,
@@ -836,6 +858,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.restart(rerun_migrations=True)
 
     @block_if_invalid_data
+    def _on_valkey_resource_created(self, _: ops.HookEvent) -> None:
+        """Handle valkey's resource-created event."""
+        self.restart(rerun_migrations=True)
+
+    @block_if_invalid_data
     def _on_s3_credential_changed(self, _: ops.HookEvent) -> None:
         """Handle s3 credentials-changed event."""
         self.restart(rerun_migrations=True)
@@ -914,3 +941,18 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
         """Handle http-proxy relation changed."""
         self.restart()
+
+    def _get_secret(self, secret_id: str) -> ops.Secret | None:
+        """Get secret by secret_id.
+
+        Args:
+            secret_id: the id of the secret to get.
+
+        Returns:
+            The ops.Secret instance for the given secret_id.
+        """
+        try:
+            return self.model.get_secret(id=secret_id)
+        except (ops.SecretNotFoundError, ops.ModelError) as exc:
+            logger.error("Failed to get secret with id %s: %s", secret_id, exc)
+            return None

@@ -16,6 +16,7 @@ import ops
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.paas_config import LoggingFormat
+from paas_charm.valkey import ValkeyClientRelationAppData
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +165,32 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> 
     if not relation_data:
         return {}
     return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
+def generate_valkey_env(
+    relation_data: ValkeyClientRelationAppData | None = None,
+) -> dict[str, str]:
+    """Generate environment variables from Valkey relation data.
+
+    Args:
+        relation_data: The charm Valkey integration relation data.
+
+    Returns:
+        Valkey environment mappings if Valkey relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    prefix = "VALKEY"
+    return {
+        **_db_url_to_env_variables(prefix, str(relation_data.valkey_client_response.endpoints)),
+        f"{prefix}_USERNAME": relation_data.username,
+        f"{prefix}_PASSWORD": relation_data.password,
+        f"{prefix}_TLS": str(relation_data.valkey_client_response.tls).lower(),
+        f"{prefix}_MODE": relation_data.valkey_client_response.mode or "",
+        f"{prefix}_TLS_CA": relation_data.valkey_client_response.tls_ca or "",
+        f"{prefix}_VERSION": relation_data.valkey_client_response.version or "",
+    }
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
@@ -355,6 +382,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_redis_env: Maps Redis connection information to environment variables.
+        generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
@@ -367,6 +395,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_redis_env = staticmethod(generate_redis_env)
+    generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
@@ -489,6 +518,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
         env.update(self.generate_redis_env(relation_data=self._charm_state.integrations.redis))
+        env.update(self.generate_valkey_env(relation_data=self._charm_state.integrations.valkey))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
@@ -559,9 +589,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         services[self._workload_config.service_name]["override"] = "replace"
         services[self._workload_config.service_name]["environment"] = self.gen_environment()
         if self._alternate_service_command:
-            services[self._workload_config.service_name][
-                "command"
-            ] = self._alternate_service_command
+            services[self._workload_config.service_name]["command"] = (
+                self._alternate_service_command
+            )
 
         for service_name, service in services.items():
             normalised_service_name = service_name.lower()

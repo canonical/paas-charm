@@ -30,6 +30,7 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
     from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
+    from paas_charm.valkey import PaaSValkeyRelationData, ValkeyClientRequirer
     from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
     from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
     from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
@@ -158,6 +159,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 redis=(
                     integration_requirers.redis.to_relation_data()
                     if integration_requirers.redis
+                    else None
+                ),
+                valkey=(
+                    integration_requirers.valkey.to_relation_data()
+                    if integration_requirers.valkey
                     else None
                 ),
                 s3=(
@@ -300,6 +306,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
         redis: Redis requirer object.
+        valkey: Valkey requirer object.
         s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
@@ -313,6 +320,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
     redis: "PaaSRedisRequires | None" = None
+    valkey: "ValkeyClientRequirer | None" = None
     s3: "PaaSS3Requirer | None" = None
     saml: "PaaSSAMLRequirer | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
@@ -332,6 +340,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
         redis: The Redis connection info from redis lib.
+        valkey: The Valkey connection info from valkey relation data.
         s3: S3 connection information from relation data.
         saml: SAML parameters.
         smtp: SMTP parameters.
@@ -344,6 +353,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
     redis: "PaaSRedisRelationData | None" = None
+    valkey: "PaaSValkeyRelationData | None" = None
     s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None
