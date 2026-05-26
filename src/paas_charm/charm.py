@@ -264,7 +264,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             _valkey = ValkeyClientRequirer(
                 charm=self, relation_name="valkey", get_secret_callback=self._get_secret
             )
-            self.framework.observe(_valkey.on.resource_created, self._on_valkey_resource_created)
+            self.framework.observe(
+                _valkey.valkey_interface.on.resource_created,
+                self._on_valkey_resource_created,
+            )
 
         return _valkey
 
