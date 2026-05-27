@@ -64,6 +64,18 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
     )
 
 
+@pytest.fixture(scope="module", name="go_valkey_app")
+def go_valkey_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+    framework = "go-valkey"
+    yield from generate_app_fixture(
+        juju=juju,
+        pytestconfig=pytestconfig,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+    )
+
+
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
     framework = "expressjs"
@@ -136,6 +148,23 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
     )
 
     return App(redis_app_name)
+
+
+@pytest.fixture(scope="module", name="valkey_app_name")
+def valkey_app_name_fixture() -> str:
+    return "valkey"
+
+
+@pytest.fixture(scope="module", name="valkey_app")
+def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
+    """Deploy and set up Valkey."""
+    juju.deploy(
+        valkey_app_name,
+        channel="9/edge",
+        trust=True,
+    )
+
+    return App(valkey_app_name)
 
 
 @pytest.fixture(scope="module", name="mongodb_app_name")

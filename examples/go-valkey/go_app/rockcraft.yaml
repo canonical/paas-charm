@@ -1,0 +1,33 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: go-app
+# see https://documentation.ubuntu.com/rockcraft/en/stable/explanation/bases/
+# for more information about bases and using 'bare' bases for chiselled rocks
+base: ubuntu@24.04 # the base environment for this Go application
+version: '0.1' # just for humans. Semantic versioning is recommended
+summary: A summary of your Go application # 79 char long summary
+description: |
+    This is go-app's description. You have a paragraph or two to tell the
+    most important story about it. Keep it under 100 words though,
+    we live in tweetspace and your description wants to look good in the
+    container registries out there.
+platforms: # The platforms this rock should be built on and run on
+    amd64:
+
+# to ensure the go-framework extension functions properly, your Go project
+# should have a go.mod file. Check the parts section for the selection of
+# the default binary.
+# see https://documentation.ubuntu.com/rockcraft/en/stable/reference/extensions/go-framework
+# for more information.
+# +-- go_app
+# |   |-- go.mod
+# |   |-- migrate.sh
+
+extensions:
+    - go-framework
+
+# Uncomment the sections you need and adjust according to your requirements.
+parts:
+  go-framework/install-app:
+    build-snaps:
+      - go/1.23/stable

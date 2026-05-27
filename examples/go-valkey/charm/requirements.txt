@@ -1,0 +1,2 @@
+ops >= 3.0
+paas-charm
