@@ -589,9 +589,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         services[self._workload_config.service_name]["override"] = "replace"
         services[self._workload_config.service_name]["environment"] = self.gen_environment()
         if self._alternate_service_command:
-            services[self._workload_config.service_name][
-                "command"
-            ] = self._alternate_service_command
+            services[self._workload_config.service_name]["command"] = (
+                self._alternate_service_command
+            )
 
         for service_name, service in services.items():
             normalised_service_name = service_name.lower()
@@ -633,14 +633,20 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
       all components as returned from urllib.parse and the
       database name extracted from the path
     """
-    prefix = prefix + "_DB"
-    envvars = _url_env_vars(prefix, url)
+    db_env_prefix = prefix + "_DB"
+    # Ensure the scheme in the url so that urllib can properly parse it into components.
+    # Providers like valkey sends the url without the scheme ( valkey_primary:6123 )
+    # This normalizes that URL to become valkey://valkey_primary:6123
+    if not url.startswith(prefix.lower()):
+        url = f"{prefix.lower()}://{url}"
+
+    envvars = _url_env_vars(db_env_prefix, url)
     parsed_url = urllib.parse.urlparse(url)
 
     # database name is usually parsed this way.
     db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
     if db_name is not None:
-        envvars[f"{prefix}_NAME"] = db_name
+        envvars[f"{db_env_prefix}_NAME"] = db_name
     return envvars
 
 
