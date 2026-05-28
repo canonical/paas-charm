@@ -160,6 +160,7 @@ def test_blocked_status_when_proxy_unavailable(
 
     base_state = request.getfixturevalue(base_state)
     base_state["config"] = config
+    base_state["leader"] = True
     http_proxy_relation = testing.Relation(
         endpoint="http-proxy",
         interface="http_proxy",

@@ -637,7 +637,7 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
     # Ensure the scheme in the url so that urllib can properly parse it into components.
     # Providers like valkey sends the url without the scheme ( valkey_primary:6123 )
     # This normalizes that URL to become valkey://valkey_primary:6123
-    if not url.startswith(prefix.lower()):
+    if "://" not in url:
         url = f"{prefix.lower()}://{url}"
 
     envvars = _url_env_vars(db_env_prefix, url)
