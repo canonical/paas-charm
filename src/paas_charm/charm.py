@@ -73,8 +73,7 @@ try:
     from charms.smtp_integrator.v0.smtp import SmtpRequires
 except ImportError:
     logger.warning(
-        "Missing charm library, please run "
-        "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
+        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
     )
 
 try:
@@ -698,9 +697,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires[oauth_endpoint_name].optional:
                 yield "oauth"
 
-    def _missing_required_integrations(
-        self, charm_state: CharmState
-    ) -> typing.Generator:  # noqa: C901
+    def _missing_required_integrations(self, charm_state: CharmState) -> typing.Generator:  # noqa: C901
         """Get list of missing integrations that are required.
 
         Args:
