@@ -50,7 +50,8 @@ jobs:
           "test_spring_saml.py",
           "test_redis.py",
           "test_mongodb.py",
-          "test_mysql.py"
+          "test_mysql.py",
+          "test_valkey.py"
         ]
       rockcraft-channel: latest/edge
       juju-channel: ${{ matrix.juju-version }}

@@ -17,6 +17,7 @@ import pymongo
 import pymongo.database
 import pymysql
 import redis
+import valkey
 import urllib3
 from authlib.integrations.flask_client import OAuth
 from celery import Celery, Task
@@ -432,6 +433,29 @@ def redis_status():
             return "SUCCESS"
         except redis.exceptions.RedisError:
             logging.exception("Error querying redis")
+    return "FAIL", 500
+
+
+def get_valkey_database() -> valkey.Valkey | None:
+    """Get valkey connection."""
+    if "valkey_db" not in g:
+        if "VALKEY_DB_CONNECT_STRING" in os.environ:
+            uri = os.environ["VALKEY_DB_CONNECT_STRING"]
+            g.valkey_db = valkey.Valkey.from_url(f"valkey://{uri}")
+        else:
+            return None
+    return g.valkey_db
+
+
+@app.route("/valkey/status")
+def valkey_status():
+    """Valkey status endpoint."""
+    if database := get_valkey_database():
+        try:
+            database.set("foo", "bar")
+            return "SUCCESS"
+        except valkey.exceptions.ValkeyError:
+            logging.exception("Error querying valkey")
     return "FAIL", 500
 
 
