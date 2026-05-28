@@ -942,18 +942,3 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
         """Handle http-proxy relation changed."""
         self.restart()
-
-    def _get_secret(self, secret_id: str) -> ops.Secret | None:
-        """Get secret by secret_id.
-
-        Args:
-            secret_id: the id of the secret to get.
-
-        Returns:
-            The ops.Secret instance for the given secret_id.
-        """
-        try:
-            return self.model.get_secret(id=secret_id)
-        except (ops.SecretNotFoundError, ops.ModelError) as exc:
-            logger.error("Failed to get secret with id %s: %s", secret_id, exc)
-            return None
