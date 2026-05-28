@@ -17,8 +17,8 @@ import pymongo
 import pymongo.database
 import pymysql
 import redis
-import valkey
 import urllib3
+import valkey
 from authlib.integrations.flask_client import OAuth
 from celery import Celery, Task
 from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
