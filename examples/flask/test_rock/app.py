@@ -66,7 +66,7 @@ def init_smtp(app: Flask) -> bool:
         app.config["MAIL_SERVER"] = os.environ.get("SMTP_HOST")
         app.config["MAIL_PORT"] = os.environ.get("SMTP_PORT")
         app.config["MAIL_USERNAME"] = (
-            f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}'
+            f"{os.environ.get('SMTP_USER')}@{os.environ.get('SMTP_DOMAIN')}"
         )
         app.config["MAIL_PASSWORD"] = os.environ.get("SMTP_PASSWORD")
         app.config["MAIL_USE_TLS"] = (
@@ -441,7 +441,7 @@ def get_valkey_database() -> valkey.Valkey | None:
     if "valkey_db" not in g:
         if "VALKEY_DB_CONNECT_STRING" in os.environ:
             uri = os.environ["VALKEY_DB_CONNECT_STRING"]
-            g.valkey_db = valkey.Valkey.from_url(f"valkey://{uri}")
+            g.valkey_db = valkey.Valkey.from_url(uri)
         else:
             return None
     return g.valkey_db
