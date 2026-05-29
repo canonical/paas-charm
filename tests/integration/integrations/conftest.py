@@ -138,6 +138,23 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
     return App(redis_app_name)
 
 
+@pytest.fixture(scope="module", name="valkey_app_name")
+def valkey_app_name_fixture() -> str:
+    return "valkey"
+
+
+@pytest.fixture(scope="module", name="valkey_app")
+def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
+    """Deploy and set up Valkey."""
+    juju.deploy(
+        valkey_app_name,
+        channel="9/edge",
+        trust=True,
+    )
+
+    return App(valkey_app_name)
+
+
 @pytest.fixture(scope="module", name="mongodb_app_name")
 def mongodb_app_name_fixture() -> str:
     return "mongodb-k8s"
