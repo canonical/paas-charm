@@ -38,6 +38,7 @@ from paas_charm.utils import (
     get_endpoints_by_interface_name,
     merge_cos_directories,
 )
+from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
 
@@ -100,8 +101,6 @@ except ImportError:
         "Missing charm library, please run "
         "`charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
     )
-
-from paas_charm.valkey import ValkeyClientRequirer  # noqa: E402
 
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
@@ -697,7 +696,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not requires[oauth_endpoint_name].optional:
                 yield "oauth"
 
-    def _missing_required_integrations(self, charm_state: CharmState) -> typing.Generator:  # noqa: C901
+    def _missing_required_integrations(
+        self, charm_state: CharmState
+    ) -> typing.Generator:  # noqa: C901
         """Get list of missing integrations that are required.
 
         Args:

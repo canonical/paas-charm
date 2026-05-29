@@ -589,9 +589,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         services[self._workload_config.service_name]["override"] = "replace"
         services[self._workload_config.service_name]["environment"] = self.gen_environment()
         if self._alternate_service_command:
-            services[self._workload_config.service_name]["command"] = (
-                self._alternate_service_command
-            )
+            services[self._workload_config.service_name][
+                "command"
+            ] = self._alternate_service_command
 
         for service_name, service in services.items():
             normalised_service_name = service_name.lower()
