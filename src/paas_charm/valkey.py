@@ -101,9 +101,7 @@ class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
                     return None
                 response = model.requests[0]
                 if response.tls:
-                    raise ValkeyTLSNotSupportedError(
-                        "Valkey TLS mode is not supported"
-                    )
+                    raise ValkeyTLSNotSupportedError("TLS mode is not supported for Valkey")
                 return response
             return None
         except ValidationError as exc:

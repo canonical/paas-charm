@@ -5,8 +5,6 @@
 
 """Module __init__."""
 
-import dpcharmlibs.interfaces  # noqa: F401
-
 from paas_charm import exceptions
 
 # Try the charm library imports to check whether they are present
