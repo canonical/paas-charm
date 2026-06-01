@@ -116,6 +116,7 @@ def test_valkey_to_relation_data_with_response(mock_handler_cls):
     mock_response.endpoints = "valkey-primary:6379"
     mock_response.username = "testuser"
     mock_response.password = "testpass"
+    mock_response.tls = False
 
     mock_model = MagicMock()
     mock_model.requests = [mock_response]
@@ -156,3 +157,65 @@ def test_valkey_to_relation_data_empty_requests(mock_handler_cls):
     requirer = ValkeyClientRequirer(charm=mock_charm, relation_name="valkey")
 
     assert requirer.to_relation_data() is None
+
+
+@patch("paas_charm.valkey.ResourceRequirerEventHandler")
+def test_valkey_to_relation_data_tls_not_supported(mock_handler_cls):
+    """
+    arrange: given ValkeyClientRequirer with TLS enabled in relation data.
+    act: when to_relation_data is called.
+    assert: ValkeyTLSNotSupportedError is raised.
+    """
+    from paas_charm.valkey import ValkeyTLSNotSupportedError
+
+    mock_relation = MagicMock()
+    mock_relation.id = 1
+    mock_relation.app = "valkey"
+
+    mock_response = MagicMock()
+    mock_response.endpoints = "valkey-primary:6379"
+    mock_response.username = "testuser"
+    mock_response.password = "testpass"
+    mock_response.tls = True
+
+    mock_model = MagicMock()
+    mock_model.requests = [mock_response]
+
+    mock_handler = MagicMock()
+    mock_handler.relations = [mock_relation]
+    mock_handler.interface.build_model.return_value = mock_model
+    mock_handler_cls.return_value = mock_handler
+
+    mock_charm = MagicMock()
+    requirer = ValkeyClientRequirer(charm=mock_charm, relation_name="valkey")
+
+    with pytest.raises(ValkeyTLSNotSupportedError):
+        requirer.to_relation_data()
+
+
+@patch("paas_charm.valkey.ResourceRequirerEventHandler")
+def test_valkey_to_relation_data_multiple_relations_not_supported(mock_handler_cls):
+    """
+    arrange: given ValkeyClientRequirer with more than one relation.
+    act: when to_relation_data is called.
+    assert: ValkeyMultipleRelationsNotSupportedError is raised.
+    """
+    from paas_charm.valkey import ValkeyMultipleRelationsNotSupportedError
+
+    mock_relation_1 = MagicMock()
+    mock_relation_1.id = 1
+    mock_relation_1.app = "valkey-1"
+
+    mock_relation_2 = MagicMock()
+    mock_relation_2.id = 2
+    mock_relation_2.app = "valkey-2"
+
+    mock_handler = MagicMock()
+    mock_handler.relations = [mock_relation_1, mock_relation_2]
+    mock_handler_cls.return_value = mock_handler
+
+    mock_charm = MagicMock()
+    requirer = ValkeyClientRequirer(charm=mock_charm, relation_name="valkey")
+
+    with pytest.raises(ValkeyMultipleRelationsNotSupportedError):
+        requirer.to_relation_data()

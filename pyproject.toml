@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.11.3.dev4"
+version = "1.11.3"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
@@ -63,7 +63,6 @@ extend-exclude = '''
   |   examples/django/charm/lib/.*
   |   examples/fastapi/charm/lib/.*
   |   examples/go/charm/lib/.*
-  |   examples/go-valkey/charm/lib/.*
   |   examples/expressjs/charm/lib/.*
   |   examples/springboot/charm/lib/.*
 )
@@ -78,7 +77,6 @@ skip = [
   "examples/django/charm/lib",
   "examples/fastapi/charm/lib",
   "examples/go/charm/lib",
-  "examples/go-valkey/charm/lib",
   "examples/expressjs/charm/lib",
   "examples/springboot/charm/lib",
 ]

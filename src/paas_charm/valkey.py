@@ -31,6 +31,26 @@ class InvalidValkeyRelationDataError(InvalidRelationDataError):
     relation = VALKEY_RELATION_NAME
 
 
+class ValkeyTLSNotSupportedError(InvalidRelationDataError):
+    """Raised when Valkey TLS mode is enabled but not yet supported.
+
+    Attributes:
+        relation: The valkey relation name.
+    """
+
+    relation = VALKEY_RELATION_NAME
+
+
+class ValkeyMultipleRelationsNotSupportedError(InvalidRelationDataError):
+    """Raised when multiple Valkey relations are detected but not yet supported.
+
+    Attributes:
+        relation: The valkey relation name.
+    """
+
+    relation = VALKEY_RELATION_NAME
+
+
 class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
     """Wrapper around ResourceRequirerEventHandler for Valkey."""
 
@@ -60,19 +80,31 @@ class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
 
         Raises:
             InvalidValkeyRelationDataError: If invalid Valkey connection parameters were provided.
+            ValkeyMultipleRelationsNotSupportedError: If more than one valkey relation exists.
+            ValkeyTLSNotSupportedError: If the Valkey relation has TLS enabled.
 
         Returns:
             ValkeyResponseModel with resolved secrets, or None if not ready.
         """
+        relations = self.valkey_interface.relations
+        if len(relations) > 1:
+            raise ValkeyMultipleRelationsNotSupportedError(
+                "Multiple valkey relations are not supported"
+            )
         try:
-            if len(self.valkey_interface.relations) == 1:
-                relation = self.valkey_interface.relations[0]
+            if len(relations) == 1:
+                relation = relations[0]
                 model = self.valkey_interface.interface.build_model(
                     relation.id, component=relation.app
                 )
                 if not model.requests:
                     return None
-                return model.requests[0]
+                response = model.requests[0]
+                if response.tls:
+                    raise ValkeyTLSNotSupportedError(
+                        "Valkey TLS mode is not supported"
+                    )
+                return response
             return None
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
