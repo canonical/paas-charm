@@ -186,9 +186,7 @@ def generate_valkey_env(
         **_db_url_to_env_variables(prefix, str(relation_data.endpoints)),
         f"{prefix}_USERNAME": relation_data.username or "",
         f"{prefix}_PASSWORD": relation_data.password or "",
-        f"{prefix}_TLS": str(relation_data.tls).lower(),
         f"{prefix}_MODE": relation_data.mode or "",
-        f"{prefix}_TLS_CA": relation_data.tls_ca or "",
         f"{prefix}_VERSION": relation_data.version or "",
     }
 
