@@ -87,26 +87,27 @@ class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
             ValkeyResponseModel with resolved secrets, or None if not ready.
         """
         relations = self.valkey_interface.relations
+        if not relations:
+            return None
         if len(relations) > 1:
             raise ValkeyMultipleRelationsNotSupportedError(
                 "Multiple valkey relations are not supported"
             )
         try:
-            if len(relations) == 1:
-                relation = relations[0]
-                model = self.valkey_interface.interface.build_model(
-                    relation.id, component=relation.app
-                )
-                if not model.requests:
-                    return None
-                response = model.requests[0]
-                if response.tls:
-                    raise ValkeyTLSNotSupportedError("TLS mode is not supported for Valkey")
-                return response
-            return None
+            relation = relations[0]
+            model = self.valkey_interface.interface.build_model(
+                relation.id, component=relation.app
+            )
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
             raise InvalidValkeyRelationDataError(
                 f"Invalid ValkeyResponseModel: {error_messages.short}"
             ) from exc
+        else:
+            if not model.requests:
+                return None
+            response = model.requests[0]
+            if response.tls:
+                raise ValkeyTLSNotSupportedError("TLS mode is not supported for Valkey")
+            return response
