@@ -18,6 +18,7 @@ import pymongo.database
 import pymysql
 import redis
 import urllib3
+import valkey
 from authlib.integrations.flask_client import OAuth
 from celery import Celery, Task
 from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
@@ -65,7 +66,7 @@ def init_smtp(app: Flask) -> bool:
         app.config["MAIL_SERVER"] = os.environ.get("SMTP_HOST")
         app.config["MAIL_PORT"] = os.environ.get("SMTP_PORT")
         app.config["MAIL_USERNAME"] = (
-            f'{os.environ.get("SMTP_USER")}@{os.environ.get("SMTP_DOMAIN")}'
+            f"{os.environ.get('SMTP_USER')}@{os.environ.get('SMTP_DOMAIN')}"
         )
         app.config["MAIL_PASSWORD"] = os.environ.get("SMTP_PASSWORD")
         app.config["MAIL_USE_TLS"] = (
@@ -432,6 +433,29 @@ def redis_status():
             return "SUCCESS"
         except redis.exceptions.RedisError:
             logging.exception("Error querying redis")
+    return "FAIL", 500
+
+
+def get_valkey_database() -> valkey.Valkey | None:
+    """Get valkey connection."""
+    if "valkey_db" not in g:
+        if "VALKEY_DB_CONNECT_STRING" in os.environ:
+            uri = os.environ["VALKEY_DB_CONNECT_STRING"]
+            g.valkey_db = valkey.Valkey.from_url(uri)
+        else:
+            return None
+    return g.valkey_db
+
+
+@app.route("/valkey/status")
+def valkey_status():
+    """Valkey status endpoint."""
+    if database := get_valkey_database():
+        try:
+            database.set("foo", "bar")
+            return "SUCCESS"
+        except valkey.exceptions.ValkeyError:
+            logging.exception("Error querying valkey")
     return "FAIL", 500
 
 
