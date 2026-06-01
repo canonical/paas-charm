@@ -441,7 +441,9 @@ def get_valkey_database() -> valkey.Valkey | None:
     if "valkey_db" not in g:
         if "VALKEY_DB_CONNECT_STRING" in os.environ:
             uri = os.environ["VALKEY_DB_CONNECT_STRING"]
-            g.valkey_db = valkey.Valkey.from_url(uri)
+            username = os.environ.get("VALKEY_USERNAME") or None
+            password = os.environ.get("VALKEY_PASSWORD") or None
+            g.valkey_db = valkey.Valkey.from_url(uri, username=username, password=password)
         else:
             return None
     return g.valkey_db
