@@ -104,10 +104,10 @@ class ValkeyClientRequirer:  # pylint: disable=too-few-public-methods
             raise InvalidValkeyRelationDataError(
                 f"Invalid ValkeyResponseModel: {error_messages.short}"
             ) from exc
-        else:
-            if not model.requests:
-                return None
-            response = model.requests[0]
-            if response.tls:
-                raise ValkeyTLSNotSupportedError("TLS mode is not supported for Valkey")
-            return response
+
+        if not model.requests:
+            return None
+        response = model.requests[0]
+        if response.tls:
+            raise ValkeyTLSNotSupportedError("TLS mode is not supported for Valkey")
+        return response
