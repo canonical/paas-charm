@@ -181,13 +181,24 @@ def generate_valkey_env(
     """
     if not relation_data:
         return {}
+    endpoint = str(relation_data.endpoints)
+    user_info = (
+        f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
+    )
     prefix = "VALKEY"
+    # Ensure the scheme in the url so that urllib can properly parse it into components.
+    # Valkey sends the url without the scheme ( valkey_primary:6123 )
+    # This normalizes that URL to become valkey://valkey_primary:6123
+    if "://" not in endpoint:
+        endpoint = f"{prefix.lower()}://{user_info}{endpoint}"
+    else:
+        scheme, netloc = endpoint.split("://", 1)
+        endpoint = f"{scheme}://{user_info}{netloc}"
+
     return {
-        **_db_url_to_env_variables(prefix, str(relation_data.endpoints)),
+        **_db_url_to_env_variables(prefix, endpoint),
         f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
         f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
-        f"{prefix}_USERNAME": relation_data.username or "",
-        f"{prefix}_PASSWORD": relation_data.password or "",
         f"{prefix}_MODE": relation_data.mode or "",
         f"{prefix}_VERSION": relation_data.version or "",
     }
@@ -634,12 +645,6 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
       database name extracted from the path
     """
     db_env_prefix = prefix + "_DB"
-    # Ensure the scheme in the url so that urllib can properly parse it into components.
-    # Providers like valkey sends the url without the scheme ( valkey_primary:6123 )
-    # This normalizes that URL to become valkey://valkey_primary:6123
-    if "://" not in url:
-        url = f"{prefix.lower()}://{url}"
-
     envvars = _url_env_vars(db_env_prefix, url)
     parsed_url = urllib.parse.urlparse(url)
 
