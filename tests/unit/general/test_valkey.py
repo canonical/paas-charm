@@ -18,6 +18,8 @@ from paas_charm.valkey import ValkeyClientRequirer
         pytest.param(
             MagicMock(
                 endpoints="valkey-primary:6379",
+                read_only_endpoints="valkey-replicas:6379",
+                sentinel_endpoints="valkey-sentinel:26379",
                 username="relation-1-abc123",
                 password="supersecretpass",
                 mode="sentinel",
@@ -33,6 +35,8 @@ from paas_charm.valkey import ValkeyClientRequirer
                 "VALKEY_DB_PORT": "6379",
                 "VALKEY_DB_QUERY": "",
                 "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "valkey-replicas:6379",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "valkey-sentinel:26379",
                 "VALKEY_USERNAME": "relation-1-abc123",
                 "VALKEY_PASSWORD": "supersecretpass",
                 "VALKEY_MODE": "sentinel",
@@ -43,6 +47,8 @@ from paas_charm.valkey import ValkeyClientRequirer
         pytest.param(
             MagicMock(
                 endpoints="valkey-host:6380",
+                read_only_endpoints=None,
+                sentinel_endpoints=None,
                 username=None,
                 password=None,
                 mode=None,
@@ -58,6 +64,8 @@ from paas_charm.valkey import ValkeyClientRequirer
                 "VALKEY_DB_PORT": "6380",
                 "VALKEY_DB_QUERY": "",
                 "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
                 "VALKEY_USERNAME": "",
                 "VALKEY_PASSWORD": "",
                 "VALKEY_MODE": "",

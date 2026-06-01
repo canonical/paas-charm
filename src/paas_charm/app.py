@@ -184,6 +184,8 @@ def generate_valkey_env(
     prefix = "VALKEY"
     return {
         **_db_url_to_env_variables(prefix, str(relation_data.endpoints)),
+        f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
+        f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
         f"{prefix}_USERNAME": relation_data.username or "",
         f"{prefix}_PASSWORD": relation_data.password or "",
         f"{prefix}_MODE": relation_data.mode or "",
