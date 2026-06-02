@@ -3,6 +3,6 @@ coverage[toml]
 gunicorn
 opentelemetry-api
 opentelemetry-sdk
-ops[testing]==2.21.1
+ops[testing]==3.7.1
 pydantic[email]==2.13.3
 pytest

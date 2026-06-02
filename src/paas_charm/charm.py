@@ -38,6 +38,7 @@ from paas_charm.utils import (
     get_endpoints_by_interface_name,
     merge_cos_directories,
 )
+from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +74,7 @@ try:
     from charms.smtp_integrator.v0.smtp import SmtpRequires
 except ImportError:
     logger.warning(
-        "Missing charm library, please run "
-        "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
+        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
     )
 
 try:
@@ -150,6 +150,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         self._redis = self._init_redis(requires)
+        self._valkey = self._init_valkey(requires)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
@@ -246,6 +247,25 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _redis
+
+    def _init_valkey(self, requires: dict[str, RelationMeta]) -> "ValkeyClientRequirer | None":
+        """Initialize the Valkey relation if it is required.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Returns:
+            Returns the Valkey relation or None
+        """
+        _valkey = None
+        if "valkey" in requires and requires["valkey"].interface_name == "valkey_client":
+            _valkey = ValkeyClientRequirer(charm=self, relation_name="valkey")
+            self.framework.observe(
+                _valkey.valkey_interface.on.resource_created,
+                self._on_valkey_resource_created,
+            )
+
+        return _valkey
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
@@ -750,6 +770,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 redis=self._redis,
+                valkey=self._valkey,
                 rabbitmq=self._rabbitmq,
                 s3=self._s3,
                 saml=self._saml,
@@ -833,6 +854,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     @block_if_invalid_data
     def _on_redis_relation_updated(self, _: DatabaseRequiresEvent) -> None:
         """Handle redis's database-created event."""
+        self.restart(rerun_migrations=True)
+
+    @block_if_invalid_data
+    def _on_valkey_resource_created(self, _: ops.HookEvent) -> None:
+        """Handle valkey's resource-created event."""
         self.restart(rerun_migrations=True)
 
     @block_if_invalid_data
