@@ -1,4 +1,4 @@
-Django==6.0.5
+Django==5.2.14
 tzdata==2026.2
 psycopg2-binary==2.9.12
 opentelemetry-api==1.42.1
