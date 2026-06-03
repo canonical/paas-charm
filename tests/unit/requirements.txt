@@ -1,8 +1,8 @@
-cosl == 0.1.0
+cosl == 1.9.1
 coverage[toml]
 gunicorn
 opentelemetry-api
 opentelemetry-sdk
 ops[testing]==3.7.1
-pydantic[email]==2.13.3
+pydantic[email]==2.13.4
 pytest
