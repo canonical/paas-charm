@@ -1,5 +1,0 @@
-cosl
-dpcharmlibs-interfaces
-jsonschema >=4.19,<4.20
-ops >= 2.6
-pydantic==2.13.3

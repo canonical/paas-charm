@@ -142,10 +142,7 @@ type: charm
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
-    override-build: |-
-      rustup default stable
-      craftctl default
+      - astral-uv

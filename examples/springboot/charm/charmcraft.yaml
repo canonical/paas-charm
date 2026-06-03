@@ -13,34 +13,34 @@ summary: An example Spring Boot application.
 description: An example Spring Boot application.
 
 charm-libs:
-- lib: traefik-k8s.ingress
-  version: '2'
-- lib: observability-libs.juju_topology
-  version: '0'
-- lib: grafana-k8s.grafana_dashboard
-  version: '0.35'
-- lib: loki-k8s.loki_push_api
-  version: '1'
-- lib: data-platform-libs.data_interfaces
-  version: '0'
-- lib: prometheus-k8s.prometheus_scrape
-  version: '0'
-- lib: redis-k8s.redis
-  version: '0'
-- lib: data-platform-libs.s3
-  version: '0'
-- lib: saml-integrator.saml
-  version: '0'
-- lib: openfga-k8s.openfga
-  version: '1'
-- lib: smtp-integrator.smtp
-  version: '0'
-- lib: tempo-coordinator-k8s.tracing
-  version: '0'
-- lib: hydra.oauth
-  version: '0'
-- lib: squid_forward_proxy.http_proxy
-  version: '0'
+  - lib: traefik-k8s.ingress
+    version: "2"
+  - lib: observability-libs.juju_topology
+    version: "0"
+  - lib: grafana-k8s.grafana_dashboard
+    version: "0.35"
+  - lib: loki-k8s.loki_push_api
+    version: "1"
+  - lib: data-platform-libs.data_interfaces
+    version: "0"
+  - lib: prometheus-k8s.prometheus_scrape
+    version: "0"
+  - lib: redis-k8s.redis
+    version: "0"
+  - lib: data-platform-libs.s3
+    version: "0"
+  - lib: saml-integrator.saml
+    version: "0"
+  - lib: openfga-k8s.openfga
+    version: "1"
+  - lib: smtp-integrator.smtp
+    version: "0"
+  - lib: tempo-coordinator-k8s.tracing
+    version: "0"
+  - lib: hydra.oauth
+    version: "0"
+  - lib: squid_forward_proxy.http_proxy
+    version: "0"
 
 actions:
   rotate-secret-key:
@@ -69,8 +69,9 @@ config:
       default: /actuator/prometheus
     app-secret-key:
       type: string
-      description: Long secret you can use for sessions, csrf or any other thing where
-         you need a random secret shared by all units
+      description:
+        Long secret you can use for sessions, csrf or any other thing where
+        you need a random secret shared by all units
     app-secret-key-id:
       type: secret
       description: >-
@@ -89,8 +90,9 @@ config:
       default: "openid profile email"
     oidc-user-name-attribute:
       type: string
-      description: The name of the attribute returned in the UserInfo Response that references the Name
-          or Identifier of the end-user.
+      description:
+        The name of the attribute returned in the UserInfo Response that references the Name
+        or Identifier of the end-user.
       default: sub
     user-defined-config:
       type: string
@@ -168,10 +170,7 @@ type: charm
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
-    override-build: |-
-      rustup default stable
-      craftctl default
+      - astral-uv
