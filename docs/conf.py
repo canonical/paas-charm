@@ -378,5 +378,3 @@ intersphinx_mapping = {
     'open-documentation-academy': ("https://documentation.academy/", None),
 }
 
-# URL migration configuration
-slug = 'juju/docs/12-factor'
