@@ -65,4 +65,5 @@ tox
 Trivy
 umask
 Uvicorn
+valkey
 VMs
