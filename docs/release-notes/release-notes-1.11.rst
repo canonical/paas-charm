@@ -132,3 +132,23 @@ the OIDC redirect URI in ``ClientConfig``.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``@RenanGreca``, ``@javierdelapuente``, ``@erinecon``
+
+1.11.3 patch release — 26 May 2026
+----------------------------------
+
+``paas-charm`` bug fixes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Support for the ``valkey_client`` interface has been added.
+
+The ingress hostname is no longer appended to ``allowed_hosts`` when it is
+already present in the ``django-allowed-hosts`` charm config option,
+preventing duplicate entries.
+
+* `Pull request #282 <https://github.com/canonical/paas-charm/pull/282>`_
+* `Pull request #278 <https://github.com/canonical/paas-charm/pull/278>`_
+
+``paas-charm`` 1.11.3 contributors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``@kot0dama``, ``@Thanhphan1147``
