@@ -148,7 +148,7 @@ def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
     """Deploy and set up Valkey."""
     juju.deploy(
         valkey_app_name,
-        channel="latest/stable",
+        channel="9/edge",
         trust=True,
     )
 
