@@ -1,4 +1,4 @@
-cosl == 1.9.1
+cosl==1.9.1
 coverage[toml]
 gunicorn
 opentelemetry-api
