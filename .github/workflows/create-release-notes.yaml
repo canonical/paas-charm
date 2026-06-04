@@ -115,7 +115,6 @@ jobs:
 
             7. **RST section underlines must exactly match the header length.** Every \`-\`, \`~\`, or \`=\` underline must be the same number of characters as the heading text above it (including any inline markup such as \`\`backticks\`\`). Off-by-one underlines cause Sphinx/docutils warnings. Count carefully — em dashes (—) count as one character.
 
-            8. **Skip PRs labelled \`no-release-note\`.** Any pull request that carries the \`no-release-note\` GitHub label must not appear in the RST release notes or in the \`CHANGELOG.md\` versioned section. Check the \`labels\` array of each PR before including it.
             \`;
 
             const issue = await github.rest.issues.create({
