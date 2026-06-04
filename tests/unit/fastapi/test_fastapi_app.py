@@ -78,6 +78,7 @@ def test_fastapi_logging_environment(
 
     plan = state_out.get_container(FASTAPI_CONTAINER_NAME).plan
     env = plan.services["fastapi"].environment if plan and "fastapi" in plan.services else {}
+    command = plan.services["fastapi"].command if plan and "fastapi" in plan.services else ""
 
     for key in expected:
         assert key in env, f"Expected env var {key!r} missing"
@@ -87,6 +88,10 @@ def test_fastapi_logging_environment(
     if logging_format == LoggingFormat.JSON:
         assert env["UVICORN_LOG_CONFIG"] == f"{_LOG_CONFIG_DIR}/{_CONFIG_FILE}"
         assert env["PYTHONPATH"].startswith(_LOG_CONFIG_DIR)
+        assert "--log-config" in command
+        assert f"{_LOG_CONFIG_DIR}/{_CONFIG_FILE}" in command
+    else:
+        assert "--log-config" not in command
 
 
 def test_fastapi_json_logging_files_pushed(

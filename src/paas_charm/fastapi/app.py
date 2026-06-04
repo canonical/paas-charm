@@ -6,6 +6,7 @@
 import importlib.resources
 import logging
 import pathlib
+import shlex
 
 import ops
 
@@ -92,6 +93,23 @@ class FastAPIApp(App):
             )
             env["UVICORN_LOG_CONFIG"] = str(_LOG_CONFIG_DIR / _CONFIG_FILE)
         return env
+
+    def _app_layer(self) -> ops.pebble.LayerDict:
+        """Generate a pebble layer and add Uvicorn log-config argument when JSON logging is used."""
+        layer = super()._app_layer()
+        if self._workload_config.logging_format != LoggingFormat.JSON:
+            return layer
+
+        service = layer["services"][self._workload_config.service_name]
+        command = service.get("command")
+        if not command:
+            return layer
+
+        command_parts = shlex.split(command)
+        if "--log-config" not in command_parts:
+            command_parts.extend(["--log-config", str(_LOG_CONFIG_DIR / _CONFIG_FILE)])
+            service["command"] = shlex.join(command_parts)
+        return layer
 
 
 def _read_template(filename: str) -> str:
