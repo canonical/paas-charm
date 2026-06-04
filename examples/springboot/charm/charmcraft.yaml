@@ -174,3 +174,7 @@ parts:
     plugin: uv
     build-snaps:
       - astral-uv
+      - rustup
+    override-build: |-
+      rustup default stable
+      craftctl default
