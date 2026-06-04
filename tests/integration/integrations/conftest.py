@@ -134,6 +134,7 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
         channel="latest/edge",
         trust=True,
     )
+    juju.wait(lambda status: status.apps[redis_app_name].is_active, timeout=60 * 30)
 
     return App(redis_app_name)
 
@@ -151,6 +152,7 @@ def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
         channel="9/edge",
         trust=True,
     )
+    juju.wait(lambda status: status.apps[valkey_app_name].is_active, timeout=60 * 30)
 
     return App(valkey_app_name)
 

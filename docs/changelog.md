@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 1.11.3 - 2026-05-26
+
+* feat: Add support for the `valkey_client` interface.
 * fix: Prevent duplicate allowed_hosts when ingress hostname matches charm config.
   This avoids duplicating hostnames that were already configured by the user
   via the `django-allowed-hosts` charm config option.
