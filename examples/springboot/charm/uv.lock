@@ -205,23 +205,6 @@ wheels = [
 ]
 
 [[package]]
-name = "paas-charm"
-version = "1.11.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cosl" },
-    { name = "dpcharmlibs-interfaces" },
-    { name = "jinja2" },
-    { name = "jsonschema" },
-    { name = "ops" },
-    { name = "pydantic" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/bb/1b0be38f0323ee8a0c16f55d9770684a007fac59f089e857138183291554/paas_charm-1.11.3.tar.gz", hash = "sha256:6e25de0670c227d98361e0b4bd9e4ab72df22d156c3fce1aa74431bceb730df5", size = 76786, upload-time = "2026-06-05T04:45:45.526Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/90/ecd91407d504fbb822690f7c183e4da96b9974c8e4c9a853125af8d4dad6/paas_charm-1.11.3-py3-none-any.whl", hash = "sha256:3cff6718da8dfa41c433faa4d3121359f5d261d8a37aa6bb647c63cb51323790", size = 97855, upload-time = "2026-06-05T04:45:44.109Z" },
-]
-
-[[package]]
 name = "pydantic"
 version = "2.13.3"
 source = { registry = "https://pypi.org/simple" }
@@ -706,7 +689,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "ops" },
-    { name = "paas-charm" },
     { name = "pydantic" },
 ]
 
@@ -717,7 +699,6 @@ requires-dist = [
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jsonschema", specifier = "==4.26" },
     { name = "ops", specifier = "==3.7.1" },
-    { name = "paas-charm", specifier = "==1.11.3" },
     { name = "pydantic", specifier = "==2.13.3" },
 ]
 

@@ -13,5 +13,4 @@ dependencies = [
     "jsonschema==4.26",
     "ops==3.7.1",
     "pydantic==2.13.3",
-    "paas-charm==1.11.3",
 ]
