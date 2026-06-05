@@ -35,7 +35,6 @@ header:
     - '**/loki_alert_rules/**'
     - '**/prometheus_alert_rules/**'
     - '**/uv.lock'
-    - '**/.python-version'
     - 'examples/django/charm/lib/charms/redis_k8s/v0/redis.py'
     - 'examples/flask/lib/charms/redis_k8s/v0/redis.py'
     - 'examples/go/charm/lib/charms/redis_k8s/v0/redis.py'

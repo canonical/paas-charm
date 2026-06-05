@@ -8,8 +8,7 @@ type: charm
 
 actions:
   rotate-secret-key:
-    description:
-      Rotate the flask secret key. Users will be forced to log in again.
+    description: Rotate the flask secret key. Users will be forced to log in again.
       This might be useful if a security breach occurs.
 assumes:
   - k8s-api
@@ -17,18 +16,17 @@ bases:
   - build-on:
       - architectures:
           - amd64
-        channel: "22.04"
+        channel: '22.04'
         name: ubuntu
     run-on:
       - architectures:
           - amd64
-        channel: "22.04"
+        channel: '22.04'
         name: ubuntu
 config:
   options:
     flask-application-root:
-      description:
-        Path in which the application / web server is mounted. This configuration
+      description: Path in which the application / web server is mounted. This configuration
         will set the FLASK_APPLICATION_ROOT environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
@@ -39,23 +37,20 @@ config:
       description: What environment the Flask app is running in, by default it's 'production'.
       type: string
     flask-permanent-session-lifetime:
-      description:
-        Time in seconds for the cookie to expire in the Flask application
+      description: Time in seconds for the cookie to expire in the Flask application
         permanent sessions. This configuration will set the FLASK_PERMANENT_SESSION_LIFETIME
         environment variable. Run `app.config.from_prefixed_env()` in your Flask application
         in order to receive this configuration.
       type: int
     flask-preferred-url-scheme:
       default: HTTPS
-      description:
-        Scheme for generating external URLs when not in a request context
+      description: Scheme for generating external URLs when not in a request context
         in the Flask application. By default, it's "HTTPS". This configuration will
         set the FLASK_PREFERRED_URL_SCHEME environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
     flask-secret-key:
-      description:
-        The secret key used for securely signing the session cookie and
+      description: The secret key used for securely signing the session cookie and
         for any other security related needs by your Flask application. This configuration
         will set the FLASK_SECRET_KEY environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
@@ -69,15 +64,13 @@ config:
         and use the outputted secret ID to configure this option.
       type: secret
     flask-session-cookie-secure:
-      description:
-        Set the secure attribute in the Flask application cookies. This
+      description: Set the secure attribute in the Flask application cookies. This
         configuration will set the FLASK_SESSION_COOKIE_SECURE environment variable.
         Run `app.config.from_prefixed_env()` in your Flask application in order to
         receive this configuration.
       type: boolean
     webserver-keepalive:
-      description:
-        Time in seconds for webserver to wait for requests on a Keep-Alive
+      description: Time in seconds for webserver to wait for requests on a Keep-Alive
         connection.
       type: int
     webserver-threads:
@@ -118,20 +111,20 @@ resources:
     type: oci-image
 
 charm-libs:
-  - lib: traefik-k8s.ingress
-    version: "2"
-  - lib: observability-libs.juju_topology
-    version: "0"
-  - lib: grafana-k8s.grafana_dashboard
-    version: "0"
-  - lib: loki-k8s.loki_push_api
-    version: "1"
-  - lib: prometheus-k8s.prometheus_scrape
-    version: "0"
-  - lib: redis_k8s.redis
-    version: "0"
-  - lib: data_platform_libs.data_interfaces
-    version: "0"
+- lib: traefik-k8s.ingress
+  version: '2'
+- lib: observability-libs.juju_topology
+  version: '0'
+- lib: grafana-k8s.grafana_dashboard
+  version: '0'
+- lib: loki-k8s.loki_push_api
+  version: '1'
+- lib: prometheus-k8s.prometheus_scrape
+  version: '0'
+- lib: redis_k8s.redis
+  version: '0'
+- lib: data_platform_libs.data_interfaces
+  version: '0'
 
 parts:
   charm:

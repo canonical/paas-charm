@@ -109,7 +109,7 @@ def test_fastapi_config(
         "environment": env,
         "override": "replace",
         "startup": "enabled",
-        "command": "/bin/python3 -m uvicorn app:app --log-config /tmp/fastapi/log_config/uvicorn-log-config.json",
+        "command": "/bin/python3 -m uvicorn app:app",
         "user": "_daemon_",
         "working-dir": "/app",
     }

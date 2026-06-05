@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import pathlib
-import re
 import subprocess
 import uuid
 import zipfile
@@ -52,20 +51,11 @@ def inject_venv(charm: pathlib.Path | str, src: pathlib.Path | str):
         src = pathlib.Path(src)
         if not src.exists():
             raise FileNotFoundError(f"Python library {src} not found")
-        site_packages_dirs = sorted(
-            {
-                match.group(1)
-                for path in zip_file.namelist()
-                if (match := re.match(r"(venv/lib/python[^/]+/site-packages)/", path))
-            }
-        )
-        target_dirs = site_packages_dirs or ["venv"]
         for file in src.rglob("*"):
-            if not file.is_file() or "__pycache__" in str(file):
+            if "__pycache__" in str(file):
                 continue
             rel_path = file.relative_to(src.parent)
-            for target_dir in target_dirs:
-                zip_file.write(file, os.path.join(target_dir, rel_path))
+            zip_file.write(file, os.path.join("venv/", rel_path))
 
 
 def inject_charm_config(charm: pathlib.Path | str, charm_dict: dict, tmp_dir: pathlib.Path) -> str:
