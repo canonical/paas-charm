@@ -12,7 +12,7 @@ jobs:
       pull-requests: write
     strategy:
       matrix:
-        juju-version: [3.6/stable]
+        juju-version: [4.0/candidate]
     uses: 
       canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
@@ -55,9 +55,10 @@ jobs:
         ]
       rockcraft-channel: latest/edge
       juju-channel: ${{ matrix.juju-version }}
-      channel: 1.34-strict/stable
+      channel: 1.33-classic/stable
+      use-canonical-k8s: true
+      provider: 'k8s'
       test-timeout: 45
-      microk8s-addons: "dns ingress rbac storage metallb:10.64.140.43-10.64.140.49"
   allure-report:
     if: ${{ !cancelled() && github.event_name == 'schedule' }}
     needs:

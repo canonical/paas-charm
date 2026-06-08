@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "endpoint, db_name, db_channel, revision, trust",
     [
-        ("postgresql/status", "postgresql-k8s", "14/edge", None, True),
+        ("postgresql/status", "postgresql-k8s", "16/edge", None, True),
     ],
 )
 def test_with_database(
@@ -42,7 +42,7 @@ def test_with_database(
     """
     # Deploy database if not already deployed
     if not juju.status().apps.get(db_name):
-        juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust)
+        juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust, force=True)
 
     juju.wait(lambda status: status.apps.get(db_name, False) and status.apps[db_name].is_active)
 
