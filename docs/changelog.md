@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: set `alert_rules_path`, when using the v1 version of the loki library.
+
 ## 1.11.3 - 2026-05-26
 
 * feat: Add support for the `valkey_client` interface.
