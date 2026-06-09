@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* fix: set `alert_rules_path`, when using the v1 version of the loki library.
+* fix: Set `alert_rules_path` of `LogProxyConsumer` when using the v1 
+  version of the Loki library.
 
 ## 1.11.3 - 2026-05-26
 
