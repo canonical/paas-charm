@@ -66,7 +66,7 @@ class Observability(ops.Object):
             self._logging = charms.loki_k8s.v1.loki_push_api.LogForwarder(
                 charm,
                 alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
-                relation_name="logging"
+                relation_name="logging",
             )
         else:
             try:
