@@ -1,4 +1,4 @@
-Django
-tzdata
-psycopg2-binary
-gevent
+Django==5.2.14
+tzdata==2026.2
+psycopg2-binary==2.9.12
+gevent==26.5.0
