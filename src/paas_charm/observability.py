@@ -84,6 +84,7 @@ class Observability(ops.Object):
 
                 self._logging = charms.loki_k8s.v1.loki_push_api.LogProxyConsumer(
                     charm,
+                    alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
                     logs_scheme={
                         container_name: {
                             "log-files": [str(log_file) for log_file in log_files],
