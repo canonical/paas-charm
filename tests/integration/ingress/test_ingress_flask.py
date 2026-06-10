@@ -4,7 +4,7 @@
 import jubilant
 import requests
 
-from tests.integration.ingress.conftest import HOSTNAME
+from tests.integration.ingress.conftest import HOSTNAME, gateway_lb_ip
 from tests.integration.types import App
 
 
@@ -12,7 +12,6 @@ def test_ingress_flask(
     juju: jubilant.Juju,
     flask_app: App,
     ingress_provider: tuple[str, str],
-    gateway_lb_ip: str,
 ):
     gateway_app, configurator_app = ingress_provider
     try:
@@ -25,9 +24,11 @@ def test_ingress_flask(
         timeout=10 * 60,
         delay=5,
     )
+    lb_ip = gateway_lb_ip(juju, ingress_provider)
     response = requests.get(
-        f"http://{gateway_lb_ip}",
+        f"https://{lb_ip}",
         headers={"Host": HOSTNAME},
+        verify=False,
         timeout=30,
     )
     assert response.status_code == 200
