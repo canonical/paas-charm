@@ -10,5 +10,12 @@
   ],
   "vulnerabilityAlerts": {
     "enabled": true
-  }
+  },
+  "packageRules": [
+    {
+      "matchFileNames": ["examples/**/requirements.txt"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["every 2 weeks"]
+    }
+  ]
 }
