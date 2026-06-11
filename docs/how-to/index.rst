@@ -38,6 +38,8 @@ configuring, integrating, and using a 12-factor app charm.
      databases, ingress, and observability.
    * :ref:`Usage <charmcraft:use-12-factor-charms>`:
      Learn more about tasks such as migrations and troubleshooting.
+   * :ref:`uv migration <uv_migration>`:
+     A quick guide to use uv plugin in your charm.
 
 * :ref:`Provide custom COS dashboards and alert rules <how_to_add_custom_cos_assets>`:
   Add your own Grafana dashboards and Loki/Prometheus alert rules by shipping a
@@ -76,4 +78,5 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Get support <get-support>
    Custom COS dashboards and alert rules <custom-cos-assets>
    Add a new framework <add-new-framework>
+   uv migration <uv-migration>
    Contribute <contribute>
