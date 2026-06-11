@@ -24,6 +24,47 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 logger = logging.getLogger(__name__)
 
+VALKEY_READY_TIMEOUT = 60 * 30
+VALKEY_RESOLVE_ATTEMPTS = 5
+VALKEY_RESOLVE_DELAY = 60 * 3
+VALKEY_STATUS_POLL_DELAY = 10
+
+
+def wait_for_valkey_active(juju: jubilant.Juju, app_name: str):
+    """Wait for Valkey to become active and recover from transient error states."""
+    deadline = (
+        time.monotonic() + VALKEY_READY_TIMEOUT + VALKEY_RESOLVE_ATTEMPTS * VALKEY_RESOLVE_DELAY
+    )
+    unit_name = f"{app_name}/0"
+    resolve_attempts = 0
+
+    while time.monotonic() < deadline:
+        status = juju.status()
+        if app_name in status.apps and jubilant.all_active(status, app_name):
+            return
+
+        if app_name in status.apps and jubilant.any_error(status, app_name):
+            if resolve_attempts >= VALKEY_RESOLVE_ATTEMPTS:
+                pytest.fail(
+                    f"{unit_name} remained in error after {VALKEY_RESOLVE_ATTEMPTS} resolve "
+                    "attempts"
+                )
+
+            resolve_attempts += 1
+            logger.warning(
+                "Valkey is in error state; resolving %s (%s/%s)",
+                unit_name,
+                resolve_attempts,
+                VALKEY_RESOLVE_ATTEMPTS,
+            )
+            juju.cli("resolve", unit_name)
+            time.sleep(VALKEY_RESOLVE_DELAY)
+            continue
+
+        time.sleep(VALKEY_STATUS_POLL_DELAY)
+
+    pytest.fail(f"Timed out waiting for {app_name} to become active")
+
 
 @pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
@@ -152,7 +193,7 @@ def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
         channel="9/edge",
         trust=True,
     )
-    juju.wait(lambda status: status.apps[valkey_app_name].is_active, timeout=60 * 30)
+    wait_for_valkey_active(juju, valkey_app_name)
 
     return App(valkey_app_name)
 
