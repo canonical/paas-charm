@@ -95,7 +95,15 @@ async def homepage(request: Request):
 
 @app.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for("callback")
+    # Build redirect_uri from the charm-injected APP_BASE_URL env var rather
+    # than request.url_for(), which reads the Host header and is therefore
+    # tainted by attacker-controlled input in Starlette < 1.0.1.
+    # request.scope["path"] is set by the ASGI server and cannot be
+    # manipulated via the Host header; APP_BASE_URL is even safer as it is
+    # fully controlled by the operator/charm, not the incoming request.
+    base_url = os.getenv("APP_BASE_URL", "").rstrip("/")
+    callback_path = os.getenv("APP_OIDC_REDIRECT_PATH", "/callback")
+    redirect_uri = f"{base_url}{callback_path}"
     return await oauth.oidc.authorize_redirect(request, redirect_uri)
 
 
