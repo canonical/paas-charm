@@ -50,8 +50,7 @@ jobs:
           "test_spring_saml.py",
           "test_redis.py",
           "test_mongodb.py",
-          "test_mysql.py",
-        # "test_valkey.py" disabled until [valkey issue #70](https://github.com/canonical/valkey-operator/issues/70) is resolved.
+          "test_mysql.py"
         ]
       rockcraft-channel: latest/edge
       juju-channel: ${{ matrix.juju-version }}
