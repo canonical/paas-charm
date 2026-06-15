@@ -35,7 +35,7 @@ from .constants import (
 def test_flask_pebble_layer(harness: Harness) -> None:
     """
     arrange: none
-    act: start the flask charm and set flask-app container to be ready.
+    act: start the flask charm and set app container to be ready.
     assert: flask charm should submit the correct flaks pebble layer to pebble.
     """
     harness.begin()
@@ -133,7 +133,7 @@ def test_ingress(harness: Harness):
 def test_integrations_wiring(harness: Harness):
     """
     arrange: Prepare a Redis a database, a S3 integration and a SAML integration
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should have environment variables in its plan
         for each of the integrations.
     """
@@ -220,7 +220,7 @@ def test_integrations_wiring(harness: Harness):
 def test_rabbitmq_integration(harness: Harness, rabbitmq_relation_data, expected_env_vars):
     """
     arrange: Prepare a rabbitmq integration (RabbitMQ)
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should have environment variables in its plan
         for each of the integrations.
     """
@@ -240,7 +240,7 @@ def test_rabbitmq_integration(harness: Harness, rabbitmq_relation_data, expected
 def test_rabbitmq_integration_with_relation_data_empty(harness: Harness):
     """
     arrange: Prepare a rabbitmq integration (RabbitMQ), with missing data.
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should not have environment variables related to RabbitMQ
     """
     harness.add_relation("rabbitmq", "rabbitmq")

@@ -112,8 +112,8 @@ config:
       default: "openid profile email"
 
 containers:
-  django-app:
-    resource: django-app-image
+  app:
+    resource: app-image
 peers:
   secret-storage:
     interface: secret-storage
@@ -154,7 +154,7 @@ requires:
     limit: 1
 
 resources:
-  django-app-image:
+  app-image:
     description: django application image.
     type: oci-image
 type: charm

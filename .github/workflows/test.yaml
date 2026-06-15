@@ -8,5 +8,6 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/test.yaml@main
     secrets: inherit
     with:
+      pre-run-script: scripts/install_custom_charmcraft.sh
       self-hosted-runner: false
       self-hosted-runner-label: "edge"

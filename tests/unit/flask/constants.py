@@ -82,7 +82,7 @@ LAYER_WITH_WORKER = {
     }
 }
 
-FLASK_CONTAINER_NAME = "flask-app"
+FLASK_CONTAINER_NAME = "app"
 
 SAML_APP_RELATION_DATA_EXAMPLE = {
     "entity_id": "https://login.staging.ubuntu.com",

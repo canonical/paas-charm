@@ -75,7 +75,7 @@ def test_json_logging(flask_app: App, juju: jubilant.Juju):
 
     requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/", timeout=5)
 
-    all_logs = fetch_container_json_logs(pod_name, model_name, "flask-app")
+    all_logs = fetch_container_json_logs(pod_name, model_name, "app")
 
     access_logs = logs_for_logger(all_logs, "gunicorn.access")
     assert access_logs, "No JSON access log lines found in container logs."

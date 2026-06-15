@@ -52,7 +52,7 @@ def test_proxy(
     )
 
     resources = {
-        "flask-app-image": pytestconfig.getoption("--test-flask-image"),
+        "app-image": pytestconfig.getoption("--test-flask-image"),
     }
 
     # Deploy the charm

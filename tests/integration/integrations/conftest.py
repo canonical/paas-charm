@@ -35,7 +35,7 @@ def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, 
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+            "app-image": pytestconfig.getoption(f"--{framework}-app-image"),
         },
     )
 

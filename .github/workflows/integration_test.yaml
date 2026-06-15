@@ -17,8 +17,7 @@ jobs:
       canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      extra-arguments: '-x --log-format="%(asctime)s %(levelname)s %(message)s"'
-      charmcraft-channel: latest/edge
+      pre-build-script: scripts/install_custom_charmcraft.sh
       modules: |
         [
           "test_charm.py",

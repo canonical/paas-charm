@@ -89,8 +89,8 @@ config:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
 containers:
-  flask-app:
-    resource: flask-app-image
+  app:
+    resource: app-image
 peers:
   secret-storage:
     interface: secret-storage
@@ -106,7 +106,7 @@ requires:
   logging:
     interface: loki_push_api
 resources:
-  flask-app-image:
+  app-image:
     description: flask application image.
     type: oci-image
 
