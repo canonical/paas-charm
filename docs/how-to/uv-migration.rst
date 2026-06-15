@@ -4,9 +4,9 @@ Migrate your 12-factor charm to use the uv plugin
 =================================================
 
 In the upcoming V2 release of the ``paas-charm`` library and charms
-using the ``26.04`` base, the ``uv`` plugin will be the default.
+using the ``26.04`` base, the `uv<https://documentation.ubuntu.com/charmcraft/stable/reference/plugins/uv_plugin/#craft-parts-uv-plugin>`_ plugin will be the default.
 V1 charms use the ``charm`` plugin by default, and
-converting your V1 charm is considered a breaking change. 
+converting your V1 charm is considered a breaking change.
 This guide walks you
 through manually converting a V1 12-factor charm that uses
 the legacy ``charm`` plugin to the modern
@@ -42,7 +42,7 @@ Then replace the file with its equivalent ``pyproject.toml``:
 
 .. code-block:: bash
    :caption: pyproject.toml
-   
+
    [project]
    name = "my-charm-k8s"          # use your charm's name
    version = "0.1.0"
@@ -94,7 +94,7 @@ The key differences are:
 
 For example, if your ``charmcraft.yaml`` contains the following snippet:
 
-.. code:: bash
+.. code-block:: bash
    :caption: charmcraft.yaml
 
    parts:
@@ -109,9 +109,9 @@ For example, if your ``charmcraft.yaml`` contains the following snippet:
 
 Then update your file to use:
 
-.. code:: bash
+.. code-block:: bash
    :caption: charmcraft.yaml
-   
+
    parts:
      charm:
        source: .
@@ -173,39 +173,42 @@ File                 Action
 ``charmcraft.yaml``  Update ``parts.charm``
 ==================== ====================================
 
-Complete ``parts`` example (no ``paas-config.yaml``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Complete ``parts`` example
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: bash
+.. tabs::
 
-   parts:
-     charm:
-       source: .
-       plugin: uv
-       build-snaps:
-         - astral-uv
-         - rustup
-       override-build: |-
-         rustup default stable
-         craftctl default
+    .. group-tab:: without ``paas-config.yaml``
 
-Complete ``parts`` example (with ``paas-config.yaml``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        .. code-block:: bash
 
-.. code:: bash
+            parts:
+            charm:
+                source: .
+                plugin: uv
+                build-snaps:
+                - astral-uv
+                - rustup
+                override-build: |-
+                rustup default stable
+                craftctl default
 
-   parts:
-     charm:
-       source: .
-       plugin: uv
-       build-snaps:
-         - astral-uv
-         - rustup
-       override-build: |-
-         rustup default stable
-         craftctl default
-     config:
-       plugin: dump
-       source: .
-       stage:
-         - paas-config.yaml
+    .. group-tab:: with ``paas-config.yaml``
+
+        .. code-block:: bash
+
+            parts:
+            charm:
+                source: .
+                plugin: uv
+                build-snaps:
+                - astral-uv
+                - rustup
+                override-build: |-
+                rustup default stable
+                craftctl default
+            config:
+                plugin: dump
+                source: .
+                stage:
+                - paas-config.yaml

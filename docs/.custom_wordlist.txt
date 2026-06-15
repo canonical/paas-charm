@@ -64,6 +64,7 @@ Terraform
 tox
 Trivy
 umask
+uv
 Uvicorn
 valkey
 VMs
