@@ -4,7 +4,7 @@ Migrate your 12-factor charm to use the uv plugin
 =================================================
 
 In the upcoming V2 release of the ``paas-charm`` library and charms
-using the ``26.04`` base, the `uv<https://documentation.ubuntu.com/charmcraft/stable/reference/plugins/uv_plugin/#craft-parts-uv-plugin>`_ plugin will be the default.
+using the ``26.04`` base, the `uv <https://documentation.ubuntu.com/charmcraft/stable/reference/plugins/uv_plugin/#craft-parts-uv-plugin>`_ plugin will be the default.
 V1 charms use the ``charm`` plugin by default, and
 converting your V1 charm is considered a breaking change.
 This guide walks you
