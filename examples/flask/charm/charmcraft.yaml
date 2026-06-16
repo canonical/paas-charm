@@ -46,6 +46,9 @@ assumes:
 
 base: ubuntu@26.04
 
+platforms:
+  amd64:
+
 config:
   options:
     flask-application-root:
