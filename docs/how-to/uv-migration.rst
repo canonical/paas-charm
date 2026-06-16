@@ -129,7 +129,7 @@ Then update your file to use:
 If your charm ships a ``paas-config.yaml`` file, you need a dedicated
 ``dump`` part to stage it into the packed charm. Without this part,
 the file will not be included in your charm because the ``uv`` plugin
-only stages Python artefacts.
+only stages Python artifacts.
 
 .. code:: bash
 
