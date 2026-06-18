@@ -1,0 +1,18 @@
+# YAML configuration for microk8s concierge environment for paas-charm
+# Provisions a juju environment using microk8s with charm-ci opcli plugin
+
+bootstrap:
+  juju:
+    version: 3.6/stable
+    controller:
+      name: microk8s
+  bootstrap-provider: microk8s
+
+microk8s:
+  addons:
+    - name: dns
+    - name: ingress
+    - name: rbac
+    - name: hostpath-storage
+    - name: metallb
+      args: 10.64.140.43-10.64.140.49

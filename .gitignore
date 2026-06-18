@@ -169,3 +169,8 @@ examples/**/lib
 # Flask minimal libs
 examples/flask-minimal/charm/lib
 
+# opcli/charm-ci artifacts
+artifacts.build.yaml
+build/
+.spread-reroot*
+
