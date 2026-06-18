@@ -90,10 +90,72 @@ jobs:
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           echo "Build matrix: $matrix"
 
-  # ── Job 2: build each artifact in parallel ─────────────────────────────────
+  # ── Job 2: build custom charmcraft snap (cached) ────────────────────────────
+  # Builds the forked charmcraft snap once and caches it by source SHA.
+  # Charm build jobs download the cached snap and sideload it so that
+  # craft_providers injects it into the managed LXD container automatically.
+  build-charmcraft-snap:
+    name: Build charmcraft snap
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      snap-cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Compute cache key
+        id: cache-key
+        run: |
+          # Cache by the fork commit SHA so the snap is rebuilt only when the
+          # fork changes.
+          echo "key=charmcraft-snap-319f7e9b5cd70978bcf9508509d419bfdef60a6c" >> "$GITHUB_OUTPUT"
+
+      - name: Restore snap cache
+        id: snap-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/charmcraft-snap
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Install LXD
+        if: steps.snap-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo snap install lxd
+          sudo lxd waitready
+          sudo lxd init --auto
+          sudo usermod -aG lxd $USER
+          sudo chmod 0666 /var/snap/lxd/common/lxd/unix.socket
+
+      - name: Install snapcraft
+        if: steps.snap-cache.outputs.cache-hit != 'true'
+        run: sudo snap install snapcraft --classic
+
+      - name: Build charmcraft snap
+        if: steps.snap-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth=1 --branch feat/extension-dispatch \
+            https://github.com/alithethird/charmcraft.git /tmp/charmcraft-src
+          cd /tmp/charmcraft-src
+          snapcraft pack --output /tmp/charmcraft-snap/ --verbose
+        timeout-minutes: 60
+
+      - name: Save snap cache
+        if: steps.snap-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/charmcraft-snap
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: charmcraft-snap
+          path: /tmp/charmcraft-snap/charmcraft_*.snap
+          if-no-files-found: error
+
+  # ── Job 3: build each artifact in parallel ─────────────────────────────────
   build:
     name: "Build ${{ matrix.type }} ${{ matrix.name }} (${{ matrix.arch }})"
-    needs: build-matrix
+    needs: [build-matrix, build-charmcraft-snap]
     runs-on: ${{ fromJSON(matrix.runner) }}
     permissions:
       contents: read
@@ -181,16 +243,21 @@ jobs:
             sudo ip6tables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
           fi
 
-      - name: Install charmcraft (custom fork)
+      - name: Install charmcraft (custom fork snap)
         if: matrix.type == 'charm'
         run: |
-          # Install custom charmcraft fork with extension-dispatch support
-          python3 -m venv /tmp/charmcraft-venv
-          source /tmp/charmcraft-venv/bin/activate
-          pip install git+https://github.com/alithethird/charmcraft.git@feat/extension-dispatch
-          mkdir -p ~/.local/bin
-          ln -sf /tmp/charmcraft-venv/bin/charmcraft ~/.local/bin/charmcraft
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          # Download the pre-built fork snap and sideload it.
+          # craft_providers detects a sideloaded snap and injects it into the
+          # managed LXD container automatically (channel=None → inject_from_host).
+          mkdir -p /tmp/charmcraft-snap
+          # Download from the charmcraft-snap artifact produced by build-charmcraft-snap job
+          gh run download "${{ github.run_id }}" \
+            --repo "${{ github.repository }}" \
+            --name charmcraft-snap \
+            --dir /tmp/charmcraft-snap
+          sudo snap install --classic --dangerous /tmp/charmcraft-snap/charmcraft_*.snap
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install rockcraft
         if: matrix.type == 'rock' && steps.restore-rock-cache.outputs.cache-hit != 'true'
@@ -214,10 +281,6 @@ jobs:
         run: opcli artifacts build --${{ matrix.type }} ${{ matrix.name }}
         env:
           OPCLI_ROCK_UPLOAD: ${{ needs.build-matrix.outputs.rock-upload-mode }}
-          # Build charms directly on the host so our custom charmcraft fork is
-          # used instead of a managed LXD container pulling stock charmcraft.
-          # Rocks and snaps must NOT set this — they require the LXD container.
-          CRAFT_BUILD_ENVIRONMENT: ${{ matrix.type == 'charm' && 'host' || '' }}
 
       - name: Save rock cache
         if: >-
