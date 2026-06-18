@@ -53,38 +53,59 @@ def fixture_session_with_retry():
 @pytest.fixture(scope="session", name="rock_images")
 def fixture_rock_images() -> dict[str, str]:
     """Return dict of built rock images from opcli artifacts.build.yaml.
-    
-    Maps rock names (e.g., "test-flask", "django-app") to OCI image URLs.
-    Provided by opcli pytest plugin; falls back to empty dict if not in opcli context.
+
+    Maps rock names (e.g., "test-flask", "django-app") to OCI image URLs or
+    local .rock file paths. Provided by opcli pytest plugin; falls back to
+    reading artifacts.build.yaml directly when not running under opcli spread.
     """
-    # When running under opcli spread, this is injected via conftest plugin.
-    # For local testing, read from artifacts.build.yaml if it exists.
     artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
     if artifacts_build.exists():
         data = yaml.safe_load(artifacts_build.read_text())
-        rocks = data.get("rocks", {})
-        return {name: info.get("image", "") for name, info in rocks.items()}
+        # artifacts.build.yaml uses a list of GeneratedRock objects:
+        # rocks:
+        #   - name: test-flask
+        #     builds:
+        #       - arch: amd64
+        #         image: ghcr.io/...   (registry build)
+        #         # or file: ./path/to.rock  (local build)
+        result = {}
+        for rock in data.get("rocks", []):
+            name = rock["name"]
+            for build in rock.get("builds", []):
+                ref = build.get("image") or build.get("file") or ""
+                if ref:
+                    result[name] = ref
+                    break
+        return result
     return {}
 
 
 @pytest.fixture(scope="session", name="charm_paths")
 def fixture_charm_paths() -> dict[str, pathlib.Path]:
     """Return dict of pre-built charm paths from opcli artifacts.build.yaml.
-    
-    Maps charm names (e.g., "flask-k8s", "django-k8s") to local .charm file paths.
-    Provided by opcli pytest plugin; falls back to empty dict if not in opcli context.
+
+    Maps charm names (e.g., "flask-k8s", "django-k8s") to local .charm file
+    paths. Provided by opcli pytest plugin; falls back to reading
+    artifacts.build.yaml directly when not running under opcli spread.
     """
-    # When running under opcli spread, this is injected via conftest plugin.
-    # For local testing, read from artifacts.build.yaml if it exists.
     artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
     if artifacts_build.exists():
         data = yaml.safe_load(artifacts_build.read_text())
-        charms = data.get("charms", {})
-        return {
-            name: pathlib.Path(info.get("charm-file", ""))
-            for name, info in charms.items()
-            if info.get("charm-file")
-        }
+        # artifacts.build.yaml uses a list of GeneratedCharm objects:
+        # charms:
+        #   - name: flask-k8s
+        #     builds:
+        #       - arch: amd64
+        #         path: ./flask-k8s_ubuntu@26.04-amd64.charm
+        result = {}
+        for charm in data.get("charms", []):
+            name = charm["name"]
+            for build in charm.get("builds", []):
+                path = build.get("path")
+                if path:
+                    result[name] = pathlib.Path(path)
+                    break
+        return result
     return {}
 
 
