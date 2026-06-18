@@ -116,19 +116,28 @@ jobs:
           path: /tmp/charmcraft-snap
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Install build dependencies
-        if: steps.snap-cache.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update -q
-          # Enable universe for cargo-1.91, rustc-1.91 etc.
-          sudo add-apt-repository universe -y
-          sudo apt-get update -q
-          sudo snap install astral-uv --classic
-          sudo snap install go --classic
-
       - name: Install snapcraft
         if: steps.snap-cache.outputs.cache-hit != 'true'
         run: sudo snap install snapcraft --classic
+
+      - name: Install build dependencies
+        if: steps.snap-cache.outputs.cache-hit != 'true'
+        run: |
+          # Enable universe for cargo-1.91, rustc-1.91 etc.
+          sudo add-apt-repository universe -y
+          sudo apt-get update -q
+          # Install all build-packages declared in the snapcraft.yaml parts
+          # (snapcraft runs as non-root in destructive mode and cannot apt-get)
+          sudo apt-get install -y \
+            cargo-1.91 rustc-1.91 findutils git \
+            golang-go \
+            pkg-config \
+            python3-dev python3-pip python3-setuptools-scm python3-venv \
+            python3-wheel python3.12-dev libpython3.12-dev \
+            libapt-pkg-dev libassuan-dev libbtrfs-dev libdevmapper-dev \
+            libffi-dev libgit2-dev libgpgme-dev liblzma-dev \
+            libsodium-dev libssl-dev libxml2-dev libxslt1-dev libyaml-dev
+          sudo snap install astral-uv --classic
 
       - name: Build charmcraft snap
         if: steps.snap-cache.outputs.cache-hit != 'true'
