@@ -90,84 +90,10 @@ jobs:
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           echo "Build matrix: $matrix"
 
-  # ── Job 2: build custom charmcraft snap (cached) ────────────────────────────
-  # Builds the forked charmcraft snap once and caches it by source SHA.
-  # Charm build jobs download the cached snap and sideload it so that
-  # craft_providers injects it into the managed LXD container automatically.
-  build-charmcraft-snap:
-    name: Build charmcraft snap
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      snap-cache-key: ${{ steps.cache-key.outputs.key }}
-    steps:
-      - name: Compute cache key
-        id: cache-key
-        run: |
-          # Cache by the fork commit SHA so the snap is rebuilt only when the
-          # fork changes.
-          echo "key=charmcraft-snap-319f7e9b5cd70978bcf9508509d419bfdef60a6c" >> "$GITHUB_OUTPUT"
-
-      - name: Restore snap cache
-        id: snap-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: /tmp/charmcraft-snap
-          key: ${{ steps.cache-key.outputs.key }}
-
-      - name: Install snapcraft
-        if: steps.snap-cache.outputs.cache-hit != 'true'
-        run: sudo snap install snapcraft --classic
-
-      - name: Install build dependencies
-        if: steps.snap-cache.outputs.cache-hit != 'true'
-        run: |
-          # Enable universe for cargo-1.91, rustc-1.91 etc.
-          sudo add-apt-repository universe -y
-          sudo apt-get update -q
-          # Install all build-packages declared in the snapcraft.yaml parts
-          # (snapcraft runs as non-root in destructive mode and cannot apt-get)
-          sudo apt-get install -y \
-            cargo-1.91 rustc-1.91 findutils git \
-            golang-go \
-            pkg-config \
-            python3-dev python3-pip python3-setuptools-scm python3-venv \
-            python3-wheel python3.12-dev libpython3.12-dev \
-            libapt-pkg-dev libassuan-dev libbtrfs-dev libdevmapper-dev \
-            libffi-dev libgit2-dev libgpgme-dev liblzma-dev \
-            libsodium-dev libssl-dev libxml2-dev libxslt1-dev libyaml-dev
-          sudo snap install astral-uv --classic
-
-      - name: Build charmcraft snap
-        if: steps.snap-cache.outputs.cache-hit != 'true'
-        run: |
-          git clone --depth=1 --branch feat/extension-dispatch \
-            https://github.com/alithethird/charmcraft.git /tmp/charmcraft-src
-          mkdir -p /tmp/charmcraft-snap
-          cd /tmp/charmcraft-src
-          CRAFT_BUILD_ENVIRONMENT=host snapcraft pack \
-            --output /tmp/charmcraft-snap/ --verbose
-        timeout-minutes: 60
-
-      - name: Save snap cache
-        if: steps.snap-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: /tmp/charmcraft-snap
-          key: ${{ steps.cache-key.outputs.key }}
-
-      - name: Upload snap artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: charmcraft-snap
-          path: /tmp/charmcraft-snap/charmcraft_*.snap
-          if-no-files-found: error
-
-  # ── Job 3: build each artifact in parallel ─────────────────────────────────
+  # ── Job 2: build each artifact in parallel ─────────────────────────────────
   build:
     name: "Build ${{ matrix.type }} ${{ matrix.name }} (${{ matrix.arch }})"
-    needs: [build-matrix, build-charmcraft-snap]
+    needs: [build-matrix]
     runs-on: ${{ fromJSON(matrix.runner) }}
     permissions:
       contents: read
@@ -258,18 +184,12 @@ jobs:
       - name: Install charmcraft (custom fork snap)
         if: matrix.type == 'charm'
         run: |
-          # Download the pre-built fork snap and sideload it.
+          # Download the pre-built fork snap from the GitHub release and sideload it.
           # craft_providers detects a sideloaded snap and injects it into the
           # managed LXD container automatically (channel=None → inject_from_host).
-          mkdir -p /tmp/charmcraft-snap
-          # Download from the charmcraft-snap artifact produced by build-charmcraft-snap job
-          gh run download "${{ github.run_id }}" \
-            --repo "${{ github.repository }}" \
-            --name charmcraft-snap \
-            --dir /tmp/charmcraft-snap
-          sudo snap install --classic --dangerous /tmp/charmcraft-snap/charmcraft_*.snap
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          curl -L --output /tmp/charmcraft.snap \
+            "https://github.com/alithethird/charmcraft/releases/download/3.3.0/charmcraft_4.2.1.post53%2Bg4ef9d389.d20260612_amd64.snap"
+          sudo snap install --classic --dangerous /tmp/charmcraft.snap
 
       - name: Install rockcraft
         if: matrix.type == 'rock' && steps.restore-rock-cache.outputs.cache-hit != 'true'
