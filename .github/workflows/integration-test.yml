@@ -1,3 +1,6 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Integration Test
 
 # Reusable workflow that:
@@ -83,21 +86,12 @@ jobs:
       actions: read
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      opcli-sha: ${{ steps.workflow-version.outputs.sha }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Get workflow version
-        id: workflow-version
-        uses: canonical/get-workflow-version-action@v1
-        with:
-          repository-name: canonical/charm-ci
-          file-name: integration-test.yml
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
         run: sudo snap install astral-uv --classic
@@ -107,7 +101,7 @@ jobs:
           if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
             uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
           else
-            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@${{ steps.workflow-version.outputs.sha }}"
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
           fi
 
       - name: Install spread
@@ -169,7 +163,7 @@ jobs:
           if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
             uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
           else
-            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@${{ needs.test-matrix.outputs.opcli-sha }}"
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
           fi
 
       # ── Install spread ────────────────────────────────────────────────────
@@ -260,7 +254,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Forward the pinned opcli SHA so the spread prepare script installs
           # the same version as the runner (falls back to @main otherwise).
-          OPCLI_GIT_REF: ${{ needs.test-matrix.outputs.opcli-sha }}
+          OPCLI_GIT_REF: b4788978c987440a24360f3fb7cb879961ddb4c5
         run: opcli spread run -- -vv ${{ matrix.selector }}
 
       - name: Juju status (on failure)

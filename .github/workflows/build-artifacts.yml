@@ -1,3 +1,6 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Build Artifacts
 
 # Reusable workflow that builds all charms, rocks, and snaps declared in
@@ -48,7 +51,6 @@ jobs:
       contents: read
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      opcli-sha: ${{ steps.workflow-version.outputs.sha }}
       rock-upload-mode: ${{ steps.upload-mode.outputs.mode }}
     defaults:
       run:
@@ -70,14 +72,6 @@ jobs:
           fi
         working-directory: .
 
-      - name: Get workflow version
-        id: workflow-version
-        uses: canonical/get-workflow-version-action@v1
-        with:
-          repository-name: canonical/charm-ci
-          file-name: build-artifacts.yml
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install uv
         run: sudo snap install astral-uv --classic
 
@@ -86,7 +80,7 @@ jobs:
           if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
             uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
           else
-            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@${{ steps.workflow-version.outputs.sha }}"
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
           fi
 
       - name: Generate build matrix
@@ -135,7 +129,7 @@ jobs:
           if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
             uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
           else
-            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@${{ needs.build-matrix.outputs.opcli-sha }}"
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
           fi
 
       - name: Compute rock cache metadata
@@ -266,7 +260,7 @@ jobs:
           if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
             uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
           else
-            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@${{ needs.build-matrix.outputs.opcli-sha }}"
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
           fi
 
       - name: Download build partials

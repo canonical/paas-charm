@@ -1,3 +1,6 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 # YAML configuration for microk8s concierge environment for paas-charm
 # Provisions a juju environment using microk8s with charm-ci opcli plugin
 
