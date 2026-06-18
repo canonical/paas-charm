@@ -1,15 +1,26 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# YAML configuration for opcli spread backend
-# Defines test suites and concierge environments for paas-charm
+project: paas-charm
+path: /home/ubuntu/proj
+kill-timeout: 4h
+warn-timeout: 1h
 
 backends:
   integration-test:
-    summary: paas-charm integration test environments
-    type: manual
-    config:
-      concierge: microk8s
+    type: integration-test
+    systems:
+      - ubuntu-24.04
+
+environment:
+  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge-microk8s.yaml}")'
+  OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-b4788978c987440a24360f3fb7cb879961ddb4c5}")'
+
+exclude:
+  - .git
+  - .tox
+  - .venv
+  - .*_cache
 
 integration-suites:
   tests/integration/:
@@ -19,6 +30,7 @@ integration-suites:
     backends:
       - integration-test
     environment:
+      CONCIERGE: concierge-microk8s.yaml
       # Flask tests (6 modules)
       MODULE/flask_test_charm: tests/integration/flask/test_charm.py
       MODULE/flask_test_database: tests/integration/flask/test_database.py
@@ -26,31 +38,24 @@ integration-suites:
       MODULE/flask_test_flask_configs: tests/integration/flask/test_flask_configs.py
       MODULE/flask_test_proxy: tests/integration/flask/test_proxy.py
       MODULE/flask_test_workers: tests/integration/flask/test_workers.py
-      
       # Django tests (3 modules)
       MODULE/django_test_django: tests/integration/django/test_django.py
       MODULE/django_test_django_integrations: tests/integration/django/test_django_integrations.py
       MODULE/django_test_workers: tests/integration/django/test_workers.py
-      
       # FastAPI tests (1 module)
       MODULE/fastapi_test_fastapi: tests/integration/fastapi/test_fastapi.py
-      
       # Go tests (1 module)
       MODULE/go_test_go: tests/integration/go/test_go.py
-      
       # ExpressJS tests (1 module)
       MODULE/expressjs_test_expressjs: tests/integration/expressjs/test_expressjs.py
-      
       # SpringBoot tests (2 modules)
       MODULE/springboot_test_charm: tests/integration/springboot/test_charm.py
       MODULE/springboot_test_spring_saml: tests/integration/springboot/test_spring_saml.py
-      
       # General tests (3 modules)
       MODULE/general_test_config: tests/integration/general/test_config.py
       MODULE/general_test_non_root_db_migration: tests/integration/general/test_non_root_db_migration.py
       MODULE/general_test_non_root_loki: tests/integration/general/test_non_root_loki.py
-      
-      # Integration tests (13 modules - excludes valkey)
+      # Integration tests (15 modules - excludes valkey)
       MODULE/integrations_test_grafana: tests/integration/integrations/test_grafana.py
       MODULE/integrations_test_http_proxy: tests/integration/integrations/test_http_proxy.py
       MODULE/integrations_test_loki: tests/integration/integrations/test_loki.py
@@ -66,7 +71,3 @@ integration-suites:
       MODULE/integrations_test_saml: tests/integration/integrations/test_saml.py
       MODULE/integrations_test_smtp: tests/integration/integrations/test_smtp.py
       MODULE/integrations_test_tracing: tests/integration/integrations/test_tracing.py
-
-concierges:
-  microk8s:
-    path: concierge-microk8s.yaml
