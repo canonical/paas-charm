@@ -216,7 +216,8 @@ jobs:
           OPCLI_ROCK_UPLOAD: ${{ needs.build-matrix.outputs.rock-upload-mode }}
           # Build charms directly on the host so our custom charmcraft fork is
           # used instead of a managed LXD container pulling stock charmcraft.
-          CRAFT_BUILD_ENVIRONMENT: host
+          # Rocks and snaps must NOT set this — they require the LXD container.
+          CRAFT_BUILD_ENVIRONMENT: ${{ matrix.type == 'charm' && 'host' || '' }}
 
       - name: Save rock cache
         if: >-
