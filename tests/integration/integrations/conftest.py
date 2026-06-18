@@ -26,52 +26,81 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module", name="flask_minimal_app")
-def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def flask_minimal_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    flask_minimal_app_image: str,
+    tmp_path_factory,
+):
     framework = "flask-minimal"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+            "app-image": flask_minimal_app_image,
         },
     )
 
 
 @pytest.fixture(scope="module", name="fastapi_app")
-def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def fastapi_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
     framework = "fastapi"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": fastapi_app_image,
+        },
         config={"non-optional-string": "string"},
     )
 
 
 @pytest.fixture(scope="module", name="go_app")
-def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def go_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    go_app_image: str,
+    tmp_path_factory,
+):
     framework = "go"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": go_app_image,
+        },
         config={"metrics-port": 8081},
     )
 
 
 @pytest.fixture(scope="module", name="expressjs_app")
-def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def expressjs_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    expressjs_app_image: str,
+    tmp_path_factory,
+):
     framework = "expressjs"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": expressjs_app_image,
+        },
     )
 
 
