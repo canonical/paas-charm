@@ -116,14 +116,15 @@ jobs:
           path: /tmp/charmcraft-snap
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Install LXD
+      - name: Install build dependencies
         if: steps.snap-cache.outputs.cache-hit != 'true'
         run: |
-          sudo snap install lxd
-          sudo lxd waitready
-          sudo lxd init --auto
-          sudo usermod -aG lxd $USER
-          sudo chmod 0666 /var/snap/lxd/common/lxd/unix.socket
+          sudo apt-get update -q
+          # Enable universe for cargo-1.91, rustc-1.91 etc.
+          sudo add-apt-repository universe -y
+          sudo apt-get update -q
+          sudo snap install astral-uv --classic
+          sudo snap install go --classic
 
       - name: Install snapcraft
         if: steps.snap-cache.outputs.cache-hit != 'true'
@@ -134,8 +135,10 @@ jobs:
         run: |
           git clone --depth=1 --branch feat/extension-dispatch \
             https://github.com/alithethird/charmcraft.git /tmp/charmcraft-src
+          mkdir -p /tmp/charmcraft-snap
           cd /tmp/charmcraft-src
-          snapcraft pack --output /tmp/charmcraft-snap/ --verbose
+          CRAFT_BUILD_ENVIRONMENT=host snapcraft pack \
+            --output /tmp/charmcraft-snap/ --verbose
         timeout-minutes: 60
 
       - name: Save snap cache
