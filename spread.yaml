@@ -13,7 +13,7 @@ backends:
       - ubuntu-24.04
 
 environment:
-  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge-microk8s.yaml}")'
+  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'
   OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-b4788978c987440a24360f3fb7cb879961ddb4c5}")'
 
 exclude:
@@ -30,7 +30,7 @@ integration-suites:
     backends:
       - integration-test
     environment:
-      CONCIERGE: concierge-microk8s.yaml
+      CONCIERGE: concierge.yaml
       # Flask tests (6 modules)
       MODULE/flask_test_charm: tests/integration/flask/test_charm.py
       MODULE/flask_test_database: tests/integration/flask/test_database.py
