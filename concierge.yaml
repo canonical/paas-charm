@@ -7,6 +7,9 @@ juju:
     automatically-retry-hooks: "false"
 
 providers:
+  lxd:
+    enable: true
+    bootstrap: true
   k8s:
     enable: true
     bootstrap: true
@@ -17,9 +20,6 @@ providers:
         cidrs: "10.43.45.0/28"
       local-storage: {}
       network: {}
-  lxd:
-    enable: true
-    bootstrap: true
 
 host:
   packages:
