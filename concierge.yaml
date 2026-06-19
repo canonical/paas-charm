@@ -1,21 +1,22 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 juju:
-  channel: 3.6/stable
+  channel: 3/stable
   model-defaults:
     test-mode: "true"
     automatically-retry-hooks: "false"
 
 providers:
-  microk8s:
+  k8s:
     enable: true
     bootstrap: true
-    addons:
-      - hostpath-storage
-      - dns
-      - rbac
-      - metallb:10.64.140.43-10.64.140.49
+    channel: 1.33-classic/stable
+    features:
+      load-balancer:
+        l2-mode: "true"
+        cidrs: "10.43.45.0/28"
+      local-storage: {}
+      network: {}
   lxd:
     enable: true
     bootstrap: true
