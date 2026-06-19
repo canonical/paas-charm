@@ -664,6 +664,11 @@ def integrate_redis_k8s_flask_fixture(
 def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""
 
+    # Ensure the active/default Juju controller is the Kubernetes one (CI: concierge-k8s)
+    # so temporary models and k8s charm deploys land on a Kubernetes cloud.
+    controller = request.config.getoption("--controller")
+    jubilant.Juju().cli("switch", controller, include_model=False)
+
     use_existing = request.config.getoption("--use-existing", default=False)
     if use_existing:
         juju = jubilant.Juju()
@@ -675,7 +680,7 @@ def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
         return juju
 
     keep_models = cast(bool, request.config.getoption("--keep-models"))
-    with jubilant.temp_model(keep=keep_models) as juju:
+    with jubilant.temp_model(keep=keep_models, controller=controller) as juju:
         juju.wait_timeout = 10 * 60
         return juju
 

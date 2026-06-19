@@ -10,3 +10,4 @@ def pytest_addoption(parser):
     parser.addoption("--keep-models", action="store_true", default=False)
     parser.addoption("--model", action="store", default=None)
     parser.addoption("--use-existing", action="store_true", default=False)
+    parser.addoption("--controller", action="store", default="concierge-k8s")
