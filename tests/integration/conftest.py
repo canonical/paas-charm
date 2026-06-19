@@ -103,7 +103,9 @@ def fixture_charm_paths() -> dict[str, pathlib.Path]:
             for build in charm.get("builds", []):
                 path = build.get("path")
                 if path:
-                    result[name] = pathlib.Path(path)
+                    # Resolve relative to PROJECT_ROOT so shutil.copy2 can
+                    # find the file regardless of the pytest working directory.
+                    result[name] = (PROJECT_ROOT / path).resolve()
                     break
         return result
     return {}
