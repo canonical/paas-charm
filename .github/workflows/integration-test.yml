@@ -255,9 +255,7 @@ jobs:
           # Forward the pinned opcli SHA so the spread prepare script installs
           # the same version as the runner (falls back to @main otherwise).
           OPCLI_GIT_REF: b4788978c987440a24360f3fb7cb879961ddb4c5
-        run: |
-          juju switch concierge-k8s
-          opcli spread run -- -vv ${{ matrix.selector }}
+        run: opcli spread run -- -vv ${{ matrix.selector }}
 
       - name: Juju status (on failure)
         if: failure()

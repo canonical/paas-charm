@@ -201,7 +201,6 @@ def fixture_spring_boot_app_image(rock_images: dict[str, str]):
     return image
 
 
-
 def build_charm_file(
     charm_paths: dict[str, pathlib.Path],
     framework: str,
@@ -210,7 +209,7 @@ def build_charm_file(
     charm_location: pathlib.Path = None,
 ) -> pathlib.Path:
     """Build or retrieve charm file, apply injections, and return path.
-    
+
     Uses pre-built charm from charm_paths if available, otherwise builds locally.
     Always copies to tmp before injecting venv/config to avoid mutating shared artifacts.
     """
@@ -236,9 +235,9 @@ def build_charm_file(
             )
             charms = list(charm_location.glob(f"{charm_key}_*.charm"))
             assert charms, f"{charm_key} .charm file not found"
-            assert (
-                len(charms) == 1
-            ), f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            assert len(charms) == 1, (
+                f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            )
             # Copy to temp dir
             tmp_dir = tmp_path_factory.mktemp(f"{framework}-charm")
             charm_file = tmp_dir / charms[0].name
@@ -256,7 +255,7 @@ def build_charm_file(
                 tmp_path_factory.mktemp(f"{framework}-config"),
             )
         )
-    
+
     return charm_file.absolute()
 
 
@@ -668,11 +667,12 @@ def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
     use_existing = request.config.getoption("--use-existing", default=False)
     if use_existing:
         juju = jubilant.Juju()
+        juju.cli(["switch", "concierge-k8s"])
         return juju
 
     model = request.config.getoption("--model")
     if model:
-        juju = jubilant.Juju(model=model)
+        juju = jubilant.Juju(model=f"concierge-k8s:{model}")
         return juju
 
     keep_models = cast(bool, request.config.getoption("--keep-models"))
