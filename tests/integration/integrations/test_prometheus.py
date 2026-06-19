@@ -68,9 +68,9 @@ def test_prometheus_integration(
                 response.raise_for_status()
                 break
         else:
-            assert (
-                False
-            ), f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
+            assert False, (
+                f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
+            )
 
     finally:
         juju.remove_relation(app.name, prometheus_app.name)
@@ -100,7 +100,7 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        model_name = juju.model
+        model_name = juju.show_model().short_name
         prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
@@ -163,19 +163,18 @@ def _assert_scrape_targets_for_app(
     """
     urls = [t["scrapeUrl"] for t in targets]
     assert len(targets) == len(identifiers), (
-        f"Expected {len(identifiers)} target(s) on port {port}, "
-        f"found {len(targets)}. URLs: {urls}"
+        f"Expected {len(identifiers)} target(s) on port {port}, found {len(targets)}. URLs: {urls}"
     )
 
     for identifier in identifiers:
-        assert any(
-            identifier in url for url in urls
-        ), f"Expected target with '{identifier}' on port {port}, got: {urls}"
+        assert any(identifier in url for url in urls), (
+            f"Expected target with '{identifier}' on port {port}, got: {urls}"
+        )
 
     if labels:
         for target in targets:
             for key, expected_value in labels.items():
                 actual_value = target["labels"].get(key)
-                assert (
-                    actual_value == expected_value
-                ), f"Expected {key}={expected_value}, got {key}={actual_value}"
+                assert actual_value == expected_value, (
+                    f"Expected {key}={expected_value}, got {key}={actual_value}"
+                )
