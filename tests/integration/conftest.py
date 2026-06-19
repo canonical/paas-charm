@@ -676,7 +676,7 @@ def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
         return juju
 
     keep_models = cast(bool, request.config.getoption("--keep-models"))
-    with jubilant.temp_model(keep=keep_models) as juju:
+    with jubilant.temp_model(controller="concierge-k8s", keep=keep_models) as juju:
         juju.wait_timeout = 10 * 60
         return juju
 
