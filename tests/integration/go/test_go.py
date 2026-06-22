@@ -81,7 +81,11 @@ def test_open_ports(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
     status = juju.status()
     traefik_ip = list(status.apps[traefik_app.name].units.values())[0].address
@@ -101,7 +105,11 @@ def test_open_ports(
     # Change port configuration
     new_port = WORKLOAD_PORT + 10
     juju.config(go_app.name, {"app-port": str(new_port)})
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{new_port}/tcp"
@@ -116,7 +124,11 @@ def test_open_ports(
 
     # Restore original port
     juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
