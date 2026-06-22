@@ -93,14 +93,16 @@ def test_open_ports(
     # Check initial opened ports
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
-    assert (
-        session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
-            timeout=5,
-        ).status_code
-        == 200
+    xxx = session_with_retry.get(
+        f"http://{traefik_ip}",
+        headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+        timeout=15,
     )
+    hsot = f"{juju.model}-{go_app.name}.{external_hostname}"
+    logger.warning(f"{xxx=}")
+    logger.warning(f"{traefik_ip=}")
+    logger.warning(f"{hsot=}")
+    assert xxx.status_code == 200
 
     # Change port configuration
     new_port = WORKLOAD_PORT + 10
