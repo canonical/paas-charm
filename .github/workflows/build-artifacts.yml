@@ -1,0 +1,275 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Build Artifacts
+
+# Reusable workflow that builds all charms, rocks, and snaps declared in
+# artifacts.yaml and publishes a merged artifacts.build.yaml as a
+# GitHub artifact.
+#
+# Call from your operator repository:
+#
+#   jobs:
+#     build:
+#       uses: canonical/charm-ci/.github/workflows/build-artifacts.yml@main
+#       permissions:
+#         contents: read
+#         packages: write
+#         actions: read   # required for get-workflow-version-action
+#
+# opcli is installed at the exact commit SHA this workflow was called with,
+# resolved via canonical/get-workflow-version-action (workaround for
+# https://github.com/actions/toolkit/issues/1264).
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "Directory containing artifacts.yaml (relative to workspace root)"
+        type: string
+        default: "."
+      upload-image:
+        description: >-
+          How rock images are published. "registry" pushes to GHCR (default for
+          same-repo PRs). "artifact" uploads the .rock as a GitHub artifact
+          (required for fork PRs with read-only GITHUB_TOKEN). Empty string
+          auto-detects based on fork status.
+        type: string
+        default: ""
+      pre-build-rock-script:
+        description: "Optional shell command to run before building each rock (e.g. './download_netbox.sh'). Skipped on cache hits."
+        type: string
+        default: ""
+
+jobs:
+  # ── Job 1: produce the build matrix ────────────────────────────────────────
+  build-matrix:
+    name: Build matrix
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      rock-upload-mode: ${{ steps.upload-mode.outputs.mode }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine rock upload mode
+        id: upload-mode
+        run: |
+          input="${{ inputs.upload-image }}"
+          if [ -n "$input" ]; then
+            echo "mode=$input" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
+            echo "mode=artifact" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=registry" >> "$GITHUB_OUTPUT"
+          fi
+        working-directory: .
+
+      - name: Install uv
+        run: sudo snap install astral-uv --classic
+
+      - name: Install opcli
+        run: |
+          if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
+            uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
+          else
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
+          fi
+
+      - name: Generate build matrix
+        id: matrix
+        run: |
+          matrix=$(opcli artifacts matrix)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Build matrix: $matrix"
+
+  # ── Job 2: build each artifact in parallel ─────────────────────────────────
+  build:
+    name: "Build ${{ matrix.type }} ${{ matrix.name }} (${{ matrix.arch }})"
+    needs: [build-matrix]
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix: ${{ fromJSON(needs.build-matrix.outputs.matrix) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up tmate session (self-hosted)
+        if: runner.debug == 1 && runner.environment == 'self-hosted'
+        uses: canonical/action-tmate@main
+        with:
+          detached: true
+          timeout-minutes: 60
+
+      - name: Set up tmate session (GitHub-hosted)
+        if: runner.debug == 1 && runner.environment == 'github-hosted'
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
+      - name: Install uv
+        run: sudo snap install astral-uv --classic
+
+      - name: Install opcli
+        run: |
+          if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
+            uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
+          else
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
+          fi
+
+      - name: Compute rock cache metadata
+        id: rock-cache-meta
+        if: matrix.type == 'rock' && needs.build-matrix.outputs.rock-upload-mode == 'registry'
+        run: |
+          # Determine the source directory to hash: pack-dir if set, otherwise
+          # the directory containing rockcraft.yaml.
+          # The shell CWD is already inputs.working-directory (set by defaults.run.working-directory),
+          # so matrix fields are resolved relative to it directly.
+          if [ -n "${{ matrix.pack-dir }}" ]; then
+            source_dir="${{ matrix.pack-dir }}"
+          else
+            source_dir="$(dirname "${{ matrix.rockcraft-yaml }}")"
+          fi
+          # Hash all files in source_dir, excluding any pre-built .rock outputs.
+          hash=$(find "$source_dir" -type f -not -name "*.rock" | sort | xargs sha256sum | sha256sum | cut -c1-32)
+          # Weekly expiry: caches rotate each ISO week to prevent long-lived stale entries.
+          week=$(date +%Y-W%V)
+          key="rock-${{ matrix.name }}-${{ matrix.arch }}-${hash}-${week}"
+          echo "key=${key}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore rock cache
+        id: restore-rock-cache
+        if: matrix.type == 'rock' && needs.build-matrix.outputs.rock-upload-mode == 'registry'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ inputs.working-directory }}/artifacts.build.yaml
+          key: ${{ steps.rock-cache-meta.outputs.key }}
+
+      - name: Run pre-build rock script
+        if: inputs.pre-build-rock-script != '' && matrix.type == 'rock' && steps.restore-rock-cache.outputs.cache-hit != 'true'
+        run: ${{ inputs.pre-build-rock-script }}
+
+      - name: Install LXD
+        if: matrix.type != 'rock' || steps.restore-rock-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo snap install lxd
+          sudo lxd waitready
+          sudo lxd init --auto
+          sudo usermod -aG lxd $USER
+          sudo chmod 0666 /var/snap/lxd/common/lxd/unix.socket
+          if sudo iptables -nL DOCKER-USER 2>/dev/null; then
+            sudo iptables -I DOCKER-USER -i lxdbr0 -j ACCEPT
+            sudo iptables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+          fi
+          if sudo ip6tables -nL DOCKER-USER 2>/dev/null; then
+            sudo ip6tables -I DOCKER-USER -i lxdbr0 -j ACCEPT
+            sudo ip6tables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+          fi
+
+      - name: Install charmcraft
+        if: matrix.type == 'charm'
+        run: sudo snap install charmcraft --classic
+
+      - name: Install rockcraft
+        if: matrix.type == 'rock' && steps.restore-rock-cache.outputs.cache-hit != 'true'
+        run: sudo snap install rockcraft --classic
+
+      - name: Install snapcraft
+        if: matrix.type == 'snap'
+        run: sudo snap install snapcraft --classic
+
+      - name: Login to GHCR
+        if: >-
+          matrix.type == 'rock' &&
+          needs.build-matrix.outputs.rock-upload-mode == 'registry' &&
+          steps.restore-rock-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            skopeo login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Build ${{ matrix.type }} ${{ matrix.name }}
+        if: matrix.type != 'rock' || steps.restore-rock-cache.outputs.cache-hit != 'true'
+        run: opcli artifacts build --${{ matrix.type }} ${{ matrix.name }}
+        env:
+          OPCLI_ROCK_UPLOAD: ${{ needs.build-matrix.outputs.rock-upload-mode }}
+
+      - name: Save rock cache
+        if: >-
+          matrix.type == 'rock' &&
+          needs.build-matrix.outputs.rock-upload-mode == 'registry' &&
+          steps.restore-rock-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ inputs.working-directory }}/artifacts.build.yaml
+          key: ${{ steps.rock-cache-meta.outputs.key }}
+
+      - name: Upload ${{ matrix.type }} ${{ matrix.name }}
+        if: matrix.type != 'rock' || needs.build-matrix.outputs.rock-upload-mode == 'artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-${{ matrix.type }}-${{ matrix.name }}-${{ matrix.arch }}
+          path: ${{ inputs.working-directory }}/**/*.${{ matrix.type }}
+          if-no-files-found: error
+
+      - name: Upload partial build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build-${{ matrix.type }}-${{ matrix.name }}-${{ matrix.arch }}
+          path: ${{ inputs.working-directory }}/artifacts.build.yaml
+          if-no-files-found: error
+
+  # ── Job 3: merge all partials into the final artifacts.build.yaml ───────
+  collect:
+    name: Collect artifacts
+    needs: [build-matrix, build]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: sudo snap install astral-uv --classic
+
+      - name: Install opcli
+        run: |
+          if grep -q 'name = "opcli"' "${GITHUB_WORKSPACE}/pyproject.toml" 2>/dev/null; then
+            uv tool install "opcli[cli] @ ${GITHUB_WORKSPACE}"
+          else
+            uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
+          fi
+
+      - name: Download build partials
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-build-*
+          path: ${{ inputs.working-directory }}/partial-artifacts/
+
+      - name: Merge build manifests
+        run: |
+          opcli artifacts collect \
+            $(find ./partial-artifacts -name "artifacts.build.yaml" | sort | tr '\n' ' ')
+
+      - name: Upload build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build
+          path: ${{ inputs.working-directory }}/artifacts.build.yaml
+          if-no-files-found: error

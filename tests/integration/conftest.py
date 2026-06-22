@@ -2,7 +2,9 @@
 # See LICENSE file for licensing details.
 import logging
 import pathlib
+import shutil
 import subprocess
+import tempfile
 from typing import cast
 
 import jubilant
@@ -48,144 +50,213 @@ def fixture_session_with_retry():
         yield session_with_retry
 
 
+@pytest.fixture(scope="session", name="rock_images")
+def fixture_rock_images() -> dict[str, str]:
+    """Return dict of built rock images from opcli artifacts.build.yaml.
+
+    Maps rock names (e.g., "test-flask", "django-app") to OCI image URLs or
+    local .rock file paths. Provided by opcli pytest plugin; falls back to
+    reading artifacts.build.yaml directly when not running under opcli spread.
+    """
+    artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
+    if artifacts_build.exists():
+        data = yaml.safe_load(artifacts_build.read_text())
+        # artifacts.build.yaml uses a list of GeneratedRock objects:
+        # rocks:
+        #   - name: test-flask
+        #     builds:
+        #       - arch: amd64
+        #         image: ghcr.io/...   (registry build)
+        #         # or file: ./path/to.rock  (local build)
+        result = {}
+        for rock in data.get("rocks", []):
+            name = rock["name"]
+            for build in rock.get("builds", []):
+                ref = build.get("image") or build.get("file") or ""
+                if ref:
+                    result[name] = ref
+                    break
+        return result
+    return {}
+
+
+@pytest.fixture(scope="session", name="charm_paths")
+def fixture_charm_paths() -> dict[str, pathlib.Path]:
+    """Return dict of pre-built charm paths from opcli artifacts.build.yaml.
+
+    Maps charm names (e.g., "flask-k8s", "django-k8s") to local .charm file
+    paths. Provided by opcli pytest plugin; falls back to reading
+    artifacts.build.yaml directly when not running under opcli spread.
+    """
+    artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
+    if artifacts_build.exists():
+        data = yaml.safe_load(artifacts_build.read_text())
+        # artifacts.build.yaml uses a list of GeneratedCharm objects:
+        # charms:
+        #   - name: flask-k8s
+        #     builds:
+        #       - arch: amd64
+        #         path: ./flask-k8s_ubuntu@26.04-amd64.charm
+        result = {}
+        for charm in data.get("charms", []):
+            name = charm["name"]
+            for build in charm.get("builds", []):
+                path = build.get("path")
+                if path:
+                    # Resolve relative to PROJECT_ROOT so shutil.copy2 can
+                    # find the file regardless of the pytest working directory.
+                    result[name] = (PROJECT_ROOT / path).resolve()
+                    break
+        return result
+    return {}
+
+
 @pytest.fixture(scope="module", name="test_flask_image")
-def fixture_test_flask_image(pytestconfig: Config):
-    """Return the --test-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-flask-image")
-    return test_flask_image
-
-
-@pytest.fixture(scope="module", name="django_app_image")
-def fixture_django_app_image(pytestconfig: Config):
-    """Return the --django-app-image test parameter."""
-    image = pytestconfig.getoption("--django-app-image")
+def fixture_test_flask_image(rock_images: dict[str, str]):
+    """Return the test-flask rock image URL."""
+    image = rock_images.get("test-flask", "")
     if not image:
-        raise ValueError("the following arguments are required: --django-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="django_async_app_image")
-def fixture_django_async_app_image(pytestconfig: Config):
-    """Return the --django-async-app-image test parameter."""
-    image = pytestconfig.getoption("--django-async-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --django-async-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="fastapi_app_image")
-def fixture_fastapi_app_image(pytestconfig: Config):
-    """Return the --fastapi-app-image test parameter."""
-    image = pytestconfig.getoption("--fastapi-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --fastapi-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="go_app_image")
-def fixture_go_app_image(pytestconfig: Config):
-    """Return the --go-app-image test parameter."""
-    image = pytestconfig.getoption("--go-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --go-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="test_db_flask_image")
-def fixture_test_db_flask_image(pytestconfig: Config):
-    """Return the --test-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-db-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-db-flask-image")
-    return test_flask_image
-
-
-@pytest.fixture(scope="module", name="expressjs_app_image")
-def fixture_expressjs_app_image(pytestconfig: Config):
-    """Return the --expressjs-app-image test parameter."""
-    image = pytestconfig.getoption("--expressjs-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --expressjs-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="flask_minimal_app_image")
-def fixture_flask_minimal_app_image(pytestconfig: Config):
-    """Return the --expressjs-app-image test parameter."""
-    image = pytestconfig.getoption("--flask-minimal-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --flask-minimal-app-image")
-    return image
-
-
-@pytest.fixture(scope="module", name="spring_boot_app_image")
-def fixture_spring_boot_app_image(pytestconfig: Config):
-    """Return the --paas-spring-boot-app-image test parameter."""
-    image = pytestconfig.getoption("--paas-spring-boot-app-image")
-    if not image:
-        raise ValueError("the following arguments are required: --paas-spring-boot-app-image")
+        raise ValueError("test-flask rock image not found in artifacts.build.yaml")
     return image
 
 
 @pytest.fixture(scope="module", name="test_async_flask_image")
-def fixture_test_async_flask_image(pytestconfig: pytest.Config):
-    """Return the --test-async-flask-image test parameter."""
-    test_flask_image = pytestconfig.getoption("--test-async-flask-image")
-    if not test_flask_image:
-        raise ValueError("the following arguments are required: --test-async-flask-image")
-    return test_flask_image
+def fixture_test_async_flask_image(rock_images: dict[str, str]):
+    """Return the test-async-flask rock image URL."""
+    image = rock_images.get("test-async-flask", "")
+    if not image:
+        raise ValueError("test-async-flask rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="test_db_flask_image")
+def fixture_test_db_flask_image(rock_images: dict[str, str]):
+    """Return the test-db-flask rock image URL."""
+    image = rock_images.get("test-db-flask", "")
+    if not image:
+        raise ValueError("test-db-flask rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="django_app_image")
+def fixture_django_app_image(rock_images: dict[str, str]):
+    """Return the django-app rock image URL."""
+    image = rock_images.get("django-app", "")
+    if not image:
+        raise ValueError("django-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="django_async_app_image")
+def fixture_django_async_app_image(rock_images: dict[str, str]):
+    """Return the django-async-app rock image URL."""
+    image = rock_images.get("django-async-app", "")
+    if not image:
+        raise ValueError("django-async-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="fastapi_app_image")
+def fixture_fastapi_app_image(rock_images: dict[str, str]):
+    """Return the fastapi-app rock image URL."""
+    image = rock_images.get("fastapi-app", "")
+    if not image:
+        raise ValueError("fastapi-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="go_app_image")
+def fixture_go_app_image(rock_images: dict[str, str]):
+    """Return the go-app rock image URL."""
+    image = rock_images.get("go-app", "")
+    if not image:
+        raise ValueError("go-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="expressjs_app_image")
+def fixture_expressjs_app_image(rock_images: dict[str, str]):
+    """Return the expressjs-app rock image URL."""
+    image = rock_images.get("expressjs-app", "")
+    if not image:
+        raise ValueError("expressjs-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="flask_minimal_app_image")
+def fixture_flask_minimal_app_image(rock_images: dict[str, str]):
+    """Return the flask-minimal-app rock image URL."""
+    image = rock_images.get("flask-minimal-app", "")
+    if not image:
+        raise ValueError("flask-minimal-app rock image not found in artifacts.build.yaml")
+    return image
+
+
+@pytest.fixture(scope="module", name="spring_boot_app_image")
+def fixture_spring_boot_app_image(rock_images: dict[str, str]):
+    """Return the paas-spring-boot-app rock image URL."""
+    image = rock_images.get("paas-spring-boot-app", "")
+    if not image:
+        raise ValueError("paas-spring-boot-app rock image not found in artifacts.build.yaml")
+    return image
 
 
 def build_charm_file(
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     framework: str,
     tmp_path_factory,
     charm_dict: dict = None,
     charm_location: pathlib.Path = None,
-) -> str:
-    """Get the existing charm file if exists, build a new one if not."""
-    charm_file = next(
-        (f for f in pytestconfig.getoption("--charm-file") if f"/{framework}-k8s" in f),
-        None,
-    )
+) -> pathlib.Path:
+    """Build or retrieve charm file, apply injections, and return path.
 
-    if not charm_file:
+    Uses pre-built charm from charm_paths if available, otherwise builds locally.
+    Always copies to tmp before injecting venv/config to avoid mutating shared artifacts.
+    """
+    # Try to find pre-built charm in charm_paths
+    charm_key = f"{framework}-k8s"
+    if charm_key in charm_paths:
+        built_charm = charm_paths[charm_key]
+        # Copy to temp dir so inject_venv doesn't mutate shared artifact
+        tmp_dir = tmp_path_factory.mktemp(f"{framework}-charm")
+        charm_file = tmp_dir / built_charm.name
+        shutil.copy2(built_charm, charm_file)
+    else:
+        # Build locally
         if not charm_location:
             charm_location = PROJECT_ROOT / f"examples/{framework}/charm"
         try:
             subprocess.run(
-                [
-                    "charmcraft",
-                    "pack",
-                ],
+                ["charmcraft", "pack"],
                 cwd=charm_location,
                 check=True,
                 capture_output=True,
                 text=True,
             )
-            app_name = f"{framework}-k8s"
-            charm_path = pathlib.Path(charm_location)
-            charms = [p.absolute() for p in charm_path.glob(f"{app_name}_*.charm")]
-            assert charms, f"{app_name} .charm file not found"
-            assert (
-                len(charms) == 1
-            ), f"{app_name} has more than one .charm file, please remove any undesired .charm files"
-            charm_file = str(charms[0])
+            charms = list(charm_location.glob(f"{charm_key}_*.charm"))
+            assert charms, f"{charm_key} .charm file not found"
+            assert len(charms) == 1, (
+                f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            )
+            # Copy to temp dir
+            tmp_dir = tmp_path_factory.mktemp(f"{framework}-charm")
+            charm_file = tmp_dir / charms[0].name
+            shutil.copy2(charms[0], charm_file)
         except subprocess.CalledProcessError as exc:
             raise OSError(f"Error packing charm: {exc}; Stderr:\n{exc.stderr}") from None
 
-    elif charm_file[0] != "/":
-        charm_file = PROJECT_ROOT / charm_file
-    inject_venv(charm_file, PROJECT_ROOT / "src" / "paas_charm")
+    # Apply injections to the temp copy
+    inject_venv(str(charm_file), PROJECT_ROOT / "src" / "paas_charm")
     if charm_dict:
-        charm_file = inject_charm_config(
-            charm_file,
-            charm_dict,
-            tmp_path_factory.mktemp(framework),
+        charm_file = pathlib.Path(
+            inject_charm_config(
+                str(charm_file),
+                charm_dict,
+                tmp_path_factory.mktemp(f"{framework}-config"),
+            )
         )
-    return pathlib.Path(charm_file).absolute()
+
+    return charm_file.absolute()
 
 
 @pytest.fixture(scope="module", name="loki_app")
@@ -206,7 +277,7 @@ def deploy_loki_fixture(
 @pytest.fixture(scope="module", name="flask_non_root_db_app")
 def flask_non_root_db_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     test_db_flask_image: str,
     tmp_path_factory,
 ):
@@ -214,7 +285,7 @@ def flask_non_root_db_app_fixture(
     framework = "flask"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=True,
@@ -228,7 +299,7 @@ def flask_non_root_db_app_fixture(
 @pytest.fixture(scope="module", name="flask_non_root_app")
 def flask_non_root_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     test_flask_image: str,
     tmp_path_factory,
 ):
@@ -236,7 +307,7 @@ def flask_non_root_app_fixture(
     framework = "flask"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
@@ -250,7 +321,7 @@ def flask_non_root_app_fixture(
 @pytest.fixture(scope="module", name="django_non_root_app")
 def django_non_root_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     django_app_image: str,
     tmp_path_factory,
 ):
@@ -258,7 +329,7 @@ def django_non_root_app_fixture(
     framework = "django"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=True,
@@ -271,13 +342,21 @@ def django_non_root_app_fixture(
 
 
 @pytest.fixture(scope="module", name="fastapi_app")
-def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def fastapi_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
     framework = "fastapi"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": fastapi_app_image,
+        },
         config={"non-optional-string": "string"},
     )
 
@@ -285,7 +364,7 @@ def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_pa
 @pytest.fixture(scope="module", name="fastapi_non_root_app")
 def fastapi_non_root_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     fastapi_app_image: str,
     tmp_path_factory,
 ):
@@ -293,7 +372,7 @@ def fastapi_non_root_app_fixture(
     framework = "fastapi"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         resources={
@@ -305,14 +384,22 @@ def fastapi_non_root_app_fixture(
 
 
 @pytest.fixture(scope="module", name="go_app")
-def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def go_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    go_app_image: str,
+    tmp_path_factory,
+):
     framework = "go"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         use_postgres=True,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": go_app_image,
+        },
         config={"metrics-port": 8081},
     )
 
@@ -320,7 +407,7 @@ def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_fa
 @pytest.fixture(scope="module", name="go_non_root_app")
 def go_non_root_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     go_app_image: str,
     tmp_path_factory,
 ):
@@ -328,7 +415,7 @@ def go_non_root_app_fixture(
     framework = "go"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         resources={
@@ -341,7 +428,8 @@ def go_non_root_app_fixture(
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
+    expressjs_app_image: str,
     tmp_path_factory,
 ):
     """ExpressJS charm used for integration testing.
@@ -349,26 +437,12 @@ def expressjs_app_fixture(
     """
     app_name = "expressjs-k8s"
 
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
-
-    juju.deploy(
-        "postgresql-k8s",
-        channel="14/edge",
-        base="ubuntu@22.04",
-        trust=True,
-        config={
-            "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
+    deploy_postgresql(juju)
 
     resources = {
-        "app-image": pytestconfig.getoption("--expressjs-app-image"),
+        "app-image": expressjs_app_image,
     }
-    charm_file = build_charm_file(pytestconfig, "expressjs", tmp_path_factory)
+    charm_file = build_charm_file(charm_paths, "expressjs", tmp_path_factory)
     juju.deploy(
         charm=charm_file,
         resources=resources,
@@ -387,17 +461,18 @@ def expressjs_app_fixture(
 @pytest.fixture(scope="module", name="expressjs_non_root_app")
 def expressjs_non_root_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     tmp_path_factory,
     expressjs_app_image: str,
 ):
-    """Build and deploy the non-root Go charm with go-app image."""
+    """Build and deploy the non-root ExpressJS charm with expressjs-app image."""
     framework = "expressjs"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         resources={
             "app-image": expressjs_app_image,
         },
@@ -408,34 +483,20 @@ def expressjs_non_root_app_fixture(
 @pytest.fixture(scope="module", name="spring_boot_app")
 def spring_boot_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     tmp_path_factory,
     spring_boot_app_image: str,
 ):
-    """Build and deploy the Go charm with go-app image."""
+    """Build and deploy the Spring Boot charm with spring-boot-app image."""
     app_name = "spring-boot-k8s"
 
     resources = {
         "app-image": spring_boot_app_image,
     }
-    try:
-        juju.deploy(
-            "postgresql-k8s",
-            channel="14/edge",
-            base="ubuntu@22.04",
-            trust=True,
-            config={
-                "profile": "testing",
-                "plugin_hstore_enable": "true",
-                "plugin_pg_trgm_enable": "true",
-            },
-        )
-    except jubilant.CLIError as err:
-        if "application already exists" not in err.stderr:
-            raise err
+    deploy_postgresql(juju)
 
     charm_file = build_charm_file(
-        pytestconfig,
+        charm_paths,
         "spring-boot",
         tmp_path_factory,
         charm_location=PROJECT_ROOT / "examples/springboot/charm",
@@ -468,11 +529,11 @@ def spring_boot_app_fixture(
 @pytest.fixture(scope="module", name="spring_boot_mysql_app")
 def spring_boot_mysql_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     spring_boot_app_image: str,
     tmp_path_factory,
 ):
-    """Build and deploy the Go charm with go-app image."""
+    """Build and deploy the Spring Boot charm with MySQL integration."""
     app_name = "spring-boot-k8s"
 
     resources = {
@@ -498,7 +559,7 @@ def spring_boot_mysql_app_fixture(
     }
 
     charm_file = build_charm_file(
-        pytestconfig,
+        charm_paths,
         "spring-boot",
         tmp_path_factory,
         charm_dict=updated_dict,
@@ -603,6 +664,11 @@ def integrate_redis_k8s_flask_fixture(
 def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
     """Pytest fixture that wraps :meth:`jubilant.with_model`."""
 
+    # Ensure the active/default Juju controller is the Kubernetes one (CI: concierge-k8s)
+    # so temporary models and k8s charm deploys land on a Kubernetes cloud.
+    controller = request.config.getoption("--controller")
+    jubilant.Juju().cli("switch", controller, include_model=False)
+
     use_existing = request.config.getoption("--use-existing", default=False)
     if use_existing:
         juju = jubilant.Juju()
@@ -614,44 +680,54 @@ def juju(request: pytest.FixtureRequest) -> jubilant.Juju:
         return juju
 
     keep_models = cast(bool, request.config.getoption("--keep-models"))
-    with jubilant.temp_model(keep=keep_models) as juju:
+    with jubilant.temp_model(keep=keep_models, controller=controller) as juju:
         juju.wait_timeout = 10 * 60
         return juju
 
 
 @pytest.fixture(scope="module", name="django_app")
-def django_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def django_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    django_app_image: str,
+    tmp_path_factory,
+):
     framework = "django"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         config={"django-allowed-hosts": "*"},
         resources={
-            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+            "django-app-image": django_app_image,
         },
     )
 
 
 @pytest.fixture(scope="module", name="django_async_app")
-def django_async_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def django_async_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    django_async_app_image: str,
+    tmp_path_factory,
+):
     framework = "django-async"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         config={"django-allowed-hosts": "*"},
         resources={
-            "django-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+            "django-app-image": django_async_app_image,
         },
     )
 
 
 def generate_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     framework: str,
     tmp_path_factory,
     image_name: str = "",
@@ -662,22 +738,16 @@ def generate_app_fixture(
 ):
     """Generates the charm, configures and deploys it and the relations it depends on."""
     app_name = f"{framework}-k8s"
-    if image_name == "":
-        image_name = f"{framework}-app-image"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        yield App(app_name)
-        return
+    if use_postgres:
+        deploy_postgresql(juju)
     if resources is None:
-        resources = {
-            "app-image": pytestconfig.getoption(f"--{image_name}"),
-        }
+        resources = {}
     main_framework = framework
     # The async version of frameworks uses the same charm as the sync one
     if "-async" in main_framework:
         main_framework = main_framework.replace("-async", "")
     charm_file = build_charm_file(
-        pytestconfig, main_framework, tmp_path_factory, charm_dict=charm_dict
+        charm_paths, main_framework, tmp_path_factory, charm_dict=charm_dict
     )
     try:
         juju.deploy(
@@ -693,7 +763,6 @@ def generate_app_fixture(
     # Add required relations
     apps_to_wait_for = [app_name]
     if use_postgres:
-        deploy_postgresql(juju)
         try:
             juju.integrate(app_name, "postgresql-k8s:database")
         except jubilant.CLIError as err:
@@ -729,18 +798,19 @@ def deploy_postgresql(
 @pytest.fixture(scope="module", name="flask_app")
 def flask_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
+    test_flask_image: str,
     tmp_path_factory,
 ):
     framework = "flask"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": pytestconfig.getoption(f"--test-{framework}-image"),
+            "flask-app-image": test_flask_image,
         },
         charm_dict={
             "config": {
@@ -759,17 +829,18 @@ def flask_app_fixture(
 @pytest.fixture(scope="module", name="flask_db_app")
 def flask_db_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
+    test_db_flask_image: str,
     tmp_path_factory,
 ):
     framework = "flask"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         resources={
-            "flask-app-image": pytestconfig.getoption(f"--test-db-flask-image"),
+            "flask-app-image": test_db_flask_image,
         },
     )
 
@@ -777,18 +848,19 @@ def flask_db_app_fixture(
 @pytest.fixture(scope="module", name="flask_async_app")
 def flask_async_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
+    test_async_flask_image: str,
     tmp_path_factory,
 ):
     framework = "flask-async"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": pytestconfig.getoption(f"--test-async-flask-image"),
+            "flask-app-image": test_async_flask_image,
         },
     )
 
@@ -797,19 +869,16 @@ def flask_async_app_fixture(
 @pytest.fixture(scope="module", name="flask_blocked_app")
 def flask_blocked_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     test_flask_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the flask charm with non-optional configs using jubilant."""
     app_name = "flask-k8s"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
 
     resources = {"flask-app-image": test_flask_image}
     charm_file = build_charm_file(
-        pytestconfig, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+        charm_paths, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
 
     try:
@@ -825,19 +894,16 @@ def flask_blocked_app_fixture(
 @pytest.fixture(scope="module", name="django_blocked_app")
 def django_blocked_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     django_app_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the Django charm with non-optional configs using jubilant."""
     app_name = "django-k8s"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
 
     resources = {"django-app-image": django_app_image}
     charm_file = build_charm_file(
-        pytestconfig, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+        charm_paths, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
 
     try:
@@ -867,19 +933,16 @@ def django_blocked_app_fixture(
 @pytest.fixture(scope="module", name="fastapi_blocked_app")
 def fastapi_blocked_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     fastapi_app_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the FastAPI charm with non-optional configs using jubilant."""
     app_name = "fastapi-k8s"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
 
     resources = {"app-image": fastapi_app_image}
     charm_file = build_charm_file(
-        pytestconfig, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+        charm_paths, "fastapi", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
 
     try:
@@ -904,19 +967,16 @@ def fastapi_blocked_app_fixture(
 @pytest.fixture(scope="module", name="go_blocked_app")
 def go_blocked_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     go_app_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the Go charm with non-optional configs using jubilant."""
     app_name = "go-k8s"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
 
     resources = {"app-image": go_app_image}
     charm_file = build_charm_file(
-        pytestconfig, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+        charm_paths, "go", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
 
     try:
@@ -941,19 +1001,16 @@ def go_blocked_app_fixture(
 @pytest.fixture(scope="module", name="expressjs_blocked_app")
 def expressjs_blocked_app_fixture(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
     expressjs_app_image: str,
     tmp_path_factory,
 ):
     """Build and deploy the ExpressJS charm with non-optional configs using jubilant."""
     app_name = "expressjs-k8s"
-    use_existing = pytestconfig.getoption("--use-existing")
-    if use_existing:
-        return App(app_name)
 
     resources = {"app-image": expressjs_app_image}
     charm_file = build_charm_file(
-        pytestconfig, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
+        charm_paths, "expressjs", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
 
     try:

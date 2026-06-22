@@ -67,10 +67,10 @@ def test_prometheus_integration(
                 response = session_with_retry.get(scrape_url, timeout=10)
                 response.raise_for_status()
                 break
-        else:
-            assert (
-                False
-            ), f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
+         else:
+            assert False, (
+                f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
+            )
 
     finally:
         juju.remove_relation(app.name, prometheus_app.name)
@@ -100,7 +100,7 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        model_name = juju.model
+        model_name = juju.show_model().short_name
         prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
