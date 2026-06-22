@@ -148,7 +148,7 @@ def _clean_juju_model_name(juju: jubilant.Juju) -> str:
     Clean the juju model name to be used in the host header for traefik requests.
     """
     if not juju.model:
-        return juju.model
+        return "testing"
     if ":" in juju.model:
         return juju.model.split(":")[-1]
     return juju.model
