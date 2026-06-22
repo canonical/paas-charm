@@ -67,10 +67,10 @@ def test_prometheus_integration(
                 response = session_with_retry.get(scrape_url, timeout=10)
                 response.raise_for_status()
                 break
-         else:
-            assert False, (
-                f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
-            )
+        else:
+            assert (
+                False
+            ), f"Application not scraped in port {metrics_port}. Scraped targets: {active_targets}"
 
     finally:
         juju.remove_relation(app.name, prometheus_app.name)
@@ -162,10 +162,9 @@ def _assert_scrape_targets_for_app(
         labels: Optional dict of labels that each target must have.
     """
     urls = [t["scrapeUrl"] for t in targets]
-    assert len(targets) == len(identifiers), (
-        f"Expected {len(identifiers)} target(s) on port {port}, "
-        f"found {len(targets)}. URLs: {urls}"
-    )
+    assert len(targets) == len(
+        identifiers
+    ), f"Expected {len(identifiers)} target(s) on port {port}, found {len(targets)}. URLs: {urls}"
 
     for identifier in identifiers:
         assert any(
