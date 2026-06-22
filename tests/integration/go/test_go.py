@@ -93,16 +93,11 @@ def test_open_ports(
     # Check initial opened ports
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
-    xxx = session_with_retry.get(
+    assert session_with_retry.get(
         f"http://{traefik_ip}",
-        headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+        headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
         timeout=15,
-    )
-    hsot = f"{juju.model}-{go_app.name}.{external_hostname}"
-    logger.warning(f"{xxx=}")
-    logger.warning(f"{traefik_ip=}")
-    logger.warning(f"{hsot=}")
-    assert xxx.status_code == 200
+    ).status_code == 200
 
     # Change port configuration
     new_port = WORKLOAD_PORT + 10
@@ -118,7 +113,7 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -137,8 +132,16 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
     )
+
+def _clean_juju_model_name(juju: jubilant.Juju) -> str:
+    """
+    Clean the juju model name to be used in the host header for traefik requests.
+    """
+    if ":" in juju.model:
+        return juju.model.split(":")[-1]
+    return juju.model
