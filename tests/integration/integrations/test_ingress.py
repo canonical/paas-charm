@@ -50,3 +50,4 @@ def test_ingress(
     assert response.status_code == 200
     if expected_text:
         assert response.text.strip() == expected_text
+    juju.remove_relation(app.name, configurator_app)
