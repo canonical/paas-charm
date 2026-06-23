@@ -43,4 +43,5 @@ header:
     - 'docs/**'
     - 'examples/springboot/spring-boot_app/pom.xml'
     - 'examples/springboot/spring-boot_app/src/main/resources/**'
+    - '.readthedocs.yaml'
   comment: on-failure
