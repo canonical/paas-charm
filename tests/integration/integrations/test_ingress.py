@@ -5,7 +5,7 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.ingress.conftest import HOSTNAME, gateway_lb_ip
+from tests.integration.integrations.conftest import HOSTNAME, gateway_lb_ip
 from tests.integration.types import App
 
 
@@ -36,9 +36,7 @@ def test_ingress(
         if "already exists" not in err.stderr:
             raise err
     juju.wait(
-        lambda status: jubilant.all_active(
-            status, app.name, gateway_app, configurator_app
-        ),
+        lambda status: jubilant.all_active(status, app.name, gateway_app, configurator_app),
         timeout=10 * 60,
         delay=5,
     )

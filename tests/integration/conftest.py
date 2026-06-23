@@ -353,18 +353,7 @@ def expressjs_app_fixture(
     if use_existing:
         return App(app_name)
 
-    juju.deploy(
-        "postgresql-k8s",
-        channel="14/edge",
-        base="ubuntu@22.04",
-        trust=True,
-        config={
-            "profile": "testing",
-            "plugin_hstore_enable": "true",
-            "plugin_pg_trgm_enable": "true",
-        },
-    )
-
+    deploy_postgresql(juju)
     resources = {
         "app-image": pytestconfig.getoption("--expressjs-app-image"),
     }
@@ -418,22 +407,7 @@ def spring_boot_app_fixture(
     resources = {
         "app-image": spring_boot_app_image,
     }
-    try:
-        juju.deploy(
-            "postgresql-k8s",
-            channel="14/edge",
-            base="ubuntu@22.04",
-            trust=True,
-            config={
-                "profile": "testing",
-                "plugin_hstore_enable": "true",
-                "plugin_pg_trgm_enable": "true",
-            },
-        )
-    except jubilant.CLIError as err:
-        if "application already exists" not in err.stderr:
-            raise err
-
+    deploy_postgresql(juju)
     charm_file = build_charm_file(
         pytestconfig,
         "spring-boot",

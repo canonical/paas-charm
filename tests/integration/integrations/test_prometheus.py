@@ -3,7 +3,6 @@
 
 """Integration tests for 12Factor charms Prometheus integration."""
 
-import json
 import logging
 
 import jubilant
@@ -162,10 +161,9 @@ def _assert_scrape_targets_for_app(
         labels: Optional dict of labels that each target must have.
     """
     urls = [t["scrapeUrl"] for t in targets]
-    assert len(targets) == len(identifiers), (
-        f"Expected {len(identifiers)} target(s) on port {port}, "
-        f"found {len(targets)}. URLs: {urls}"
-    )
+    assert len(targets) == len(
+        identifiers
+    ), f"Expected {len(identifiers)} target(s) on port {port}, found {len(targets)}. URLs: {urls}"
 
     for identifier in identifiers:
         assert any(
