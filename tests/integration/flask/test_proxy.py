@@ -79,4 +79,3 @@ def test_proxy(
         assert env["HTTPS_PROXY"] == https_proxy
         assert env["no_proxy"] == no_proxy
         assert env["NO_PROXY"] == no_proxy
-
