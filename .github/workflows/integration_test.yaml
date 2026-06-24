@@ -11,7 +11,7 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: ./.github/workflows/integration-test.yml
+    uses: canonical/charm-ci/.github/workflows/integration-test.yml@main
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
