@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 * fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when
- using the v1 version of the Loki library.
+  using the v1 version of the Loki library.
+* docs: Migrate the RTD documentation URL under the Canonical domain.
 
 ## 1.11.3 - 2026-05-26
 
