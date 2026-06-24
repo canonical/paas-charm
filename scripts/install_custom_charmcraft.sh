@@ -1,7 +1,7 @@
+#!/bin/bash
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-#!/bin/bash
 set -ex
 
 python3 -m venv /tmp/charmcraft-venv
