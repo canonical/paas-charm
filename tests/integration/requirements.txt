@@ -7,3 +7,5 @@ minio==7.2.14
 ops==3.7.1
 tenacity==9.0.0
 playwright==1.53.0
+opcli @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5
+pytest==9.1.1

@@ -4,16 +4,20 @@
 
 """Integration tests for Flask charm proxy setting."""
 
+import pathlib
+
 import jubilant
 import pytest
 import requests
 
-from tests.integration.conftest import build_charm_file, inject_charm_config
+from tests.integration.conftest import build_charm_file
+from tests.integration.helpers import inject_charm_config
 
 
 def test_proxy(
     juju: jubilant.Juju,
-    pytestconfig: pytest.Config,
+    charm_paths: dict[str, pathlib.Path],
+    test_flask_image: str,
     tmp_path_factory,
     session_with_retry: requests.Session,
 ):
@@ -34,7 +38,7 @@ def test_proxy(
 
     # Build charm
     framework = "flask"
-    charm_file = build_charm_file(pytestconfig, framework, tmp_path_factory)
+    charm_file = build_charm_file(charm_paths, framework, tmp_path_factory)
     charm_file = inject_charm_config(
         charm_file,
         {
@@ -52,7 +56,7 @@ def test_proxy(
     )
 
     resources = {
-        "flask-app-image": pytestconfig.getoption("--test-flask-image"),
+        "flask-app-image": test_flask_image,
     }
 
     # Deploy the charm

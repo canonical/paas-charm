@@ -81,9 +81,15 @@ def test_open_ports(
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
+    # Get the Traefik IP and build the ingress host header from the model name.
     status = juju.status()
+    model_name = status.model.name
     traefik_ip = list(status.apps[traefik_app.name].units.values())[0].address
 
     # Check initial opened ports
@@ -92,7 +98,7 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -101,14 +107,18 @@ def test_open_ports(
     # Change port configuration
     new_port = WORKLOAD_PORT + 10
     juju.config(go_app.name, {"app-port": str(new_port)})
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{new_port}/tcp"
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -116,14 +126,18 @@ def test_open_ports(
 
     # Restore original port
     juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, traefik_app.name))
+    juju.wait(
+        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
+        delay=3,
+        successes=5,
+    )
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{juju.model}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200

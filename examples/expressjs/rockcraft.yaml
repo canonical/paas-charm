@@ -45,3 +45,6 @@ parts:
     plugin: nil
     stage-packages:
       - base-files
+  expressjs-framework/runtime:
+    stage:
+    - -etc/ssl/certs/ca-certificates.crt

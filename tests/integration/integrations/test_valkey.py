@@ -15,6 +15,7 @@ from tests.integration.types import App
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(reason="Valkey is unstable rn")
 @pytest.mark.parametrize(
     "app_fixture, port, endpoint",
     [

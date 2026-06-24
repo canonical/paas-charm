@@ -100,7 +100,7 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        model_name = juju.model
+        model_name = juju.show_model().short_name
         prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
@@ -162,10 +162,9 @@ def _assert_scrape_targets_for_app(
         labels: Optional dict of labels that each target must have.
     """
     urls = [t["scrapeUrl"] for t in targets]
-    assert len(targets) == len(identifiers), (
-        f"Expected {len(identifiers)} target(s) on port {port}, "
-        f"found {len(targets)}. URLs: {urls}"
-    )
+    assert len(targets) == len(
+        identifiers
+    ), f"Expected {len(identifiers)} target(s) on port {port}, found {len(targets)}. URLs: {urls}"
 
     for identifier in identifiers:
         assert any(
