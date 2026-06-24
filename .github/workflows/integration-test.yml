@@ -228,8 +228,8 @@ jobs:
 
       # ── Fix LXD+Docker connectivity ─────────────────────────────────────
       # Docker sets the FORWARD policy to DROP and filters via the DOCKER-USER
-      # chain, which blocks LXD bridge traffic.  Insert allow rules for lxdbr0
-      # into the chain (if it exists) rather than resetting the global policy.
+      # chain, which blocks LXD bridge traffic. Set FORWARD to ACCEPT and insert
+      # allow rules for lxdbr0 into the DOCKER-USER chain (if it exists).
       # See https://documentation.ubuntu.com/lxd/latest/howto/network_bridge_firewalld/#network-lxd-docker
       - name: Fix LXD+Docker forwarding
         run: |
