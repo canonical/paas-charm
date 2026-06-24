@@ -4,6 +4,7 @@
 
 """Integration tests for Go charm."""
 
+import json
 import logging
 
 import jubilant
@@ -68,7 +69,6 @@ def test_open_ports(
     go_app: App,
     traefik_app: App,
     session_with_retry: requests.Session,
-    external_hostname: str,
 ):
     """
     arrange: after Go charm has been deployed.
@@ -87,16 +87,19 @@ def test_open_ports(
         successes=5,
     )
 
-    status = juju.status()
-    traefik_ip = list(status.apps[traefik_app.name].units.values())[0].address
+    # Get the ingress URL directly from Traefik to avoid manually reconstructing
+    # the hostname (which would break if Traefik switches to path-mode routing).
+    proxied = json.loads(
+        juju.run(f"{traefik_app.name}/0", "show-proxied-endpoints").results["proxied-endpoints"]
+    )
+    ingress_url = proxied[go_app.name]["url"]
 
     # Check initial opened ports
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
         session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
+            ingress_url,
             timeout=5,
         ).status_code
         == 200
@@ -115,8 +118,7 @@ def test_open_ports(
     assert opened_ports.strip() == f"{new_port}/tcp"
     assert (
         session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
+            ingress_url,
             timeout=5,
         ).status_code
         == 200
@@ -134,20 +136,8 @@ def test_open_ports(
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (
         session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
+            ingress_url,
             timeout=5,
         ).status_code
         == 200
     )
-
-
-def _clean_juju_model_name(juju: jubilant.Juju) -> str:
-    """
-    Clean the juju model name to be used in the host header for traefik requests.
-    """
-    if not juju.model:
-        return "testing"
-    if ":" in juju.model:
-        return juju.model.split(":")[-1]
-    return juju.model
