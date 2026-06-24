@@ -30,6 +30,9 @@ import yaml
 project = "12-Factor app support"
 author = "Canonical Ltd."
 
+# Version
+
+version = f"{os.environ.get('READTHEDOCS_VERSION', 'local')}"
 
 # Sidebar documentation title; best kept reasonably short
 #
@@ -73,7 +76,7 @@ copyright = "%s CC-BY-SA, %s" % (datetime.date.today().year, author)
 # NOTE: The Open Graph Protocol (OGP) enhances page display in a social graph
 #       and is used by social media platforms; see https://ogp.me/
 
-ogp_site_url = ""
+ogp_site_url = f"https://canonical.com/juju/docs/12-factor/{version}/"
 
 
 # Preview name of the documentation website
@@ -170,7 +173,7 @@ html_theme_options = {
 # TODO: If your documentation is hosted on https://docs.ubuntu.com/,
 #       uncomment and update as needed.
 
-# slug = ''
+slug = 'juju/docs/12-factor'
 
 #######################
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
@@ -178,7 +181,7 @@ html_theme_options = {
 
 # Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
 
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+html_baseurl = f"https://canonical.com/juju/docs/12-factor/{version}/"
 
 # sphinx-sitemap uses html_baseurl to generate the full URL for each page:
 
@@ -307,6 +310,7 @@ html_css_files = [
 
 html_js_files = [
     'js/bundle.js',
+    'js/overwrite_links.js',
 ]
 
 
@@ -373,3 +377,4 @@ intersphinx_mapping = {
     'ops': ("https://documentation.ubuntu.com/ops/latest/", None),
     'open-documentation-academy': ("https://documentation.academy/", None),
 }
+
