@@ -4,14 +4,12 @@ import logging
 import pathlib
 import shutil
 import subprocess
-import tempfile
 from typing import cast
 
 import jubilant
 import pytest
 import requests
 import yaml
-from pytest import Config
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -235,9 +233,9 @@ def build_charm_file(
             )
             charms = list(charm_location.glob(f"{charm_key}_*.charm"))
             assert charms, f"{charm_key} .charm file not found"
-            assert (
-                len(charms) == 1
-            ), f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            assert len(charms) == 1, (
+                f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            )
             # Copy to temp dir
             tmp_dir = tmp_path_factory.mktemp(f"{framework}-charm")
             charm_file = tmp_dir / charms[0].name
