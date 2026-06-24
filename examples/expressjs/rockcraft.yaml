@@ -47,4 +47,4 @@ parts:
       - base-files
   expressjs-framework/runtime:
     stage:
-      - -etc/ssl/certs/ca-certificates.crt
+    - -etc/ssl/certs/ca-certificates.crt

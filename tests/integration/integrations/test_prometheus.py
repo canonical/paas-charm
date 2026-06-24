@@ -99,7 +99,7 @@ def test_prometheus_custom_scrape_configs(
         )
 
         status = juju.status()
-        model_name = juju.model
+        model_name = juju.show_model().short_name
         prometheus_unit_ip, active_targets = _get_prometheus_targets(
             juju, prometheus_app, session_with_retry
         )
