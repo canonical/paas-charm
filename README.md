@@ -63,7 +63,8 @@ Read the framework-specific tutorials for a complete walkthrough:
 
 ## Documentation
 
-The 12-Factor framework support documentation provides guidance and learning material about
+The [12-Factor framework support documentation](https://canonical.com/juju/docs/12-factor/)
+provides guidance and learning material about
 the tooling, getting started, customization, and usage.
 The documentation is hosted on Read the Docs.
 
@@ -79,7 +80,7 @@ pull request in this repository, or reach out to us on [Matrix](https://matrix.t
 
 ## Additional resources
 
-- [12-Factor app support documentation](https://canonical-12-factor-app-support.readthedocs-hosted.com/latest/)
+- [12-Factor app support documentation](https://canonical.com/juju/docs/12-factor/)
 - [Rockcraft](https://documentation.ubuntu.com/rockcraft/latest/):
   Documentation related to the OCI image containers
 - [Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/):
