@@ -11,7 +11,6 @@ import jubilant
 import pytest
 import requests
 import yaml
-from pytest import Config
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -55,29 +54,32 @@ def fixture_rock_images() -> dict[str, str]:
     """Return dict of built rock images from opcli artifacts.build.yaml.
 
     Maps rock names (e.g., "test-flask", "django-app") to OCI image URLs or
-    local .rock file paths. Provided by opcli pytest plugin; falls back to
-    reading artifacts.build.yaml directly when not running under opcli spread.
+    local .rock file paths. Requires artifacts.build.yaml to exist; run
+    'opcli artifacts build' to generate it before running integration tests.
     """
     artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
-    if artifacts_build.exists():
-        data = yaml.safe_load(artifacts_build.read_text())
-        # artifacts.build.yaml uses a list of GeneratedRock objects:
-        # rocks:
-        #   - name: test-flask
-        #     builds:
-        #       - arch: amd64
-        #         image: ghcr.io/...   (registry build)
-        #         # or file: ./path/to.rock  (local build)
-        result = {}
-        for rock in data.get("rocks", []):
-            name = rock["name"]
-            for build in rock.get("builds", []):
-                ref = build.get("image") or build.get("file") or ""
-                if ref:
-                    result[name] = ref
-                    break
-        return result
-    return {}
+    if not artifacts_build.exists():
+        pytest.fail(
+            f"{artifacts_build} not found. Run 'opcli artifacts build' to generate "
+            "build artifacts before running integration tests."
+        )
+    data = yaml.safe_load(artifacts_build.read_text())
+    # artifacts.build.yaml uses a list of GeneratedRock objects:
+    # rocks:
+    #   - name: test-flask
+    #     builds:
+    #       - arch: amd64
+    #         image: ghcr.io/...   (registry build)
+    #         # or file: ./path/to.rock  (local build)
+    result = {}
+    for rock in data.get("rocks", []):
+        name = rock["name"]
+        for build in rock.get("builds", []):
+            ref = build.get("image") or build.get("file") or ""
+            if ref:
+                result[name] = ref
+                break
+    return result
 
 
 @pytest.fixture(scope="session", name="charm_paths")
@@ -85,30 +87,33 @@ def fixture_charm_paths() -> dict[str, pathlib.Path]:
     """Return dict of pre-built charm paths from opcli artifacts.build.yaml.
 
     Maps charm names (e.g., "flask-k8s", "django-k8s") to local .charm file
-    paths. Provided by opcli pytest plugin; falls back to reading
-    artifacts.build.yaml directly when not running under opcli spread.
+    paths. Requires artifacts.build.yaml to exist; run 'opcli artifacts build'
+    to generate it before running integration tests.
     """
     artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
-    if artifacts_build.exists():
-        data = yaml.safe_load(artifacts_build.read_text())
-        # artifacts.build.yaml uses a list of GeneratedCharm objects:
-        # charms:
-        #   - name: flask-k8s
-        #     builds:
-        #       - arch: amd64
-        #         path: ./flask-k8s_ubuntu@26.04-amd64.charm
-        result = {}
-        for charm in data.get("charms", []):
-            name = charm["name"]
-            for build in charm.get("builds", []):
-                path = build.get("path")
-                if path:
-                    # Resolve relative to PROJECT_ROOT so shutil.copy2 can
-                    # find the file regardless of the pytest working directory.
-                    result[name] = (PROJECT_ROOT / path).resolve()
-                    break
-        return result
-    return {}
+    if not artifacts_build.exists():
+        pytest.fail(
+            f"{artifacts_build} not found. Run 'opcli artifacts build' to generate "
+            "build artifacts before running integration tests."
+        )
+    data = yaml.safe_load(artifacts_build.read_text())
+    # artifacts.build.yaml uses a list of GeneratedCharm objects:
+    # charms:
+    #   - name: flask-k8s
+    #     builds:
+    #       - arch: amd64
+    #         path: ./flask-k8s_ubuntu@26.04-amd64.charm
+    result = {}
+    for charm in data.get("charms", []):
+        name = charm["name"]
+        for build in charm.get("builds", []):
+            path = build.get("path")
+            if path:
+                # Resolve relative to PROJECT_ROOT so shutil.copy2 can
+                # find the file regardless of the pytest working directory.
+                result[name] = (PROJECT_ROOT / path).resolve()
+                break
+    return result
 
 
 @pytest.fixture(scope="module", name="test_flask_image")

@@ -87,7 +87,9 @@ def test_open_ports(
         successes=5,
     )
 
+    # Get the Traefik IP and build the ingress host header from the model name.
     status = juju.status()
+    model_name = status.model.name
     traefik_ip = list(status.apps[traefik_app.name].units.values())[0].address
 
     # Check initial opened ports
@@ -97,8 +99,8 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
-            timeout=15,
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
+            timeout=5,
         ).status_code
         == 200
     )
@@ -117,7 +119,7 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
@@ -136,7 +138,7 @@ def test_open_ports(
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
-            headers={"Host": f"{_clean_juju_model_name(juju)}-{go_app.name}.{external_hostname}"},
+            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
             timeout=5,
         ).status_code
         == 200
