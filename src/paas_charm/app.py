@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
 import ops
+from dpcharmlibs.interfaces import ValkeyResponseModel
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
@@ -164,6 +165,43 @@ def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> 
     if not relation_data:
         return {}
     return _db_url_to_env_variables("REDIS", str(relation_data.url))
+
+
+def generate_valkey_env(
+    relation_data: ValkeyResponseModel | None = None,
+) -> dict[str, str]:
+    """Generate environment variables from Valkey relation data.
+
+    Args:
+        relation_data: The ValkeyResponseModel from dpcharmlibs with resolved secrets.
+
+    Returns:
+        Valkey environment mappings if Valkey relation data is available, empty
+        dictionary otherwise.
+    """
+    if not relation_data:
+        return {}
+    endpoint = str(relation_data.endpoints)
+    user_info = (
+        f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
+    )
+    prefix = "VALKEY"
+    # Ensure the scheme in the url so that urllib can properly parse it into components.
+    # Valkey sends the url without the scheme ( valkey_primary:6123 )
+    # This normalizes that URL to become valkey://valkey_primary:6123
+    if "://" not in endpoint:
+        endpoint = f"{prefix.lower()}://{user_info}{endpoint}"
+    else:
+        scheme, netloc = endpoint.split("://", 1)
+        endpoint = f"{scheme}://{user_info}{netloc}"
+
+    return {
+        **_db_url_to_env_variables(prefix, endpoint),
+        f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
+        f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
+        f"{prefix}_MODE": relation_data.mode or "",
+        f"{prefix}_VERSION": relation_data.version or "",
+    }
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
@@ -355,6 +393,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
         generate_redis_env: Maps Redis connection information to environment variables.
+        generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
@@ -367,6 +406,7 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
     generate_redis_env = staticmethod(generate_redis_env)
+    generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
@@ -489,6 +529,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
         env.update(self.generate_redis_env(relation_data=self._charm_state.integrations.redis))
+        env.update(self.generate_valkey_env(relation_data=self._charm_state.integrations.valkey))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
@@ -603,14 +644,14 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
       all components as returned from urllib.parse and the
       database name extracted from the path
     """
-    prefix = prefix + "_DB"
-    envvars = _url_env_vars(prefix, url)
+    db_env_prefix = prefix + "_DB"
+    envvars = _url_env_vars(db_env_prefix, url)
     parsed_url = urllib.parse.urlparse(url)
 
     # database name is usually parsed this way.
     db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
     if db_name is not None:
-        envvars[f"{prefix}_NAME"] = db_name
+        envvars[f"{db_env_prefix}_NAME"] = db_name
     return envvars
 
 

@@ -5,19 +5,9 @@
 
 
 def pytest_addoption(parser):
-    """Define some command line options for integration and unit tests."""
-    parser.addoption("--charm-file", action="extend", nargs="+", default=[])
-    parser.addoption("--test-flask-image", action="store")
-    parser.addoption("--test-async-flask-image", action="store")
-    parser.addoption("--test-db-flask-image", action="store")
-    parser.addoption("--django-app-image", action="store")
-    parser.addoption("--django-async-app-image", action="store")
-    parser.addoption("--fastapi-app-image", action="store")
-    parser.addoption("--go-app-image", action="store")
-    parser.addoption("--flask-minimal-app-image", action="store")
-    parser.addoption("--expressjs-app-image", action="store")
-    parser.addoption("--paas-spring-boot-app-image", action="store")
+    """Define command line options for integration and unit tests."""
     parser.addoption("--kube-config", action="store")
     parser.addoption("--keep-models", action="store_true", default=False)
     parser.addoption("--model", action="store", default=None)
     parser.addoption("--use-existing", action="store_true", default=False)
+    parser.addoption("--controller", action="store", default="concierge-k8s")

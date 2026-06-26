@@ -1,0 +1,70 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+version: 1
+
+rocks:
+  - name: test-flask
+    rockcraft-yaml: examples/flask/test_rock/rockcraft.yaml
+  - name: test-async-flask
+    rockcraft-yaml: examples/flask/test_async_rock/rockcraft.yaml
+  - name: test-db-flask
+    rockcraft-yaml: examples/flask/test_db_rock/rockcraft.yaml
+  - name: flask-minimal-app
+    rockcraft-yaml: examples/flask-minimal/flask_minimal_app/rockcraft.yaml
+  - name: django-app
+    rockcraft-yaml: examples/django/django_app/rockcraft.yaml
+  - name: django-async-app
+    rockcraft-yaml: examples/django/django_async_app/rockcraft.yaml
+  - name: expressjs-app
+    rockcraft-yaml: examples/expressjs/rockcraft.yaml
+  - name: fastapi-app
+    rockcraft-yaml: examples/fastapi/fastapi_app/rockcraft.yaml
+  - name: go-app
+    rockcraft-yaml: examples/go/go_app/rockcraft.yaml
+  - name: paas-spring-boot-app
+    rockcraft-yaml: examples/springboot/spring-boot_app/rockcraft.yaml
+
+charms:
+  - name: flask-k8s
+    charmcraft-yaml: examples/flask/charm/charmcraft.yaml
+    resources:
+      flask-app-image:
+        type: oci-image
+        rock: test-flask
+  - name: flask-minimal-k8s
+    charmcraft-yaml: examples/flask-minimal/charm/charmcraft.yaml
+    resources:
+      flask-app-image:
+        type: oci-image
+        rock: flask-minimal-app
+  - name: django-k8s
+    charmcraft-yaml: examples/django/charm/charmcraft.yaml
+    resources:
+      django-app-image:
+        type: oci-image
+        rock: django-app
+  - name: expressjs-k8s
+    charmcraft-yaml: examples/expressjs/charm/charmcraft.yaml
+    resources:
+      app-image:
+        type: oci-image
+        rock: expressjs-app
+  - name: fastapi-k8s
+    charmcraft-yaml: examples/fastapi/charm/charmcraft.yaml
+    resources:
+      app-image:
+        type: oci-image
+        rock: fastapi-app
+  - name: go-k8s
+    charmcraft-yaml: examples/go/charm/charmcraft.yaml
+    resources:
+      app-image:
+        type: oci-image
+        rock: go-app
+  - name: spring-boot-k8s
+    charmcraft-yaml: examples/springboot/charm/charmcraft.yaml
+    resources:
+      app-image:
+        type: oci-image
+        rock: paas-spring-boot-app

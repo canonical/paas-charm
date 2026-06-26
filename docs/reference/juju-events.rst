@@ -51,6 +51,9 @@ For a web app charm, the following events are observed:
   * - ``redis_relation_updated``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the configuration, run pending migrations and restart the workload.
+  * - ``valkey_resource_created``
+    - Fired when the Valkey relation data is available.
+    - Validate the configuration, run pending migrations and restart the workload.
   * - `s3_credentials_changed <https://github.com/canonical/data-platform-libs>`_
     - Fired when the S3 credentials are changed.
     - Validate the configuration, run pending migrations and restart the workload.

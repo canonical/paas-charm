@@ -1,5 +1,5 @@
-cosl
-jsonschema >=4.19,<4.20
-ops >= 2.6
-pydantic==2.6.4
-
+cosl==1.9.1
+dpcharmlibs-interfaces==1.0.2
+jsonschema==4.19.2
+ops==3.7.1
+pydantic==2.13.3

@@ -1,0 +1,33 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+project: paas-charm
+path: /home/ubuntu/proj
+kill-timeout: 4h
+warn-timeout: 1h
+
+backends:
+  integration-test:
+    type: integration-test
+    systems:
+      - ubuntu-24.04
+
+environment:
+  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'
+  OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-b4788978c987440a24360f3fb7cb879961ddb4c5}")'
+
+exclude:
+  - .git
+  - .tox
+  - .venv
+  - .*_cache
+
+integration-suites:
+  tests/integration/:
+    working-dir: ./
+    summary: paas-charm integration tests
+    auto-discover: true
+    backends:
+      - integration-test
+    environment:
+      CONCIERGE: concierge.yaml

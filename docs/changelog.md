@@ -11,7 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Place any unreleased changes here, that are subject to release in coming versions :).
+* fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when
+  using the v1 version of the Loki library.
+* docs: Migrate the RTD documentation URL under the Canonical domain.
+
+## 1.11.3 - 2026-05-26
+
+* feat: Add support for the `valkey_client` interface.
+* fix: Prevent duplicate allowed_hosts when ingress hostname matches charm config.
+  This avoids duplicating hostnames that were already configured by the user
+  via the `django-allowed-hosts` charm config option.
 
 ## 1.11.2 - 2026-04-30
 

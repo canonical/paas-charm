@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.11.2"
+version = "1.11.3"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
@@ -113,3 +113,7 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99

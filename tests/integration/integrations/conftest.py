@@ -4,6 +4,7 @@
 """Fixtures for flask charm integration tests."""
 
 import collections
+import contextlib
 import logging
 import pathlib
 import subprocess
@@ -14,64 +15,173 @@ from typing import cast
 import jubilant
 import kubernetes
 import pytest
+import urllib3.util.connection
+from lightkube import Client
+from lightkube.generic_resource import create_namespaced_resource
+from lightkube.resources.core_v1 import Service
 from minio import Minio
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from tests.integration.conftest import deploy_postgresql, generate_app_fixture
 from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+HOSTNAME = "gateway.internal"
 
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope="module", name="ingress_provider")
+def ingress_provider_fixture(
+    juju: jubilant.Juju,
+):
+    juju.deploy(
+        charm="gateway-api-integrator",
+        app="gateway",
+        channel="latest/edge",
+        trust=True,
+        config={"gateway-class": "ck-gateway"},
+    )
+    juju.deploy(
+        charm="gateway-route-configurator",
+        app="configurator",
+        channel="latest/edge",
+        config={"hostname": HOSTNAME},
+    )
+    juju.deploy(
+        charm="self-signed-certificates",
+        app="cert",
+        channel="1/edge",
+    )
+    juju.integrate("cert:certificates", "gateway:certificates")
+    juju.integrate("configurator:gateway-route", "gateway:gateway-route")
+
+    juju.wait(
+        # gateway/configurator can be blocked before the app-ingress relation is created.
+        lambda status: jubilant.all_active(status, "cert"),
+        timeout=10 * 60,
+    )
+    return ("gateway", "configurator")
+
+
+def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str:
+    gateway_resource = create_namespaced_resource(
+        group="gateway.networking.k8s.io",
+        version="v1",
+        kind="Gateway",
+        plural="gateways",
+    )
+
+    @retry(stop=stop_after_attempt(12), wait=wait_fixed(5))
+    def _gateway_lb_ip() -> str:
+        gateway_app, _ = ingress_provider
+        model_name = juju.status().model.name
+        client = Client()
+        service = client.get(Service, name=gateway_app, namespace=model_name)
+        if (
+            service.status
+            and service.status.loadBalancer
+            and service.status.loadBalancer.ingress
+            and service.status.loadBalancer.ingress[0].ip
+        ):
+            return service.status.loadBalancer.ingress[0].ip
+
+        gateway = client.get(gateway_resource, name=gateway_app, namespace=model_name)
+        gateway_status = getattr(gateway, "status", None)
+        if isinstance(gateway_status, dict):
+            addresses = gateway_status.get("addresses")
+        else:
+            addresses = getattr(gateway_status, "addresses", None)
+        if not addresses:
+            raise ValueError(f"No addresses in Gateway status for resource {gateway_app!r}")
+        if isinstance(addresses[0], dict):
+            address_value = addresses[0].get("value")
+        else:
+            address_value = getattr(addresses[0], "value", None)
+        if not address_value:
+            raise ValueError(f"No Gateway address value set for resource {gateway_app!r}")
+        return address_value
+
+    return _gateway_lb_ip()
+
+
 @pytest.fixture(scope="module", name="flask_minimal_app")
-def flask_minimal_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def flask_minimal_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    flask_minimal_app_image: str,
+    tmp_path_factory,
+):
     framework = "flask-minimal"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": pytestconfig.getoption(f"--{framework}-app-image"),
+            "flask-app-image": flask_minimal_app_image,
         },
     )
 
 
 @pytest.fixture(scope="module", name="fastapi_app")
-def fastapi_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def fastapi_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
     framework = "fastapi"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": fastapi_app_image,
+        },
         config={"non-optional-string": "string"},
     )
 
 
 @pytest.fixture(scope="module", name="go_app")
-def go_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def go_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    go_app_image: str,
+    tmp_path_factory,
+):
     framework = "go"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": go_app_image,
+        },
         config={"metrics-port": 8081},
     )
 
 
 @pytest.fixture(scope="module", name="expressjs_app")
-def expressjs_app_fixture(juju: jubilant.Juju, pytestconfig: pytest.Config, tmp_path_factory):
+def expressjs_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    expressjs_app_image: str,
+    tmp_path_factory,
+):
     framework = "expressjs"
     yield from generate_app_fixture(
         juju=juju,
-        pytestconfig=pytestconfig,
+        charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": expressjs_app_image,
+        },
     )
 
 
@@ -134,8 +244,27 @@ def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
         channel="latest/edge",
         trust=True,
     )
+    juju.wait(lambda status: status.apps[redis_app_name].is_active, timeout=60 * 30)
 
     return App(redis_app_name)
+
+
+@pytest.fixture(scope="module", name="valkey_app_name")
+def valkey_app_name_fixture() -> str:
+    return "valkey"
+
+
+@pytest.fixture(scope="module", name="valkey_app")
+def valkey_app_fixture(juju: jubilant.Juju, valkey_app_name):
+    """Deploy and set up Valkey."""
+    juju.deploy(
+        valkey_app_name,
+        channel="9/edge",
+        trust=True,
+    )
+    juju.wait(lambda status: status.apps[valkey_app_name].is_active, timeout=60 * 30)
+
+    return App(valkey_app_name)
 
 
 @pytest.fixture(scope="module", name="mongodb_app_name")
@@ -640,3 +769,64 @@ def browser_context_manager():
         pytest.fail(f"Failed to install Playwright browser: {e.stderr}")
 
     yield
+
+
+@contextlib.contextmanager
+def pin_dns(hostname: str, ip: str):
+    """Resolve ``hostname`` to ``ip`` for every connection made in the context.
+
+    The gateway only routes by the ingress hostname, which exists solely as a
+    Host header in these tests and is not in DNS. Some apps (e.g. the FastAPI
+    app with its ``root_path``) reply with a redirect to that hostname, so we
+    pin its resolution to the gateway load-balancer IP for both the initial
+    request and any connection opened while following redirects.
+    """
+    original_create_connection = urllib3.util.connection.create_connection
+
+    def patched_create_connection(address, *args, **kwargs):
+        host, port = address
+        if host == hostname:
+            address = (ip, port)
+        return original_create_connection(address, *args, **kwargs)
+
+    urllib3.util.connection.create_connection = patched_create_connection
+    try:
+        yield
+    finally:
+        urllib3.util.connection.create_connection = original_create_connection
+
+
+@contextlib.contextmanager
+def ingress_relation(juju: jubilant.Juju, app: App, ingress_provider: tuple[str, str]):
+    """Relate ``app`` to the ingress configurator, cleaning up on exit.
+
+    configurator:ingress accepts a single relation, so the relation is always
+    removed (and the removal awaited) on exit, even on failure, so one failing
+    case can't exhaust the quota for the next one.
+    """
+    gateway_app, configurator_app = ingress_provider
+    try:
+        juju.integrate(app.name, configurator_app)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise
+    try:
+        juju.wait(
+            lambda status: jubilant.all_active(status, app.name, gateway_app, configurator_app),
+            timeout=10 * 60,
+            delay=5,
+        )
+        yield
+    finally:
+        juju.remove_relation(app.name, configurator_app)
+        juju.wait(
+            lambda status: (
+                app.name
+                not in [
+                    rel.related_app
+                    for rel in status.apps[configurator_app].relations.get("ingress", [])
+                ]
+            ),
+            timeout=5 * 60,
+            delay=5,
+        )
