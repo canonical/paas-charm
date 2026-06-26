@@ -108,31 +108,63 @@ The code for this charm can be downloaded as follows:
 git clone https://github.com/canonical/paas-charm
 ```
 
-You can use the environments created by `tox` for development:
+You can use the environments created by `tox` for unit-test development:
 
 ```shell
 tox --notest -e unit
 source .tox/unit/bin/activate
 ```
 
-You can create an environment for development with `tox`:
+Integration tests run locally through [`canonical/charm-ci`](https://github.com/canonical/charm-ci)
+(the `opcli` CLI plus [spread](https://github.com/canonical/spread)), the same path CI uses.
+Install `opcli` and the rest of the local development tooling:
 
 ```shell
-tox devenv -e integration
-source venv/bin/activate
+sudo snap install astral-uv --classic
+uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git"
+export PATH="$HOME/.local/bin:$PATH"
+opcli install all       # gh, spread, concierge, lxd, charmcraft, rockcraft, snapcraft, ...
+opcli install doctor    # verify the environment
 ```
 
 ### Test
 
-This project uses `tox` for managing test environments. There are some pre-configured environments
-that can be used for linting and formatting code when you're preparing contributions to the charm:
+This project uses `tox` for managing the lint and unit test environments. There are some
+pre-configured environments that can be used for linting and formatting code when you're
+preparing contributions to the charm:
 
 * `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
 * `tox -e fmt`: Runs formatting using `black` and `isort`.
 * `tox -e lint`: Runs a range of static code analysis to check the code.
 * `tox -e static`: Runs other checks such as `bandit` for security issues.
 * `tox -e unit`: Runs the unit tests.
-* `tox -e integration`: Runs the integration tests.
+
+#### Integration tests
+
+Integration tests run locally through `canonical/charm-ci` (`opcli` + `spread`), the same
+way they run in CI. You must build the artifacts first, because
+[`tests/integration/conftest.py`](tests/integration/conftest.py) reads `artifacts.build.yaml`.
+
+The recommended flow runs the tests on a local LXD VM, mirroring CI:
+
+```shell
+opcli artifacts build     # build charms/rocks -> artifacts.build.yaml
+opcli spread run          # run all integration tests on the local LXD backend
+
+# Run a single test:
+opcli spread run -- integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>
+```
+
+For faster iteration you can run pytest directly against the current host:
+
+```shell
+opcli artifacts build
+opcli env provision                                    # concierge provisioning
+opcli artifacts push-images --missing-registry deploy  # push rocks to a local registry
+opcli pytest run                                        # run the integration tests
+```
+
+See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 
 ## Add an integration
 
