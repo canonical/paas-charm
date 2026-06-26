@@ -5,7 +5,12 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.integrations.conftest import HOSTNAME, gateway_lb_ip
+from tests.integration.integrations.conftest import (
+    HOSTNAME,
+    gateway_lb_ip,
+    ingress_relation,
+    pin_dns,
+)
 from tests.integration.types import App
 
 
@@ -27,27 +32,20 @@ def test_ingress(
     expected_text: str | None,
     request: pytest.FixtureRequest,
     ingress_provider: tuple[str, str],
+    session_with_retry: requests.Session,
 ):
     app = request.getfixturevalue(app_fixture)
-    gateway_app, configurator_app = ingress_provider
-    try:
-        juju.integrate(app.name, configurator_app)
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-    juju.wait(
-        lambda status: jubilant.all_active(status, app.name, gateway_app, configurator_app),
-        timeout=10 * 60,
-        delay=5,
-    )
-    lb_ip = gateway_lb_ip(juju, ingress_provider)
-    response = requests.get(
-        f"https://{lb_ip}{endpoint}",
-        headers={"Host": HOSTNAME},
-        verify=False,
-        timeout=30,
-    )
-    assert response.status_code == 200
-    if expected_text:
-        assert response.text.strip() == expected_text
-    juju.remove_relation(app.name, configurator_app)
+    # The shared session_with_retry fixture only mounts the retry adapter on
+    # http://; reuse that same adapter for https:// without touching the fixture.
+    session_with_retry.mount("https://", session_with_retry.get_adapter("http://"))
+    with ingress_relation(juju, app, ingress_provider):
+        lb_ip = gateway_lb_ip(juju, ingress_provider)
+        with pin_dns(HOSTNAME, lb_ip):
+            response = session_with_retry.get(
+                f"https://{HOSTNAME}{endpoint}",
+                verify=False,
+                timeout=30,
+            )
+        assert response.status_code == 200
+        if expected_text:
+            assert response.text.strip() == expected_text

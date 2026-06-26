@@ -4,6 +4,7 @@
 """Fixtures for flask charm integration tests."""
 
 import collections
+import contextlib
 import logging
 import pathlib
 import subprocess
@@ -14,6 +15,7 @@ from typing import cast
 import jubilant
 import kubernetes
 import pytest
+import urllib3.util.connection
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
 from lightkube.resources.core_v1 import Service
@@ -766,3 +768,64 @@ def browser_context_manager():
         pytest.fail(f"Failed to install Playwright browser: {e.stderr}")
 
     yield
+
+
+@contextlib.contextmanager
+def pin_dns(hostname: str, ip: str):
+    """Resolve ``hostname`` to ``ip`` for every connection made in the context.
+
+    The gateway only routes by the ingress hostname, which exists solely as a
+    Host header in these tests and is not in DNS. Some apps (e.g. the FastAPI
+    app with its ``root_path``) reply with a redirect to that hostname, so we
+    pin its resolution to the gateway load-balancer IP for both the initial
+    request and any connection opened while following redirects.
+    """
+    original_create_connection = urllib3.util.connection.create_connection
+
+    def patched_create_connection(address, *args, **kwargs):
+        host, port = address
+        if host == hostname:
+            address = (ip, port)
+        return original_create_connection(address, *args, **kwargs)
+
+    urllib3.util.connection.create_connection = patched_create_connection
+    try:
+        yield
+    finally:
+        urllib3.util.connection.create_connection = original_create_connection
+
+
+@contextlib.contextmanager
+def ingress_relation(juju: jubilant.Juju, app: App, ingress_provider: tuple[str, str]):
+    """Relate ``app`` to the ingress configurator, cleaning up on exit.
+
+    configurator:ingress accepts a single relation, so the relation is always
+    removed (and the removal awaited) on exit, even on failure, so one failing
+    case can't exhaust the quota for the next one.
+    """
+    gateway_app, configurator_app = ingress_provider
+    try:
+        juju.integrate(app.name, configurator_app)
+    except jubilant.CLIError as err:
+        if "already exists" not in err.stderr:
+            raise
+    try:
+        juju.wait(
+            lambda status: jubilant.all_active(status, app.name, gateway_app, configurator_app),
+            timeout=10 * 60,
+            delay=5,
+        )
+        yield
+    finally:
+        juju.remove_relation(app.name, configurator_app)
+        juju.wait(
+            lambda status: (
+                app.name
+                not in [
+                    rel.related_app
+                    for rel in status.apps[configurator_app].relations.get("ingress", [])
+                ]
+            ),
+            timeout=5 * 60,
+            delay=5,
+        )
