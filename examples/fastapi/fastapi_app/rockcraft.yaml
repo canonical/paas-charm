@@ -23,3 +23,6 @@ parts:
     stage:
     - app/alembic
     - app/alembic.ini
+  fastapi-framework/runtime:
+    stage:
+    - -etc/ssl/certs/ca-certificates.crt
