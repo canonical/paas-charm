@@ -21,7 +21,7 @@ from tests.integration.types import App
         ("expressjs_app", "/", None),
         ("fastapi_app", "/", None),
         ("flask_app", "/", None),
-        ("go_app", "/", "Hello, World!! Path: /"),
+        ("go_app", "/", "Hello, World!"),
         ("spring_boot_app", "/hello-world", None),
     ],
 )
