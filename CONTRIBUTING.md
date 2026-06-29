@@ -147,22 +147,16 @@ way they run in CI. You must build the artifacts first, because
 
 The recommended flow runs the tests on a local LXD VM, mirroring CI:
 
-```shell
-opcli artifacts build     # build charms/rocks -> artifacts.build.yaml
-opcli spread run          # run all integration tests on the local LXD backend
-
-# Run a single test:
-opcli spread run -- integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>
-```
+* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+* `opcli spread run -- -list`: Lists the integration tests.
+* `opcli spread run -- -v -debug integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>`: Runs a single test with debugging.
 
 For faster iteration you can run pytest directly against the current host:
 
-```shell
-opcli artifacts build
-opcli env provision                                    # concierge provisioning
-opcli artifacts push-images --missing-registry deploy  # push rocks to a local registry
-opcli pytest run                                        # run the integration tests
-```
+* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+* `opcli env provision`: Provisions the environment using [Concierge](https://github.com/canonical/concierge).
+* `opcli artifacts push-images --missing-registry deploy`: Pushes rocks to the local registry.
+* `opcli pytest run -- -k "test_name"`: Runs a single test.
 
 See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 
@@ -235,4 +229,3 @@ below.
   [profile](https://github.com/canonical/charmcraft/tree/main/charmcraft/templates/init-flask-framework)
   and
   [extension](https://github.com/canonical/charmcraft/blob/b6baa10566e3f3933cbd42392a0fe62cc79d2b6b/charmcraft/extensions/gunicorn.py#L167).
-
