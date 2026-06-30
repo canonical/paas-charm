@@ -181,15 +181,9 @@ jobs:
             sudo ip6tables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
           fi
 
-      - name: Install charmcraft (custom fork snap)
+      - name: Install charmcraft
         if: matrix.type == 'charm'
-        run: |
-          # Download the pre-built fork snap from the GitHub release and sideload it.
-          # craft_providers detects a sideloaded snap and injects it into the
-          # managed LXD container automatically (channel=None → inject_from_host).
-          curl -L --output /tmp/charmcraft.snap \
-            "https://github.com/alithethird/charmcraft/releases/download/3.3.0/charmcraft_4.2.1.post53%2Bg4ef9d389.d20260612_amd64.snap"
-          sudo snap install --classic --dangerous /tmp/charmcraft.snap
+        run: sudo snap install charmcraft --classic --channel=latest/edge
 
       - name: Install rockcraft
         if: matrix.type == 'rock' && steps.restore-rock-cache.outputs.cache-hit != 'true'

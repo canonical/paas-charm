@@ -2,14 +2,13 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.11.3"
+version = "2.0.0-alpha.1"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
     {name = "Canonical IS DevOps team", email="is-devops-team@canonical.com"},
 ]
-requires-python = ">=3.10"
-dynamic = ["dependencies"]
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -17,7 +16,15 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
 ]
-
+dependencies = [
+    "cosl==1.9.1",
+    "dpcharmlibs-interfaces==1.0.2",
+    "Jinja2==3.1.6",
+    "jsonschema==4.26.0",
+    "opcli[cli]>=0.0.1a2",
+    "ops==3.7.1",
+    "pydantic==2.13.4",
+]
 
 [project.urls]
 Repository = "https://github.com/canonical/paas-charm"
@@ -117,3 +124,18 @@ disallow_untyped_defs = false
 [tool.ruff]
 target-version = "py312"
 line-length = 99
+
+[dependency-groups]
+integration-tests = [
+    "pytest>=9.1.1",
+    "aiohttp==3.11.7",
+    "cosl==1.9.1",
+    "saml-test-helper @ git+https://github.com/canonical/saml-test-idp.git",
+    "jubilant==1.7.0",
+    "juju==3.6.1.2",
+    "minio==7.2.14",
+    "ops==3.7.1",
+    "tenacity==9.0.0",
+    "playwright==1.53.0",
+    "opcli @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
+]
