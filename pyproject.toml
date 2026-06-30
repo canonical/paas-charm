@@ -21,7 +21,6 @@ dependencies = [
     "dpcharmlibs-interfaces==1.0.2",
     "Jinja2==3.1.6",
     "jsonschema==4.26.0",
-    "opcli[cli]>=0.0.1a2",
     "ops==3.7.1",
     "pydantic==2.13.4",
 ]
@@ -29,8 +28,26 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/canonical/paas-charm"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv]
+# The unit and integration-tests groups pin incompatible pytest versions and
+# are never installed into the same environment, so mark them as conflicting.
+conflicts = [
+    [
+        { group = "unit" },
+        { group = "integration-tests" },
+    ],
+]
+
+[tool.uv.sources]
+# opcli is published only from the charm-ci git repository, not PyPI.
+opcli = { git = "https://github.com/canonical/charm-ci.git", rev = "b4788978c987440a24360f3fb7cb879961ddb4c5" }
 
 [tool.setuptools.package-data]
 paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2", "**/templates/**/*.py", "**/templates/**/*.json"]
@@ -126,6 +143,39 @@ target-version = "py312"
 line-length = 99
 
 [dependency-groups]
+unit = [
+    "cosl==1.9.1",
+    "coverage[toml]==7.14.1",
+    "gunicorn==26.0.0",
+    "opentelemetry-api==1.42.1",
+    "opentelemetry-sdk==1.42.1",
+    "ops[testing]==3.7.1",
+    "pydantic[email]==2.13.4",
+    "pytest==9.0.3",
+]
+lint = [
+    "black",
+    "codespell",
+    "flake8",
+    "flake8-builtins",
+    "flake8-copyright",
+    "flake8-docstrings>=1.6.0",
+    "flake8-docstrings-complete>=1.0.4",
+    "flake8-test-docs",
+    "isort",
+    "mypy",
+    "pep8-naming",
+    "pydocstyle",
+    "pylint",
+    "pyproject-flake8",
+    "pytest_operator",
+    "snowballstemmer<3.0.0",
+    "types-PyYAML",
+    "types-requests",
+]
+static = [
+    "bandit[toml]",
+]
 integration-tests = [
     "pytest>=9.1.1",
     "aiohttp==3.11.7",
@@ -137,5 +187,5 @@ integration-tests = [
     "ops==3.7.1",
     "tenacity==9.0.0",
     "playwright==1.53.0",
-    "opcli @ git+https://github.com/canonical/charm-ci.git@b4788978c987440a24360f3fb7cb879961ddb4c5"
+    "opcli"
 ]
