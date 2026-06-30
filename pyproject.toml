@@ -177,5 +177,6 @@ integration-tests = [
     "ops==3.7.1",
     "tenacity==9.0.0",
     "playwright==1.53.0",
+    "lightkube==0.21.0",
     "opcli"
 ]
