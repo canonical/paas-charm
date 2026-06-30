@@ -2,18 +2,10 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
-    "python_full_version >= '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit'",
-    "python_full_version < '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit'",
-    "python_full_version >= '3.15' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version == '3.14.*' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version < '3.14' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version >= '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version < '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
+    "python_full_version >= '3.15'",
+    "python_full_version == '3.14.*'",
+    "python_full_version < '3.14'",
 ]
-conflicts = [[
-    { package = "paas-charm", group = "integration-tests" },
-    { package = "paas-charm", group = "unit" },
-]]
 
 [[package]]
 name = "aiohappyeyeballs"
@@ -224,7 +216,7 @@ name = "bandit"
 version = "1.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "stevedore" },
@@ -346,7 +338,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -476,7 +468,7 @@ name = "click"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/d4/81420972a676e8ffea40450d8c8c92943e7218a78fe9b64359836cc9876b/click-8.4.2.tar.gz", hash = "sha256:9a6cea6e60b17ebe0a44c5cc636d94f09bd66142c1cd7d8b4cd731c4917a15f6", size = 338000, upload-time = "2026-06-24T17:45:15.148Z" }
 wheels = [
@@ -606,7 +598,7 @@ name = "cryptography"
 version = "49.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1f/99/d1c90d6041656cc6ee229dc99cd67fd0cd5aec3c5f7d72fffc27cc750054/cryptography-49.0.0.tar.gz", hash = "sha256:f89660a348f4f78a92366240a61404e337586ef7f5909a2fef59ca88ef505493", size = 854345, upload-time = "2026-06-12T20:02:30.512Z" }
 wheels = [
@@ -1026,14 +1018,14 @@ name = "ipython"
 version = "9.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "decorator" },
     { name = "ipython-pygments-lexers" },
     { name = "jedi" },
     { name = "matplotlib-inline" },
-    { name = "pexpect", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit') or (sys_platform == 'win32' and extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
     { name = "prompt-toolkit" },
-    { name = "psutil", marker = "(sys_platform != 'cygwin' and sys_platform != 'emscripten') or (sys_platform == 'cygwin' and extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit') or (sys_platform == 'emscripten' and extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "psutil", marker = "sys_platform != 'cygwin' and sys_platform != 'emscripten'" },
     { name = "pygments" },
     { name = "stack-data" },
     { name = "traitlets" },
@@ -1471,7 +1463,7 @@ version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ast-serialize" },
-    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "librt", marker = "platform_python_implementation != 'PyPy'" },
     { name = "mypy-extensions" },
     { name = "pathspec" },
     { name = "typing-extensions" },
@@ -1631,7 +1623,7 @@ integration-tests = [
     { name = "opcli" },
     { name = "ops" },
     { name = "playwright" },
-    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" } },
+    { name = "pytest" },
     { name = "saml-test-helper" },
     { name = "tenacity" },
 ]
@@ -1660,13 +1652,13 @@ static = [
 ]
 unit = [
     { name = "cosl" },
-    { name = "coverage", marker = "extra == 'group-10-paas-charm-unit'" },
+    { name = "coverage" },
     { name = "gunicorn" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-sdk" },
-    { name = "ops", extra = ["testing"], marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pydantic", extra = ["email"], marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pytest", version = "9.0.3", source = { registry = "https://pypi.org/simple" } },
+    { name = "ops", extra = ["testing"] },
+    { name = "pydantic", extra = ["email"] },
+    { name = "pytest" },
 ]
 
 [package.metadata]
@@ -1722,7 +1714,7 @@ unit = [
     { name = "opentelemetry-sdk", specifier = "==1.42.1" },
     { name = "ops", extras = ["testing"], specifier = "==3.7.1" },
     { name = "pydantic", extras = ["email"], specifier = "==2.13.4" },
-    { name = "pytest", specifier = "==9.0.3" },
+    { name = "pytest", specifier = "==9.1.1" },
 ]
 
 [[package]]
@@ -2207,7 +2199,7 @@ version = "4.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "dill" },
     { name = "isort" },
     { name = "mccabe" },
@@ -2237,7 +2229,7 @@ name = "pynacl"
 version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d9/9a/4019b524b03a13438637b11538c82781a5eda427394380381af8f04f467a/pynacl-1.6.2.tar.gz", hash = "sha256:018494d6d696ae03c7e656e5e74cdfd8ea1326962cc401bcf018f1ed8436811c", size = 3511692, upload-time = "2026-01-01T17:48:10.851Z" }
 wheels = [
@@ -2293,41 +2285,14 @@ wheels = [
 
 [[package]]
 name = "pytest"
-version = "9.0.3"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15'",
-    "python_full_version < '3.15'",
-]
-dependencies = [
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra == 'group-10-paas-charm-unit') or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
-    { name = "iniconfig", marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "packaging", marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pluggy", marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pygments", marker = "extra == 'group-10-paas-charm-unit'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/0d/549bd94f1a0a402dc8cf64563a117c0f3765662e2e668477624baeec44d5/pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c", size = 1572165, upload-time = "2026-04-07T17:16:18.027Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/24/a372aaf5c9b7208e7112038812994107bc65a84cd00e0354a88c2c77a617/pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9", size = 375249, upload-time = "2026-04-07T17:16:16.13Z" },
-]
-
-[[package]]
-name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version == '3.14.*' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version < '3.14' and extra == 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version >= '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-    "python_full_version < '3.15' and extra != 'group-10-paas-charm-integration-tests' and extra != 'group-10-paas-charm-unit'",
-]
 dependencies = [
-    { name = "colorama", marker = "(sys_platform == 'win32' and extra == 'group-10-paas-charm-integration-tests') or (sys_platform == 'win32' and extra != 'group-10-paas-charm-unit') or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
-    { name = "iniconfig", marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
-    { name = "packaging", marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
-    { name = "pluggy", marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
-    { name = "pygments", marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
+    { name = "pygments" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
 wheels = [
@@ -2339,8 +2304,7 @@ name = "pytest-asyncio"
 version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pytest", version = "9.0.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
+    { name = "pytest" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ae/53/57663d99acaac2fcdafdc697e52a9b1b7d6fcf36616281ff9768a44e7ff3/pytest_asyncio-0.21.2.tar.gz", hash = "sha256:d67738fc232b94b326b9d060750beb16e0074210b98dd8b58a5239fa2a154f45", size = 30656, upload-time = "2024-04-29T13:23:24.738Z" }
 wheels = [
@@ -2355,8 +2319,7 @@ dependencies = [
     { name = "ipdb" },
     { name = "jinja2" },
     { name = "juju" },
-    { name = "pytest", version = "9.0.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-10-paas-charm-unit'" },
-    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-10-paas-charm-integration-tests' or extra != 'group-10-paas-charm-unit'" },
+    { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pyyaml" },
 ]
@@ -2468,7 +2431,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "rpds-py" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-10-paas-charm-integration-tests' and extra == 'group-10-paas-charm-unit')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [

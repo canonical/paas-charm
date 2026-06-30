@@ -35,16 +35,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.uv]
-# The unit and integration-tests groups pin incompatible pytest versions and
-# are never installed into the same environment, so mark them as conflicting.
-conflicts = [
-    [
-        { group = "unit" },
-        { group = "integration-tests" },
-    ],
-]
-
 [tool.uv.sources]
 # opcli is published only from the charm-ci git repository, not PyPI.
 opcli = { git = "https://github.com/canonical/charm-ci.git", rev = "b4788978c987440a24360f3fb7cb879961ddb4c5" }
@@ -151,7 +141,7 @@ unit = [
     "opentelemetry-sdk==1.42.1",
     "ops[testing]==3.7.1",
     "pydantic[email]==2.13.4",
-    "pytest==9.0.3",
+    "pytest==9.1.1",
 ]
 lint = [
     "black",
