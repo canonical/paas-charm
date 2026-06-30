@@ -1803,7 +1803,7 @@ integration-tests = [
     { name = "cosl", specifier = "==1.9.1" },
     { name = "jubilant", specifier = "==1.7.0" },
     { name = "juju", specifier = "==3.6.1.2" },
-    { name = "lightkube" },
+    { name = "lightkube", specifier = "==0.21.0" },
     { name = "minio", specifier = "==7.2.14" },
     { name = "opcli", git = "https://github.com/canonical/charm-ci.git?rev=b4788978c987440a24360f3fb7cb879961ddb4c5" },
     { name = "ops", specifier = "==3.7.1" },
