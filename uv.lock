@@ -1647,7 +1647,7 @@ wheels = [
 [[package]]
 name = "opcli"
 version = "0.0.1a2"
-source = { git = "https://github.com/canonical/charm-ci.git?rev=b4788978c987440a24360f3fb7cb879961ddb4c5#b4788978c987440a24360f3fb7cb879961ddb4c5" }
+source = { git = "https://github.com/canonical/charm-ci.git?branch=main#7e08ea41eadd61b4bc14ce408c660699deed6567" }
 dependencies = [
     { name = "pydantic" },
     { name = "ruamel-yaml" },
@@ -1805,7 +1805,7 @@ integration-tests = [
     { name = "juju", specifier = "==3.6.1.2" },
     { name = "lightkube", specifier = "==0.21.0" },
     { name = "minio", specifier = "==7.2.14" },
-    { name = "opcli", git = "https://github.com/canonical/charm-ci.git?rev=b4788978c987440a24360f3fb7cb879961ddb4c5" },
+    { name = "opcli", git = "https://github.com/canonical/charm-ci.git?branch=main" },
     { name = "ops", specifier = "==3.7.1" },
     { name = "playwright", specifier = "==1.53.0" },
     { name = "pytest", specifier = ">=9.1.1" },

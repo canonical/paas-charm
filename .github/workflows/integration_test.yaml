@@ -11,7 +11,11 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: ./.github/workflows/integration-test.yml
+    uses: canonical/charm-ci/.github/workflows/integration-test.yml@main
+    secrets: inherit
+    with:
+      charmcraft-channel: latest/edge
+      rockcraft-channel: latest/edge
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
