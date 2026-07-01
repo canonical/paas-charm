@@ -68,7 +68,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
 def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     """
     arrange: none
-    act: start the django charm and set django-app container to be ready.
+    act: start the django charm and set app container to be ready.
     assert: django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()
@@ -163,7 +163,7 @@ def test_django_create_super_user(harness: Harness) -> None:
 def test_required_database_integration(harness_no_integrations: Harness):
     """
     arrange: Start the Django charm with no integrations specified in the charm.
-    act: Start the django charm and set django-app container to be ready.
+    act: Start the django charm and set app container to be ready.
     assert: The charm should be blocked, as Django requires a database to work.
     """
     harness = harness_no_integrations
@@ -180,7 +180,7 @@ def test_required_database_integration(harness_no_integrations: Harness):
 def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     """
     arrange: None
-    act: Start the django charm and set django-app container to be ready.
+    act: Start the django charm and set app container to be ready.
     assert: Django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()

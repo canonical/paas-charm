@@ -1,5 +1,0 @@
-cosl==1.9.1
-dpcharmlibs-interfaces==1.0.2
-jsonschema==4.19.2
-ops==3.7.1
-pydantic==2.13.3

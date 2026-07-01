@@ -116,7 +116,7 @@ def test_prometheus_custom_scrape_configs(
         _assert_scrape_targets_for_app(
             custom_targets, [unit_0_ip, unit_1_ip], 8081, {"app": "flask", "env": "example"}
         )
-        assert "flask-app-custom" in custom_targets[0]["labels"]["job"]
+        assert "app-custom" in custom_targets[0]["labels"]["job"]
 
         # @scheduler placeholder uses FQDN
         scheduler_fqdn = (
@@ -125,7 +125,7 @@ def test_prometheus_custom_scrape_configs(
         _assert_scrape_targets_for_app(
             scheduler_targets, [scheduler_fqdn], 8082, {"role": "scheduler"}
         )
-        assert "flask-scheduler-metrics" in scheduler_targets[0]["labels"]["job"]
+        assert "app-scheduler-metrics" in scheduler_targets[0]["labels"]["job"]
 
     finally:
         juju.remove_unit(flask_app.name, num_units=1)

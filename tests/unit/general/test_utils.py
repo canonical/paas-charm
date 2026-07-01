@@ -309,17 +309,17 @@ def test_get_relations_by_interface(requires, interface_name, expected_relation_
     "app_name, unit_identifier, model_name, expected",
     [
         pytest.param(
-            "flask-app",
+            "app",
             "0",
             "my-model",
-            "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local",
+            "app-0.app-endpoints.my-model.svc.cluster.local",
             id="unit number only",
         ),
         pytest.param(
-            "flask-app",
-            "flask-app/0",
+            "app",
+            "app/0",
             "production",
-            "flask-app-0.flask-app-endpoints.production.svc.cluster.local",
+            "app-0.app-endpoints.production.svc.cluster.local",
             id="unit name with slash",
         ),
         pytest.param(

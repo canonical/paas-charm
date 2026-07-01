@@ -53,8 +53,8 @@ def harness_no_integrations_fixture() -> typing.Generator[Harness, None, None]:
     description: An example Django application.
 
     containers:
-      django-app:
-        resource: django-app-image
+      app:
+        resource: app-image
 
     peers:
       secret-storage:

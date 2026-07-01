@@ -204,7 +204,7 @@ def flask_base_state_fixture():
         ],
         "containers": {
             testing.Container(
-                name="flask-app",
+                name="app",
                 can_connect=True,
                 mounts={"data": testing.Mount(location="/flask/gunicorn.conf.py", source="conf")},
                 execs={
@@ -301,7 +301,7 @@ def django_base_state_fixture():
         ],
         "containers": {
             testing.Container(
-                name="django-app",
+                name="app",
                 can_connect=True,
                 mounts={"data": testing.Mount(location="/django/gunicorn.conf.py", source="conf")},
                 execs={

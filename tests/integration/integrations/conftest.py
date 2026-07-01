@@ -121,7 +121,7 @@ def flask_minimal_app_fixture(
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": flask_minimal_app_image,
+            "app-image": flask_minimal_app_image,
         },
     )
 

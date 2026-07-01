@@ -175,19 +175,19 @@ def build_k8s_unit_fqdn(app_name: str, unit_identifier: str, model_name: str) ->
     """Build Kubernetes FQDN for a unit using service discovery.
 
     Args:
-        app_name: Application name (e.g., "flask-app").
+        app_name: Application name (e.g., "app").
         unit_identifier: Unit identifier - can be unit number ("0"), unit name with slash
-            ("flask-app/0"), or unit name with dash ("flask-app-0").
+            ("app/0"), or unit name with dash ("app-0").
         model_name: Juju model name.
 
     Returns:
         Full Kubernetes FQDN for the unit.
 
     Example:
-        >>> build_k8s_unit_fqdn("flask-app", "0", "my-model")
-        "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local"
-        >>> build_k8s_unit_fqdn("flask-app", "flask-app/0", "my-model")
-        "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local"
+        >>> build_k8s_unit_fqdn("app", "0", "my-model")
+        "app-0.app-endpoints.my-model.svc.cluster.local"
+        >>> build_k8s_unit_fqdn("app", "app/0", "my-model")
+        "app-0.app-endpoints.my-model.svc.cluster.local"
     """
     if "/" in unit_identifier:
         normalized = unit_identifier.replace("/", "-")

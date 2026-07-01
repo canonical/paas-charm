@@ -4,6 +4,7 @@ import logging
 import pathlib
 import shutil
 import subprocess
+import tempfile
 from typing import cast
 
 import jubilant
@@ -294,7 +295,7 @@ def flask_non_root_db_app_fixture(
         tmp_path_factory=tmp_path_factory,
         use_postgres=True,
         resources={
-            "flask-app-image": test_db_flask_image,
+            "app-image": test_db_flask_image,
         },
         charm_dict={"charm-user": "non-root"},
     )
@@ -316,7 +317,7 @@ def flask_non_root_app_fixture(
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": test_flask_image,
+            "app-image": test_flask_image,
         },
         charm_dict={"charm-user": "non-root"},
     )
@@ -339,7 +340,7 @@ def django_non_root_app_fixture(
         use_postgres=True,
         config={"django-allowed-hosts": "*"},
         resources={
-            "django-app-image": django_app_image,
+            "app-image": django_app_image,
         },
         charm_dict={"charm-user": "non-root"},
     )
@@ -704,7 +705,7 @@ def django_app_fixture(
         tmp_path_factory=tmp_path_factory,
         config={"django-allowed-hosts": "*"},
         resources={
-            "django-app-image": django_app_image,
+            "app-image": django_app_image,
         },
     )
 
@@ -724,7 +725,7 @@ def django_async_app_fixture(
         tmp_path_factory=tmp_path_factory,
         config={"django-allowed-hosts": "*"},
         resources={
-            "django-app-image": django_async_app_image,
+            "app-image": django_async_app_image,
         },
     )
 
@@ -814,7 +815,7 @@ def flask_app_fixture(
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": test_flask_image,
+            "app-image": test_flask_image,
         },
         charm_dict={
             "config": {
@@ -844,7 +845,7 @@ def flask_db_app_fixture(
         framework=framework,
         tmp_path_factory=tmp_path_factory,
         resources={
-            "flask-app-image": test_db_flask_image,
+            "app-image": test_db_flask_image,
         },
     )
 
@@ -864,7 +865,7 @@ def flask_async_app_fixture(
         tmp_path_factory=tmp_path_factory,
         use_postgres=False,
         resources={
-            "flask-app-image": test_async_flask_image,
+            "app-image": test_async_flask_image,
         },
     )
 
@@ -880,7 +881,7 @@ def flask_blocked_app_fixture(
     """Build and deploy the flask charm with non-optional configs using jubilant."""
     app_name = "flask-k8s"
 
-    resources = {"flask-app-image": test_flask_image}
+    resources = {"app-image": test_flask_image}
     charm_file = build_charm_file(
         charm_paths, "flask", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
@@ -905,7 +906,7 @@ def django_blocked_app_fixture(
     """Build and deploy the Django charm with non-optional configs using jubilant."""
     app_name = "django-k8s"
 
-    resources = {"django-app-image": django_app_image}
+    resources = {"app-image": django_app_image}
     charm_file = build_charm_file(
         charm_paths, "django", tmp_path_factory, charm_dict=NON_OPTIONAL_CONFIGS
     )
