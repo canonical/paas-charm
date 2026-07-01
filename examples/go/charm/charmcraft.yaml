@@ -41,6 +41,8 @@ charm-libs:
   version: '0'
 - lib: squid_forward_proxy.http_proxy
   version: '0'
+- lib: traefik-k8s.traefik_route
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -133,6 +135,16 @@ requires:
     interface: rabbitmq
     optional: True
     limit: 1
+  traefik-route:
+    interface: traefik_route
+    optional: True
+    limit: 1
+  garm-configurator:
+    interface: garm_configurator_v0
+    optional: True
+  planner:
+    interface: github_runner_planner_v0
+    optional: True
 
 resources:
   app-image:

@@ -95,6 +95,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_storage: KeySecretStorage,
         integration_requirers: "IntegrationRequirers",
         base_url: str | None = None,
+        custom_integrations: "list[typing.Any] | None" = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
@@ -106,6 +107,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_storage: The secret storage manager associated with the charm.
             integration_requirers: The collection of integration requirers.
             base_url: Base URL for the service.
+            custom_integrations: List of custom integration instances.
 
         Return:
             The CharmState instance created by the provided charm.
@@ -213,6 +215,27 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 f"{exc.relation} relation data is either unavailable, invalid or not usable.",
                 relation=exc.relation,
             ) from exc
+
+        # Process custom integrations (touchpoints 2-3)
+        custom_integration_env: dict[str, str] = {}
+        if custom_integrations:
+            for integration in custom_integrations:
+                try:
+                    # Call is_ready which will call relation_data() by default
+                    if integration.is_ready():
+                        relation_data = integration.relation_data()
+                        env_vars = integration.gen_environment(relation_data)
+                        # Check for collisions with built-in env vars and other custom vars
+                        for var_name, var_value in env_vars.items():
+                            custom_integration_env[var_name] = var_value
+                except InvalidRelationDataError as exc:
+                    raise RelationDataError(
+                        f"Invalid {exc.relation} relation data.", relation=exc.relation
+                    ) from exc
+        
+        # Store custom integration env in integrations state
+        integrations.custom_integration_env = custom_integration_env
+
         peer_fqdns = None
         if secret_storage.is_initialized and (
             peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
@@ -348,6 +371,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         tracing: Tracing relation data.
         oauth: OAuth relation data.
         http_proxy: HTTP proxy relation data.
+        custom_integration_env: Environment variables from custom integrations.
     """
 
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
@@ -361,6 +385,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     tracing: "PaaSTracingRelationData | None" = None
     oauth: "PaaSOAuthRelationData | None" = None
     http_proxy: "ProxyConfig | None" = None
+    custom_integration_env: dict[str, str] = field(default_factory=dict)
 
 
 class PaasProxyConfig(BaseModel):

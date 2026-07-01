@@ -41,6 +41,8 @@ charm-libs:
   version: '0'
 - lib: squid_forward_proxy.http_proxy
   version: '0'
+- lib: nginx-ingress-integrator.nginx_route
+  version: '0'
 
 actions:
   rotate-secret-key:
@@ -131,6 +133,10 @@ requires:
     limit: 1
   http-proxy:
     interface: http_proxy
+    optional: True
+    limit: 1
+  nginx-route:
+    interface: nginx-route
     optional: True
     limit: 1
 
