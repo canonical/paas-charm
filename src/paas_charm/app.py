@@ -16,6 +16,7 @@ from dpcharmlibs.interfaces import ValkeyResponseModel
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
+from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.paas_config import LoggingFormat
 
 logger = logging.getLogger(__name__)
@@ -546,6 +547,17 @@ class App:  # pylint: disable=too-many-instance-attributes
                 relation_data=self._charm_state.integrations.oauth,
             )
         )
+        
+        # Add custom integration env vars with collision detection
+        custom_env = self._charm_state.integrations.custom_integration_env
+        for var_name, var_value in custom_env.items():
+            if var_name in env:
+                raise CharmConfigInvalidError(
+                    f"Custom integration env var '{var_name}' collides with built-in env var. "
+                    "Please rename the custom env var in your integration."
+                )
+            env[var_name] = var_value
+        
         return {prefix + k: v for (k, v) in env.items()}
 
     @property

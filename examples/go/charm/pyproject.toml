@@ -13,4 +13,5 @@ dependencies = [
     "jsonschema==4.26",
     "ops==3.7.1",
     "pydantic[email]==2.13.3",
+    "tomli-w>=1.0.0",
 ]

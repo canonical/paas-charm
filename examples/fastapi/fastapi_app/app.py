@@ -181,3 +181,16 @@ def test_table(table: str):
         return "SUCCESS"
     else:
         raise HTTPException(status_code=404, detail="Table not found")
+
+
+@app.get("/ophelia/status")
+def ophelia_status():
+    """Return Ophelia gRPC server connection info from env vars.
+
+    The ophelia-interface CustomIntegration exposes OPHELIA_GRPC_SERVER
+    when an ophelia-server relation is present.
+    """
+    server = os.environ.get("OPHELIA_GRPC_SERVER")
+    if not server:
+        return JSONResponse({"configured": False}, status_code=503)
+    return {"configured": True, "server": server}
