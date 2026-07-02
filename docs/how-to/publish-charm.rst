@@ -143,6 +143,6 @@ For example:
 
 .. seealso::
 
-   - `Charmcraft upload <https://documentation.ubuntu.com/charmcraft/en/latest/reference/commands/upload/>`_
-   - `Charmcraft upload-resource <https://documentation.ubuntu.com/charmcraft/en/latest/reference/commands/upload-resource/>`_
-   - `Charmcraft release <https://documentation.ubuntu.com/charmcraft/en/latest/reference/commands/release/>`_
+   - `Charmcraft upload <https://canonical.com/juju/docs/charmcraft/latest/reference/commands/upload/>`_
+   - `Charmcraft upload-resource <https://canonical.com/juju/docs/charmcraft/latest/reference/commands/upload-resource/>`_
+   - `Charmcraft release <https://canonical.com/juju/docs/charmcraft/latest/reference/commands/release/>`_
