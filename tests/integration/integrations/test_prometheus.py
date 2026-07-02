@@ -3,7 +3,6 @@
 
 """Integration tests for 12Factor charms Prometheus integration."""
 
-import json
 import logging
 
 import jubilant
