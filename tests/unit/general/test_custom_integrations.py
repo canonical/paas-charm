@@ -4,7 +4,7 @@
 """Unit tests for CustomIntegration API (IntegrationHandle-based)."""
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, call
+from unittest.mock import MagicMock, call
 
 import ops
 
@@ -104,21 +104,23 @@ class TestCustomIntegrationDefaults(unittest.TestCase):
     """Tests for the default implementations on CustomIntegration."""
 
     def setUp(self):
-        self.integration = ConcreteMinimal()
         self.handle = make_handle()
-        self.integration.setup(self.handle)
+        # Build a minimal ops.Object-compatible parent for the integration
+        charm_mock = MagicMock(spec=ops.CharmBase)
+        framework_mock = MagicMock()
+        framework_mock._track = MagicMock()
+        charm_mock.framework = framework_mock
+        self.integration = ConcreteMinimal.__new__(ConcreteMinimal)
+        # Bypass ops.Object.__init__ for unit-test isolation
+        self.integration.handle = self.handle
 
-    def test_relation_data_default_none(self):
-        """Default relation_data() returns None."""
-        self.assertIsNone(self.integration.relation_data())
-
-    def test_is_ready_default_false_when_no_data(self):
-        """Default is_ready() returns False when relation_data() is None."""
-        self.assertFalse(self.integration.is_ready())
+    def test_is_ready_default_true(self):
+        """Default is_ready() returns True."""
+        self.assertTrue(self.integration.is_ready())
 
     def test_gen_environment_default_empty(self):
         """Default gen_environment() returns {}."""
-        self.assertEqual(self.integration.gen_environment(None), {})
+        self.assertEqual(self.integration.gen_environment(), {})
 
     def test_reconcile_default_noop(self):
         """Default reconcile() does nothing."""
@@ -126,7 +128,12 @@ class TestCustomIntegrationDefaults(unittest.TestCase):
 
     def test_setup_stores_handle(self):
         """setup() receives and can store IntegrationHandle."""
+        # ConcreteMinimal.setup stores the handle as self.handle
         self.assertIs(self.integration.handle, self.handle)
+
+    def test_no_relation_data_method(self):
+        """CustomIntegration has no relation_data() method."""
+        self.assertFalse(hasattr(CustomIntegration, "relation_data"))
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +141,7 @@ class TestCustomIntegrationDefaults(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class ConcreteEnvVar(CustomIntegration):
-    """Env-var integration: reads a URI from the relation bag."""
+    """Env-var integration: reads a URI from the relation bag directly."""
     relation_name = "example-db"
 
     def setup(self, handle: IntegrationHandle) -> None:
@@ -148,77 +155,82 @@ class ConcreteEnvVar(CustomIntegration):
             lambda _: handle.on_change(),
         )
 
-    def relation_data(self):
+    def is_ready(self) -> bool:
         relation = self._handle.model.get_relation("example-db")
         if not relation or not relation.app:
-            return None
-        uri = relation.data[relation.app].get("uri")
-        if relation.data[relation.app] and not uri:
-            raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
-        return uri
+            return False
+        return "uri" in relation.data.get(relation.app, {})
 
-    def gen_environment(self, relation_data):
-        return {"EXAMPLE_DB_URI": relation_data}
+    def gen_environment(self) -> dict[str, str]:
+        relation = self._handle.model.get_relation("example-db")
+        if not relation or not relation.app:
+            return {}
+        bag = relation.data.get(relation.app, {})
+        uri = bag.get("uri")
+        if bag and not uri:
+            raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
+        if not uri:
+            return {}
+        return {"EXAMPLE_DB_URI": uri}
 
 
 class TestEnvVarIntegration(unittest.TestCase):
     """Tests for the env-var integration pattern."""
 
     def setUp(self):
-        self.integration = ConcreteEnvVar()
         self.handle = make_handle()
-        self.integration.setup(self.handle)
+        self.integration = ConcreteEnvVar.__new__(ConcreteEnvVar)
+        self.integration._handle = self.handle
 
-    def test_setup_calls_observe(self):
-        """setup() calls handle.observe for each event."""
-        self.assertEqual(self.handle.observe.call_count, 2)
-
-    def test_relation_data_returns_none_when_no_relation(self):
-        """relation_data() returns None when no relation exists."""
+    def test_gen_environment_returns_empty_when_no_relation(self):
+        """gen_environment() returns {} when no relation exists."""
         self.handle.model.get_relation.return_value = None
-        self.assertIsNone(self.integration.relation_data())
+        self.assertEqual(self.integration.gen_environment(), {})
 
-    def test_relation_data_returns_none_when_no_app(self):
-        """relation_data() returns None when relation.app is None."""
+    def test_gen_environment_returns_empty_when_no_app(self):
+        """gen_environment() returns {} when relation.app is None."""
         mock_relation = MagicMock()
         mock_relation.app = None
         self.handle.model.get_relation.return_value = mock_relation
-        self.assertIsNone(self.integration.relation_data())
+        self.assertEqual(self.integration.gen_environment(), {})
 
-    def test_relation_data_returns_uri(self):
-        """relation_data() returns the URI from the databag."""
+    def test_gen_environment_returns_uri(self):
+        """gen_environment() returns the URI env var from the databag."""
         mock_relation = MagicMock()
         mock_relation.app = MagicMock()
         mock_relation.data = {mock_relation.app: {"uri": "postgresql://host/db"}}
         self.handle.model.get_relation.return_value = mock_relation
-        self.assertEqual(self.integration.relation_data(), "postgresql://host/db")
+        self.assertEqual(
+            self.integration.gen_environment(),
+            {"EXAMPLE_DB_URI": "postgresql://host/db"},
+        )
 
-    def test_relation_data_raises_on_missing_uri(self):
-        """relation_data() raises InvalidRelationDataError when bag is present but uri absent."""
+    def test_gen_environment_raises_on_missing_uri(self):
+        """gen_environment() raises InvalidRelationDataError when bag present but uri absent."""
         mock_relation = MagicMock()
         mock_relation.app = MagicMock()
         mock_relation.data = {mock_relation.app: {"other_key": "value"}}
         self.handle.model.get_relation.return_value = mock_relation
         with self.assertRaises(InvalidRelationDataError):
-            self.integration.relation_data()
+            self.integration.gen_environment()
 
-    def test_is_ready_true_when_data(self):
-        """is_ready() returns True when relation_data() is not None."""
+    def test_is_ready_true_when_uri_present(self):
+        """is_ready() returns True when the URI is in the databag."""
         mock_relation = MagicMock()
         mock_relation.app = MagicMock()
         mock_relation.data = {mock_relation.app: {"uri": "postgresql://host/db"}}
         self.handle.model.get_relation.return_value = mock_relation
         self.assertTrue(self.integration.is_ready())
 
-    def test_is_ready_false_when_no_data(self):
-        """is_ready() returns False when relation_data() is None."""
+    def test_is_ready_false_when_no_relation(self):
+        """is_ready() returns False when no relation exists."""
         self.handle.model.get_relation.return_value = None
         self.assertFalse(self.integration.is_ready())
 
-    def test_gen_environment_maps_uri(self):
-        """gen_environment() maps the URI to EXAMPLE_DB_URI."""
-        env = self.integration.gen_environment("postgresql://host/db")
-        self.assertEqual(env, {"EXAMPLE_DB_URI": "postgresql://host/db"})
+    def test_setup_calls_observe(self):
+        """setup() calls handle.observe for each event."""
+        self.integration.setup(self.handle)
+        self.assertEqual(self.handle.observe.call_count, 2)
 
 
 # ---------------------------------------------------------------------------
@@ -230,11 +242,7 @@ class ConcreteSideEffect(CustomIntegration):
     relation_name = "nginx-route"
 
     def setup(self, handle: IntegrationHandle) -> None:
-        self._handle = handle
         self._setup_called_with = handle
-
-    def is_ready(self) -> bool:
-        return True
 
     def reconcile(self, handle: IntegrationHandle) -> None:
         self._reconcile_called_with = handle
@@ -244,21 +252,17 @@ class TestSideEffectIntegration(unittest.TestCase):
     """Tests for the side-effect integration pattern."""
 
     def setUp(self):
-        self.integration = ConcreteSideEffect()
         self.handle = make_handle()
+        self.integration = ConcreteSideEffect.__new__(ConcreteSideEffect)
         self.integration.setup(self.handle)
 
-    def test_is_ready_always_true(self):
-        """Side-effect integration is_ready() returns True unconditionally."""
+    def test_is_ready_default_true(self):
+        """Side-effect integration is_ready() returns True (default)."""
         self.assertTrue(self.integration.is_ready())
 
-    def test_relation_data_default_none(self):
-        """relation_data() still returns None for side-effect integrations."""
-        self.assertIsNone(self.integration.relation_data())
-
     def test_gen_environment_default_empty(self):
-        """gen_environment() still returns {} for side-effect integrations."""
-        self.assertEqual(self.integration.gen_environment(None), {})
+        """Side-effect integration gen_environment() returns {}."""
+        self.assertEqual(self.integration.gen_environment(), {})
 
     def test_reconcile_called_with_handle(self):
         """reconcile() receives the IntegrationHandle."""

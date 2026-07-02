@@ -115,25 +115,26 @@ class IntegrationHandle:
         return self._charm.framework.observe
 
 
-class CustomIntegration(abc.ABC):
+class CustomIntegration(ops.Object, abc.ABC):
     """Author-implemented extension point for a custom Juju relation.
 
-    Subclass this once per custom relation and register instances by
-    overriding :meth:`PaasCharm.custom_integrations`.
+    Subclass this once per custom relation and register the class (not an
+    instance) by overriding :meth:`PaasCharm.custom_integrations`.  The
+    framework instantiates each class as ``cls(charm)`` so it is properly
+    registered as an ``ops.Object`` child — required by
+    ``framework.observe``.
 
     Two usage patterns are supported:
 
-    **Env-var pattern** (most common)
-        Override :meth:`relation_data` to return validated data and
-        :meth:`gen_environment` to map it to workload environment
-        variables.  The framework calls both on every reconcile; env
-        vars are merged into the Pebble layer after built-in ones.
+    **Env-var pattern**
+        Override :meth:`is_ready` to signal when the relation data is
+        usable and :meth:`gen_environment` to return the workload env
+        vars.  The framework calls both on every reconcile; env vars are
+        merged into the Pebble layer after built-in ones.
 
     **Side-effect / provides-style pattern**
-        Leave :meth:`relation_data` and :meth:`gen_environment` at
-        their defaults (``None`` / ``{}``).  Override :meth:`is_ready`
-        to return ``True`` unconditionally when the integration should
-        never block the workload, and override :meth:`reconcile` to
+        Leave :meth:`is_ready` and :meth:`gen_environment` at their
+        defaults (``True`` / ``{}``).  Override :meth:`reconcile` to
         push config files, call external APIs, or publish relation data
         on every restart.
 
@@ -153,17 +154,20 @@ class CustomIntegration(abc.ABC):
                     lambda _: handle.on_change(),
                 )
 
-            def relation_data(self):
+            def is_ready(self):
+                return (
+                    self._requirer.host is not None
+                    and self._requirer.port is not None
+                )
+
+            def gen_environment(self):
                 host = self._requirer.host
                 port = self._requirer.port
                 if host is None or port is None:
-                    return None
-                return {"host": host, "port": port}
-
-            def gen_environment(self, relation_data):
+                    return {}
                 return {
-                    "TEMPORAL_HOST": relation_data["host"],
-                    "TEMPORAL_PORT": str(relation_data["port"]),
+                    "TEMPORAL_HOST": host,
+                    "TEMPORAL_PORT": str(port),
                 }
 
     Example (side-effect / provides-style)::
@@ -179,21 +183,35 @@ class CustomIntegration(abc.ABC):
                     service_port=int(handle.config.get("webserver-port", 80)),
                 )
 
-            def is_ready(self):
-                return True  # never blocks the workload
+            # is_ready() defaults True — never blocks the workload.
+            # gen_environment() defaults {} — no env vars produced.
 
+    Note: ``CustomIntegration`` subclasses ``ops.Object`` so that event
+    handler methods can be registered with ``framework.observe``.  Do
+    **not** override ``__init__``; put all setup logic in
+    :meth:`setup` instead.
     """
 
     relation_name: str
     """Name of the Juju relation endpoint (must match ``charmcraft.yaml``)."""
 
+    def __init__(self, charm: ops.CharmBase):
+        """Initialise as an ops.Object child of *charm*.
+
+        Called automatically by the paas-charm framework; do not override.
+
+        Args:
+            charm: The parent :class:`ops.CharmBase` instance.
+        """
+        super().__init__(charm, self.relation_name)
+
     @abc.abstractmethod
     def setup(self, handle: IntegrationHandle) -> None:
         """Wire event handlers and instantiate requirer objects.
 
-        Called once during charm initialisation.  Store *handle* or its
-        ``model``/``on``/``observe`` attributes for later use in
-        :meth:`relation_data` and :meth:`reconcile`.
+        Called once during charm initialisation.  Store *handle* (or its
+        individual attributes) for later use in :meth:`is_ready`,
+        :meth:`gen_environment`, and :meth:`reconcile`.
 
         Args:
             handle: Framework-provided handle giving access to the charm,
@@ -201,92 +219,62 @@ class CustomIntegration(abc.ABC):
         """
 
     # ------------------------------------------------------------------
-    # Touchpoint 2 — resolve + validate relation data (env-var pattern)
-    # ------------------------------------------------------------------
-
-    def relation_data(self) -> object | None:
-        """Return validated relation data, or ``None`` when not available.
-
-        Return ``None`` when the relation is absent or its data is not
-        yet usable.  Raise
-        :class:`~paas_charm.exceptions.InvalidRelationDataError` when
-        the related application has provided malformed data.
-
-        The framework calls this inside its invalid-data-catching
-        context, and the default :meth:`is_ready` calls it too, so
-        implementations must be **cheap and idempotent** (read the
-        relation bag; do not assume a single call per reconcile).
-
-        Access the relation bag by storing ``handle`` in
-        :meth:`setup` and calling
-        ``self._handle.model.get_relation(self.relation_name)``.
-        Requirer charm libraries often expose their own bag-reading
-        properties (e.g. ``self._requirer.host``).
-
-        The value may be any type — a pydantic model, a ``dict``, a
-        primitive — and is forwarded unchanged to
-        :meth:`gen_environment`.
-
-        Side-effect integrations that never expose env vars should
-        leave this at its default (returns ``None``).
-
-        Returns:
-            Validated relation data, or ``None``.
-
-        Raises:
-            InvalidRelationDataError: if the remote application sent
-                malformed data.
-        """
-        return None
-
-    # ------------------------------------------------------------------
-    # Touchpoint 3 — readiness contribution
+    # Touchpoint 2 — readiness contribution
     # ------------------------------------------------------------------
 
     def is_ready(self) -> bool:
         """Return whether this integration is ready.
 
-        Default: ``self.relation_data() is not None``.
+        Default: ``True`` — the integration never blocks the workload.
 
-        Side-effect integrations that should never block the workload
-        must override this to return ``True`` unconditionally.
+        **Env-var integrations** must override this to return ``False``
+        when the relation is absent or its data is not yet usable, so
+        the framework can enter ``BlockedStatus`` for required relations
+        and skip env-var generation for optional ones.
 
-        Because the default implementation calls :meth:`relation_data`,
-        it may raise
-        :class:`~paas_charm.exceptions.InvalidRelationDataError`; the
-        framework always invokes :meth:`is_ready` inside the
-        invalid-data-catching context so the raise becomes a
+        May raise
+        :class:`~paas_charm.exceptions.InvalidRelationDataError` to
+        signal malformed databag content; the framework catches this
+        inside its invalid-data context and converts it to a
         ``BlockedStatus`` naming the relation.
 
         Returns:
-            ``True`` when the integration's data is usable and the
-            workload should not be blocked because of this integration.
+            ``True`` when the integration is ready and the workload
+            should not be blocked because of it.
         """
-        return self.relation_data() is not None
+        return True
 
     # ------------------------------------------------------------------
-    # Touchpoint 4 — environment variables (env-var pattern)
+    # Touchpoint 3 — environment variables (env-var pattern)
     # ------------------------------------------------------------------
 
-    def gen_environment(self, relation_data: object) -> dict[str, str]:
-        """Return workload environment variables for *relation_data*.
+    def gen_environment(self) -> dict[str, str]:
+        """Return workload environment variables for this integration.
+
+        Called by the framework on every reconcile **only when**
+        :meth:`is_ready` returns ``True``.  Read the relation bag
+        directly using the handle stored in :meth:`setup`
+        (``self._handle.model.get_relation(self.relation_name)`` or a
+        requirer library property).
 
         The mapping is used verbatim — no per-framework remapping — so
-        emit the exact variable names that the target framework expects.
+        emit the exact variable names the target framework expects.
+
+        Raise :class:`~paas_charm.exceptions.InvalidRelationDataError`
+        when the databag is present but malformed; the framework's
+        error-catching context converts it to a ``BlockedStatus``.
 
         Side-effect integrations that produce no env vars should leave
         this at its default (returns ``{}``).
 
-        Args:
-            relation_data: The value returned by :meth:`relation_data`.
-
         Returns:
-            A ``dict`` of environment variable names to string values.
+            A ``dict`` of environment variable names to string values,
+            or ``{}`` when there is nothing to contribute.
         """
         return {}
 
     # ------------------------------------------------------------------
-    # Touchpoint 5 — side-effect reconciliation
+    # Touchpoint 4 — side-effect reconciliation
     # ------------------------------------------------------------------
 
     def reconcile(self, handle: IntegrationHandle) -> None:

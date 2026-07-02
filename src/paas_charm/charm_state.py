@@ -221,11 +221,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         if custom_integrations:
             for integration in custom_integrations:
                 try:
-                    # Call is_ready which will call relation_data() by default
                     if integration.is_ready():
-                        relation_data = integration.relation_data()
-                        env_vars = integration.gen_environment(relation_data)
-                        # Check for collisions with built-in env vars and other custom vars
+                        env_vars = integration.gen_environment()
                         for var_name, var_value in env_vars.items():
                             custom_integration_env[var_name] = var_value
                 except InvalidRelationDataError as exc:

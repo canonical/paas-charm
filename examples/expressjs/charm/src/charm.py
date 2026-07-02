@@ -111,7 +111,7 @@ class ExpressJSCharm(paas_charm.expressjs.Charm):
         Returns:
             List containing the NginxRouteIntegration instance.
         """
-        return [NginxRouteIntegration()]
+        return [NginxRouteIntegration]
 
 
 if __name__ == "__main__":  # pragma: nocover

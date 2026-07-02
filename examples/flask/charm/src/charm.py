@@ -68,41 +68,40 @@ class TemporalHostInfoIntegration(CustomIntegration):
             lambda _: handle.on_change(),
         )
 
-    def relation_data(self) -> dict | None:
-        """Return host/port dict, or None when not yet available.
+    def is_ready(self) -> bool:
+        """Return True when the requirer has both host and port.
 
         Returns:
-            Dict with ``host`` (str) and ``port`` (int), or None.
-
-        Raises:
-            InvalidRelationDataError: if the relation bag has partial data.
+            True when Temporal connection details are available.
         """
         if TemporalHostInfoRequirer is None or not hasattr(self, "_requirer"):
-            return None
+            return False
+        return self._requirer.host is not None and self._requirer.port is not None
+
+    def gen_environment(self) -> dict[str, str]:
+        """Expose Temporal connection details as workload env vars.
+
+        Raises:
+            InvalidRelationDataError: if only one of host/port is present.
+
+        Returns:
+            ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` env vars,
+            or ``{}`` when the relation data is not yet available.
+        """
+        if TemporalHostInfoRequirer is None or not hasattr(self, "_requirer"):
+            return {}
         host = self._requirer.host
         port = self._requirer.port
         if host is None and port is None:
-            return None
+            return {}
         if host is None or port is None:
             raise InvalidRelationDataError(
                 f"Incomplete temporal-host-info data: host={host!r}, port={port!r}",
                 relation=self.relation_name,
             )
-        return {"host": host, "port": port}
-
-    def gen_environment(self, relation_data: object) -> dict[str, str]:
-        """Expose Temporal connection details as workload env vars.
-
-        Args:
-            relation_data: Dict with ``host`` and ``port`` keys.
-
-        Returns:
-            ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` env vars.
-        """
-        data = typing.cast(dict, relation_data)
         return {
-            "TEMPORAL_HOST": data["host"],
-            "TEMPORAL_PORT": str(data["port"]),
+            "TEMPORAL_HOST": host,
+            "TEMPORAL_PORT": str(port),
         }
 
 
@@ -123,7 +122,7 @@ class FlaskCharm(paas_charm.flask.Charm):
         Returns:
             List containing the TemporalHostInfoIntegration instance.
         """
-        return [TemporalHostInfoIntegration()]
+        return [TemporalHostInfoIntegration]
 
 
 if __name__ == "__main__":  # pragma: nocover

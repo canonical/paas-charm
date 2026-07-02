@@ -180,12 +180,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             on_change=self.restart,
         )
         self._custom_integrations: list["integrations.CustomIntegration"] = []
-        for integration in self.custom_integrations():
-            if integration.relation_name not in requires:
+        for integration_cls in self.custom_integrations():
+            if integration_cls.relation_name not in requires:
                 raise CharmConfigInvalidError(
-                    f"Custom integration '{integration.relation_name}' not found in "
+                    f"Custom integration '{integration_cls.relation_name}' not found in "
                     "charm metadata requires. Define it in charmcraft.yaml."
                 )
+            # Instantiate as an ops.Object child of this charm so that
+            # event handler methods pass framework.observe's isinstance check.
+            integration = integration_cls(self)
             integration.setup(self._integration_handle)
             self._custom_integrations.append(integration)
 
@@ -242,18 +245,21 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._on_pebble_ready,
         )
 
-    def custom_integrations(self) -> list["integrations.CustomIntegration"]:
-        """Return list of custom integrations for this charm.
-        
+    def custom_integrations(self) -> "list[type[integrations.CustomIntegration]]":
+        """Return list of custom integration classes for this charm.
+
         Override this method to register custom relations. This is called during
         charm initialization, before the subclass __init__ body runs.
-        
-        Note:
-            You may use ``self.config`` and ``self.model`` here, but not attributes
-            set after ``super().__init__()`` in the subclass, which don't exist yet.
-        
+        Return **classes** (not instances); the framework instantiates them
+        automatically so they are registered as ``ops.Object`` children of the charm.
+
+        Example::
+
+            def custom_integrations(self):
+                return [TemporalHostInfoIntegration, NginxRouteIntegration]
+
         Returns:
-            A list of CustomIntegration instances.
+            A list of CustomIntegration subclasses (not instances).
         """
         return []
 

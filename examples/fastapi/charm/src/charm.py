@@ -91,43 +91,43 @@ class OpheliaInterfaceIntegration(CustomIntegration):
         relation.data[self._handle.unit]["client_version"] = "1"
 
     # ------------------------------------------------------------------
-    # Touchpoints 2-4: env-var pattern
+    # Touchpoints 2-3: env-var pattern
     # ------------------------------------------------------------------
 
-    def relation_data(self) -> str | None:
-        """Return server_address string, or None if not yet available.
+    def is_ready(self) -> bool:
+        """Return True when the server_address is present in the relation bag.
 
         Returns:
-            The ``server_address`` value from the remote app databag, or None.
-
-        Raises:
-            InvalidRelationDataError: if the app databag exists but ``server_address``
-                is missing (indicating partial/malformed data).
+            True when the Ophelia server address is available.
         """
         relation = self._handle.model.get_relation(OPHELIA_RELATION_NAME)
         if not relation or not relation.app:
-            return None
+            return False
+        return bool(relation.data[relation.app].get("server_address"))
+
+    def gen_environment(self) -> dict[str, str]:
+        """Expose the Ophelia gRPC server address as a workload env var.
+
+        Raises:
+            InvalidRelationDataError: if the app databag exists but
+                ``server_address`` is missing.
+
+        Returns:
+            ``OPHELIA_GRPC_SERVER`` env var, or ``{}`` when not available.
+        """
+        relation = self._handle.model.get_relation(OPHELIA_RELATION_NAME)
+        if not relation or not relation.app:
+            return {}
         app_data = relation.data[relation.app]
         if not app_data:
-            return None
+            return {}
         server_address = app_data.get("server_address")
         if server_address is None:
             raise InvalidRelationDataError(
                 "ophelia-server relation data present but 'server_address' is missing",
                 relation=self.relation_name,
             )
-        return server_address
-
-    def gen_environment(self, relation_data: object) -> dict[str, str]:
-        """Expose the Ophelia gRPC server address as a workload env var.
-
-        Args:
-            relation_data: The server_address string.
-
-        Returns:
-            ``OPHELIA_GRPC_SERVER`` env var.
-        """
-        return {"OPHELIA_GRPC_SERVER": typing.cast(str, relation_data)}
+        return {"OPHELIA_GRPC_SERVER": server_address}
 
 
 class FastAPICharm(paas_charm.fastapi.Charm):
@@ -147,7 +147,7 @@ class FastAPICharm(paas_charm.fastapi.Charm):
         Returns:
             List containing the OpheliaInterfaceIntegration instance.
         """
-        return [OpheliaInterfaceIntegration()]
+        return [OpheliaInterfaceIntegration]
 
 
 if __name__ == "__main__":  # pragma: nocover

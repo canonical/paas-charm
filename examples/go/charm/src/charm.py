@@ -413,9 +413,9 @@ class GoCharm(paas_charm.go.Charm):
             List of CustomIntegration instances.
         """
         return [
-            TraefikRouteIntegration(),
-            GarmConfiguratorIntegration(),
-            GithubRunnerPlannerIntegration(),
+            TraefikRouteIntegration,
+            GarmConfiguratorIntegration,
+            GithubRunnerPlannerIntegration,
         ]
 
 
