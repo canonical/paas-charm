@@ -125,3 +125,10 @@ jobs:
             });
 
             core.notice(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+              body: `@github-copilot Please work on this issue.`,
+            });
