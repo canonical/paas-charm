@@ -108,14 +108,19 @@ The code for this charm can be downloaded as follows:
 git clone https://github.com/canonical/paas-charm
 ```
 
+<<<<<<< v2
 This project uses [uv](https://docs.astral.sh/uv/) to manage its Python
 dependencies and [tox](https://tox.wiki/) (via the `tox-uv` plugin) to run its
 test environments. Install `uv` first, then install `tox`:
+=======
+You can use the environments created by `tox` for unit-test development:
+>>>>>>> main
 
 ```shell
 uv tool install tox --with tox-uv
 ```
 
+<<<<<<< v2
 Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`. To create
 a development environment for a given dependency group and run commands inside it
 directly with `uv`:
@@ -123,6 +128,18 @@ directly with `uv`:
 ```shell
 uv sync --group unit
 uv run pytest tests/unit
+=======
+Integration tests run locally through [`canonical/charm-ci`](https://github.com/canonical/charm-ci)
+(the `opcli` CLI plus [spread](https://github.com/canonical/spread)), the same path CI uses.
+Install `opcli` and the rest of the local development tooling:
+
+```shell
+sudo snap install astral-uv --classic
+uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git"
+export PATH="$HOME/.local/bin:$PATH"
+opcli install all       # gh, spread, concierge, lxd, charmcraft, rockcraft, snapcraft, ...
+opcli install doctor    # verify the environment
+>>>>>>> main
 ```
 
 Alternatively, you can use the environments created by `tox`:
@@ -137,17 +154,43 @@ lock file with `uv lock`.
 
 ### Test
 
+<<<<<<< v2
 This project uses `tox` (via the `tox-uv` plugin) for managing test environments.
 Each environment installs its dependencies from the matching group in
 `pyproject.toml` using `uv`. There are some pre-configured environments
 that can be used for linting and formatting code when you're preparing contributions to the charm:
+=======
+This project uses `tox` for managing the lint and unit test environments. There are some
+pre-configured environments that can be used for linting and formatting code when you're
+preparing contributions to the charm:
+>>>>>>> main
 
 * `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
 * `tox -e fmt`: Runs formatting using `black` and `isort`.
 * `tox -e lint`: Runs a range of static code analysis to check the code.
 * `tox -e static`: Runs other checks such as `bandit` for security issues.
 * `tox -e unit`: Runs the unit tests.
-* `tox -e integration`: Runs the integration tests.
+
+#### Integration tests
+
+Integration tests run locally through `canonical/charm-ci` (`opcli` + `spread`), the same
+way they run in CI. You must build the artifacts first, because
+[`tests/integration/conftest.py`](tests/integration/conftest.py) reads `artifacts.build.yaml`.
+
+The recommended flow runs the tests on a local LXD VM, mirroring CI:
+
+* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+* `opcli spread run -- -list`: Lists the integration tests.
+* `opcli spread run -- -v -debug integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>`: Runs a single test with debugging.
+
+For faster iteration you can run pytest directly against the current host:
+
+* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+* `opcli env provision`: Provisions the environment using [Concierge](https://github.com/canonical/concierge).
+* `opcli artifacts push-images --missing-registry deploy`: Pushes rocks to the local registry.
+* `opcli pytest run -- -k "test_name"`: Runs a single test.
+
+See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 
 ## Add an integration
 
@@ -218,4 +261,3 @@ below.
   [profile](https://github.com/canonical/charmcraft/tree/main/charmcraft/templates/init-flask-framework)
   and
   [extension](https://github.com/canonical/charmcraft/blob/b6baa10566e3f3933cbd42392a0fe62cc79d2b6b/charmcraft/extensions/gunicorn.py#L167).
-
