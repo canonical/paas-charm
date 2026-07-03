@@ -121,7 +121,6 @@ jobs:
               repo: context.repo.repo,
               title: `Add release notes for v${version}`,
               body: body.replace(/^ {12}/gm, ''),
-              assignees: ['copilot'],
               labels: [],
             });
 
