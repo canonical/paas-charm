@@ -174,3 +174,4 @@ artifacts.build.yaml
 build/
 .spread-reroot*
 
+.worktrees/

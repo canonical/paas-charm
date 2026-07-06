@@ -44,7 +44,7 @@ def ingress_provider_fixture(
         config={"gateway-class": "ck-gateway"},
     )
     juju.deploy(
-        charm="gateway-route-configurator",
+        charm="ingress-configurator",
         app="configurator",
         channel="latest/edge",
         config={"hostname": HOSTNAME},
