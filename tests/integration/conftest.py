@@ -704,7 +704,6 @@ def grafana_app_name_fixture() -> str:
     return "grafana-k8s"
 
 
-
 @pytest.fixture(scope="module", name="redis_k8s_app")
 def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
     """Deploy Redis k8s charm using jubilant."""
