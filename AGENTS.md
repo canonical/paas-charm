@@ -50,7 +50,7 @@ opcli pytest run -- -k "test_name"
 ### Package layout
 
 - `src/paas_charm/` — main library; the canonical source for all new code
-- `src/paas_app_charmer/` — **deprecated** thin re-export shims (maintained for Juju bases 22.04/24.04; do not add new code here)
+- `src/paas_app_charmer/` — **deprecated** thin re-export shims (maintained for Juju bases 22.04/24.04; do not add new functionality here. Bug fixes and shim updates that mirror changes in `src/paas_charm/` to preserve backwards compatibility are the only permitted changes.)
 - `examples/` — reference charm implementations for each supported framework
 - `tests/unit/` / `tests/integration/` — framework-specific test suites
 
@@ -114,7 +114,7 @@ All public symbols require Google-style docstrings. The flake8-docstrings-comple
 
 - **Line length**: 99 characters (black + flake8 both configured to 99)
 - **Formatter**: `black --target-version py310` + `isort` (profile `black`)
-- **Type annotations**: required on all functions (`mypy --disallow-untyped-defs`); `disallow_untyped_defs = false` only in tests
+- **Type annotations**: required on all functions (`mypy --disallow-untyped-defs`); `disallow_untyped_defs = false` only in tests. Test functions do not require type annotations; omit them in `tests/` files to stay consistent with the relaxed mypy config.
 
 ### Test structure
 
@@ -124,7 +124,7 @@ All public symbols require Google-style docstrings. The flake8-docstrings-comple
 
 ### Adding a new integration
 
-New integrations go in `src/paas_charm/` as a dedicated module (e.g. `rabbitmq.py`). The import must be wrapped in `try/except ImportError` with a `logger.warning(...)` pointing to the `charmcraft fetch-lib` command. Wire it up in `PaasCharm.__init__` using the same pattern as existing integrations (check `requires` metadata, conditionally create the requirer, register observers).
+New integrations go in `src/paas_charm/` as a dedicated module (e.g. `rabbitmq.py`). The import must be wrapped in `try/except ImportError` with a `logger.warning(...)` pointing to the `charmcraft fetch-lib` command. The warning must follow the pattern already used in existing integrations, e.g.: `logger.warning("rabbitmq library not available; run: charmcraft fetch-lib charms.rabbitmq_k8s.v0.rabbitmq")`. Wire it up in `PaasCharm.__init__` using the same pattern as existing integrations (check `requires` metadata, conditionally create the requirer, register observers).
 
 ### Adding a new framework
 
