@@ -12,6 +12,7 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.conftest import INGRESS_HOSTNAME, gateway_lb_ip, pin_dns
 from tests.integration.helpers import fetch_container_json_logs, logs_for_logger
 from tests.integration.types import App
 
@@ -220,41 +221,37 @@ def test_port_without_ingress(
 def test_with_ingress(
     juju: jubilant.Juju,
     flask_app: App,
-    traefik_app: App,
-    traefik_app_name: str,
-    external_hostname: str,
+    ingress_provider: tuple[str, str],
     session_with_retry: requests.Session,
 ):
     """
     arrange: build and deploy the flask charm, and deploy the ingress.
-    act: relate the ingress charm with the Flask charm.
-    assert: requesting the charm through traefik should return a correct response,
+    act: relate the ingress configurator with the Flask charm.
+    assert: requesting the charm through the gateway should return a correct response,
          and the BASE_URL config should be correctly set (FLASK_BASE_URL env variable).
     """
+    gateway_app, configurator_app = ingress_provider
     try:
-        juju.integrate(flask_app.name, traefik_app_name)
+        juju.integrate(flask_app.name, configurator_app)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
     juju.wait(
-        lambda status: jubilant.all_active(status, flask_app.name, traefik_app_name), delay=5
+        lambda status: jubilant.all_active(
+            status, flask_app.name, gateway_app, configurator_app
+        ),
+        delay=5,
     )
 
-    status = juju.status()
-    model_name = status.model.name
-    traefik_unit = list(status.apps[traefik_app_name].units.values())[0]
-    traefik_ip = traefik_unit.address
-
-    url = f"http://{traefik_ip}/config/BASE_URL"
-    hostname = f"{model_name}-{flask_app.name}.{external_hostname}"
-    logger.info("checking endpoint: %s with hostname %s", url, hostname)
-    response = session_with_retry.get(
-        url,
-        headers={"Host": hostname},
-        timeout=5,
-    )
+    lb_ip = gateway_lb_ip(juju, ingress_provider)
+    url = f"https://{INGRESS_HOSTNAME}/config/BASE_URL"
+    logger.info("checking endpoint: %s via gateway IP %s", url, lb_ip)
+    # Mount the retry adapter for https:// as well (session only mounts it for http://).
+    session_with_retry.mount("https://", session_with_retry.get_adapter("http://"))
+    with pin_dns(INGRESS_HOSTNAME, lb_ip):
+        response = session_with_retry.get(url, verify=False, timeout=5)
     assert response.status_code == 200
-    assert response.json() == f"http://{model_name}-{flask_app.name}.{external_hostname}/"
+    assert response.json() == f"https://{INGRESS_HOSTNAME}/"
 
 
 def test_app_peer_address(
