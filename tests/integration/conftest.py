@@ -608,6 +608,7 @@ def ingress_provider_fixture(
         charm="ingress-configurator",
         app="configurator",
         channel="latest/edge",
+        trust=True,
         config={"hostname": INGRESS_HOSTNAME},
     )
     juju.deploy(
