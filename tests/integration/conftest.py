@@ -596,7 +596,7 @@ def spring_boot_mysql_app_fixture(
 def ingress_provider_fixture(
     juju: jubilant.Juju,
 ):
-    """Deploy gateway-api-integrator and gateway-route-configurator for ingress-related tests."""
+    """Deploy gateway-api-integrator and ingress-configurator for ingress-related tests."""
     juju.deploy(
         charm="gateway-api-integrator",
         app="gateway",
@@ -605,7 +605,7 @@ def ingress_provider_fixture(
         config={"gateway-class": "ck-gateway"},
     )
     juju.deploy(
-        charm="gateway-route-configurator",
+        charm="ingress-configurator",
         app="configurator",
         channel="latest/edge",
         config={"hostname": INGRESS_HOSTNAME},
