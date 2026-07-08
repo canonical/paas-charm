@@ -113,7 +113,7 @@ All public symbols require Google-style docstrings. The flake8-docstrings-comple
 ### Code style
 
 - **Line length**: 99 characters (black + flake8 both configured to 99)
-- **Formatter**: `black --target-version py310` + `isort` (profile `black`)
+- **Formatter**: `black` + `isort` (profile `black`). Note: `tox` runs black with `--target-version=py310`.
 - **Type annotations**: required on all functions (`mypy --disallow-untyped-defs`); `disallow_untyped_defs = false` only in tests. Test functions do not require type annotations; omit them in `tests/` files to stay consistent with the relaxed mypy config.
 
 ### Test structure
