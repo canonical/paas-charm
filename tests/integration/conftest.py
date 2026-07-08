@@ -600,7 +600,7 @@ def ingress_provider_fixture(
     juju.deploy(
         charm="gateway-api-integrator",
         app="gateway",
-        channel="latest/edge",
+        channel="1/edge",
         trust=True,
         config={"gateway-class": "ck-gateway"},
     )
