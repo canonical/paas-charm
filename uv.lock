@@ -1727,7 +1727,7 @@ wheels = [
 
 [[package]]
 name = "paas-charm"
-version = "2.0.0a1"
+version = "2.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "cosl" },
