@@ -369,8 +369,8 @@ if os.path.exists('./reuse/substitutions.yaml'):
 
 intersphinx_mapping = {
     'sphinxcontrib-mermaid': ('https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest', None),
-    'juju': ("https://documentation.ubuntu.com/juju/3.6/", None),
-    'charmcraft': ("https://documentation.ubuntu.com/charmcraft/latest/", None),
+    'juju': ("https://canonical.com/juju/docs/juju-cli/3.6/", None),
+    'charmcraft': ("https://canonical.com/juju/docs/charmcraft/latest/", None),
     'rockcraft': ("https://documentation.ubuntu.com/rockcraft/latest/", None),
     'pebble': ("https://documentation.ubuntu.com/pebble/", None),
     'cos': ("https://documentation.ubuntu.com/observability/latest/", None),
