@@ -468,6 +468,43 @@ func (h *mainHandler) RabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) 
 	fmt.Fprint(w, result)
 }
 
+// serveGarmConfig reads the GARM TOML config file written by the
+// garm_configurator_v0 CustomIntegration and returns its contents.
+// This endpoint lets operators verify that the integration correctly
+// generated and pushed the configuration file into the container.
+//
+// The garm_configurator_v0 CustomIntegration (in charm/src/charm.py) reads
+// OpenStack provider credentials from each connected Configurator unit's
+// relation databag, renders a TOML file, and pushes it to /etc/garm/config.toml
+// via Pebble.  On every restart (PaasCharm.restart → integration.reconcile()),
+// the file is regenerated so it always reflects current relation state.
+//
+// Example response (file present):
+//
+//	HTTP 200
+//	Content-Type: text/plain
+//	<contents of /etc/garm/config.toml>
+//
+// Example response (file absent — integration not yet related):
+//
+//	HTTP 503
+//	GARM config not yet available
+func serveGarmConfig(w http.ResponseWriter, r *http.Request) {
+	const garmConfigPath = "/etc/garm/config.toml"
+	data, err := os.ReadFile(garmConfigPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "GARM config not yet available", http.StatusServiceUnavailable)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Failed to read GARM config: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
 func main() {
 	// Load all configuration from environment variables at startup.
 	config, err := NewConfig()
@@ -566,6 +603,7 @@ func main() {
 	mux.HandleFunc("/rabbitmq/receive", mainHandler.RabbitMQReceive)
 	mux.HandleFunc("/rabbitmq/send_ha", mainHandler.RabbitMQSendHA)
 	mux.HandleFunc("/rabbitmq/receive_ha", mainHandler.RabbitMQReceiveHA)
+	mux.HandleFunc("/garm-config", serveGarmConfig)
 
 	// OIDC-specific: Add OIDC routes
 	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)

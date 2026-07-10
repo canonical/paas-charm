@@ -22,6 +22,7 @@ from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm import integrations
 from paas_charm.observability import Observability
 from paas_charm.openfga import STORE_NAME
 from paas_charm.paas_config import (
@@ -171,6 +172,26 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._oauth = self._init_oauth(requires)
 
+        # Initialize custom integrations.
+        # Build the handle once; it is reused for setup() and later for reconcile().
+        self._integration_handle = integrations.IntegrationHandle(
+            charm=self,
+            config=self.get_merged_config(),
+            on_change=self.restart,
+        )
+        self._custom_integrations: list["integrations.CustomIntegration"] = []
+        for integration_cls in self.custom_integrations():
+            if integration_cls.relation_name not in requires:
+                raise CharmConfigInvalidError(
+                    f"Custom integration '{integration_cls.relation_name}' not found in "
+                    "charm metadata requires. Define it in charmcraft.yaml."
+                )
+            # Instantiate as an ops.Object child of this charm so that
+            # event handler methods pass framework.observe's isinstance check.
+            integration = integration_cls(self)
+            integration.setup(self._integration_handle)
+            self._custom_integrations.append(integration)
+
         paas_config = read_paas_config()
         if paas_config.framework_logging_format != LoggingFormat.NONE:
             supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
@@ -223,6 +244,24 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on[self._workload_config.container_name].pebble_ready,
             self._on_pebble_ready,
         )
+
+    def custom_integrations(self) -> "list[type[integrations.CustomIntegration]]":
+        """Return list of custom integration classes for this charm.
+
+        Override this method to register custom relations. This is called during
+        charm initialization, before the subclass __init__ body runs.
+        Return **classes** (not instances); the framework instantiates them
+        automatically so they are registered as ``ops.Object`` children of the charm.
+
+        Example::
+
+            def custom_integrations(self):
+                return [TemporalHostInfoIntegration, NginxRouteIntegration]
+
+        Returns:
+            A list of CustomIntegration subclasses (not instances).
+        """
+        return []
 
     def _init_redis(self, requires: dict[str, RelationMeta]) -> "PaaSRedisRequires | None":
         """Initialize the Redis relation if its required.
@@ -490,6 +529,35 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
 
+    def get_merged_config(self) -> dict[str, typing.Any]:
+        """Return merged charm configuration.
+        
+        Combines framework-specific config and user-defined app config, with 
+        Juju-secret values resolved. This is the unified config passed to custom
+        integrations' setup() method.
+        
+        Returns:
+            A dict combining all charm config with secrets resolved.
+        """
+        framework_config = self.get_framework_config()
+        
+        # Get resolved config (secrets included)
+        charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
+        resolved_config = typing.cast(
+            dict,
+            {
+                k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
+                for k, v in charm_config.items()
+            },
+        )
+        
+        # Merge framework config (as dict) with full resolved config
+        merged = {}
+        merged.update(framework_config.model_dump(exclude_none=True))
+        merged.update(resolved_config)
+        
+        return merged
+
     def build_cos_dir(self) -> pathlib.Path:
         """Build and return a merged directory with COS files.
 
@@ -732,6 +800,18 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
 
+        # Notify each ready custom integration so it can perform side-effect work
+        # (push config files, call external APIs, publish relation data, …).
+        for integration in self._custom_integrations:
+            try:
+                if integration.is_ready():
+                    integration.reconcile(self._integration_handle)
+            except Exception:  # pylint: disable=broad-except
+                logger.exception(
+                    "Custom integration '%s' raised during reconcile; skipping",
+                    integration.relation_name,
+                )
+
         self.update_app_and_unit_status(ops.ActiveStatus())
 
     def _gen_environment(self) -> dict[str, str]:
@@ -781,6 +861,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 http_proxy=self._http_proxy,
             ),
             base_url=self._base_url,
+            custom_integrations=self._custom_integrations,
         )
 
     @property
