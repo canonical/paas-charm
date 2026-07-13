@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Rename the `secret-storage` peer relation (and its interface) to `peers`.
+  This is a breaking change: on upgrade a fresh application secret key is generated,
+  so users of session-signing frameworks (Flask/Django) must log in again. Use a
+  `type: secret` config option for user-provided secrets.
+
 ## 1.12.0 - 2026-07-03
 
 * fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when

@@ -18,13 +18,13 @@ For a web app charm, the following events are observed:
   * - ``config_changed```
     - Usually fired in response to a configuration change using the CLI.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``secret_storage_relation_created``
+  * - ``peers_relation_created``
     - Fired when the relation is first created.
     - Generate a new secret and store it in the relation data.
-  * - ``secret_storage_relation_changed``
+  * - ``peers_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``secret_storage_relation_departed``
+  * - ``peers_relation_departed``
     - Fired when a unit departs from an existing relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``update_status``
