@@ -45,7 +45,7 @@ class SecretStorage(ops.Object, abc.ABC):
     def _on_peers_relation_created(self, event: ops.RelationEvent) -> None:
         """Handle the event when a new peer relation is created.
 
-        Generates a new secret key and stores it within the relation's data.
+        Generates a new application secret key and stores it within the relation's data.
 
         Args:
             event: The event that triggered this handler.
