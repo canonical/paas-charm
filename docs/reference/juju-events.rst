@@ -15,7 +15,7 @@ For a web app charm, the following events are observed:
   * - :ref:`\<container name\>_pebble_ready <juju:hook-container-pebble-ready>`
     - Fired on Kubernetes charms when the requested container is ready.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``config_changed```
+  * - ``config_changed``
     - Usually fired in response to a configuration change using the CLI.
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``peers_relation_created``
