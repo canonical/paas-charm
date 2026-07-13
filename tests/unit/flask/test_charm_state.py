@@ -22,7 +22,7 @@ def flask_base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"flask_secret_key": "test", "secret": "test"}
+                "peers", local_app_data={"flask_secret_key": "test", "secret": "test"}
             ),
         ],
         "containers": {

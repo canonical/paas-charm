@@ -912,19 +912,19 @@ def test_openfga_not_activated(
     "app_harness",
     ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
 )
-def test_secret_storage_relation_departed_hook(
+def test_peers_relation_departed_hook(
     app_harness: str,
     request: pytest.FixtureRequest,
 ):
     """
-    arrange: Run initial hooks. Add a unit to the secret-storage relation.
-    act: Remove one unit from the secret-storage relation.
+    arrange: Run initial hooks. Add a unit to the peers relation.
+    act: Remove one unit from the peers relation.
     assert: The restart function should be called once.
     """
     harness = request.getfixturevalue(app_harness)
     harness.begin_with_initial_hooks()
     harness.charm.restart = unittest.mock.MagicMock()
-    peer_relation_name = "secret-storage"
+    peer_relation_name = "peers"
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
 

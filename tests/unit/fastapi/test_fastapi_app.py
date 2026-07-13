@@ -28,7 +28,7 @@ def base_state_fixture() -> testing.State:
         service_statuses={"fastapi": pebble.ServiceStatus.INACTIVE},
     )
     peer_rel = testing.PeerRelation(
-        "secret-storage",
+        "peers",
         local_app_data={"fastapi_secret_key": "test-secret-key"},
     )
     return testing.State(

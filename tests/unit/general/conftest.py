@@ -199,7 +199,7 @@ def flask_base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"flask_secret_key": "test", "secret": "test"}
+                "peers", local_app_data={"flask_secret_key": "test", "secret": "test"}
             ),
         ],
         "containers": {
@@ -235,7 +235,7 @@ def spring_boot_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+                "peers", local_app_data={"spring-boot_secret_key": "test"}
             ),
             postgresql_relation("spring-boot-k8s"),
         ],
@@ -295,7 +295,7 @@ def django_base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"django_secret_key": "test", "secret": "test"}
+                "peers", local_app_data={"django_secret_key": "test", "secret": "test"}
             ),
             postgresql_relation("django-k8s"),
         ],
@@ -332,7 +332,7 @@ def fastapi_base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"fastapi_secret_key": "test", "secret": "test"}
+                "peers", local_app_data={"fastapi_secret_key": "test", "secret": "test"}
             ),
             postgresql_relation("fastapi-k8s"),
         ],
@@ -368,7 +368,7 @@ def go_base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"go_secret_key": "test", "secret": "test"}
+                "peers", local_app_data={"go_secret_key": "test", "secret": "test"}
             ),
             postgresql_relation("go-k8s"),
         ],
@@ -404,7 +404,7 @@ def expressjs_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"expressjs_secret_key": "test"}
+                "peers", local_app_data={"expressjs_secret_key": "test"}
             ),
             postgresql_relation("expressjs-k8s"),
         ],

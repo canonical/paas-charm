@@ -459,14 +459,14 @@ def test_secret_storage_config(
 ):
     """
     arrange: Run initial hooks.
-    act: Add two units to the secret-storage relation.
+    act: Add two units to the peers relation.
     assert: The app service must have the right peer configuration.
     """
     harness = request.getfixturevalue(app_harness)
     harness.set_model_name("test-model")
     harness.begin_with_initial_hooks()
 
-    peer_relation_name = "secret-storage"
+    peer_relation_name = "peers"
     harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="foobar")
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")

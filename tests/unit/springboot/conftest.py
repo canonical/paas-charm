@@ -25,7 +25,7 @@ def base_state_fixture():
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+                "peers", local_app_data={"spring-boot_secret_key": "test"}
             ),
             postgresql_relation("spring-boot-k8s"),
         ],
@@ -71,7 +71,7 @@ def base_state_fixture_with_mysql(mysql_relation):
     yield {
         "relations": [
             testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
+                "peers", local_app_data={"spring-boot_secret_key": "test"}
             ),
             mysql_relation,
         ],
