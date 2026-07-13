@@ -95,7 +95,6 @@ def test_open_ports(
     # Check initial opened ports
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
-    logger.warning(f"{_clean_juju_model_name(juju)=}")
     assert (
         session_with_retry.get(
             f"http://{traefik_ip}",
@@ -143,14 +142,3 @@ def test_open_ports(
         ).status_code
         == 200
     )
-
-
-def _clean_juju_model_name(juju: jubilant.Juju) -> str:
-    """
-    Clean the juju model name to be used in the host header for traefik requests.
-    """
-    if not juju.model:
-        return "testing"
-    if ":" in juju.model:
-        return juju.model.split(":")[-1]
-    return juju.model

@@ -5,7 +5,7 @@ This document explains the processes and practices recommended for contributing 
 ## Overview
 
 - Generally, before developing enhancements to this charm, you should consider [opening an issue
-  ](https://github.com/canonical/paas-charm/issues) explaining your use case.
+](https://github.com/canonical/paas-charm/issues) explaining your use case.
 - If you would like to chat with us about your use-cases or proposed implementation, you can reach
   us at [Canonical Matrix public channel](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
   or [Discourse](https://discourse.charmhub.io/).
@@ -74,7 +74,7 @@ AI usage). You don't need to go into explicit details about how and where you us
 Avoid submitting contributions that you don't fully understand.
 You are responsible for the entire contribution, including the AI-assisted portions.
 You must be willing to engage in discussion and respond to any questions, comments,
-or suggestions we may have. 
+or suggestions we may have.
 
 ### Signing commits
 
@@ -108,19 +108,14 @@ The code for this charm can be downloaded as follows:
 git clone https://github.com/canonical/paas-charm
 ```
 
-<<<<<<< v2
 This project uses [uv](https://docs.astral.sh/uv/) to manage its Python
 dependencies and [tox](https://tox.wiki/) (via the `tox-uv` plugin) to run its
 test environments. Install `uv` first, then install `tox`:
-=======
-You can use the environments created by `tox` for unit-test development:
->>>>>>> main
 
 ```shell
 uv tool install tox --with tox-uv
 ```
 
-<<<<<<< v2
 Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`. To create
 a development environment for a given dependency group and run commands inside it
 directly with `uv`:
@@ -128,7 +123,8 @@ directly with `uv`:
 ```shell
 uv sync --group unit
 uv run pytest tests/unit
-=======
+```
+
 Integration tests run locally through [`canonical/charm-ci`](https://github.com/canonical/charm-ci)
 (the `opcli` CLI plus [spread](https://github.com/canonical/spread)), the same path CI uses.
 Install `opcli` and the rest of the local development tooling:
@@ -139,14 +135,6 @@ uv tool install "opcli[cli] @ git+https://github.com/canonical/charm-ci.git"
 export PATH="$HOME/.local/bin:$PATH"
 opcli install all       # gh, spread, concierge, lxd, charmcraft, rockcraft, snapcraft, ...
 opcli install doctor    # verify the environment
->>>>>>> main
-```
-
-Alternatively, you can use the environments created by `tox`:
-
-```shell
-tox --notest -e unit
-source .tox/unit/bin/activate
 ```
 
 Whenever you change dependencies in `pyproject.toml`, regenerate and commit the
@@ -154,22 +142,16 @@ lock file with `uv lock`.
 
 ### Test
 
-<<<<<<< v2
 This project uses `tox` (via the `tox-uv` plugin) for managing test environments.
 Each environment installs its dependencies from the matching group in
 `pyproject.toml` using `uv`. There are some pre-configured environments
 that can be used for linting and formatting code when you're preparing contributions to the charm:
-=======
-This project uses `tox` for managing the lint and unit test environments. There are some
-pre-configured environments that can be used for linting and formatting code when you're
-preparing contributions to the charm:
->>>>>>> main
 
-* `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
-* `tox -e fmt`: Runs formatting using `black` and `isort`.
-* `tox -e lint`: Runs a range of static code analysis to check the code.
-* `tox -e static`: Runs other checks such as `bandit` for security issues.
-* `tox -e unit`: Runs the unit tests.
+- `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
+- `tox -e fmt`: Runs formatting using `black` and `isort`.
+- `tox -e lint`: Runs a range of static code analysis to check the code.
+- `tox -e static`: Runs other checks such as `bandit` for security issues.
+- `tox -e unit`: Runs the unit tests.
 
 #### Integration tests
 
@@ -179,16 +161,16 @@ way they run in CI. You must build the artifacts first, because
 
 The recommended flow runs the tests on a local LXD VM, mirroring CI:
 
-* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
-* `opcli spread run -- -list`: Lists the integration tests.
-* `opcli spread run -- -v -debug integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>`: Runs a single test with debugging.
+- `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+- `opcli spread run -- -list`: Lists the integration tests.
+- `opcli spread run -- -v -debug integration-test-local:ubuntu-24.04:tests/integration/run:<test_name>`: Runs a single test with debugging.
 
 For faster iteration you can run pytest directly against the current host:
 
-* `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
-* `opcli env provision`: Provisions the environment using [Concierge](https://github.com/canonical/concierge).
-* `opcli artifacts push-images --missing-registry deploy`: Pushes rocks to the local registry.
-* `opcli pytest run -- -k "test_name"`: Runs a single test.
+- `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
+- `opcli env provision`: Provisions the environment using [Concierge](https://github.com/canonical/concierge).
+- `opcli artifacts push-images --missing-registry deploy`: Pushes rocks to the local registry.
+- `opcli pytest run -- -k "test_name"`: Runs a single test.
 
 See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 
@@ -201,15 +183,15 @@ through below.
   [charm topic on Discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
 
-  * The integration you intend add.
-  * For each of the frameworks that PaaS Charm supports:
+- The integration you intend add.
+- For each of the frameworks that PaaS Charm supports:
 
-    - The commonly used package(s) to make use of the integration.
-    - The environment variables, configuration etc. that would be made available
+  - The commonly used package(s) to make use of the integration.
+  - The environment variables, configuration etc. that would be made available
       to the app.
-    - An example for how to use the integration within an app.
+  - An example for how to use the integration within an app.
 
-  * The proposed implementation in `paas-app`. Take a look at
+- The proposed implementation in `paas-app`. Take a look at
     [`charm.py`](paas_charm/_gunicorn/charm.py) for `gunicorn` based
     frameworks for integration examples.
 
@@ -230,20 +212,20 @@ below.
   [charm topic on Discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
 
-  * The programming language and framework you are thinking of
-  * Create an example `rockcraft.yaml` file and build a working OCI image. To
+- The programming language and framework you are thinking of
+- Create an example `rockcraft.yaml` file and build a working OCI image. To
     see an example for `flask`, install Rockcraft and run
     `rockcraft init --profile flask-framework` and run
     `rockcraft expand-extensions` and inspect the output.
-  * Create an example `charmcraft.yaml` file and build a working charm. To see
+- Create an example `charmcraft.yaml` file and build a working charm. To see
     an example for `flask`, install Charmcraft and run
     `charmcraft init --profile flask-framework` and run
     `charmcraft expand-extensions` and inspect the output.
-  * How the configuration options of the charm map to environment variables,
+- How the configuration options of the charm map to environment variables,
     configurations or another method of passing the information to the app
-  * The requirements and conventions for how users need to configure their app
+- The requirements and conventions for how users need to configure their app
     to work with PaaS Charm
-  * Which web server to use
+- Which web server to use
 
 1. Raise a pull request to [rockcraft](https://github.com/canonical/rockcraft)
   adding a new extension and profile for the framework. This is the flask
