@@ -195,12 +195,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
-            self.on.secret_storage_relation_changed,
-            self._on_secret_storage_relation_changed,
+            self.on.peers_relation_changed,
+            self._on_peers_relation_changed,
         )
         self.framework.observe(
-            self.on.secret_storage_relation_departed,
-            self._on_secret_storage_relation_departed,
+            self.on.peers_relation_departed,
+            self._on_peers_relation_departed,
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._on_secret_changed)
@@ -563,13 +563,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self.restart()
 
     @block_if_invalid_data
-    def _on_secret_storage_relation_changed(self, _: ops.RelationEvent) -> None:
-        """Handle the secret-storage-relation-changed event."""
+    def _on_peers_relation_changed(self, _: ops.RelationEvent) -> None:
+        """Handle the peers-relation-changed event."""
         self.restart()
 
     @block_if_invalid_data
-    def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
-        """Handle the secret-storage-relation-departed event."""
+    def _on_peers_relation_departed(self, _: ops.HookEvent) -> None:
+        """Handle the peers-relation-departed event."""
         self.restart()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:

@@ -20,7 +20,7 @@ class SecretStorage(ops.Object, abc.ABC):
     """
 
     def __init__(
-        self, charm: ops.CharmBase, keys: list[str], peer_relation_name: str = "secret-storage"
+        self, charm: ops.CharmBase, keys: list[str], peer_relation_name: str = "peers"
     ):
         """Initialize the SecretStorage with a given Charm object.
 
@@ -35,14 +35,14 @@ class SecretStorage(ops.Object, abc.ABC):
         self._peer_relation_name = peer_relation_name
         charm.framework.observe(
             self._charm.on[self._peer_relation_name].relation_created,
-            self._on_secret_storage_relation_created,
+            self._on_peers_relation_created,
         )
 
     @abc.abstractmethod
     def gen_initial_value(self) -> dict[str, str]:
         """Generate the initial secret values."""
 
-    def _on_secret_storage_relation_created(self, event: ops.RelationEvent) -> None:
+    def _on_peers_relation_created(self, event: ops.RelationEvent) -> None:
         """Handle the event when a new peer relation is created.
 
         Generates a new secret key and stores it within the relation's data.
