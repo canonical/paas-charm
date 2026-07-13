@@ -131,8 +131,8 @@ containers:
   flask-app:
     resource: flask-app-image
 peers:
-  secret-storage:
-    interface: secret-storage
+  peers:
+    interface: peers
 provides:
   grafana-dashboard:
     interface: grafana_dashboard
