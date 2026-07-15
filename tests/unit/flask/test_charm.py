@@ -36,7 +36,7 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     """
     arrange: none
     act: start the flask charm and set app container to be ready.
-    assert: flask charm should submit the correct flaks pebble layer to pebble.
+    assert: flask charm should submit the correct flask pebble layer to pebble.
     """
     harness.begin()
     container = harness.charm.unit.get_container(FLASK_CONTAINER_NAME)
