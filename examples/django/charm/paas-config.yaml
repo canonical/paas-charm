@@ -1,5 +1,5 @@
-framework_logging_format: json
 port: 8080
+framework_logging_format: json
 prometheus:
   scrape_configs:
   - job_name: app-custom

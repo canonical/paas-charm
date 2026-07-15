@@ -112,6 +112,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     """
 
     framework_config_class: type[BaseModel]
+    paas_config_framework_fields: dict[str, str] = {}
 
     @property
     @abc.abstractmethod
@@ -144,6 +145,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         super().__init__(framework)
         self._framework_name = framework_name
+        self._paas_config = read_paas_config()
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
@@ -171,14 +173,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._oauth = self._init_oauth(requires)
 
-        paas_config = read_paas_config()
-        if paas_config.framework_logging_format != LoggingFormat.NONE:
+        if self._paas_config.framework_logging_format != LoggingFormat.NONE:
             supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
-                paas_config.framework_logging_format, set()
+                self._paas_config.framework_logging_format, set()
             )
             if self._framework_name not in supported:
                 raise CharmConfigInvalidError(
-                    f"framework_logging_format '{paas_config.framework_logging_format}' "
+                    f"framework_logging_format '{self._paas_config.framework_logging_format}' "
                     f"is not supported for the '{self._framework_name}' framework. "
                     f"Supported frameworks: {sorted(supported) or 'none'}."
                 )
@@ -189,7 +190,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             cos_dir=self.build_cos_dir(),
             metrics_target=self._workload_config.metrics_target,
             metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus,
+            prometheus_config=self._paas_config.prometheus,
         )
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
@@ -482,6 +483,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+        for framework_field, paas_config_field in self.paas_config_framework_fields.items():
+            if paas_config_field not in self._paas_config.model_fields_set:
+                continue
+            model_field = framework_config_class.model_fields[framework_field]
+            config[model_field.alias or framework_field] = getattr(
+                self._paas_config, paas_config_field
+            )
 
         try:
             return framework_config_class.model_validate(config)

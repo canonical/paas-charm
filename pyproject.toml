@@ -158,7 +158,6 @@ lint = [
     "pydocstyle",
     "pylint",
     "pyproject-flake8",
-    "pytest_operator",
     "snowballstemmer<3.0.0",
     "types-PyYAML",
     "types-requests",
@@ -178,5 +177,6 @@ integration-tests = [
     "tenacity==9.0.0",
     "playwright==1.53.0",
     "lightkube==0.21.0",
+    "pytest-jubilant>=2,<3",
     "opcli"
 ]

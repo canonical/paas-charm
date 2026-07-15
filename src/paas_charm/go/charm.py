@@ -19,17 +19,12 @@ class GoConfig(FrameworkConfig):
 
     Attrs:
         port: port where the application is listening
-        metrics_port: port where the metrics are collected
-        metrics_path: path where the metrics are collected
-        secret_key: a secret key that will be used for securely signing the session cookie
-            and can be used for any other security related needs by your Flask application.
+        app_secret_key: a secret key that can be used for application security needs.
         model_config: Pydantic model configuration.
     """
 
-    port: int = Field(alias="app-port", default=8080, gt=0)
-    metrics_port: int | None = Field(alias="metrics-port", default=None, gt=0)
-    metrics_path: str | None = Field(alias="metrics-path", default=None, min_length=1)
-    secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
+    port: int = Field(alias="port", default=8080, gt=0)
+    app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
 
@@ -42,6 +37,9 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = GoConfig
+    paas_config_framework_fields = {
+        "port": "port",
+    }
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the Go charm.
@@ -57,6 +55,9 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(GoConfig, self.get_framework_config())
+        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
+            default_port=framework_config.port, default_path="/metrics"
+        )
         return WorkloadConfig(
             framework=framework_name,
             port=framework_config.port,
@@ -66,8 +67,10 @@ class Charm(PaasCharm):
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,
-            metrics_target=f"*:{framework_config.metrics_port}",
-            metrics_path=framework_config.metrics_path,
+            metrics_target=f"*:{metrics_port}",
+            metrics_path=metrics_path,
+            metrics_port=metrics_port,
+            configure_metrics=configure_metrics,
         )
 
     def _create_app(self) -> App:
@@ -82,4 +85,5 @@ class Charm(PaasCharm):
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
+            framework_config_prefix="",
         )

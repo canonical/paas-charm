@@ -39,8 +39,6 @@ class SpringBootConfig(FrameworkConfig):
     Attrs:
         server_port: port where the application is listening
         app_profiles: active profiles for the Spring Boot app
-        management_server_port: port where the metrics are collected
-        metrics_path: path where the metrics are collected
         secret_key: a secret key that will be used for securely signing the session cookie
             and can be used for any other security related needs by your Flask application.
         model_config: Pydantic model configuration.
@@ -48,10 +46,6 @@ class SpringBootConfig(FrameworkConfig):
 
     server_port: int = Field(alias="app-port", default=8080, gt=0)
     app_profiles: str | None = Field(alias="app-profiles", default=None, min_length=1)
-    management_server_port: int | None = Field(alias="metrics-port", default=8080, gt=0)
-    metrics_path: str | None = Field(
-        alias="metrics-path", default="/actuator/prometheus", min_length=1
-    )
     secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
@@ -66,14 +60,18 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
     Returns:
         Default Prometheus environment mappings.
     """
-    if not workload_config.metrics_path:
-        return {}
+    environment = {"management.endpoints.web.exposure.include": "prometheus"}
+    if not workload_config.configure_metrics or not workload_config.metrics_path:
+        return environment
     metrics_path_list = [part for part in workload_config.metrics_path.split("/") if part]
-    return {
-        "management.endpoints.web.exposure.include": "prometheus",
+    environment.update(
+        {
+        "management.server.port": str(workload_config.metrics_port),
         "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
         "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
-    }
+        }
+    )
+    return environment
 
 
 def generate_oauth_env(
@@ -368,6 +366,8 @@ class SpringBootApp(App):
             A dictionary representing the application environment variables.
         """
         env = super().gen_environment()
+        env.pop("METRICS_PORT", None)
+        env.pop("METRICS_PATH", None)
         # Name of the profiles field in SpringBootConfig
         profiles_field = "app_profiles"
         if profiles_field in self._charm_state.framework_config:
@@ -385,6 +385,9 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = SpringBootConfig
+    paas_config_framework_fields = {
+        "server_port": "port",
+    }
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the SpringBootConfig charm.
@@ -401,6 +404,9 @@ class Charm(PaasCharm):
         base_dir = pathlib.Path("/app")
         state_dir = base_dir / "state"
         framework_config = typing.cast(SpringBootConfig, self.get_framework_config())
+        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
+            default_port=framework_config.server_port, default_path="/actuator/prometheus"
+        )
 
         return WorkloadConfig(
             framework=framework_name,
@@ -412,8 +418,10 @@ class Charm(PaasCharm):
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,
-            metrics_target=f"*:{framework_config.management_server_port}",
-            metrics_path=framework_config.metrics_path,
+            metrics_target=f"*:{metrics_port}",
+            metrics_path=metrics_path,
+            metrics_port=metrics_port,
+            configure_metrics=configure_metrics,
         )
 
     def _create_app(self) -> App:

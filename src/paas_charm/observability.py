@@ -123,8 +123,11 @@ def build_prometheus_jobs(
     """
     jobs: list[dict[str, typing.Any]] = []
 
-    # Add default framework job if configured. The library adds a default job_name.
-    if metrics_path and metrics_target:
+    app_scrape_config = prometheus_config.app_scrape_config if prometheus_config else None
+
+    # Add the framework job unless the reserved app job replaces it.
+    # The library adds a default job_name.
+    if metrics_path and metrics_target and not app_scrape_config:
         resolved_target = _resolve_scheduler_placeholder(app_name, model_name, metrics_target)
         jobs.append(
             {"metrics_path": metrics_path, "static_configs": [{"targets": [resolved_target]}]}

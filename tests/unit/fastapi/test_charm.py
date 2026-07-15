@@ -28,8 +28,6 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
                 "UVICORN_LOG_LEVEL": "info",
                 "UVICORN_HOST": "0.0.0.0",
                 "APP_BASE_URL": "http://fastapi-k8s.None:8080",
-                "METRICS_PORT": "8080",
-                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -41,9 +39,6 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
         pytest.param(
             {
                 "app-secret-key": "foobar",
-                "webserver-port": 9000,
-                "metrics-port": 9001,
-                "metrics-path": "/othermetrics",
                 "user-defined-config": "userdefined",
             },
             {
@@ -54,13 +49,11 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
             },
             {
                 "APP_NON_OPTIONAL_STRING": "non-optional-value",
-                "UVICORN_PORT": "9000",
+                "UVICORN_PORT": "8080",
                 "WEB_CONCURRENCY": "1",
                 "UVICORN_LOG_LEVEL": "info",
                 "UVICORN_HOST": "0.0.0.0",
-                "APP_BASE_URL": "http://fastapi-k8s.None:9000",
-                "METRICS_PORT": "9001",
-                "METRICS_PATH": "/othermetrics",
+                "APP_BASE_URL": "http://fastapi-k8s.None:8080",
                 "APP_SECRET_KEY": "foobar",
                 "APP_USER_DEFINED_CONFIG": "userdefined",
                 # pylint: disable=line-too-long

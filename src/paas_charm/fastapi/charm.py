@@ -13,7 +13,6 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.framework import FrameworkConfig
-from paas_charm.paas_config import read_paas_config
 
 
 class FastAPIConfig(FrameworkConfig):
@@ -24,8 +23,6 @@ class FastAPIConfig(FrameworkConfig):
         uvicorn_host: The uvicorn host name or ip address where uvicorn is listening
         web_concurrency: number of workers for uvicorn
         uvicorn_log_level: uvicorn log level
-        metrics_port: port where the metrics are collected
-        metrics_path: path where the metrics are collected
         app_secret_key: a secret key that will be used for securely signing the session cookie
             and can be used for any other security related needs by your Flask application.
         model_config: Pydantic model configuration.
@@ -37,8 +34,6 @@ class FastAPIConfig(FrameworkConfig):
     uvicorn_log_level: typing.Literal["critical", "error", "warning", "info", "debug", "trace"] = (
         Field(alias="webserver-log-level", default="info")
     )
-    metrics_port: int | None = Field(alias="metrics-port", default=None, gt=0)
-    metrics_path: str | None = Field(alias="metrics-path", default=None, min_length=1)
     app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
@@ -52,6 +47,9 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = FastAPIConfig
+    paas_config_framework_fields = {
+        "uvicorn_port": "port",
+    }
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the FastAPI charm.
@@ -67,7 +65,9 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
-        paas_config = read_paas_config()
+        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
+            default_port=framework_config.uvicorn_port, default_path="/metrics"
+        )
         return WorkloadConfig(
             framework=framework_name,
             port=framework_config.uvicorn_port,
@@ -76,10 +76,12 @@ class Charm(PaasCharm):
             state_dir=self._state_dir,
             service_name=framework_name,
             log_files=[],
-            metrics_target=f"*:{framework_config.metrics_port}",
-            metrics_path=framework_config.metrics_path,
+            metrics_target=f"*:{metrics_port}",
+            metrics_path=metrics_path,
+            metrics_port=metrics_port,
+            configure_metrics=configure_metrics,
             unit_name=self.unit.name,
-            logging_format=paas_config.framework_logging_format,
+            logging_format=self._paas_config.framework_logging_format,
         )
 
     def _create_app(self) -> App:

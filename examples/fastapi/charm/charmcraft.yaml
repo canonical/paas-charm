@@ -56,23 +56,11 @@ config:
       type: int
       description: Number of workers for uvicorn. Sets env variable WEB_CONCURRENCY. See https://www.uvicorn.org/#command-line-options
       default: 1
-    webserver-port:
-      type: int
-      description: Default port where the application will listen
-      default: 8080
     webserver-log-level:
       type: string
       description: Set the log level. Valid options are 'critical', 'error', 'warning', 'info', 'debug', 'trace'.
         Sets the env variable UVICORN_LOG_LEVEL.
       default: "info"
-    metrics-port:
-      type: int
-      description: Port where the prometheus metrics will be scraped.
-      default: 8080
-    metrics-path:
-      type: string
-      description: Path where the prometheus metrics will be scraped.
-      default: /metrics
     app-secret-key:
       type: string
       description:

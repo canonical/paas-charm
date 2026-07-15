@@ -21,8 +21,6 @@ class ExpressJSConfig(FrameworkConfig):
         node_env: environment where the application is running.
             It can be "production" or "development".
         port: port where the application is listening
-        metrics_port: port where the metrics are collected
-        metrics_path: path where the metrics are collected
         app_secret_key: a secret key that will be used for securely signing the session cookie
             and can be used for any other security related needs by your ExpressJS application.
         model_config: Pydantic model configuration.
@@ -30,8 +28,6 @@ class ExpressJSConfig(FrameworkConfig):
 
     node_env: str = Field(alias="node-env", default="production", min_length=1)
     port: int = Field(alias="port", default=8080, gt=0)
-    metrics_port: int | None = Field(alias="metrics-port", default=None, gt=0)
-    metrics_path: str | None = Field(alias="metrics-path", default=None, min_length=1)
     app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
@@ -45,6 +41,9 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = ExpressJSConfig
+    paas_config_framework_fields = {
+        "port": "port",
+    }
 
     def __init__(self, framework: ops.Framework) -> None:
         """Initialize the ExpressJS charm.
@@ -59,6 +58,9 @@ class Charm(PaasCharm):
         """Return an WorkloadConfig instance."""
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(ExpressJSConfig, self.get_framework_config())
+        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
+            default_port=framework_config.port, default_path="/metrics"
+        )
         return WorkloadConfig(
             framework=self._framework_name,
             port=framework_config.port,
@@ -67,8 +69,10 @@ class Charm(PaasCharm):
             state_dir=base_dir / "state",
             log_files=[],
             service_name=self._framework_name,
-            metrics_target=f"*:{framework_config.metrics_port}",
-            metrics_path=framework_config.metrics_path,
+            metrics_target=f"*:{metrics_port}",
+            metrics_path=metrics_path,
+            metrics_port=metrics_port,
+            configure_metrics=configure_metrics,
             unit_name=self.unit.name,
         )
 

@@ -8,6 +8,7 @@ import pathlib
 from secrets import token_hex
 
 import pytest
+import yaml
 from ops import testing
 
 from examples.flask.charm.src.charm import FlaskCharm
@@ -279,3 +280,54 @@ def test_flask_secret_key_id_duplication(flask_base_state):
 
     assert isinstance(out.unit_status, testing.BlockedStatus)
     assert "invalid option" in out.unit_status.message
+
+
+
+@pytest.mark.parametrize("charm_config, expected_env", CHARM_STATE_FLASK_CONFIG_TEST_PARAMS)
+def test_charm_state_paas_config(
+    flask_base_state, modify_paas_config, charm_config: dict, expected_env: dict
+) -> None:
+    """
+    arrange: none
+    act: set flask_* charm configurations.
+    assert: flask_config in the charm state should reflect changes in charm configurations.
+    """
+    flask_base_state["config"] = charm_config
+
+    modify_paas_config(8081, 8082, "/alternative_metrics")
+
+    ctx = testing.Context(FlaskCharm)
+    state = testing.State(**flask_base_state)
+
+    out = ctx.run(ctx.on.config_changed(), state)
+
+    plan = list(out.containers)[0].plan
+    service = plan.services["flask"]
+    for key, value in expected_env.items():
+        assert service.environment.get(key) == value
+
+
+@pytest.fixture(name="modify_paas_config")
+def modify_paas_config_fixture():
+    """Temporarily modify paas-config.yaml and revert to the original after the test."""
+    paas_config_path = PROJECT_ROOT / "examples/flask/charm/paas-config.yaml"
+    original_content = paas_config_path.read_text()
+
+    def _modify(port: int, metrics_port: int, metrics_path: str) -> None:
+        config = yaml.safe_load(original_content)
+        config["port"] = port
+        prometheus = config.setdefault("prometheus", {})
+        scrape_configs = prometheus.setdefault("scrape_configs", [])
+        scrape_configs[:] = [job for job in scrape_configs if job.get("job_name") != "app"]
+        scrape_configs.append(
+            {
+                "job_name": "app",
+                "metrics_path": metrics_path,
+                "static_configs": [{"targets": [f"*:{metrics_port}"]}],
+            }
+        )
+        paas_config_path.write_text(yaml.dump(config))
+
+    yield _modify
+
+    paas_config_path.write_text(original_content)

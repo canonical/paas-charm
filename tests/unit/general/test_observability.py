@@ -93,6 +93,28 @@ class TestBuildPrometheusJobs:
             {"targets": ["*:8001", "localhost:9090"]},
         ]
 
+    def test_app_job_replaces_framework_default(self):
+        """Test that the reserved app job replaces the automatic framework job."""
+        prom_config = PrometheusConfig(
+            scrape_configs=[
+                ScrapeConfig(
+                    job_name="app",
+                    metrics_path="/custom-metrics",
+                    static_configs=[StaticConfig(targets=["*:9090"])],
+                )
+            ]
+        )
+
+        jobs = build_prometheus_jobs("*:8080", "/metrics", prom_config, "app", "model")
+
+        assert jobs == [
+            {
+                "job_name": "app",
+                "metrics_path": "/custom-metrics",
+                "static_configs": [{"targets": ["*:9090"]}],
+            }
+        ]
+
     def test_custom_job_with_labels(self):
         """Test custom job with labels."""
         prom_config = PrometheusConfig(

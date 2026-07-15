@@ -56,18 +56,6 @@ config:
       type: string
       description: Path where the prometheus metrics will be scraped.
       default: production
-    port:
-      type: int
-      description: Default port where the application will listen
-      default: 8080
-    metrics-port:
-      type: int
-      description: Port where the prometheus metrics will be scraped.
-      default: 8080
-    metrics-path:
-      type: string
-      description: Path where the prometheus metrics will be scraped.
-      default: /metrics
     app-secret-key:
       type: string
       description: Long secret to use for sessions, CSRF or any other occurrences

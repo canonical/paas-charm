@@ -1,8 +1,6 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""ExpressJS charm unit tests for the generic app module."""
-
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
@@ -38,8 +36,6 @@ from paas_charm.redis import PaaSRedisRelationData
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
             {"extra-config": "extravalue"},
             {
-                "metrics-port": "9000",
-                "metrics-path": "/m",
                 "app-secret-key": "notfoobar",
             },
             IntegrationsState(
@@ -55,8 +51,6 @@ from paas_charm.redis import PaaSRedisRelationData
             {
                 "PORT": "8080",
                 "NODE_ENV": "production",
-                "METRICS_PATH": "/m",
-                "METRICS_PORT": "9000",
                 "APP_SECRET_KEY": "notfoobar",
                 "APP_EXTRA-CONFIG": "extravalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -118,8 +112,8 @@ def test_expressjs_environment_vars(
         state_dir=base_dir / "state",
         service_name=framework_name,
         log_files=[],
-        metrics_target=f"*:{framework_config.metrics_port}",
-        metrics_path=framework_config.metrics_path,
+        metrics_target=f"*:{framework_config.port}",
+        metrics_path="/metrics",
         unit_name="expressjs/0",
     )
 

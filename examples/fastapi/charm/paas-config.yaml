@@ -2,3 +2,4 @@
 # See LICENSE file for licensing details.
 
 framework_logging_format: json
+port: 8080

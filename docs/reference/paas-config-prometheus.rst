@@ -10,6 +10,8 @@ expose additional metrics endpoints.
 
 The custom scrape configurations are merged with the default framework
 metrics job (if defined), so both can be active when you integrate with Prometheus.
+The reserved ``app`` job replaces the default framework job and also configures
+the application's primary metrics endpoint.
 
 Configuration schema
 --------------------
@@ -67,6 +69,31 @@ Each static configuration defines a set of targets and optional labels.
    * - ``labels``
      - Dictionary
      - Key-value pairs of labels to attach to all metrics from these targets. Optional.
+
+Application metrics job
+-----------------------
+
+Use the reserved job name ``app`` to override the framework's primary metrics
+endpoint. This job must contain exactly one static configuration with exactly one
+``*:PORT`` target. The port must be between 1 and 65535.
+
+For example:
+
+.. code-block:: yaml
+
+   prometheus:
+     scrape_configs:
+       - job_name: app
+         metrics_path: /custom-metrics
+         static_configs:
+           - targets:
+               - "*:9090"
+
+The charm configures the application to expose metrics on port ``9090`` at
+``/custom-metrics`` and publishes the same endpoint to Prometheus. If the ``app``
+job is omitted, the charm uses the selected framework's default metrics port and path.
+Other scrape jobs configure additional Prometheus targets and do not change the
+application's metrics endpoint.
 
 Target formats
 --------------
@@ -137,6 +164,7 @@ The Prometheus configuration validates the following rules:
 1. No extra fields are allowed in the schema.
 2. Each ``job_name`` must be unique across all scrape configs.
 3. Targets using the ``@scheduler:PORT`` format will require a numeric port.
+4. The reserved ``app`` job must contain one ``*:PORT`` target with a valid port.
 
 .. seealso::
 

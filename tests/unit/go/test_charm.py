@@ -18,10 +18,8 @@ from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
         pytest.param(
             {},
             {
-                "APP_PORT": "8080",
+                "PORT": "8080",
                 "APP_BASE_URL": "http://go-k8s.None:8080",
-                "APP_METRICS_PORT": "8080",
-                "APP_METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -31,15 +29,10 @@ from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
         pytest.param(
             {
                 "app-secret-key": "foobar",
-                "app-port": 9000,
-                "metrics-port": 9001,
-                "metrics-path": "/othermetrics",
             },
             {
-                "APP_PORT": "9000",
-                "APP_BASE_URL": "http://go-k8s.None:9000",
-                "APP_METRICS_PORT": "9001",
-                "APP_METRICS_PATH": "/othermetrics",
+                "PORT": "8080",
+                "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -82,10 +75,6 @@ def test_metrics_config(harness: Harness):
     container = harness.model.unit.get_container(GO_CONTAINER_NAME)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.add_relation("metrics-endpoint", "prometheus-k8s")
-    # update_config has to be executed before begin, as the charm does not call __init__
-    # twice in ops and the observability information is updated in __init__.
-    harness.update_config({"metrics-port": 9999, "metrics-path": "/metricspath"})
-
     harness.begin_with_initial_hooks()
 
     metrics_endpoint_relation = harness.model.relations["metrics-endpoint"]
@@ -98,5 +87,5 @@ def test_metrics_config(harness: Harness):
 
     relation_data_app = relation_data[harness.model.app]
     scrape_jobs = relation_data_app["scrape_jobs"]
-    assert "/metricspath" in scrape_jobs
-    assert "*:9999" in scrape_jobs
+    assert "/metrics" in scrape_jobs
+    assert "*:8080" in scrape_jobs

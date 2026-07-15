@@ -25,6 +25,7 @@ from paas_charm.utils import build_validation_error_message
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "paas-config.yaml"
+APP_JOB_NAME = "app"
 
 
 class LoggingFormat(str, enum.Enum):
@@ -104,7 +105,10 @@ class ScrapeConfig(BaseModel):
 
     job_name: str = Field(description="Job name assigned to scraped metrics")
     metrics_path: str = Field(
-        default="/metrics", description="HTTP resource path on which to fetch metrics"
+        default="/metrics",
+        min_length=1,
+        pattern=r"^/",
+        description="HTTP resource path on which to fetch metrics",
     )
     static_configs: typing.List[StaticConfig] = Field(
         description="List of labeled statically configured targets for this job"
@@ -149,7 +153,32 @@ class PrometheusConfig(BaseModel):
                 f"{', '.join(sorted(duplicates))}. Each job must have a unique name."
             )
 
+        app_scrape_config = self.app_scrape_config
+        if app_scrape_config:
+            if not app_scrape_config.metrics_path.strip("/"):
+                raise ValueError("The 'app' scrape job metrics path must identify an endpoint")
+            if len(app_scrape_config.static_configs) != 1:
+                raise ValueError("The 'app' scrape job must define exactly one static config")
+            targets = app_scrape_config.static_configs[0].targets
+            if len(targets) != 1 or not targets[0].startswith("*:"):
+                raise ValueError("The 'app' scrape job must define exactly one '*:PORT' target")
+            port = targets[0].removeprefix("*:")
+            if not port.isdigit() or not 1 <= int(port) <= 65535:
+                raise ValueError("The 'app' scrape job target must use a port between 1 and 65535")
+
         return self
+
+    @property
+    def app_scrape_config(self) -> ScrapeConfig | None:
+        """Return the reserved application scrape job, if configured."""
+        return next(
+            (
+                scrape_config
+                for scrape_config in self.scrape_configs or []
+                if scrape_config.job_name == APP_JOB_NAME
+            ),
+            None,
+        )
 
 
 class PaasConfig(BaseModel):
@@ -161,6 +190,7 @@ class PaasConfig(BaseModel):
             Defaults to ``LoggingFormat.NONE`` (framework default logging).
             ``LoggingFormat.JSON`` ("json") is supported for FastAPI, Flask, and Django.
         model_config: Pydantic model configuration.
+        port: Port on which the application server listens. Defaults to 8080.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -171,6 +201,12 @@ class PaasConfig(BaseModel):
         description="Structured logging format for the framework server (e.g. 'json').",
     )
 
+    port: int = Field(
+        default=8080,
+        gt=0,
+        le=65535,
+        description="Port on which the application server listens.",
+    )
     @field_validator("framework_logging_format", mode="before")
     @classmethod
     def _coerce_none_to_logging_format_none(cls, v: object) -> object:
@@ -184,6 +220,16 @@ class PaasConfig(BaseModel):
             ``LoggingFormat.NONE`` if *v* is ``None``, otherwise *v* unchanged.
         """
         return LoggingFormat.NONE if v is None else v
+
+    def metrics_endpoint(
+        self, *, default_port: int, default_path: str
+    ) -> tuple[int, str, bool]:
+        """Return the application metrics endpoint and whether it was customized."""
+        app_scrape_config = self.prometheus.app_scrape_config if self.prometheus else None
+        if not app_scrape_config:
+            return default_port, default_path, False
+        target = app_scrape_config.static_configs[0].targets[0]
+        return int(target.removeprefix("*:")), app_scrape_config.metrics_path, True
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 

@@ -16,7 +16,7 @@ from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
-
+from paas_charm.paas_config import PaasConfig
 from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
 
 TEST_DJANGO_CONFIG_PARAMS = [
@@ -93,6 +93,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         framework_name="django",
         unit_name="django/0",
         state_dir=harness.charm._state_dir,
+        paas_config=PaasConfig(),
     )
     webserver = GunicornWebserver(
         webserver_config=webserver_config,
