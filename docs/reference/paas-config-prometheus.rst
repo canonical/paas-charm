@@ -111,7 +111,7 @@ You can also specify exact hostnames or IP addresses in the targets section. For
    prometheus:
      scrape_configs:
        # Application metrics from all units
-       - job_name: "flask-app-custom"
+       - job_name: "app-custom"
          metrics_path: "/metrics"
          static_configs:
            - targets:
@@ -121,7 +121,7 @@ You can also specify exact hostnames or IP addresses in the targets section. For
                env: "example"
 
        # Scheduler-specific metrics
-       - job_name: "flask-scheduler-metrics"
+       - job_name: "app-scheduler-metrics"
          metrics_path: "/metrics"
          static_configs:
            - targets:
