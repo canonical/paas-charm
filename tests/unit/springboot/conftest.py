@@ -23,10 +23,16 @@ def cwd():
 def base_state_fixture():
     """State with container and config file set."""
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"spring-boot_secret_key": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="spring-boot-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("spring-boot-k8s"),
         ],
         "containers": {
@@ -69,10 +75,16 @@ def mysql_relation_fixture():
 def base_state_fixture_with_mysql(mysql_relation):
     """State with container and config file set."""
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"spring-boot_secret_key": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="spring-boot-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             mysql_relation,
         ],
         "containers": {

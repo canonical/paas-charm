@@ -33,7 +33,6 @@ from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
 from paas_charm.peers import Peers
 from paas_charm.secret_key import SecretKeyStorage
-from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
@@ -147,7 +146,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         super().__init__(framework)
         self._framework_name = framework_name
 
-        self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._secret_key = SecretKeyStorage(charm=self, label=f"{framework_name}-secret-key")
         self._peers = Peers(charm=self, peer_relation_name="peers")
         self._database_requirers = make_database_requirers(self, self.app.name)
@@ -560,10 +558,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if not self.unit.is_leader():
             event.fail("only leader unit can rotate secret key")
             return
-        if not self._secret_storage.is_initialized:
+        if not self._secret_key.is_ready:
             event.fail("charm is still initializing")
             return
-        self._secret_storage.reset_secret_key()
+        self._secret_key.rotate()
         event.set_results({"status": "success"})
         self.restart()
 
@@ -608,9 +606,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False
+        self._secret_key.initialize()
         if not charm_state.is_secret_storage_ready:
-            logger.info("secret storage is not initialized")
-            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for peer integration"))
+            logger.info("application secret key is not initialized")
+            self.update_app_and_unit_status(
+                ops.WaitingStatus("Waiting for secret key creation")
+            )
             return False
 
         missing_integrations = list(self._missing_required_integrations(charm_state))
@@ -777,7 +778,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
-            secret_storage=self._secret_storage,
+            secret_key=self._secret_key,
+            peers=self._peers,
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 redis=self._redis,

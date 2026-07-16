@@ -75,17 +75,20 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_storage = unittest.mock.MagicMock()
-    secret_storage.is_secret_storage_ready = True
-    secret_storage.get_secret_key.return_value = "test"
-    secret_storage.get_peer_unit_fdqns.return_value = None
+    secret_key = unittest.mock.MagicMock()
+    secret_key.is_ready = True
+    secret_key.get_secret_key.return_value = "test"
+    peers = unittest.mock.MagicMock()
+    peers.is_related = True
+    peers.get_peer_unit_fqdns.return_value = None
     harness.update_config(config)
     charm_state = CharmState.from_charm(
         charm_dir=harness.charm.charm_dir,
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),
-        secret_storage=secret_storage,
+        secret_key=secret_key,
+        peers=peers,
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
@@ -187,10 +190,12 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
     container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_storage = unittest.mock.MagicMock()
-    secret_storage.is_secret_storage_ready = True
-    secret_storage.get_secret_key.return_value = "test"
-    secret_storage.get_peer_unit_fdqns.return_value = None
+    secret_key = unittest.mock.MagicMock()
+    secret_key.is_ready = True
+    secret_key.get_secret_key.return_value = "test"
+    peers = unittest.mock.MagicMock()
+    peers.is_related = True
+    peers.get_peer_unit_fqdns.return_value = None
     config["webserver-worker-class"] = "gevent"
     harness.update_config(config)
     charm_state = CharmState.from_charm(
@@ -198,7 +203,8 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         config=harness.charm.config,
         framework="django",
         framework_config=harness.charm.get_framework_config(),
-        secret_storage=secret_storage,
+        secret_key=secret_key,
+        peers=peers,
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)

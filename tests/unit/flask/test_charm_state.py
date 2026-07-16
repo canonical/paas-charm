@@ -20,10 +20,16 @@ def flask_base_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/flask/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"flask_secret_key": "test", "secret": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="flask-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
         ],
         "containers": {
             testing.Container(
@@ -222,7 +228,7 @@ def test_secret_configuration(flask_base_state):
     secret = testing.Secret(
         tracked_content={"foo": "foo", "bar": "bar", "foo-bar": "foobar"},
     )
-    flask_base_state["secrets"] = [secret]
+    flask_base_state["secrets"].append(secret)
     flask_base_state["config"] = {"secret-test": secret.id}
 
     ctx = testing.Context(FlaskCharm)

@@ -197,10 +197,16 @@ def flask_base_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/flask/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"flask_secret_key": "test", "secret": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="flask-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
         ],
         "containers": {
             testing.Container(
@@ -233,10 +239,16 @@ def spring_boot_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/springboot/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"spring-boot_secret_key": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="spring-boot-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("spring-boot-k8s"),
         ],
         "containers": {
@@ -293,10 +305,16 @@ def django_base_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/django/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"django_secret_key": "test", "secret": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="django-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("django-k8s"),
         ],
         "containers": {
@@ -330,10 +348,16 @@ def fastapi_base_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"fastapi_secret_key": "test", "secret": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="fastapi-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("fastapi-k8s"),
         ],
         "containers": {
@@ -366,10 +390,16 @@ def go_base_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/go/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"go_secret_key": "test", "secret": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="go-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("go-k8s"),
         ],
         "containers": {
@@ -402,10 +432,16 @@ def expressjs_state_fixture():
     """State with container and config file set."""
     os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
     yield {
-        "relations": [
-            testing.PeerRelation(
-                "peers", local_app_data={"expressjs_secret_key": "test"}
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="expressjs-secret-key",
+                owner="app",
             ),
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
             postgresql_relation("expressjs-k8s"),
         ],
         "containers": {

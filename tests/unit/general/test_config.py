@@ -467,7 +467,7 @@ def test_secret_storage_config(
     harness.begin_with_initial_hooks()
 
     peer_relation_name = "peers"
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="foobar")
+    harness.charm._secret_key.get_secret_key = unittest.mock.MagicMock(return_value="foobar")
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/2")
