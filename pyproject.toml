@@ -68,7 +68,7 @@ pythonpath = [
 # Formatting tools configuration
 [tool.black]
 line-length = 99
-target-version = ["py38"]
+target-version = ["py312"]
 extend-exclude = '''
 
 (
