@@ -11,7 +11,11 @@ from paas_charm.utils import build_k8s_unit_fqdn
 
 
 class Peers(ops.Object):
-    """Expose peer coordination data such as peer unit FQDNs."""
+    """Expose peer coordination data such as peer unit FQDNs.
+
+    Attrs:
+        is_related: True if the peer relation exists.
+    """
 
     def __init__(self, charm: ops.CharmBase, peer_relation_name: str = "peers"):
         """Initialize the Peers helper.

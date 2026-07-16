@@ -29,9 +29,9 @@ from paas_charm.paas_config import (
     LoggingFormat,
     read_paas_config,
 )
+from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
-from paas_charm.peers import Peers
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import (
     build_validation_error_message,
@@ -609,9 +609,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._secret_key.initialize()
         if not charm_state.is_secret_storage_ready:
             logger.info("application secret key is not initialized")
-            self.update_app_and_unit_status(
-                ops.WaitingStatus("Waiting for secret key creation")
-            )
+            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
             return False
 
         missing_integrations = list(self._missing_required_integrations(charm_state))

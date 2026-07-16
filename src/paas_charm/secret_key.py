@@ -13,6 +13,9 @@ class SecretKeyStorage(ops.Object):
 
     The secret is owned by the application and located by a stable label, so no
     secret identifier needs to be stored in any relation databag.
+
+    Attrs:
+        is_ready: True if the application secret key is available.
     """
 
     def __init__(self, charm: ops.CharmBase, label: str):
