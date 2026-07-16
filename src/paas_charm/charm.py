@@ -31,6 +31,7 @@ from paas_charm.paas_config import (
 )
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
+from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import (
     build_validation_error_message,
@@ -146,6 +147,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._framework_name = framework_name
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
+        self._secret_key = SecretKeyStorage(charm=self, label=f"{framework_name}-secret-key")
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
@@ -193,6 +195,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.leader_elected, self._on_leader_elected)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
             self.on.peers_relation_changed,
@@ -560,6 +563,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._secret_storage.reset_secret_key()
         event.set_results({"status": "success"})
+        self.restart()
+
+    @block_if_invalid_data
+    def _on_leader_elected(self, _: ops.EventBase) -> None:
+        """Handle the leader-elected event."""
+        self._secret_key.initialize()
         self.restart()
 
     @block_if_invalid_data
