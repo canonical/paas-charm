@@ -18,9 +18,12 @@ For a web app charm, the following events are observed:
   * - ``config_changed``
     - Usually fired in response to a configuration change using the CLI.
     - Validate the charm configuration, run pending migrations and restart the workload.
+  * - ``leader_elected``
+    - Fired when a new leader unit is elected.
+    - Create the application secret key if it does not exist, then restart the workload.
   * - ``peers_relation_created``
-    - Fired when the relation is first created.
-    - Generate a new application secret key and store it in the relation data.
+    - Fired when the peer relation is first created.
+    - Make peer coordination data (such as peer unit FQDNs) available.
   * - ``peers_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the charm configuration, run pending migrations and restart the workload.
