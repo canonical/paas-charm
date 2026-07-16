@@ -31,6 +31,7 @@ from paas_charm.paas_config import (
 )
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
+from paas_charm.peers import Peers
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.secret_storage import KeySecretStorage
 from paas_charm.utils import (
@@ -148,6 +149,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._secret_key = SecretKeyStorage(charm=self, label=f"{framework_name}-secret-key")
+        self._peers = Peers(charm=self, peer_relation_name="peers")
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
