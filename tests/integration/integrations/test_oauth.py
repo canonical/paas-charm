@@ -137,7 +137,9 @@ def _assert_idp_login_success(
                 page.locator("input[type='password']").first.fill(test_password)
                 page.get_by_role("button", name="Sign in").click()
                 try:
-                    page.wait_for_url(re.compile(f"^{re.escape(app_url)}/profile.*"), timeout=15000)
+                    page.wait_for_url(
+                        re.compile(f"^{re.escape(app_url)}/profile.*"), timeout=15000
+                    )
                     login_succeeded = True
                     break
                 except PlaywrightTimeoutError:
@@ -151,7 +153,9 @@ def _assert_idp_login_success(
 
             if not login_succeeded:
                 logger.error("Page content at error: %s", page.content())
-                raise AssertionError(f"OIDC login did not reach profile page, final url={page.url}")
+                raise AssertionError(
+                    f"OIDC login did not reach profile page, final url={page.url}"
+                )
 
             expect(page).to_have_url(re.compile(f"^{re.escape(app_url)}/profile.*"))
             assert f"Welcome, {test_email}!" in page.content()
