@@ -77,8 +77,7 @@ inside it directly with ``uv``:
 
 .. code-block::
 
-    uv sync --group unit
-    uv run pytest tests/unit
+    uvx tox -e unit
 
 Alternatively, you can use the environments created by ``tox``:
 

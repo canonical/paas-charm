@@ -176,3 +176,8 @@ parts:
     override-build: |-
       rustup default stable
       craftctl default
+  config:
+    plugin: dump
+    source: .
+    stage:
+      - paas-config.yaml

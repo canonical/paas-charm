@@ -10,5 +10,3 @@ DEFAULT_LAYER = {
         },
     }
 }
-
-SPRINGBOOT_CONTAINER_NAME = "app"
