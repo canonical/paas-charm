@@ -61,6 +61,17 @@ config:
       description: Set the log level. Valid options are 'critical', 'error', 'warning', 'info', 'debug', 'trace'.
         Sets the env variable UVICORN_LOG_LEVEL.
       default: "info"
+<<<<<<< chore/refactor-framework-options
+=======
+    metrics-port:
+      type: int
+      description: Port where the prometheus metrics will be scraped.
+      default: 8080
+    metrics-path:
+      type: string
+      description: Path where the prometheus metrics will be scraped.
+      default: /metrics
+>>>>>>> main
     app-secret-key:
       type: string
       description:
