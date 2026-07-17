@@ -19,7 +19,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState
 from paas_charm.utils import enable_pebble_log_forwarding
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 GUNICORN_CONFIG_TEST_PARAMS = [
     pytest.param(
@@ -80,6 +80,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
 )
 def test_gunicorn_config(
     harness: Harness,
+    container_name: str,
     charm_state_params,
     tracing_enabled,
     config_file,
@@ -92,8 +93,8 @@ def test_gunicorn_config(
     assert: gunicorn configuration file inside the flask app container should change accordingly.
     """
     harness.begin()
-    container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    harness.set_can_connect(FLASK_CONTAINER_NAME, True)
+    container: ops.Container = harness.model.unit.get_container(container_name)
+    harness.set_can_connect(container_name, True)
     container.add_layer("default", DEFAULT_LAYER)
 
     charm_state = CharmState(
@@ -131,7 +132,9 @@ def test_gunicorn_config(
 
 
 @pytest.mark.parametrize("is_running", [True, False])
-def test_webserver_reload(monkeypatch, harness: Harness, is_running, database_migration_mock):
+def test_webserver_reload(
+    monkeypatch, harness: Harness, container_name: str, is_running, database_migration_mock
+):
     """
     arrange: put an empty file in the Flask container and create a webserver object with default
         charm state.
@@ -139,7 +142,7 @@ def test_webserver_reload(monkeypatch, harness: Harness, is_running, database_mi
     assert: webserver object should send signal to the Gunicorn server based on the running status.
     """
     harness.begin()
-    container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container: ops.Container = harness.model.unit.get_container(container_name)
     harness.set_can_connect(container, True)
     container.add_layer("default", DEFAULT_LAYER)
 
@@ -190,7 +193,7 @@ def test_enable_pebble_log_forwarding(monkeypatch):
 
 
 def test_gunicorn_config_with_pebble_log_forwarding(
-    monkeypatch, harness: Harness, database_migration_mock
+    monkeypatch, harness: Harness, container_name: str, database_migration_mock
 ):
     """
     arrange: set JUJU_VERSION environment variable to a version supporting pebble log forwarding.
@@ -199,8 +202,8 @@ def test_gunicorn_config_with_pebble_log_forwarding(
     """
     monkeypatch.setenv("JUJU_VERSION", "3.4.0")
     harness.begin()
-    container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    harness.set_can_connect(FLASK_CONTAINER_NAME, True)
+    container: ops.Container = harness.model.unit.get_container(container_name)
+    harness.set_can_connect(container_name, True)
     container.add_layer("default", DEFAULT_LAYER)
     charm_state = CharmState(
         framework="flask",

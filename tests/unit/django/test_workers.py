@@ -7,7 +7,7 @@ import ops
 import pytest
 from ops.testing import ExecResult, Harness
 
-from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,13 @@ from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
     ],
 )
 def test_async_workers_config(
-    harness: Harness, django_layer, worker_class, expected_status, expected_message, exec_res
+    harness: Harness,
+    container_name: str,
+    django_layer,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -70,7 +76,7 @@ def test_async_workers_config(
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", django_layer)
 
     harness.handle_exec(
@@ -117,7 +123,12 @@ def test_async_workers_config(
     ],
 )
 def test_async_workers_config_fail(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
+    harness: Harness,
+    container_name: str,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -132,7 +143,7 @@ def test_async_workers_config_fail(
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.handle_exec(
         container.name,

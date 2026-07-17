@@ -35,7 +35,7 @@ def create_workload_config(
     base_dir = pathlib.Path(f"/{framework_name}")
     return WorkloadConfig(
         framework=framework_name,
-        container_name=f"{framework_name}-app",
+        container_name="app",
         port=8000,
         base_dir=base_dir,
         app_dir=base_dir / "app",
