@@ -8,6 +8,7 @@ import contextlib
 import logging
 import pathlib
 import subprocess
+import sys
 import time
 from secrets import token_hex
 from typing import cast
@@ -758,14 +759,15 @@ def browser_context_manager():
     """
     try:
         subprocess.run(
-            ["python", "-m", "playwright", "install", "chromium"],
+            [sys.executable, "-m", "playwright", "install", "chromium"],
             check=True,
             capture_output=True,
             text=True,
         )
         print("Chromium installation complete.")
     except subprocess.CalledProcessError as e:
-        pytest.fail(f"Failed to install Playwright browser: {e.stderr}")
+        output = e.stderr or e.stdout or str(e)
+        pytest.fail(f"Failed to install Playwright browser: {output}")
 
     yield
 

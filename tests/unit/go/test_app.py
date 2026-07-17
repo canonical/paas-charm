@@ -78,7 +78,13 @@ from paas_charm.redis import PaaSRedisRelationData
     ],
 )
 def test_go_environment_vars(
-    monkeypatch, set_env, user_defined_config, framework_config, integrations, expected
+    monkeypatch,
+    set_env,
+    user_defined_config,
+    framework_config,
+    integrations,
+    expected,
+    container_name,
 ):
     """
     arrange: set juju charm generic app with distinct combinations of configuration.
@@ -93,7 +99,7 @@ def test_go_environment_vars(
     base_dir = pathlib.Path("/app")
     workload_config = WorkloadConfig(
         framework=framework_name,
-        container_name="app",
+        container_name=container_name,
         port=framework_config.port,
         base_dir=base_dir,
         app_dir=base_dir,

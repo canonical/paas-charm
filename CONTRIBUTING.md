@@ -4,8 +4,7 @@ This document explains the processes and practices recommended for contributing 
 
 ## Overview
 
-- Generally, before developing enhancements to this charm, you should consider [opening an issue
-](https://github.com/canonical/paas-charm/issues) explaining your use case.
+- Generally, before developing enhancements to this charm, you should consider [opening an issue](https://github.com/canonical/paas-charm/issues) explaining your use case.
 - If you would like to chat with us about your use-cases or proposed implementation, you can reach
   us at [Canonical Matrix public channel](https://matrix.to/#/#charmhub-charmdev:ubuntu.com)
   or [Discourse](https://discourse.charmhub.io/).
@@ -121,8 +120,7 @@ a development environment for a given dependency group and run commands inside i
 directly with `uv`:
 
 ```shell
-uv sync --group unit
-uv run pytest tests/unit
+uvx tox -e unit
 ```
 
 Integration tests run locally through [`canonical/charm-ci`](https://github.com/canonical/charm-ci)
@@ -147,11 +145,11 @@ Each environment installs its dependencies from the matching group in
 `pyproject.toml` using `uv`. There are some pre-configured environments
 that can be used for linting and formatting code when you're preparing contributions to the charm:
 
-- `tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
-- `tox -e fmt`: Runs formatting using `black` and `isort`.
-- `tox -e lint`: Runs a range of static code analysis to check the code.
-- `tox -e static`: Runs other checks such as `bandit` for security issues.
-- `tox -e unit`: Runs the unit tests.
+- `uvx tox`: Runs all of the basic checks (`lint`, `unit`, `static`, and `coverage-report`).
+- `uvx tox -e fmt`: Runs formatting using `black` and `isort`.
+- `uvx tox -e lint`: Runs a range of static code analysis to check the code.
+- `uvx tox -e static`: Runs other checks such as `bandit` for security issues.
+- `uvx tox -e unit`: Runs the unit tests.
 
 #### Integration tests
 
@@ -212,20 +210,20 @@ below.
   [charm topic on Discourse](https://discourse.charmhub.io/c/charm/41). This
   should cover things like:
 
-- The programming language and framework you are thinking of
-- Create an example `rockcraft.yaml` file and build a working OCI image. To
-    see an example for `flask`, install Rockcraft and run
-    `rockcraft init --profile flask-framework` and run
-    `rockcraft expand-extensions` and inspect the output.
-- Create an example `charmcraft.yaml` file and build a working charm. To see
-    an example for `flask`, install Charmcraft and run
-    `charmcraft init --profile flask-framework` and run
-    `charmcraft expand-extensions` and inspect the output.
-- How the configuration options of the charm map to environment variables,
-    configurations or another method of passing the information to the app
-- The requirements and conventions for how users need to configure their app
-    to work with PaaS Charm
-- Which web server to use
+  - The programming language and framework you are thinking of
+  - Create an example `rockcraft.yaml` file and build a working OCI image. To
+      see an example for `flask`, install Rockcraft and run
+      `rockcraft init --profile flask-framework` and run
+      `rockcraft expand-extensions` and inspect the output.
+  - Create an example `charmcraft.yaml` file and build a working charm. To see
+      an example for `flask`, install Charmcraft and run
+      `charmcraft init --profile flask-framework` and run
+      `charmcraft expand-extensions` and inspect the output.
+  - How the configuration options of the charm map to environment variables,
+      configurations or another method of passing the information to the app
+  - The requirements and conventions for how users need to configure their app
+      to work with PaaS Charm
+  - Which web server to use
 
 1. Raise a pull request to [rockcraft](https://github.com/canonical/rockcraft)
   adding a new extension and profile for the framework. This is the flask

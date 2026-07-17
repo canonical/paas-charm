@@ -12,8 +12,6 @@ from ops.testing import Harness
 
 from examples.go.charm.src.charm import GoCharm
 
-from .constants import GO_CONTAINER_NAME
-
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 
@@ -23,13 +21,13 @@ def cwd():
 
 
 @pytest.fixture(name="harness")
-def harness_fixture() -> typing.Generator[Harness, None, None]:
+def harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Ops testing framework harness fixture."""
     harness = Harness(GoCharm)
     harness.set_leader()
-    root = harness.get_filesystem_root(GO_CONTAINER_NAME)
+    root = harness.get_filesystem_root(container_name)
     (root / "app").mkdir(parents=True)
-    harness.set_can_connect(GO_CONTAINER_NAME, True)
+    harness.set_can_connect(container_name, True)
 
     yield harness
     harness.cleanup()

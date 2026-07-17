@@ -2,18 +2,21 @@ framework_logging_format: json
 port: 8080
 prometheus:
   scrape_configs:
-  - job_name: app-custom
-    metrics_path: /metrics
-    static_configs:
-    - labels:
-        app: flask
-        env: example
-      targets:
-      - '*:8081'
-  - job_name: app-scheduler-metrics
-    metrics_path: /metrics
-    static_configs:
-    - labels:
-        role: scheduler
-      targets:
-      - '@scheduler:8082'
+    # Custom job scraping all units on port 8081
+    - job_name: "flask-app-custom"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets:
+            - "*:8081"  # Different port from framework default (9102)
+          labels:
+            app: "flask"
+            env: "example"
+    
+    # Scheduler-only job using @scheduler placeholder
+    - job_name: "flask-scheduler-metrics"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets:
+            - "@scheduler:8082"  # Only scrapes scheduler unit (unit 0)
+          labels:
+            role: "scheduler"
