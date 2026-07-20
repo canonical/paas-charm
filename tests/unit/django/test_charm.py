@@ -16,6 +16,7 @@ from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
+from paas_charm.paas_config import PaasConfig
 
 from .constants import DEFAULT_LAYER
 
@@ -27,6 +28,8 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_METRICS_PORT": "9102",
+            "DJANGO_METRICS_PATH": "/metrics",
         },
         id="default",
     ),
@@ -37,6 +40,8 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
+            "DJANGO_METRICS_PORT": "9102",
+            "DJANGO_METRICS_PATH": "/metrics",
         },
         id="allowed-hosts",
     ),
@@ -47,6 +52,8 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_METRICS_PORT": "9102",
+            "DJANGO_METRICS_PATH": "/metrics",
             "DJANGO_DEBUG": "true",
         },
         id="debug",
@@ -58,6 +65,8 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "foobar",
             "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_METRICS_PORT": "9102",
+            "DJANGO_METRICS_PATH": "/metrics",
         },
         id="secret-key",
     ),

@@ -153,4 +153,3 @@ parts:
     source: .
     stage:
       - paas-config.yaml
-

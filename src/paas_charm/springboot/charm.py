@@ -60,18 +60,15 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
     Returns:
         Default Prometheus environment mappings.
     """
-    environment = {"management.endpoints.web.exposure.include": "prometheus"}
-    if not workload_config.configure_metrics or not workload_config.metrics_path:
-        return environment
+    if not workload_config.metrics_path:
+        return {"management.endpoints.web.exposure.include": "prometheus"}
     metrics_path_list = [part for part in workload_config.metrics_path.split("/") if part]
-    environment.update(
-        {
+    return {
+        "management.endpoints.web.exposure.include": "prometheus",
         "management.server.port": str(workload_config.metrics_port),
         "management.endpoints.web.base-path": f"/{'/'.join(metrics_path_list[:-1])}",
         "management.endpoints.web.path-mapping.prometheus": metrics_path_list[-1],
-        }
-    )
-    return environment
+    }
 
 
 def generate_oauth_env(
@@ -382,6 +379,7 @@ class Charm(PaasCharm):
 
     Attrs:
         framework_config_class: Base class for framework configuration.
+        paas_config_framework_fields: Mapping from framework fields to paas-config fields.
     """
 
     framework_config_class = SpringBootConfig
@@ -404,8 +402,8 @@ class Charm(PaasCharm):
         base_dir = pathlib.Path("/app")
         state_dir = base_dir / "state"
         framework_config = typing.cast(SpringBootConfig, self.get_framework_config())
-        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
-            default_port=framework_config.server_port, default_path="/actuator/prometheus"
+        metrics_port, metrics_path = self._paas_config.metrics_endpoint(
+            default_port=8080, default_path="/actuator/prometheus"
         )
 
         return WorkloadConfig(
@@ -421,7 +419,6 @@ class Charm(PaasCharm):
             metrics_target=f"*:{metrics_port}",
             metrics_path=metrics_path,
             metrics_port=metrics_port,
-            configure_metrics=configure_metrics,
         )
 
     def _create_app(self) -> App:

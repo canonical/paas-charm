@@ -78,6 +78,8 @@ def test_flask_pebble_layer(harness: Harness, container_name: str) -> None:
             "FLASK_OIDC_REDIRECT_PATH": "/callback",
             "FLASK_OIDC_SCOPES": "openid profile email",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
+            "FLASK_METRICS_PORT": "9102",
+            "FLASK_METRICS_PATH": "/metrics",
             "FLASK_SECRET_KEY": "0000000000000000",
         },
         "override": "replace",

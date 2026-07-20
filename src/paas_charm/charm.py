@@ -109,6 +109,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     Attrs:
         on: charm events replaced by Redis ones for the Redis charm library.
         framework_config_class: base class for the framework config.
+        paas_config_framework_fields: Mapping from framework fields to paas-config fields.
     """
 
     framework_config_class: type[BaseModel]

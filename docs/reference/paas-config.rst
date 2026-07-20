@@ -32,7 +32,7 @@ Use the following key to configure the framework server:
      - Description
    * - ``port``
      - Integer
-     - ``8080``
+     - Framework-specific
      - Port on which the application server listens.
 
 For example:
@@ -44,11 +44,25 @@ For example:
 The port must be between 1 and 65535. This value is packaged with the charm and
 cannot be changed with ``juju config``. If it is omitted, the framework default is used.
 
+The default application port is ``8000`` for Flask and Django, and ``8080`` for
+FastAPI, ExpressJS, Go, and Spring Boot. The resolved port is always written to the
+workload environment when the framework uses an application port environment variable.
+Go uses ``PORT``; Flask and Django configure the port directly in Gunicorn instead.
+
 Metrics settings are configured under ``prometheus.scrape_configs``. A reserved
-job named ``app`` replaces the framework's default metrics endpoint and scrape job.
+job named ``app`` replaces the framework's default metrics configuration and scrape job.
 If the ``app`` job is omitted, the framework metrics defaults are used. In particular,
 Spring Boot uses its native Actuator path at ``/actuator/prometheus`` and always
 exposes the Prometheus Actuator endpoint.
+
+The charm always passes the resolved metrics port and path to the workload and publishes the
+same values to Prometheus. Workload code is responsible for consuming this configuration and
+exposing the corresponding endpoint. Flask and Django receive framework-prefixed
+``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive unprefixed
+variables. Spring Boot receives native ``management.*`` properties.
+
+Flask and Django default to ``9102`` and ``/metrics``. The other frameworks default to ``8080``
+and ``/metrics``, except Spring Boot, which uses ``8080`` and ``/actuator/prometheus``.
 
 See :ref:`ref_paas_config_prometheus` for detailed Prometheus configuration options.
 See :ref:`ref_paas_config_structured_logging` for detailed structured logging options.

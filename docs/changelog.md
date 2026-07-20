@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Move application and metrics endpoint customization to `paas-config.yaml` while
+  always exposing the resolved framework defaults to workloads.
+
 ## 1.12.0 - 2026-07-03
 
 * fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when

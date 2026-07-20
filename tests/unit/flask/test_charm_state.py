@@ -282,7 +282,6 @@ def test_flask_secret_key_id_duplication(flask_base_state):
     assert "invalid option" in out.unit_status.message
 
 
-
 @pytest.mark.parametrize("charm_config, expected_env", CHARM_STATE_FLASK_CONFIG_TEST_PARAMS)
 def test_charm_state_paas_config(
     flask_base_state, modify_paas_config, charm_config: dict, expected_env: dict

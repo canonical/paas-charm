@@ -23,6 +23,8 @@ from .constants import DEFAULT_LAYER
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://expressjs-k8s.None:8080",
                 "APP_SECRET_KEY": "test",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
@@ -50,6 +52,8 @@ from .constants import DEFAULT_LAYER
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://expressjs-k8s.None:8080",
                 "APP_SECRET_KEY": "foobar",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",

@@ -34,6 +34,7 @@ class Charm(PaasCharm):
 
     Attrs:
         framework_config_class: Base class for framework configuration.
+        paas_config_framework_fields: Mapping from framework fields to paas-config fields.
     """
 
     framework_config_class = GoConfig
@@ -55,8 +56,8 @@ class Charm(PaasCharm):
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(GoConfig, self.get_framework_config())
-        metrics_port, metrics_path, configure_metrics = self._paas_config.metrics_endpoint(
-            default_port=framework_config.port, default_path="/metrics"
+        metrics_port, metrics_path = self._paas_config.metrics_endpoint(
+            default_port=8080, default_path="/metrics"
         )
         return WorkloadConfig(
             framework=framework_name,
@@ -70,7 +71,6 @@ class Charm(PaasCharm):
             metrics_target=f"*:{metrics_port}",
             metrics_path=metrics_path,
             metrics_port=metrics_port,
-            configure_metrics=configure_metrics,
         )
 
     def _create_app(self) -> App:

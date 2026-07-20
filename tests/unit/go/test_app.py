@@ -25,6 +25,8 @@ from paas_charm.redis import PaaSRedisRelationData
             None,
             {
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OTHERCONFIG": "othervalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -47,6 +49,8 @@ from paas_charm.redis import PaaSRedisRelationData
             ),
             {
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "notfoobar",
                 "APP_EXTRA-CONFIG": "extravalue",
                 "APP_BASE_URL": "https://paas.example.com",

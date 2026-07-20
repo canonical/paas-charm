@@ -10,8 +10,8 @@ expose additional metrics endpoints.
 
 The custom scrape configurations are merged with the default framework
 metrics job (if defined), so both can be active when you integrate with Prometheus.
-The reserved ``app`` job replaces the default framework job and also configures
-the application's primary metrics endpoint.
+The reserved ``app`` job replaces the default framework job and supplies the
+application's primary metrics endpoint configuration.
 
 Configuration schema
 --------------------
@@ -89,11 +89,23 @@ For example:
            - targets:
                - "*:9090"
 
-The charm configures the application to expose metrics on port ``9090`` at
-``/custom-metrics`` and publishes the same endpoint to Prometheus. If the ``app``
-job is omitted, the charm uses the selected framework's default metrics port and path.
-Other scrape jobs configure additional Prometheus targets and do not change the
-application's metrics endpoint.
+The charm passes port ``9090`` and path ``/custom-metrics`` to the workload and publishes the
+same endpoint to Prometheus. The workload must consume this configuration and expose the
+corresponding endpoint; the charm does not create or probe an arbitrary metrics listener.
+If the ``app`` job is omitted, the charm passes and publishes the selected framework's default
+metrics port and path. Other scrape jobs add Prometheus targets without changing the workload
+metrics configuration.
+
+The workload mappings are:
+
+* Flask: ``FLASK_METRICS_PORT`` and ``FLASK_METRICS_PATH``
+* Django: ``DJANGO_METRICS_PORT`` and ``DJANGO_METRICS_PATH``
+* FastAPI, ExpressJS, and Go: ``METRICS_PORT`` and ``METRICS_PATH``
+* Spring Boot: native ``management.server.port``, ``management.endpoints.web.base-path``, and
+  ``management.endpoints.web.path-mapping.prometheus`` properties
+
+Flask and Django default to ``*:9102/metrics``. FastAPI, ExpressJS, and Go default to
+``*:8080/metrics``. Spring Boot defaults to ``*:8080/actuator/prometheus``.
 
 Target formats
 --------------

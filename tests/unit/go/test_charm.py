@@ -19,6 +19,8 @@ from .constants import DEFAULT_LAYER
             {},
             {
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
@@ -32,6 +34,8 @@ from .constants import DEFAULT_LAYER
             },
             {
                 "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",

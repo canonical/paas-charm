@@ -33,14 +33,15 @@ def create_workload_config(
        new WorkloadConfig
     """
     paas_config = paas_config or PaasConfig()
-    metrics_port, metrics_path, configure_metrics = paas_config.metrics_endpoint(
-        default_port=paas_config.port, default_path="/metrics"
+    application_port = paas_config.application_port(default_port=8000)
+    metrics_port, metrics_path = paas_config.metrics_endpoint(
+        default_port=9102, default_path="/metrics"
     )
     base_dir = pathlib.Path(f"/{framework_name}")
     return WorkloadConfig(
         framework=framework_name,
         container_name="app",
-        port=paas_config.port,
+        port=application_port,
         base_dir=base_dir,
         app_dir=base_dir / "app",
         state_dir=state_dir,
@@ -52,7 +53,6 @@ def create_workload_config(
         metrics_target=f"*:{metrics_port}",
         metrics_path=metrics_path,
         metrics_port=metrics_port,
-        configure_metrics=configure_metrics,
         unit_name=unit_name,
         tracing_enabled=tracing_enabled,
         logging_format=paas_config.framework_logging_format,

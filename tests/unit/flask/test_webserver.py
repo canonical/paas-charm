@@ -26,7 +26,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         {"workers": 10},
         False,
         textwrap.dedent("""\
-                bind = ['0.0.0.0:8080']
+                bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
@@ -38,7 +38,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         {"threads": 2, "timeout": 3, "keepalive": 4},
         False,
         textwrap.dedent("""\
-                bind = ['0.0.0.0:8080']
+                bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'
@@ -57,7 +57,7 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 from opentelemetry.sdk.trace import TracerProvider
                 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-                bind = ['0.0.0.0:8080']
+                bind = ['0.0.0.0:8000']
                 chdir = '/flask/app'
                 accesslog = '/var/log/flask/access.log'
                 errorlog = '/var/log/flask/error.log'

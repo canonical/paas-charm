@@ -122,6 +122,7 @@ class PrometheusConfig(BaseModel):
 
     Attributes:
         scrape_configs: List of scrape job configurations.
+        app_scrape_config: Reserved application scrape job, if configured.
         model_config: Pydantic model configuration.
     """
 
@@ -190,7 +191,7 @@ class PaasConfig(BaseModel):
             Defaults to ``LoggingFormat.NONE`` (framework default logging).
             ``LoggingFormat.JSON`` ("json") is supported for FastAPI, Flask, and Django.
         model_config: Pydantic model configuration.
-        port: Port on which the application server listens. Defaults to 8080.
+        port: Optional override for the port on which the application server listens.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -207,6 +208,7 @@ class PaasConfig(BaseModel):
         le=65535,
         description="Port on which the application server listens.",
     )
+
     @field_validator("framework_logging_format", mode="before")
     @classmethod
     def _coerce_none_to_logging_format_none(cls, v: object) -> object:
@@ -221,15 +223,38 @@ class PaasConfig(BaseModel):
         """
         return LoggingFormat.NONE if v is None else v
 
-    def metrics_endpoint(
-        self, *, default_port: int, default_path: str
-    ) -> tuple[int, str, bool]:
-        """Return the application metrics endpoint and whether it was customized."""
-        app_scrape_config = self.prometheus.app_scrape_config if self.prometheus else None
+    def application_port(self, *, default_port: int) -> int:
+        """Return the configured application port or the framework default.
+
+        Args:
+            default_port: Framework-specific application port.
+
+        Returns:
+            The configured application port when explicitly set, otherwise the framework default.
+        """
+        return self.port if "port" in self.model_fields_set else default_port
+
+    def metrics_endpoint(self, *, default_port: int, default_path: str) -> tuple[int, str]:
+        """Return the configured application metrics endpoint or framework defaults.
+
+        Args:
+            default_port: Framework-specific metrics port.
+            default_path: Framework-specific metrics path.
+
+        Returns:
+            The resolved metrics port and path.
+        """
+        # Pylint resolves Pydantic model fields as FieldInfo rather than their annotated type.
+        prometheus_config = self.prometheus
+        app_scrape_config = (
+            prometheus_config.app_scrape_config  # pylint: disable=no-member
+            if prometheus_config is not None
+            else None
+        )
         if not app_scrape_config:
-            return default_port, default_path, False
+            return default_port, default_path
         target = app_scrape_config.static_configs[0].targets[0]
-        return int(target.removeprefix("*:")), app_scrape_config.metrics_path, True
+        return int(target.removeprefix("*:")), app_scrape_config.metrics_path
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 

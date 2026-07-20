@@ -1,5 +1,4 @@
 framework_logging_format: json
-port: 8080
 prometheus:
   scrape_configs:
     # Custom job scraping all units on port 8081
