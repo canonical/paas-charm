@@ -40,14 +40,14 @@ def ingress_provider_fixture(
     juju.deploy(
         charm="gateway-api-integrator",
         app="gateway",
-        channel="latest/edge",
+        channel="1/stable",
         trust=True,
         config={"gateway-class": "ck-gateway"},
     )
     juju.deploy(
         charm="ingress-configurator",
         app="configurator",
-        channel="latest/edge",
+        channel="latest/stable",
         trust=True,
         config={"hostname": HOSTNAME},
     )
