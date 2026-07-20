@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 1.12.1 - 2026-07-20
+
+* fix: ExpressJS framework `app-port` config option wiring.
+
 ## 1.12.0 - 2026-07-03
 
 * fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when
