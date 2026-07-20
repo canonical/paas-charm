@@ -15,8 +15,6 @@ from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 
-from .constants import FLASK_CONTAINER_NAME
-
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 
@@ -26,13 +24,13 @@ def cwd():
 
 
 @pytest.fixture(name="harness")
-def harness_fixture() -> typing.Generator[Harness, None, None]:
+def harness_fixture(container_name: str) -> typing.Generator[Harness, None, None]:
     """Ops testing framework harness fixture."""
     harness = Harness(FlaskCharm)
     harness.set_leader()
-    root = harness.get_filesystem_root(FLASK_CONTAINER_NAME)
+    root = harness.get_filesystem_root(container_name)
     (root / "flask/app").mkdir(parents=True)
-    harness.set_can_connect(FLASK_CONTAINER_NAME, True)
+    harness.set_can_connect(container_name, True)
 
     def check_config_handler(_):
         """Handle the gunicorn check config command."""
@@ -53,7 +51,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         "--check-config",
     ]
     harness.handle_exec(
-        FLASK_CONTAINER_NAME,
+        container_name,
         check_config_command,
         handler=check_config_handler,
     )
@@ -70,7 +68,7 @@ def harness_fixture() -> typing.Generator[Harness, None, None]:
         "--check-config",
     ]
     harness.handle_exec(
-        FLASK_CONTAINER_NAME,
+        container_name,
         gevent_check_config_command,
         handler=check_config_handler,
     )

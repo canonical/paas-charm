@@ -93,7 +93,7 @@ def test_flask_access_logs_have_trace_correlation(
         response = session_with_retry.get(f"http://{unit_ip}:8000", timeout=5)
         assert response.status_code == 200
 
-    all_logs = fetch_container_json_logs(pod_name, model_name, "flask-app")
+    all_logs = fetch_container_json_logs(pod_name, model_name, "app")
     access_logs = [
         log
         for log in all_logs
