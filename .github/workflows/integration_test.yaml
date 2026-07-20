@@ -16,6 +16,30 @@ jobs:
     with:
       charmcraft-channel: latest/edge
       rockcraft-channel: latest/edge
+      # Sideload the alithethird/rockcraft 1.90.1 CI test fork as a parallel
+      # snap instance and shadow the official rockcraft binary with it via
+      # /usr/local/bin (which precedes /snap/bin on the runner's PATH), so
+      # the subsequent "Install rockcraft" step in the reusable workflow
+      # installs the official snap normally but rock builds still resolve
+      # to the fork's rockcraft binary.
+      # TODO: revert to the official rockcraft snap once CI testing with
+      # https://github.com/alithethird/rockcraft/releases/tag/1.90.1 is done.
+      pre-build-rock-script: |
+        set -euo pipefail
+        rockcraft_fork_url="https://github.com/alithethird/rockcraft/releases/download/1.90.1/rockcraft_1.19.0.post104%2Bg78186d4_amd64.snap"
+        rockcraft_fork_snap="$(mktemp -t rockcraft-fork-XXXXXX.snap)"
+        curl -sSfL "${rockcraft_fork_url}" -o "${rockcraft_fork_snap}"
+        sudo snap set system experimental.parallel-instances=true
+        sudo snap install --dangerous --classic --name rockcraft_fork "${rockcraft_fork_snap}"
+        rm -f "${rockcraft_fork_snap}"
+        if [ ! -x /snap/bin/rockcraft_fork ]; then
+          echo "::error::expected /snap/bin/rockcraft_fork binary was not created by the parallel snap install" >&2
+          exit 1
+        fi
+        sudo ln -sf /snap/bin/rockcraft_fork /usr/local/bin/rockcraft
+        hash -r
+        echo "rockcraft resolves to: $(command -v rockcraft)"
+        rockcraft version
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
