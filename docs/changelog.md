@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * feat: Move application and metrics endpoint customization to `paas-config.yaml` while
   always exposing the resolved framework defaults to workloads.
+* breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
+  `app-secret-key-id` while preserving their framework-prefixed workload variables.
 
 ## 1.12.0 - 2026-07-03
 

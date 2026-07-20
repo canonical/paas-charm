@@ -59,7 +59,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
         id="debug",
     ),
     pytest.param(
-        {"django-secret-key": "foobar"},
+        {"app-secret-key": "foobar"},
         {
             "DJANGO_OIDC_REDIRECT_PATH": "/callback",
             "DJANGO_OIDC_SCOPES": "openid profile email",

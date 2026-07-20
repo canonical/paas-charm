@@ -34,7 +34,7 @@ class FlaskConfig(FrameworkConfig):
 
     env: str | None = Field(alias="flask-env", default=None, min_length=1)
     debug: bool | None = Field(alias="flask-debug", default=None)
-    secret_key: str | None = Field(alias="flask-secret-key", default=None, min_length=1)
+    secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
     permanent_session_lifetime: int | None = Field(
         alias="flask-permanent-session-lifetime", default=None, gt=0
     )

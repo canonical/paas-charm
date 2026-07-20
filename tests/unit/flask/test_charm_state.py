@@ -64,7 +64,7 @@ CHARM_STATE_FLASK_CONFIG_TEST_PARAMS = [
         id="debug",
     ),
     pytest.param(
-        {"flask-secret-key": "1234"},
+        {"app-secret-key": "1234"},
         {"FLASK_SECRET_KEY": "1234", "FLASK_PREFERRED_URL_SCHEME": "HTTPS"},
         id="secret-key",
     ),
@@ -102,7 +102,7 @@ def test_charm_state_flask_config(
     "charm_config",
     [
         pytest.param({"flask-env": ""}, id="env"),
-        pytest.param({"flask-secret-key": ""}, id="secret-key"),
+        pytest.param({"app-secret-key": ""}, id="secret-key"),
         pytest.param(
             {"flask-preferred-url-scheme": "tls"},
             id="preferred-url-scheme",
@@ -243,7 +243,7 @@ def test_secret_configuration(flask_base_state):
 
 def test_flask_secret_key_id_no_value(flask_base_state):
     """
-    arrange: Prepare an invalid flask-secret-key-id secret.
+    arrange: Prepare an invalid app-secret-key-id secret.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
@@ -251,7 +251,7 @@ def test_flask_secret_key_id_no_value(flask_base_state):
     key_secret = testing.Secret(owner="app", tracked_content={"wrong-key": "foobar"})
     flask_base_state["secrets"] = [key_secret]
 
-    flask_base_state["config"] = {"flask-secret-key-id": key_secret.id}
+    flask_base_state["config"] = {"app-secret-key-id": key_secret.id}
 
     ctx = testing.Context(FlaskCharm)
     state = testing.State(**flask_base_state)
@@ -263,15 +263,15 @@ def test_flask_secret_key_id_no_value(flask_base_state):
 
 def test_flask_secret_key_id_duplication(flask_base_state):
     """
-    arrange: Provide both the flask-secret-key-id and flask-secret-key configuration.
+    arrange: Provide both the app-secret-key-id and app-secret-key configuration.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
     secret = testing.Secret(tracked_content={"value": "foobar"})
     flask_base_state["secrets"] = [secret]
     flask_base_state["config"] = {
-        "flask-secret-key-id": secret.id,
-        "flask-secret-key": "test",
+        "app-secret-key-id": secret.id,
+        "app-secret-key": "test",
     }
 
     ctx = testing.Context(FlaskCharm)
