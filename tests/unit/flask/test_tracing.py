@@ -6,10 +6,10 @@
 import ops
 from ops.testing import Harness
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 
-def test_tracing_relation(harness: Harness):
+def test_tracing_relation(harness: Harness, container_name: str):
     """
     arrange: Integrate the charm with the Tempo charm.
     act: Run all initial hooks.
@@ -24,7 +24,7 @@ def test_tracing_relation(harness: Harness):
             "receivers": '[{"protocol": {"name": "otlp_http", "type": "http"}, "url": "http://test-ip:4318"}]'
         },
     )
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -35,7 +35,7 @@ def test_tracing_relation(harness: Harness):
     assert service_env["OTEL_SERVICE_NAME"] == "flask-k8s"
 
 
-def test_tracing_not_activated(harness: Harness):
+def test_tracing_not_activated(harness: Harness, container_name: str):
     """
     arrange: Deploy the flask charm without a relation to the Tempo charm.
     act: Run all initial hooks.
@@ -43,7 +43,7 @@ def test_tracing_not_activated(harness: Harness):
     """
     harness.set_model_name("flask-model")
 
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()

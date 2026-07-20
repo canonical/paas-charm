@@ -17,10 +17,10 @@ from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.exceptions import CharmConfigInvalidError
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 
-def test_database_migration(harness: Harness):
+def test_database_migration(harness: Harness, container_name: str):
     """
     arrange: none
     act: set the database migration script to be different value.
@@ -28,7 +28,7 @@ def test_database_migration(harness: Harness):
         first successful run.
     """
     harness.begin()
-    container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container: ops.Container = harness.model.unit.get_container(container_name)
     container.add_layer("default", DEFAULT_LAYER)
     root = harness.get_filesystem_root(container)
     harness.set_can_connect(container, True)
@@ -95,14 +95,16 @@ def test_database_migration(harness: Harness):
         pytest.param("manage.py", ["python3", "manage.py", "migrate"], id="django"),
     ],
 )
-def test_database_migrate_command(harness: Harness, file: str, command: list[str]):
+def test_database_migrate_command(
+    harness: Harness, container_name: str, file: str, command: list[str]
+):
     """
     arrange: set up the test harness
     act: run the database migration with different database migration scripts
     assert: database migration should run different command accordingly
     """
     harness.begin()
-    container: ops.Container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container: ops.Container = harness.model.unit.get_container(container_name)
     container.add_layer("default", DEFAULT_LAYER)
     root = harness.get_filesystem_root(container)
     (root / "flask/app" / file).touch()
@@ -140,14 +142,14 @@ def test_database_migrate_command(harness: Harness, file: str, command: list[str
     assert history[0] == command
 
 
-def test_database_migration_status(harness: Harness):
+def test_database_migration_status(harness: Harness, container_name: str):
     """
     arrange: set up the test harness
     act: run the database migration with migration run sets to fail or succeed
     assert: database migration instance should report correct status.
     """
     harness.begin()
-    container = harness.charm.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.charm.unit.get_container(container_name)
     container.add_layer("default", DEFAULT_LAYER)
 
     harness.handle_exec(container, [], result=1)
@@ -167,13 +169,15 @@ def test_database_migration_status(harness: Harness):
     assert database_migration.get_status() == DatabaseMigrationStatus.COMPLETED
 
 
-def test_migrations_run_second_time_optional_integration_integrated(harness: Harness):
+def test_migrations_run_second_time_optional_integration_integrated(
+    harness: Harness, container_name: str
+):
     """
     arrange: set up a active charm that has run the migration successfully.
     act: integrate with a new optional integration.
     assert: the migration command should be called again.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     root = harness.get_filesystem_root(container)
     (root / "flask/app/migrate.sh").touch()

@@ -15,6 +15,3 @@ DEFAULT_LAYER = {
         },
     }
 }
-
-
-EXPRESSJS_CONTAINER_NAME = "app"

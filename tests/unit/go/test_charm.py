@@ -9,7 +9,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 
 @pytest.mark.parametrize(
@@ -48,13 +48,13 @@ from .constants import DEFAULT_LAYER, GO_CONTAINER_NAME
         ),
     ],
 )
-def test_go_config(harness: Harness, config: dict, env: dict) -> None:
+def test_go_config(harness: Harness, config: dict, env: dict, container_name: str) -> None:
     """
     arrange: none
     act: start the go charm and set go-app container to be ready.
     assert: go charm should submit the correct go pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(GO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
     harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
@@ -73,13 +73,13 @@ def test_go_config(harness: Harness, config: dict, env: dict) -> None:
     }
 
 
-def test_metrics_config(harness: Harness):
+def test_metrics_config(harness: Harness, container_name: str) -> None:
     """
     arrange: Charm with a metrics-endpoint integration
     act: Start the charm with all initial hooks
     assert: The correct port and path for scraping should be in the relation data.
     """
-    container = harness.model.unit.get_container(GO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.add_relation("metrics-endpoint", "prometheus-k8s")
     # update_config has to be executed before begin, as the charm does not call __init__

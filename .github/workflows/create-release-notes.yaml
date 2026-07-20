@@ -79,7 +79,7 @@ jobs:
 
             ### 5. Requirements section
 
-            Read the exact dependency versions from \`requirements.txt\` and make sure the **Requirements and compatibility** section of the RST file lists them accurately.
+            Read the exact dependency versions from the \`[project.dependencies]\` section of \`pyproject.toml\` and make sure the **Requirements and compatibility** section of the RST file lists them accurately.
 
             ### 6. Contributors
 
@@ -103,7 +103,7 @@ jobs:
 
             1. **Do not skip any feature or fix.** Scan every merged PR since the last release. The v1.11.0 PR initially omitted the structured-logging feature for FastAPI (PR #255) because it was merged after the first draft was written. Always do a final diff between the previous tag and \`main\` before submitting.
 
-            2. **Update requirements versions from \`requirements.txt\`**, not from memory or the previous release notes. The exact pinned versions in the file are the source of truth.
+            2. **Update requirements versions from the \`[project.dependencies]\` section of \`pyproject.toml\`**, not from memory or the previous release notes. The exact pinned versions in the file are the source of truth.
 
             3. **Patch vs minor releases use the same RST file.** Patch releases (x.y.Z where Z > 0) add a section to the existing \`release-notes-x.y.rst\` rather than creating a new file.
 

@@ -21,20 +21,14 @@ from examples.go.charm.src.charm import GoCharm
 from src.paas_charm.charm import PaasCharm
 from tests.unit.conftest import postgresql_relation
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
-from tests.unit.django.constants import DJANGO_CONTAINER_NAME
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
-from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
-from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
-from tests.unit.flask.constants import FLASK_CONTAINER_NAME
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
-from tests.unit.go.constants import GO_CONTAINER_NAME
 from tests.unit.test_charm.src.charm import TestCharm
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
-TEST_CONTAINER_NAME = "app"
 TEST_DEFAULT_LAYER = {
     "services": {
         "app": {
@@ -48,21 +42,19 @@ TEST_DEFAULT_LAYER = {
 
 
 @pytest.fixture(name="generic_harness")
-def generic_harness_fixture():
+def generic_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Generic charm harness for testing."""
     os.chdir(PROJECT_ROOT / "tests/unit/test_charm")
-    harness = _build_harness(TestCharm, TEST_CONTAINER_NAME, TEST_DEFAULT_LAYER, "app")
+    harness = _build_harness(TestCharm, container_name, TEST_DEFAULT_LAYER, "app")
     harness.begin()
     return harness
 
 
 @pytest.fixture(name="expressjs_harness")
-def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
+def expressjs_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Express JS harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
-    harness = _build_harness(
-        ExpressJSCharm, EXPRESSJS_CONTAINER_NAME, EXPRESSJS_DEFAULT_LAYER, "app"
-    )
+    harness = _build_harness(ExpressJSCharm, container_name, EXPRESSJS_DEFAULT_LAYER, "app")
 
     postgresql_relation_data = {
         "database": "test-database",
@@ -77,10 +69,10 @@ def expressjs_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 
 @pytest.fixture(name="go_harness")
-def go_harness_fixture() -> typing.Generator[Harness, None, None]:
+def go_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Go harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/go/charm")
-    harness = _build_harness(GoCharm, GO_CONTAINER_NAME, GO_DEFAULT_LAYER, "app")
+    harness = _build_harness(GoCharm, container_name, GO_DEFAULT_LAYER, "app")
 
     yield harness
 
@@ -88,11 +80,11 @@ def go_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 
 @pytest.fixture(name="flask_harness")
-def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
+def flask_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Flask harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/flask/charm")
-    harness = _build_harness(FlaskCharm, FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER, "flask/app")
-    _set_check_config_handler(harness, "flask", FLASK_CONTAINER_NAME, FLASK_DEFAULT_LAYER)
+    harness = _build_harness(FlaskCharm, container_name, FLASK_DEFAULT_LAYER, "flask/app")
+    _set_check_config_handler(harness, "flask", container_name, FLASK_DEFAULT_LAYER)
 
     yield harness
 
@@ -100,10 +92,10 @@ def flask_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 
 @pytest.fixture(name="fastapi_harness")
-def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
+def fastapi_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Fast API harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
-    harness = _build_harness(FastAPICharm, FASTAPI_CONTAINER_NAME, FASTAPI_DEFAULT_LAYER, "app")
+    harness = _build_harness(FastAPICharm, container_name, FASTAPI_DEFAULT_LAYER, "app")
 
     harness.update_config({"non-optional-string": ""})
     yield harness
@@ -112,13 +104,11 @@ def fastapi_harness_fixture() -> typing.Generator[Harness, None, None]:
 
 
 @pytest.fixture(name="django_harness")
-def django_harness_fixture() -> typing.Generator[Harness, None, None]:
+def django_harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
     """Django harness fixture."""
     os.chdir(PROJECT_ROOT / "examples/django/charm")
-    harness = _build_harness(
-        DjangoCharm, DJANGO_CONTAINER_NAME, DJANGO_DEFAULT_LAYER, "django/app"
-    )
-    _set_check_config_handler(harness, "django", DJANGO_CONTAINER_NAME, DJANGO_DEFAULT_LAYER)
+    harness = _build_harness(DjangoCharm, container_name, DJANGO_DEFAULT_LAYER, "django/app")
+    _set_check_config_handler(harness, "django", container_name, DJANGO_DEFAULT_LAYER)
 
     postgresql_relation_data = {
         "database": "test-database",
@@ -204,7 +194,7 @@ def flask_base_state_fixture():
         ],
         "containers": {
             testing.Container(
-                name="flask-app",
+                name="app",
                 can_connect=True,
                 mounts={"data": testing.Mount(location="/flask/gunicorn.conf.py", source="conf")},
                 execs={
@@ -301,7 +291,7 @@ def django_base_state_fixture():
         ],
         "containers": {
             testing.Container(
-                name="django-app",
+                name="app",
                 can_connect=True,
                 mounts={"data": testing.Mount(location="/django/gunicorn.conf.py", source="conf")},
                 execs={
