@@ -555,6 +555,28 @@ def test_init_openfga(requires, expected_type):
     assert isinstance(result, expected_type)
 
 
+def test_init_openfga_uses_application_name():
+    """
+    arrange: Set the charm application name and OpenFGA relation metadata.
+    act: Run the _init_openfga function.
+    assert: The application name should be used as the OpenFGA store name.
+    """
+    charm = unittest.mock.MagicMock()
+    charm.app.name = "test-app"
+    requires = {
+        "openfga": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="openfga",
+            raw={"interface": "openfga", "limit": 1},
+        )
+    }
+
+    with patch("paas_charm.charm.OpenFGARequires") as openfga_requires:
+        paas_charm.charm.PaasCharm._init_openfga(self=charm, requires=requires)
+
+    openfga_requires.assert_called_once_with(charm, "test-app")
+
+
 def _test_missing_required_other_integrations_parameters():
     charm_without_relation = unittest.mock.MagicMock()
     charm_with_saml = unittest.mock.MagicMock()
