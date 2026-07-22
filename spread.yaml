@@ -9,6 +9,7 @@ warn-timeout: 1h
 backends:
   integration-test:
     type: integration-test
+    disk: 50G
     systems:
       - ubuntu-24.04
 
