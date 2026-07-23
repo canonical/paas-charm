@@ -8,5 +8,7 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/test.yaml@main
     secrets: inherit
     with:
+      charmcraft-channel: latest/edge
       self-hosted-runner: false
       self-hosted-runner-label: "edge"
+      with-uv: true

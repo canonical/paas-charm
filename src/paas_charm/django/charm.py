@@ -114,7 +114,7 @@ class Charm(GunicornBase):
             event: the action event object.
         """
         if not self.is_ready():
-            event.fail("django-app container is not ready")
+            event.fail("app container is not ready")
         try:
             password = secrets.token_urlsafe(16)
             self._container.exec(

@@ -12,8 +12,6 @@ from ops.testing import Harness
 
 from examples.expressjs.charm.src.charm import ExpressJSCharm
 
-from .constants import EXPRESSJS_CONTAINER_NAME
-
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
 
@@ -23,13 +21,13 @@ def cwd():
 
 
 @pytest.fixture(name="harness")
-def harness_fixture() -> typing.Generator[Harness, None, None]:
+def harness_fixture(container_name: str) -> typing.Generator[Harness, None, None]:
     """Ops testing framework harness fixture."""
     harness = Harness(ExpressJSCharm)
     harness.set_leader()
-    root = harness.get_filesystem_root(EXPRESSJS_CONTAINER_NAME)
+    root = harness.get_filesystem_root(container_name)
     (root / "app").mkdir(parents=True)
-    harness.set_can_connect(EXPRESSJS_CONTAINER_NAME, True)
+    harness.set_can_connect(container_name, True)
     harness.add_relation(
         "postgresql",
         "postgresql-k8s",

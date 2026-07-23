@@ -2,14 +2,13 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "1.11.3"
+version = "2.0.dev0"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
     {name = "Canonical IS DevOps team", email="is-devops-team@canonical.com"},
 ]
-requires-python = ">=3.10"
-dynamic = ["dependencies"]
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -17,13 +16,28 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
 ]
-
+dependencies = [
+    "cosl==1.10.2",
+    "dpcharmlibs-interfaces==1.1.0",
+    "Jinja2==3.1.6",
+    "jsonschema==4.26.0",
+    "ops==3.8.0",
+    "pydantic==2.13.4",
+]
 
 [project.urls]
 Repository = "https://github.com/canonical/paas-charm"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+# opcli is published only from the charm-ci git repository, not PyPI.
+opcli = { git = "https://github.com/canonical/charm-ci.git", branch = "main" }
 
 [tool.setuptools.package-data]
 paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2", "**/templates/**/*.py", "**/templates/**/*.json"]
@@ -54,7 +68,7 @@ pythonpath = [
 # Formatting tools configuration
 [tool.black]
 line-length = 99
-target-version = ["py38"]
+target-version = ["py312"]
 extend-exclude = '''
 
 (
@@ -117,3 +131,52 @@ disallow_untyped_defs = false
 [tool.ruff]
 target-version = "py312"
 line-length = 99
+
+[dependency-groups]
+unit = [
+    "cosl==1.10.2",
+    "coverage[toml]==7.15.2",
+    "gunicorn==26.0.0",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "ops[testing]==3.8.0",
+    "pydantic[email]==2.13.4",
+    "pytest==9.1.1",
+]
+lint = [
+    "black",
+    "codespell",
+    "flake8",
+    "flake8-builtins",
+    "flake8-copyright",
+    "flake8-docstrings>=1.6.0",
+    "flake8-docstrings-complete>=1.0.4",
+    "flake8-test-docs",
+    "isort",
+    "mypy",
+    "pep8-naming",
+    "pydocstyle",
+    "pylint",
+    "pyproject-flake8",
+    "pytest_operator",
+    "snowballstemmer<3.1.2",
+    "types-PyYAML",
+    "types-requests",
+]
+static = [
+    "bandit[toml]",
+]
+integration-tests = [
+    "pytest>=9.1.1",
+    "aiohttp==3.14.1",
+    "cosl==1.10.2",
+    "saml-test-helper @ git+https://github.com/canonical/saml-test-idp.git",
+    "jubilant==1.11.0",
+    "juju==3.6.1.3",
+    "minio==7.2.20",
+    "ops==3.8.0",
+    "tenacity==9.1.4",
+    "playwright==1.61.0",
+    "lightkube==0.22.0",
+    "opcli"
+]
