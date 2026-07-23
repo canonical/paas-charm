@@ -6,6 +6,7 @@
 import json
 import logging
 import re
+import time
 
 import jubilant
 import pytest
@@ -120,8 +121,10 @@ def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test
         page.goto(f"{app_url}/{endpoint}")
         logger.info("Page content: %s", page.content())
         expect(page).not_to_have_title(re.compile("Sign in failed"))
+        time.sleep(1)  # Wait for a second before inputting the credentials
         page.get_by_label("Email").fill(test_email)
         page.get_by_label("Password").fill(test_password)
+        time.sleep(1)  # Wait for a second before clicking the sign-in button
         page.get_by_role("button", name="Sign in").click()
         try:
             page.wait_for_url(f"{app_url}/**")
