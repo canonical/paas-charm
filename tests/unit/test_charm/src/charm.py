@@ -58,7 +58,6 @@ class TestCharm(PaasCharm):
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,
-            metrics_target=f"*:{framework_config.metrics_port}",
             metrics_path=framework_config.metrics_path,
         )
 

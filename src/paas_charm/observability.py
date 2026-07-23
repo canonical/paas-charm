@@ -19,6 +19,15 @@ from paas_charm.utils import build_k8s_unit_fqdn, enable_pebble_log_forwarding
 logger = logging.getLogger(__name__)
 
 
+class _ExplicitMetricsEndpointProvider(MetricsEndpointProvider):
+    """Metrics provider that does not synthesize the charm library's default scrape job."""
+
+    @property
+    def _scrape_jobs(self) -> list[dict[str, typing.Any]]:
+        """Return only explicitly configured scrape jobs."""
+        return self._jobs
+
+
 class Observability(ops.Object):
     """A class representing the observability stack for charm managed application."""
 
@@ -29,8 +38,6 @@ class Observability(ops.Object):
         container_name: str,
         cos_dir: str | os.PathLike[str],
         log_files: Iterable[str] | Iterable[os.PathLike[str]],
-        metrics_target: str | None,
-        metrics_path: str | None,
         prometheus_config: PrometheusConfig | None = None,
     ):
         """Initialize a new instance of the Observability class.
@@ -41,16 +48,12 @@ class Observability(ops.Object):
             cos_dir: The directories containing the grafana_dashboards, loki_alert_rules and
                 prometheus_alert_rules.
             log_files: List of files to monitor.
-            metrics_target: Target to scrape for metrics.
-            metrics_path: Path to scrape for metrics.
             prometheus_config: Custom Prometheus configuration from paas-config.yaml.
         """
         super().__init__(charm, "observability")
         self._charm = charm
-        jobs = build_prometheus_jobs(
-            metrics_target, metrics_path, prometheus_config, charm.app.name, charm.model.name
-        )
-        self._metrics_endpoint = MetricsEndpointProvider(
+        jobs = build_prometheus_jobs(prometheus_config, charm.app.name, charm.model.name)
+        self._metrics_endpoint = _ExplicitMetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
             jobs=jobs,
@@ -103,17 +106,13 @@ class Observability(ops.Object):
 
 
 def build_prometheus_jobs(
-    metrics_target: str | None,
-    metrics_path: str | None,
     prometheus_config: PrometheusConfig | None,
     app_name: str,
     model_name: str,
 ) -> list[dict[str, typing.Any]]:
-    """Build Prometheus scrape jobs list from framework defaults and custom config.
+    """Build Prometheus scrape jobs from explicit configuration.
 
     Args:
-        metrics_target: Default framework metrics target (e.g., "*:8000").
-        metrics_path: Default framework metrics path (e.g., "/metrics").
         prometheus_config: Custom Prometheus configuration from paas-config.yaml.
         app_name: Application name for @scheduler resolution.
         model_name: Juju model name for @scheduler resolution.
@@ -122,20 +121,8 @@ def build_prometheus_jobs(
         List of Prometheus job configurations (empty list if no jobs are configured).
     """
     jobs: list[dict[str, typing.Any]] = []
-
-    app_scrape_config = prometheus_config.app_scrape_config if prometheus_config else None
-
-    # Add the framework job unless the reserved app job replaces it.
-    # The library adds a default job_name.
-    if metrics_path and metrics_target and not app_scrape_config:
-        resolved_target = _resolve_scheduler_placeholder(app_name, model_name, metrics_target)
-        jobs.append(
-            {"metrics_path": metrics_path, "static_configs": [{"targets": [resolved_target]}]}
-        )
-
-    # Add custom jobs from paas-config.yaml
-    if prometheus_config and prometheus_config.scrape_configs:
-        for scrape_config in prometheus_config.scrape_configs:
+    if prometheus_config:
+        for scrape_config in prometheus_config.scrape_configs or []:
             static_configs = []
             for sc in scrape_config.static_configs:
                 resolved_targets = [

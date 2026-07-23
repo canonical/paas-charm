@@ -3,15 +3,13 @@
 Prometheus configuration
 ========================
 
-The ``prometheus`` section in ``paas-config.yaml`` allows you to define custom
-Prometheus scrape targets for metrics collection. This configuration is useful when the default
-framework metrics are insufficient for your use case or you want to
-expose additional metrics endpoints.
+The ``prometheus`` section in ``paas-config.yaml`` defines Prometheus scrape targets for metrics
+collection. The charm publishes only the jobs listed in ``scrape_configs``; it does not add a
+framework default job. If the section is absent or the list is empty, no scrape jobs are published.
 
-The custom scrape configurations are merged with the default framework
-metrics job (if defined), so both can be active when you integrate with Prometheus.
-The reserved ``app`` job replaces the default framework job and supplies the
-application's primary metrics endpoint configuration.
+Scrape configuration does not configure the workload listener. Use the top-level ``metrics_port``
+and ``metrics_path`` fields for workload environment variables or native framework properties, and
+ensure each scrape target matches an endpoint the workload actually serves.
 
 Configuration schema
 --------------------
@@ -73,9 +71,8 @@ Each static configuration defines a set of targets and optional labels.
 Application metrics job
 -----------------------
 
-Use the reserved job name ``app`` to override the framework's primary metrics
-endpoint. This job must contain exactly one static configuration with exactly one
-``*:PORT`` target. The port must be between 1 and 65535.
+Job names have no special behavior. For example, ``app`` can be used as an ordinary name for an
+explicit application scrape job:
 
 For example:
 
@@ -89,23 +86,9 @@ For example:
            - targets:
                - "*:9090"
 
-The charm passes port ``9090`` and path ``/custom-metrics`` to the workload and publishes the
-same endpoint to Prometheus. The workload must consume this configuration and expose the
-corresponding endpoint; the charm does not create or probe an arbitrary metrics listener.
-If the ``app`` job is omitted, the charm passes and publishes the selected framework's default
-metrics port and path. Other scrape jobs add Prometheus targets without changing the workload
-metrics configuration.
-
-The workload mappings are:
-
-* Flask: ``FLASK_METRICS_PORT`` and ``FLASK_METRICS_PATH``
-* Django: ``DJANGO_METRICS_PORT`` and ``DJANGO_METRICS_PATH``
-* FastAPI, ExpressJS, and Go: ``METRICS_PORT`` and ``METRICS_PATH``
-* Spring Boot: native ``management.server.port``, ``management.endpoints.web.base-path``, and
-  ``management.endpoints.web.path-mapping.prometheus`` properties
-
-Flask and Django default to ``*:9102/metrics``. FastAPI, ExpressJS, and Go default to
-``*:8080/metrics``. Spring Boot defaults to ``*:8080/actuator/prometheus``.
+This publishes port ``9090`` and path ``/custom-metrics`` to Prometheus only. It does not alter the
+workload environment, create a listener, or probe the endpoint. Configure the workload separately
+with top-level ``metrics_port`` and ``metrics_path`` values when needed.
 
 Target formats
 --------------
@@ -176,7 +159,6 @@ The Prometheus configuration validates the following rules:
 1. No extra fields are allowed in the schema.
 2. Each ``job_name`` must be unique across all scrape configs.
 3. Targets using the ``@scheduler:PORT`` format will require a numeric port.
-4. The reserved ``app`` job must contain one ``*:PORT`` target with a valid port.
 
 .. seealso::
 

@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* feat: Move application and metrics endpoint customization to `paas-config.yaml` while
-  always exposing the resolved framework defaults to workloads.
+* feat: Move application and metrics endpoint customization to top-level `paas-config.yaml`
+  fields while always exposing the resolved framework defaults to workloads.
+* breaking: Publish only explicit `prometheus.scrape_configs`; remove the implicit framework
+  scrape job and reserved `app` job behavior.
 * breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
   `app-secret-key-id` while preserving their framework-prefixed workload variables.
 

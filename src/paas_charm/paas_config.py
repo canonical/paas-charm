@@ -25,7 +25,6 @@ from paas_charm.utils import build_validation_error_message
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "paas-config.yaml"
-APP_JOB_NAME = "app"
 
 
 class LoggingFormat(str, enum.Enum):
@@ -122,7 +121,6 @@ class PrometheusConfig(BaseModel):
 
     Attributes:
         scrape_configs: List of scrape job configurations.
-        app_scrape_config: Reserved application scrape job, if configured.
         model_config: Pydantic model configuration.
     """
 
@@ -154,32 +152,7 @@ class PrometheusConfig(BaseModel):
                 f"{', '.join(sorted(duplicates))}. Each job must have a unique name."
             )
 
-        app_scrape_config = self.app_scrape_config
-        if app_scrape_config:
-            if not app_scrape_config.metrics_path.strip("/"):
-                raise ValueError("The 'app' scrape job metrics path must identify an endpoint")
-            if len(app_scrape_config.static_configs) != 1:
-                raise ValueError("The 'app' scrape job must define exactly one static config")
-            targets = app_scrape_config.static_configs[0].targets
-            if len(targets) != 1 or not targets[0].startswith("*:"):
-                raise ValueError("The 'app' scrape job must define exactly one '*:PORT' target")
-            port = targets[0].removeprefix("*:")
-            if not port.isdigit() or not 1 <= int(port) <= 65535:
-                raise ValueError("The 'app' scrape job target must use a port between 1 and 65535")
-
         return self
-
-    @property
-    def app_scrape_config(self) -> ScrapeConfig | None:
-        """Return the reserved application scrape job, if configured."""
-        return next(
-            (
-                scrape_config
-                for scrape_config in self.scrape_configs or []
-                if scrape_config.job_name == APP_JOB_NAME
-            ),
-            None,
-        )
 
 
 class PaasConfig(BaseModel):
@@ -192,6 +165,8 @@ class PaasConfig(BaseModel):
             ``LoggingFormat.JSON`` ("json") is supported for FastAPI, Flask, and Django.
         model_config: Pydantic model configuration.
         port: Optional override for the port on which the application server listens.
+        metrics_port: Optional override for the port on which the application serves metrics.
+        metrics_path: Optional override for the path on which the application serves metrics.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -207,6 +182,18 @@ class PaasConfig(BaseModel):
         gt=0,
         le=65535,
         description="Port on which the application server listens.",
+    )
+    metrics_port: int = Field(
+        default=8080,
+        gt=0,
+        le=65535,
+        description="Port on which the application serves metrics.",
+    )
+    metrics_path: str = Field(
+        default="/metrics",
+        min_length=1,
+        pattern=r"^/.+",
+        description="HTTP resource path on which the application serves metrics.",
     )
 
     @field_validator("framework_logging_format", mode="before")
@@ -235,7 +222,7 @@ class PaasConfig(BaseModel):
         return self.port if "port" in self.model_fields_set else default_port
 
     def metrics_endpoint(self, *, default_port: int, default_path: str) -> tuple[int, str]:
-        """Return the configured application metrics endpoint or framework defaults.
+        """Return the configured workload metrics endpoint or framework defaults.
 
         Args:
             default_port: Framework-specific metrics port.
@@ -244,17 +231,9 @@ class PaasConfig(BaseModel):
         Returns:
             The resolved metrics port and path.
         """
-        # Pylint resolves Pydantic model fields as FieldInfo rather than their annotated type.
-        prometheus_config = self.prometheus
-        app_scrape_config = (
-            prometheus_config.app_scrape_config  # pylint: disable=no-member
-            if prometheus_config is not None
-            else None
-        )
-        if not app_scrape_config:
-            return default_port, default_path
-        target = app_scrape_config.static_configs[0].targets[0]
-        return int(target.removeprefix("*:")), app_scrape_config.metrics_path
+        port = self.metrics_port if "metrics_port" in self.model_fields_set else default_port
+        path = self.metrics_path if "metrics_path" in self.model_fields_set else default_path
+        return port, path
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 

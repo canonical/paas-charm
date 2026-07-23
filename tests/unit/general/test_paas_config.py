@@ -43,6 +43,8 @@ class TestPaasConfig:
         assert config.prometheus is None
         assert config.framework_logging_format is LoggingFormat.NONE
         assert config.port == 8080
+        assert config.metrics_port == 8080
+        assert config.metrics_path == "/metrics"
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""
@@ -60,8 +62,8 @@ class TestPaasConfig:
         assert config.prometheus.scrape_configs[0].job_name == "test"
         assert config.port == 9090
 
-    def test_metrics_endpoint_uses_framework_default_without_app_job(self):
-        """Test that an omitted app job preserves framework metrics defaults."""
+    def test_metrics_endpoint_uses_framework_defaults_when_omitted(self):
+        """Test that omitted metrics fields preserve framework defaults."""
         config = PaasConfig()
 
         assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
@@ -69,42 +71,22 @@ class TestPaasConfig:
             "/metrics",
         )
 
-    def test_metrics_endpoint_uses_app_job(self):
-        """Test that the app job overrides the framework metrics endpoint."""
-        config = PaasConfig(
-            prometheus={
-                "scrape_configs": [
-                    {
-                        "job_name": "app",
-                        "metrics_path": "/custom-metrics",
-                        "static_configs": [{"targets": ["*:9090"]}],
-                    }
-                ]
-            }
-        )
+    def test_metrics_endpoint_uses_explicit_fields(self):
+        """Test that top-level metrics fields override framework defaults."""
+        config = PaasConfig(metrics_port=9090, metrics_path="/custom-metrics")
 
         assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
             9090,
             "/custom-metrics",
         )
 
-    def test_metrics_endpoint_ignores_non_app_jobs(self):
-        """Test that additional scrape jobs do not change the workload metrics endpoint."""
-        config = PaasConfig(
-            prometheus={
-                "scrape_configs": [
-                    {
-                        "job_name": "additional",
-                        "metrics_path": "/additional-metrics",
-                        "static_configs": [{"targets": ["*:9090"]}],
-                    }
-                ]
-            }
-        )
+    def test_metrics_endpoint_resolves_fields_independently(self):
+        """Test that each omitted metrics field retains its framework default."""
+        config = PaasConfig(metrics_path="/custom-metrics")
 
         assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
             8080,
-            "/metrics",
+            "/custom-metrics",
         )
 
     def test_application_port_uses_framework_default_when_omitted(self):
@@ -142,11 +124,18 @@ class TestPaasConfig:
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
 
+    @pytest.mark.parametrize("field", ["port", "metrics_port"])
     @pytest.mark.parametrize("value", [None, 0, 65536])
-    def test_invalid_port_rejected(self, value):
+    def test_invalid_port_rejected(self, field, value):
         """Test that ports must be valid TCP port numbers."""
         with pytest.raises(ValidationError):
-            PaasConfig(port=value)
+            PaasConfig(**{field: value})
+
+    @pytest.mark.parametrize("value", ["", "/", "metrics"])
+    def test_invalid_metrics_path_rejected(self, value):
+        """Test that the workload metrics path is absolute."""
+        with pytest.raises(ValidationError):
+            PaasConfig(metrics_path=value)
 
 
 class TestReadPaasConfig:
@@ -238,6 +227,8 @@ class TestReadPaasConfig:
         """Test reading a config file with all supported fields."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_data = {
+            "metrics_port": 9090,
+            "metrics_path": "/custom-metrics",
             "prometheus": {
                 "scrape_configs": [
                     {
@@ -253,16 +244,23 @@ class TestReadPaasConfig:
 
         config = read_paas_config(tmp_path)
         assert config.prometheus is not None
+        assert config.metrics_port == 9090
+        assert config.metrics_path == "/custom-metrics"
 
     def test_partial_config_uses_defaults_for_missing_keys(self, tmp_path):
         """Test that omitted keys retain sane generic defaults."""
         config_path = tmp_path / CONFIG_FILE_NAME
-        config_path.write_text("port: 9090\n", encoding="utf-8")
+        config_path.write_text(
+            "port: 9090\nmetrics_port: 9091\nmetrics_path: /custom-metrics\n",
+            encoding="utf-8",
+        )
 
         config = read_paas_config(tmp_path)
 
-        assert config.model_fields_set == {"port"}
+        assert config.model_fields_set == {"port", "metrics_port", "metrics_path"}
         assert config.port == 9090
+        assert config.metrics_port == 9091
+        assert config.metrics_path == "/custom-metrics"
 
 
 class TestStaticConfig:
@@ -419,49 +417,20 @@ class TestPrometheusConfig:
         assert len(prom_config.scrape_configs) == 1
         assert prom_config.scrape_configs[0].job_name == "job1"
 
-    def test_app_scrape_config(self):
-        """Test retrieving a valid reserved application scrape job."""
+    def test_app_is_an_ordinary_job_name(self):
+        """Test that app has no special scrape-job restrictions."""
         app_job = ScrapeConfig(
             job_name="app",
-            metrics_path="/custom-metrics",
-            static_configs=[StaticConfig(targets=["*:9090"])],
+            metrics_path="/",
+            static_configs=[
+                StaticConfig(targets=["localhost:9090", "@scheduler:9091"]),
+                StaticConfig(targets=["*:0"]),
+            ],
         )
 
         prom_config = PrometheusConfig(scrape_configs=[app_job])
 
-        assert prom_config.app_scrape_config == app_job
-
-    @pytest.mark.parametrize(
-        "static_configs",
-        [
-            [],
-            [StaticConfig(targets=["*:9090"]), StaticConfig(targets=["*:9091"])],
-            [StaticConfig(targets=["*:9090", "*:9091"])],
-            [StaticConfig(targets=["@scheduler:9090"])],
-            [StaticConfig(targets=["localhost:9090"])],
-            [StaticConfig(targets=["*:0"])],
-            [StaticConfig(targets=["*:65536"])],
-        ],
-    )
-    def test_invalid_app_scrape_config_rejected(self, static_configs):
-        """Test that the reserved app job has one valid wildcard target."""
-        with pytest.raises(ValidationError):
-            PrometheusConfig(
-                scrape_configs=[ScrapeConfig(job_name="app", static_configs=static_configs)]
-            )
-
-    def test_app_scrape_config_root_path_rejected(self):
-        """Test that the reserved app job identifies a metrics endpoint path."""
-        with pytest.raises(ValidationError):
-            PrometheusConfig(
-                scrape_configs=[
-                    ScrapeConfig(
-                        job_name="app",
-                        metrics_path="/",
-                        static_configs=[StaticConfig(targets=["*:9090"])],
-                    )
-                ]
-            )
+        assert prom_config.scrape_configs == [app_job]
 
     def test_valid_prometheus_config_multiple_jobs(self):
         """Test valid prometheus config with multiple jobs."""
@@ -676,9 +645,8 @@ def test_charm_state_paas_config(
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
     scrape_jobs = json.loads(metrics_relation.local_app_data["scrape_jobs"])
-    app_job = next(job for job in scrape_jobs if job.get("job_name") == "app")
-    assert app_job["metrics_path"] == "/alternative_metrics"
-    assert app_job["static_configs"] == [{"targets": ["*:8082"]}]
+    assert scrape_jobs
+    assert all(job.get("job_name") != "app" for job in scrape_jobs)
 
 
 @pytest.mark.parametrize(
@@ -728,6 +696,113 @@ def test_application_port_override_preserves_default_metrics_endpoint(
     assert environment["METRICS_PATH"] == "/metrics"
 
 
+@pytest.mark.parametrize(
+    "charm, state_fixture, service, expected_metrics",
+    [
+        pytest.param(
+            FlaskCharm,
+            "flask_base_state",
+            "flask",
+            {"FLASK_METRICS_PORT": "9102", "FLASK_METRICS_PATH": "/metrics"},
+            id="flask",
+        ),
+        pytest.param(
+            DjangoCharm,
+            "django_base_state",
+            "django",
+            {"DJANGO_METRICS_PORT": "9102", "DJANGO_METRICS_PATH": "/metrics"},
+            id="django",
+        ),
+        pytest.param(
+            FastAPICharm,
+            "fastapi_base_state",
+            "fastapi",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="fastapi",
+        ),
+        pytest.param(
+            ExpressJSCharm,
+            "expressjs_base_state",
+            "expressjs",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="expressjs",
+        ),
+        pytest.param(
+            GoCharm,
+            "go_base_state",
+            "go",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="go",
+        ),
+        pytest.param(
+            SpringBootCharm,
+            "spring_boot_base_state",
+            "spring-boot",
+            {
+                "management.server.port": "8080",
+                "management.endpoints.web.base-path": "/actuator",
+                "management.endpoints.web.path-mapping.prometheus": "prometheus",
+            },
+            id="springboot",
+        ),
+    ],
+)
+def test_prometheus_jobs_do_not_configure_workload_metrics(
+    request,
+    charm: type,
+    state_fixture: str,
+    service: str,
+    expected_metrics: dict[str, str],
+) -> None:
+    """Test that explicit scrape jobs do not alter the workload metrics endpoint."""
+    base_state = request.getfixturevalue(state_fixture)
+    base_state["relations"].append(
+        testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
+    )
+    base_state["leader"] = True
+    paas_config = PaasConfig(
+        prometheus={
+            "scrape_configs": [
+                {
+                    "job_name": "app",
+                    "metrics_path": "/scrape-only",
+                    "static_configs": [{"targets": ["*:9999"]}],
+                }
+            ]
+        }
+    )
+
+    with patch("paas_charm.charm.read_paas_config", return_value=paas_config):
+        ctx = testing.Context(charm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    environment = list(out.containers)[0].plan.services[service].environment
+    assert {key: environment[key] for key in expected_metrics} == expected_metrics
+    scrape_jobs = json.loads(
+        out.get_relations("metrics-endpoint")[0].local_app_data["scrape_jobs"]
+    )
+    assert scrape_jobs[0]["job_name"] == "app"
+    assert scrape_jobs[0]["metrics_path"] == "/scrape-only"
+    assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:9999"]}]
+
+
+def test_no_explicit_jobs_publish_no_scrape_data(request) -> None:
+    """Test that an empty scrape configuration does not trigger the library default job."""
+    base_state = request.getfixturevalue("fastapi_base_state")
+    base_state["relations"].append(
+        testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
+    )
+    base_state["leader"] = True
+
+    with patch("paas_charm.charm.read_paas_config", return_value=PaasConfig()):
+        ctx = testing.Context(FastAPICharm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    metrics_relation = out.get_relations("metrics-endpoint")[0]
+    assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == []
+    assert metrics_relation.local_unit_data["prometheus_scrape_unit_address"]
+
+
 @pytest.fixture(name="modify_paas_config")
 def modify_paas_config_fixture():
     """Temporarily modify paas-config.yaml for a given framework and revert after the test."""
@@ -739,16 +814,8 @@ def modify_paas_config_fixture():
             originals[paas_config_path] = paas_config_path.read_text()
         config = yaml.safe_load(originals[paas_config_path])
         config["port"] = port
-        prometheus = config.setdefault("prometheus", {})
-        scrape_configs = prometheus.setdefault("scrape_configs", [])
-        scrape_configs[:] = [job for job in scrape_configs if job.get("job_name") != "app"]
-        scrape_configs.append(
-            {
-                "job_name": "app",
-                "metrics_path": metrics_path,
-                "static_configs": [{"targets": [f"*:{metrics_port}"]}],
-            }
-        )
+        config["metrics_port"] = metrics_port
+        config["metrics_path"] = metrics_path
         paas_config_path.write_text(yaml.dump(config))
 
     try:

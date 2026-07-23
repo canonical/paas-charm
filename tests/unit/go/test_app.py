@@ -110,7 +110,6 @@ def test_go_environment_vars(
         state_dir=base_dir / "state",
         service_name=framework_name,
         log_files=[],
-        metrics_target=f"*:{framework_config.port}",
         metrics_path="/metrics",
         unit_name="go/0",
     )

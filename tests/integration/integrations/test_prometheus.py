@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture,metrics_port,metrics_path",
     [
-        ("flask_app", 9102, "/metrics"),
-        ("django_app", 9102, "/metrics"),
+        ("flask_app", 8081, "/metrics"),
+        ("django_app", 8081, "/metrics"),
         ("spring_boot_app", 8080, "/actuator/prometheus"),
         ("expressjs_app", 8080, "/metrics"),
-        ("go_app", 8081, "/metrics"),
+        ("go_app", 8080, "/metrics"),
         ("fastapi_app", 8080, "/metrics"),
     ],
 )
@@ -84,9 +84,9 @@ def test_prometheus_custom_scrape_configs(
     """
     arrange: flask charm with paas-config.yaml containing custom scrape_configs, scaled to 2 units.
     act: establish relation with prometheus charm.
-    assert: prometheus scrapes framework default jobs (port 9102 on 2 units), custom jobs
-        (port 8081 on 2 units using wildcard), and scheduler-only job (port 8082 on unit 0 only
-        using @scheduler placeholder). Verify custom labels and @scheduler resolves to unit 0 FQDN.
+    assert: prometheus scrapes the explicit application job (port 8081 on 2 units using wildcard)
+        and scheduler-only job (port 8082 on unit 0 only using @scheduler placeholder). Verify
+        custom labels and @scheduler resolution to the unit 0 FQDN.
     """
     try:
         juju.add_unit(flask_app.name)
@@ -107,12 +107,11 @@ def test_prometheus_custom_scrape_configs(
         unit_0_ip = status.apps[flask_app.name].units[f"{flask_app.name}/0"].address
         unit_1_ip = status.apps[flask_app.name].units[f"{flask_app.name}/1"].address
 
-        framework_targets = [t for t in active_targets if ":9102" in t["scrapeUrl"]]
         custom_targets = [t for t in active_targets if ":8081" in t["scrapeUrl"]]
         scheduler_targets = [t for t in active_targets if ":8082" in t["scrapeUrl"]]
 
+        assert not any(":9102" in target["scrapeUrl"] for target in active_targets)
         # Wildcard targets use pod IPs
-        _assert_scrape_targets_for_app(framework_targets, [unit_0_ip, unit_1_ip], 9102)
         _assert_scrape_targets_for_app(
             custom_targets, [unit_0_ip, unit_1_ip], 8081, {"app": "flask", "env": "example"}
         )

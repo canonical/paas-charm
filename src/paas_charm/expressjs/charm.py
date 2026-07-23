@@ -70,7 +70,6 @@ class Charm(PaasCharm):
             state_dir=base_dir / "state",
             log_files=[],
             service_name=self._framework_name,
-            metrics_target=f"*:{metrics_port}",
             metrics_path=metrics_path,
             metrics_port=metrics_port,
             unit_name=self.unit.name,

@@ -416,7 +416,6 @@ class Charm(PaasCharm):
             service_name=framework_name,
             log_files=[],
             unit_name=self.unit.name,
-            metrics_target=f"*:{metrics_port}",
             metrics_path=metrics_path,
             metrics_port=metrics_port,
         )

@@ -54,7 +54,6 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         state_dir: the directory in the application container to store states information.
         service_name: the WSGI application pebble service name.
         log_files: list of files to monitor.
-        metrics_target: target to scrape for metrics.
         metrics_path: path to scrape for metrics.
         metrics_port: port on which the application exposes metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
@@ -72,7 +71,6 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     state_dir: pathlib.Path
     service_name: str
     log_files: List[pathlib.Path]
-    metrics_target: str | None = None
     metrics_path: str | None = "/metrics"
     metrics_port: int = 8080
     unit_name: str

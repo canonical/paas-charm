@@ -50,7 +50,6 @@ def create_workload_config(
             pathlib.Path(str.format(APPLICATION_LOG_FILE_FMT, framework=framework_name)),
             pathlib.Path(str.format(APPLICATION_ERROR_LOG_FILE_FMT, framework=framework_name)),
         ],
-        metrics_target=f"*:{metrics_port}",
         metrics_path=metrics_path,
         metrics_port=metrics_port,
         unit_name=unit_name,
