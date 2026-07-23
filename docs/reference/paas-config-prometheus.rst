@@ -7,8 +7,8 @@ The ``prometheus`` section in ``paas-config.yaml`` defines Prometheus scrape tar
 collection. The charm publishes only the jobs listed in ``scrape_configs``; it does not add a
 framework default job. If the section is absent or the list is empty, no scrape jobs are published.
 
-Scrape configuration does not configure the workload listener. Use the top-level ``metrics_port``
-and ``metrics_path`` fields for workload environment variables or native framework properties, and
+Scrape configuration does not configure the workload listener. Use the top-level ``metrics-port``
+and ``metrics-path`` fields for workload environment variables or native framework properties, and
 ensure each scrape target matches an endpoint the workload actually serves.
 
 Configuration schema
@@ -85,7 +85,7 @@ The following example publishes one custom scrape job:
 
 This publishes port ``9090`` and path ``/custom-metrics`` to Prometheus only. It does not alter the
 workload environment, create a listener, or probe the endpoint. Configure the workload separately
-with top-level ``metrics_port`` and ``metrics_path`` values when needed.
+with top-level ``metrics-port`` and ``metrics-path`` values when needed.
 
 Target formats
 --------------

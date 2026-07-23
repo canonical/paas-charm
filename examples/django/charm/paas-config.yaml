@@ -1,6 +1,6 @@
 framework_logging_format: json
-metrics_port: 9102
-metrics_path: /metrics
+metrics-port: 9102
+metrics-path: /metrics
 prometheus:
   scrape_configs:
   - job_name: django-custom-metrics

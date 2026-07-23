@@ -3,8 +3,8 @@
 
 framework_logging_format: json
 port: 8080
-metrics_port: 8080
-metrics_path: /metrics
+metrics-port: 8080
+metrics-path: /metrics
 prometheus:
   scrape_configs:
     - job_name: fastapi-metrics

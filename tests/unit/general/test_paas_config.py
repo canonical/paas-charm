@@ -73,7 +73,9 @@ class TestPaasConfig:
 
     def test_metrics_endpoint_uses_explicit_fields(self):
         """Test that top-level metrics fields override framework defaults."""
-        config = PaasConfig(metrics_port=9090, metrics_path="/custom-metrics")
+        config = PaasConfig.model_validate(
+            {"metrics-port": 9090, "metrics-path": "/custom-metrics"}
+        )
 
         assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
             9090,
@@ -82,7 +84,7 @@ class TestPaasConfig:
 
     def test_metrics_endpoint_resolves_fields_independently(self):
         """Test that each omitted metrics field retains its framework default."""
-        config = PaasConfig(metrics_path="/custom-metrics")
+        config = PaasConfig.model_validate({"metrics-path": "/custom-metrics"})
 
         assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
             8080,
@@ -124,18 +126,18 @@ class TestPaasConfig:
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
 
-    @pytest.mark.parametrize("field", ["port", "metrics_port"])
+    @pytest.mark.parametrize("field", ["port", "metrics-port"])
     @pytest.mark.parametrize("value", [None, 0, 65536])
     def test_invalid_port_rejected(self, field, value):
         """Test that ports must be valid TCP port numbers."""
         with pytest.raises(ValidationError):
-            PaasConfig(**{field: value})
+            PaasConfig.model_validate({field: value})
 
     @pytest.mark.parametrize("value", ["", "/", "metrics"])
     def test_invalid_metrics_path_rejected(self, value):
         """Test that the workload metrics path is absolute."""
         with pytest.raises(ValidationError):
-            PaasConfig(metrics_path=value)
+            PaasConfig.model_validate({"metrics-path": value})
 
 
 class TestReadPaasConfig:
@@ -227,8 +229,8 @@ class TestReadPaasConfig:
         """Test reading a config file with all supported fields."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_data = {
-            "metrics_port": 9090,
-            "metrics_path": "/custom-metrics",
+            "metrics-port": 9090,
+            "metrics-path": "/custom-metrics",
             "prometheus": {
                 "scrape_configs": [
                     {
@@ -251,7 +253,7 @@ class TestReadPaasConfig:
         """Test that omitted keys retain sane generic defaults."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_path.write_text(
-            "port: 9090\nmetrics_port: 9091\nmetrics_path: /custom-metrics\n",
+            "port: 9090\nmetrics-port: 9091\nmetrics-path: /custom-metrics\n",
             encoding="utf-8",
         )
 
@@ -801,8 +803,8 @@ def modify_paas_config_fixture():
             originals[paas_config_path] = paas_config_path.read_text()
         config = yaml.safe_load(originals[paas_config_path])
         config["port"] = port
-        config["metrics_port"] = metrics_port
-        config["metrics_path"] = metrics_path
+        config["metrics-port"] = metrics_port
+        config["metrics-path"] = metrics_path
         paas_config_path.write_text(yaml.dump(config))
 
     try:

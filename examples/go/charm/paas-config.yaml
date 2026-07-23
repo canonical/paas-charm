@@ -1,6 +1,6 @@
 port: 8080
-metrics_port: 8080
-metrics_path: /metrics
+metrics-port: 8080
+metrics-path: /metrics
 prometheus:
   scrape_configs:
     - job_name: go-metrics

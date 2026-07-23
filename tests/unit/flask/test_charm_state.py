@@ -315,8 +315,8 @@ def modify_paas_config_fixture():
     def _modify(port: int, metrics_port: int, metrics_path: str) -> None:
         config = yaml.safe_load(original_content)
         config["port"] = port
-        config["metrics_port"] = metrics_port
-        config["metrics_path"] = metrics_path
+        config["metrics-port"] = metrics_port
+        config["metrics-path"] = metrics_path
         paas_config_path.write_text(yaml.dump(config))
 
     yield _modify

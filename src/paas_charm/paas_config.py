@@ -185,12 +185,14 @@ class PaasConfig(BaseModel):
     )
     metrics_port: int = Field(
         default=8080,
+        alias="metrics-port",
         gt=0,
         le=65535,
         description="Port on which the application serves metrics.",
     )
     metrics_path: str = Field(
         default="/metrics",
+        alias="metrics-path",
         min_length=1,
         pattern=r"^/.+",
         description="HTTP resource path on which the application serves metrics.",

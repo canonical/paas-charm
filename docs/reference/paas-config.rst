@@ -34,11 +34,11 @@ Use the following keys to configure the framework server and its metrics endpoin
      - Integer
      - Framework-specific
      - Port on which the application server listens.
-   * - ``metrics_port``
+   * - ``metrics-port``
      - Integer
      - Framework-specific
      - Port on which the workload serves metrics.
-   * - ``metrics_path``
+   * - ``metrics-path``
      - String
      - Framework-specific
      - Absolute HTTP path on which the workload serves metrics.
@@ -48,10 +48,10 @@ For example:
 .. code-block:: yaml
 
     port: 8080
-    metrics_port: 8080
-    metrics_path: /metrics
+    metrics-port: 8080
+    metrics-path: /metrics
 
-Ports must be between 1 and 65535. ``metrics_path`` must start with ``/`` and identify a
+Ports must be between 1 and 65535. ``metrics-path`` must start with ``/`` and identify a
 non-root endpoint. These values are packaged with the charm and cannot be changed with
 ``juju config``. Omitted values use the framework defaults.
 
@@ -60,7 +60,7 @@ FastAPI, ExpressJS, Go, and Spring Boot. The resolved port is always written to 
 workload environment when the framework uses an application port environment variable.
 Go uses ``PORT``; Flask and Django configure the port directly in Gunicorn instead.
 
-The charm always passes the resolved ``metrics_port`` and ``metrics_path`` values to the workload.
+The charm always passes the resolved ``metrics-port`` and ``metrics-path`` values to the workload.
 Workload code is responsible for consuming this configuration and exposing the corresponding
 endpoint. Flask and Django receive framework-prefixed
 ``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive unprefixed
@@ -70,7 +70,7 @@ Flask and Django default to ``9102`` and ``/metrics``. The other frameworks defa
 and ``/metrics``, except Spring Boot, which uses ``8080`` and ``/actuator/prometheus``.
 
 Prometheus scrape jobs are configured independently under ``prometheus.scrape_configs``. The charm
-does not infer or publish a scrape job from ``metrics_port`` and ``metrics_path``. Every desired
+does not infer or publish a scrape job from ``metrics-port`` and ``metrics-path``. Every desired
 scrape job must be explicit, and its target must match an endpoint that the workload actually
 serves.
 
