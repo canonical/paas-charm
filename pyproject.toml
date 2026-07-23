@@ -159,7 +159,7 @@ lint = [
     "pylint",
     "pyproject-flake8",
     "pytest_operator",
-    "snowballstemmer<3.0.0",
+    "snowballstemmer<3.1.2",
     "types-PyYAML",
     "types-requests",
 ]
