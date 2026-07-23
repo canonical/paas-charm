@@ -4,8 +4,9 @@ Prometheus configuration
 ========================
 
 The ``prometheus`` section in ``paas-config.yaml`` defines Prometheus scrape targets for metrics
-collection. The charm publishes only the jobs listed in ``scrape_configs``; it does not add a
-framework default job. If the section is absent or the list is empty, no scrape jobs are published.
+collection. Jobs listed in ``scrape_configs`` replace the metrics provider's default scrape job.
+If the section is absent or the list is empty, the provider publishes its default ``*:80/metrics``
+job.
 
 Scrape configuration does not configure the workload listener. Use the top-level ``metrics-port``
 and ``metrics-path`` fields for workload environment variables or native framework properties, and

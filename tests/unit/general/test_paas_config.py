@@ -775,8 +775,8 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
     assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:9999"]}]
 
 
-def test_no_explicit_jobs_publish_no_scrape_data(request) -> None:
-    """Test that an empty scrape configuration does not trigger the library default job."""
+def test_no_explicit_jobs_publish_provider_default(request) -> None:
+    """Test that an empty scrape configuration uses the metrics provider default."""
     base_state = request.getfixturevalue("fastapi_base_state")
     base_state["relations"].append(
         testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
@@ -788,7 +788,9 @@ def test_no_explicit_jobs_publish_no_scrape_data(request) -> None:
         out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
-    assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == []
+    assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == [
+        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:80"]}]}
+    ]
     assert metrics_relation.local_unit_data["prometheus_scrape_unit_address"]
 
 

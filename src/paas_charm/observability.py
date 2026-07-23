@@ -19,15 +19,6 @@ from paas_charm.utils import build_k8s_unit_fqdn, enable_pebble_log_forwarding
 logger = logging.getLogger(__name__)
 
 
-class _ExplicitMetricsEndpointProvider(MetricsEndpointProvider):
-    """Metrics provider that does not synthesize the charm library's default scrape job."""
-
-    @property
-    def _scrape_jobs(self) -> list[dict[str, typing.Any]]:
-        """Return only explicitly configured scrape jobs."""
-        return self._jobs
-
-
 class Observability(ops.Object):
     """A class representing the observability stack for charm managed application."""
 
@@ -53,7 +44,7 @@ class Observability(ops.Object):
         super().__init__(charm, "observability")
         self._charm = charm
         jobs = build_prometheus_jobs(prometheus_config, charm.app.name, charm.model.name)
-        self._metrics_endpoint = _ExplicitMetricsEndpointProvider(
+        self._metrics_endpoint = MetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
             jobs=jobs,

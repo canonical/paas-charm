@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
   and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
   defaults to workloads.
-* breaking: Publish only jobs configured explicitly in `prometheus.scrape_configs`.
+* feat: Support custom Prometheus jobs through `prometheus.scrape_configs`.
 * breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
   `app-secret-key-id` while preserving their framework-prefixed workload variables.
 * fix: Use the charm application name for the OpenFGA store name.
