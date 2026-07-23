@@ -618,7 +618,7 @@ def ingress_provider_fixture(
     juju.integrate("configurator:gateway-route", "gateway:gateway-route")
     juju.wait(
         # gateway/configurator can be blocked before the app-ingress relation is created.
-        lambda status: jubilant.all_active(status, "cert"),
+        lambda status: jubilant.all_active(status, "cert") and jubilant.all_agents_idle(status),
         timeout=10 * 60,
     )
     return ("gateway", "configurator")

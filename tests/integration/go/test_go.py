@@ -85,7 +85,8 @@ def test_open_ports(
         if "already exists" not in err.stderr:
             raise err
     juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app),
+        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app)
+        and jubilant.all_agents_idle(status),
         delay=3,
         successes=5,
     )
@@ -109,7 +110,8 @@ def test_open_ports(
     new_port = WORKLOAD_PORT + 10
     juju.config(go_app.name, {"app-port": str(new_port)})
     juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app),
+        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app)
+        and jubilant.all_agents_idle(status),
         delay=3,
         successes=5,
     )
@@ -129,7 +131,8 @@ def test_open_ports(
     # Restore original port
     juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
     juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app),
+        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app)
+        and jubilant.all_agents_idle(status),
         delay=3,
         successes=5,
     )

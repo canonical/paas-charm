@@ -237,7 +237,10 @@ def test_with_ingress(
         if "already exists" not in err.stderr:
             raise err
     juju.wait(
-        lambda status: jubilant.all_active(status, flask_app.name, gateway_app, configurator_app),
+        lambda status: jubilant.all_active(
+            status, flask_app.name, gateway_app, configurator_app
+        )
+        and jubilant.all_agents_idle(status),
         delay=5,
     )
 
