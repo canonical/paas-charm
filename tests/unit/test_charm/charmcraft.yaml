@@ -44,7 +44,7 @@ config:
 
 containers:
   app:
-    resource: test-app-image
+    resource: app-image
 peers:
   peers:
     interface: peers
@@ -80,8 +80,8 @@ requires:
     optional: True
     limit: 1
 resources:
-  test-app-image:
-    description: testomg application image.
+  app-image:
+    description: test application image.
     type: oci-image
 type: charm
 

@@ -3,51 +3,48 @@
 
 name: django-k8s
 
-bases:
-  - build-on:
-      - name: ubuntu
-        channel: "22.04"
-    run-on:
-      - name: ubuntu
-        channel: "22.04"
+base: ubuntu@26.04
+platforms:
+  amd64:
 
 summary: An example Django application.
 
 description: An example Django application.
 
 charm-libs:
-- lib: traefik-k8s.ingress
-  version: '2'
-- lib: observability-libs.juju_topology
-  version: '0'
-- lib: grafana-k8s.grafana_dashboard
-  version: '0.35'
-- lib: loki-k8s.loki_push_api
-  version: '1'
-- lib: data-platform-libs.data_interfaces
-  version: '0'
-- lib: prometheus-k8s.prometheus_scrape
-  version: '0'
-- lib: redis-k8s.redis
-  version: '0'
-- lib: data-platform-libs.s3
-  version: '0'
-- lib: saml-integrator.saml
-  version: '0'
-- lib: openfga-k8s.openfga
-  version: '1'
-- lib: smtp-integrator.smtp
-  version: '0'
-- lib: tempo-coordinator-k8s.tracing
-  version: '0'
-- lib: hydra.oauth
-  version: '0'
-- lib: squid_forward_proxy.http_proxy
-  version: '0'
+  - lib: traefik-k8s.ingress
+    version: "2"
+  - lib: observability-libs.juju_topology
+    version: "0"
+  - lib: grafana-k8s.grafana_dashboard
+    version: "0.35"
+  - lib: loki-k8s.loki_push_api
+    version: "1"
+  - lib: data-platform-libs.data_interfaces
+    version: "0"
+  - lib: prometheus-k8s.prometheus_scrape
+    version: "0"
+  - lib: redis-k8s.redis
+    version: "0"
+  - lib: data-platform-libs.s3
+    version: "0"
+  - lib: saml-integrator.saml
+    version: "0"
+  - lib: openfga-k8s.openfga
+    version: "1"
+  - lib: smtp-integrator.smtp
+    version: "0"
+  - lib: tempo-coordinator-k8s.tracing
+    version: "0"
+  - lib: hydra.oauth
+    version: "0"
+  - lib: squid_forward_proxy.http_proxy
+    version: "0"
 
 actions:
   rotate-secret-key:
-    description: Rotate the django secret key. Users will be forced to log in again.
+    description:
+      Rotate the django secret key. Users will be forced to log in again.
       This might be useful if a security breach occurs.
   create-superuser:
     description: Create a new Django superuser account.
@@ -66,7 +63,8 @@ assumes:
 config:
   options:
     django-allowed-hosts:
-      description: A comma-separated list of host/domain names that this Django site
+      description:
+        A comma-separated list of host/domain names that this Django site
         can serve. This configuration will set the DJANGO_ALLOWED_HOSTS environment
         variable with its content being a JSON encoded list.
       type: string
@@ -74,7 +72,8 @@ config:
       description: Whether Django debug mode is enabled.
       type: boolean
     django-secret-key:
-      description: The secret key used for securely signing the session cookie and
+      description:
+        The secret key used for securely signing the session cookie and
         for any other security related needs by your Django application. This configuration
         will set the DJANGO_SECRET_KEY environment variable.
       type: string
@@ -87,7 +86,8 @@ config:
         and use the outputted secret ID to configure this option.
       type: secret
     webserver-keepalive:
-      description: Time in seconds for webserver to wait for requests on a Keep-Alive
+      description:
+        Time in seconds for webserver to wait for requests on a Keep-Alive
         connection.
       type: int
     webserver-threads:
@@ -112,8 +112,8 @@ config:
       default: "openid profile email"
 
 containers:
-  django-app:
-    resource: django-app-image
+  app:
+    resource: app-image
 peers:
   peers:
     interface: peers
@@ -154,17 +154,18 @@ requires:
     limit: 1
 
 resources:
-  django-app-image:
+  app-image:
     description: django application image.
     type: oci-image
 type: charm
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
+      - astral-uv
+      - rustup
     override-build: |-
       rustup default stable
       craftctl default

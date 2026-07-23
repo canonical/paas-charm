@@ -7,17 +7,17 @@ import ops
 import pytest
 from ops.testing import ExecResult, Harness
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, LAYER_WITH_WORKER
+from .constants import DEFAULT_LAYER, LAYER_WITH_WORKER
 
 
-def test_worker(harness: Harness):
+def test_worker(harness: Harness, container_name: str):
     """
     arrange: Prepare a unit with workers and schedulers.
     act: Run initial hooks.
     assert: The workers should have all the environment variables. Also the schedulers, as
             the unit is 0.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", LAYER_WITH_WORKER)
 
     harness.begin_with_initial_hooks()
@@ -48,7 +48,12 @@ def test_worker(harness: Harness):
     ],
 )
 def test_async_workers_config(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
+    harness: Harness,
+    container_name: str,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -56,7 +61,7 @@ def test_async_workers_config(
     assert: The charm should be blocked if the `webserver-worker-class` config is anything other
     then `sync` or `gevent`.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.handle_exec(
@@ -117,7 +122,13 @@ def test_async_workers_config(
     ],
 )
 def test_async_workers_config_fail(
-    harness: Harness, flask_layer, worker_class, expected_status, expected_message, exec_res
+    harness: Harness,
+    container_name: str,
+    flask_layer,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -125,7 +136,7 @@ def test_async_workers_config_fail(
     assert: The charm should be blocked if the `webserver-worker-class` config is anything other
     then `sync`.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", flask_layer)
 
     harness.handle_exec(
@@ -154,7 +165,7 @@ def test_async_workers_config_fail(
     )
 
 
-def test_worker_multiple_units(harness: Harness):
+def test_worker_multiple_units(harness: Harness, container_name: str):
     """
     arrange: Prepare a unit with workers that is not the first one (number 1)
     act: Run initial hooks.
@@ -172,7 +183,7 @@ def test_worker_multiple_units(harness: Harness):
     harness._backend.secret_add({"value": "XX"}, label="flask-secret-key", owner="app")
     harness.add_relation("peers", harness.framework.model.app.name)
 
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", LAYER_WITH_WORKER)
 
     harness.begin_with_initial_hooks()

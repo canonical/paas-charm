@@ -159,7 +159,7 @@ def _resolve_scheduler_placeholder(app_name: str, model_name: str, target: str) 
     """Replace @scheduler placeholder with scheduler unit FQDN.
 
     Args:
-        app_name: Application name (e.g., "flask-app").
+        app_name: Application name (e.g., "app").
         model_name: Juju model name (e.g., "my-model").
         target: Target string possibly containing @scheduler placeholder.
 

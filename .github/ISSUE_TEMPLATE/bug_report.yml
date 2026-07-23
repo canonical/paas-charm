@@ -55,7 +55,7 @@ body:
         We need to know a bit more about the context in which you run the charm.
         - Are you running Juju locally, on lxd, in multipass or on some other platform?
         - What track and channel you deployed the charm from (i.e. `latest/edge` or similar).
-        - Version of any applicable components, like the juju snap, the model controller, lxd, microk8s, and/or multipass.
+        - Version of any applicable components, like the juju snap, the model controller, lxd, k8s, and/or multipass.
     validations:
       required: true
   - type: textarea

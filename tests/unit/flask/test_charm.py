@@ -26,20 +26,19 @@ from paas_charm.flask import Charm
 
 from .constants import (
     DEFAULT_LAYER,
-    FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
     SAML_APP_RELATION_DATA_EXAMPLE,
 )
 
 
-def test_flask_pebble_layer(harness: Harness) -> None:
+def test_flask_pebble_layer(harness: Harness, container_name: str) -> None:
     """
     arrange: none
-    act: start the flask charm and set flask-app container to be ready.
-    assert: flask charm should submit the correct flaks pebble layer to pebble.
+    act: start the flask charm and set app container to be ready.
+    assert: flask charm should submit the correct flask pebble layer to pebble.
     """
     harness.begin()
-    container = harness.charm.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.charm.unit.get_container(container_name)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
     secret_key = unittest.mock.MagicMock()
@@ -92,14 +91,14 @@ def test_flask_pebble_layer(harness: Harness) -> None:
     }
 
 
-def test_rotate_secret_key_action(harness: Harness):
+def test_rotate_secret_key_action(harness: Harness, container_name: str):
     """
     arrange: none
     act: invoke the rotate-secret-key callback function
     assert: the action should change the secret key value in the relation data and restart the
         flask application with the new secret key.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
     action_event = unittest.mock.MagicMock()
@@ -110,7 +109,7 @@ def test_rotate_secret_key_action(harness: Harness):
     assert secret_key != new_secret_key
 
 
-def test_ingress(harness: Harness):
+def test_ingress(harness: Harness, container_name: str):
     """
     arrange: Integrate the charm with an ingress provider.
     act: Run all initial hooks.
@@ -123,7 +122,7 @@ def test_ingress(harness: Harness):
         "nginx-ingress-integrator",
         app_data={"ingress": '{"url": "http://juju.test/"}'},
     )
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -133,10 +132,10 @@ def test_ingress(harness: Harness):
     assert service_env["FLASK_BASE_URL"] == "http://juju.test/"
 
 
-def test_integrations_wiring(harness: Harness):
+def test_integrations_wiring(harness: Harness, container_name: str):
     """
     arrange: Prepare a Redis a database, a S3 integration and a SAML integration
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should have environment variables in its plan
         for each of the integrations.
     """
@@ -161,7 +160,7 @@ def test_integrations_wiring(harness: Harness):
     harness.add_relation("saml", "saml-integrator", app_data=SAML_APP_RELATION_DATA_EXAMPLE)
 
     harness.set_leader(True)
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -220,15 +219,17 @@ def test_integrations_wiring(harness: Harness):
         ),
     ],
 )
-def test_rabbitmq_integration(harness: Harness, rabbitmq_relation_data, expected_env_vars):
+def test_rabbitmq_integration(
+    harness: Harness, container_name: str, rabbitmq_relation_data, expected_env_vars
+):
     """
     arrange: Prepare a rabbitmq integration (RabbitMQ)
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should have environment variables in its plan
         for each of the integrations.
     """
     harness.add_relation("rabbitmq", "rabbitmq", **rabbitmq_relation_data)
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -240,14 +241,14 @@ def test_rabbitmq_integration(harness: Harness, rabbitmq_relation_data, expected
         assert service_env[env] == env_val
 
 
-def test_rabbitmq_integration_with_relation_data_empty(harness: Harness):
+def test_rabbitmq_integration_with_relation_data_empty(harness: Harness, container_name: str):
     """
     arrange: Prepare a rabbitmq integration (RabbitMQ), with missing data.
-    act: Start the flask charm and set flask-app container to be ready.
+    act: Start the flask charm and set app container to be ready.
     assert: The flask service should not have environment variables related to RabbitMQ
     """
     harness.add_relation("rabbitmq", "rabbitmq")
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -258,7 +259,7 @@ def test_rabbitmq_integration_with_relation_data_empty(harness: Harness):
         assert "RABBITMQ" not in env
 
 
-def test_rabbitmq_remove_integration(harness: Harness):
+def test_rabbitmq_remove_integration(harness: Harness, container_name: str):
     """
     arrange: Prepare a charm with a complete rabbitmq integration (RabbitMQ).
     act: Remove the relation.
@@ -269,7 +270,7 @@ def test_rabbitmq_remove_integration(harness: Harness):
         "rabbitmq",
         app_data={"hostname": "example.com", "password": token_hex(16)},
     )
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
     assert harness.model.unit.status == ops.ActiveStatus()
@@ -294,14 +295,16 @@ def test_rabbitmq_remove_integration(harness: Harness):
         ),
     ],
 )
-def test_missing_integrations(harness: Harness, integrate_to, required_integrations):
+def test_missing_integrations(
+    harness: Harness, container_name: str, integrate_to, required_integrations
+):
     """
     arrange: Prepare the harness. Instantiate the charm with some required integrations.
     act: Integrate with some integrations (but not all the required ones).
     assert: The charm should be blocked. The message should list only the required integrations
          that are missing.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     for integration in required_integrations:
         harness.framework.meta.requires[integration].optional = False
@@ -324,6 +327,7 @@ def test_missing_integrations(harness: Harness, integrate_to, required_integrati
 
 def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
     harness: Harness,
+    container_name: str,
 ):
     """
     arrange: Prepare the harness. Instantiate the charm with all the required integrations
@@ -332,7 +336,7 @@ def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
     assert: The charm should be blocked. All services should be stopped and the
         database migration pending.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     root = harness.get_filesystem_root(container)
     (root / "flask/app/migrate.sh").touch()
     harness.handle_exec(container, [], result=0)

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   upgrade a fresh application secret key is generated, so users of session-signing
   frameworks (Flask/Django) must log in again. Use a `type: secret` config option
   for user-provided secrets.
+* fix: Use the charm application name for the OpenFGA store name.
 
 ## 1.12.0 - 2026-07-03
 

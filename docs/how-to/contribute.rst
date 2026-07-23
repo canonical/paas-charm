@@ -63,21 +63,31 @@ The code for this charm can be downloaded as follows:
 
     git clone https://github.com/canonical/paas-charm
 
-You can use the environments created by ``tox`` for development:
+This project uses `uv <https://docs.astral.sh/uv/>`_ to manage its Python
+dependencies and `tox <https://tox.wiki/>`_ (via the ``tox-uv`` plugin) to run
+its test environments. Install ``uv`` first, then install ``tox``:
+
+.. code-block::
+
+    uv tool install tox --with tox-uv
+
+Dependencies are declared in ``pyproject.toml`` and pinned in ``uv.lock``. To
+create a development environment for a given dependency group and run commands
+inside it directly with ``uv``:
+
+.. code-block::
+
+    uvx tox -e unit
+
+Alternatively, you can use the environments created by ``tox``:
 
 .. code-block::
 
     tox --notest -e unit
     source .tox/unit/bin/activate
 
-You can create an environment for development with ``python3-venv``:
-
-.. code-block::
-  
-    sudo apt install python3-venv
-    python3 -m venv venv
-
-Install ``tox`` inside the virtual environment for testing.
+Whenever you change dependencies in ``pyproject.toml``, regenerate and commit
+the lock file with ``uv lock``.
 
 Submissions
 -----------
@@ -275,8 +285,11 @@ Code
 Formatting and linting
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This project uses ``tox`` for managing test environments. There are some pre-configured environments
-that can be used for linting and formatting code when you're preparing contributions to the charm:
+This project uses ``tox`` (via the ``tox-uv`` plugin) for managing test
+environments. Each environment installs its dependencies from the matching
+group in ``pyproject.toml`` using ``uv``. There are some pre-configured
+environments that can be used for linting and formatting code when you're
+preparing contributions to the charm:
 
 * ``tox``: Executes all of the basic checks and tests (``lint``, ``unit``, ``static``, and ``coverage-report``).
 * ``tox -e fmt``: Runs formatting using ``black`` and ``isort``.

@@ -3,7 +3,7 @@
 
 name: spring-boot-k8s
 
-base: ubuntu@24.04
+base: ubuntu@26.04
 
 platforms:
   amd64:
@@ -70,7 +70,7 @@ config:
     app-secret-key:
       type: string
       description: Long secret you can use for sessions, csrf or any other thing where
-         you need a random secret shared by all units
+        you need a random secret shared by all units
     app-secret-key-id:
       type: secret
       description: >-
@@ -90,7 +90,7 @@ config:
     oidc-user-name-attribute:
       type: string
       description: The name of the attribute returned in the UserInfo Response that references the Name
-          or Identifier of the end-user.
+        or Identifier of the end-user.
       default: sub
     user-defined-config:
       type: string
@@ -168,10 +168,11 @@ type: charm
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
+      - astral-uv
+      - rustup
     override-build: |-
       rustup default stable
       craftctl default

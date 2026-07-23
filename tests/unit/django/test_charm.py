@@ -17,7 +17,7 @@ from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.charm_state import CharmState, IntegrationRequirers
 
-from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
@@ -65,14 +65,14 @@ TEST_DJANGO_CONFIG_PARAMS = [
 
 
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
-def test_django_config(harness: Harness, config: dict, env: dict) -> None:
+def test_django_config(harness: Harness, container_name: str, config: dict, env: dict) -> None:
     """
     arrange: none
-    act: start the django charm and set django-app container to be ready.
+    act: start the django charm and set app container to be ready.
     assert: django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()
-    container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.charm.unit.get_container(container_name)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
     secret_key = unittest.mock.MagicMock()
@@ -103,7 +103,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
         container=container,
     )
     django_app = WsgiApp(
-        container=harness.charm.unit.get_container(DJANGO_CONTAINER_NAME),
+        container=harness.charm.unit.get_container(container_name),
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=webserver,
@@ -122,7 +122,7 @@ def test_django_config(harness: Harness, config: dict, env: dict) -> None:
     }
 
 
-def test_django_create_super_user(harness: Harness) -> None:
+def test_django_create_super_user(harness: Harness, container_name: str) -> None:
     """
     arrange: Start the Django charm. Mock the Django command (pebble exec) to create a superuser.
     act: Run action create superuser.
@@ -135,7 +135,7 @@ def test_django_create_super_user(harness: Harness) -> None:
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
 
@@ -163,14 +163,14 @@ def test_django_create_super_user(harness: Harness) -> None:
     assert output.results["password"] == password
 
 
-def test_required_database_integration(harness_no_integrations: Harness):
+def test_required_database_integration(harness_no_integrations: Harness, container_name: str):
     """
     arrange: Start the Django charm with no integrations specified in the charm.
-    act: Start the django charm and set django-app container to be ready.
+    act: Start the django charm and set app container to be ready.
     assert: The charm should be blocked, as Django requires a database to work.
     """
     harness = harness_no_integrations
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
 
     harness.begin_with_initial_hooks()
@@ -180,14 +180,16 @@ def test_required_database_integration(harness_no_integrations: Harness):
 
 
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
-def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
+def test_django_async_config(
+    harness: Harness, container_name: str, config: dict, env: dict
+) -> None:
     """
     arrange: None
-    act: Start the django charm and set django-app container to be ready.
+    act: Start the django charm and set app container to be ready.
     assert: Django charm should submit the correct pebble layer to pebble.
     """
     harness.begin()
-    container = harness.charm.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.charm.unit.get_container(container_name)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
     secret_key = unittest.mock.MagicMock()
@@ -219,7 +221,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
         container=container,
     )
     django_app = WsgiApp(
-        container=harness.charm.unit.get_container(DJANGO_CONTAINER_NAME),
+        container=harness.charm.unit.get_container(container_name),
         charm_state=charm_state,
         workload_config=workload_config,
         webserver=webserver,
@@ -240,6 +242,7 @@ def test_django_async_config(harness: Harness, config: dict, env: dict) -> None:
 
 def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
     harness: Harness,
+    container_name: str,
 ):
     """
     arrange: Configure the django charm with an allowed host that matches the ingress url hostname.
@@ -253,7 +256,7 @@ def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.set_model_name("test-model")
     harness.update_config({"django-allowed-hosts": "django-k8s.test-model"})
@@ -275,7 +278,7 @@ def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
     assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
 
 
-def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness):
+def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness, container_name: str):
     """
     arrange: Deploy a Django charm without an ingress integration
     act: Add a new ingress integration
@@ -290,7 +293,7 @@ def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness):
         "username": "test-username",
     }
     harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.set_model_name("flask-model")
     harness.begin_with_initial_hooks()

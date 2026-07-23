@@ -17,10 +17,6 @@ import paas_charm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
-from tests.unit.django.constants import DJANGO_CONTAINER_NAME
-from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
-from tests.unit.flask.constants import FLASK_CONTAINER_NAME
-from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
 @pytest.mark.parametrize(
@@ -436,25 +432,24 @@ def test_app_config_class_factory(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name, app_prefix",
+    "app_harness, framework, app_prefix",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, "FLASK", id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, "DJANGO", id="django"),
+        pytest.param("flask_harness", "flask", "FLASK", id="flask"),
+        pytest.param("django_harness", "django", "DJANGO", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             "APP",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, "APP", id="go"),
+        pytest.param("go_harness", "go", "APP", id="go"),
     ],
 )
 def test_secret_storage_config(
     app_harness: str,
     framework: str,
-    container_name: str,
     app_prefix: str,
+    container_name: str,
     request: pytest.FixtureRequest,
 ):
     """

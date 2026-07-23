@@ -11,7 +11,7 @@ from ops import pebble, testing
 from examples.fastapi.charm.src.charm import FastAPICharm
 from paas_charm.paas_config import LoggingFormat
 
-from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 _LOG_CONFIG_DIR = "/tmp/fastapi/log_config"
 _HANDLER_FILE = "uvicorn_log_handler.py"
@@ -19,10 +19,10 @@ _CONFIG_FILE = "uvicorn-log-config.json"
 
 
 @pytest.fixture(scope="function", name="base_state")
-def base_state_fixture() -> testing.State:
+def base_state_fixture(container_name: str) -> testing.State:
     """Return a minimal State with the app container connected and peer relation initialised."""
     container = testing.Container(
-        name=FASTAPI_CONTAINER_NAME,
+        name=container_name,
         can_connect=True,
         layers={"base": pebble.Layer(DEFAULT_LAYER)},
         service_statuses={"fastapi": pebble.ServiceStatus.INACTIVE},
@@ -58,6 +58,7 @@ def base_state_fixture() -> testing.State:
 )
 def test_fastapi_logging_environment(
     base_state: testing.State,
+    container_name: str,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
     logging_format: LoggingFormat,
@@ -76,10 +77,10 @@ def test_fastapi_logging_environment(
         )
 
     ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(FASTAPI_CONTAINER_NAME)
+    container = base_state.get_container(container_name)
     state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
 
-    plan = state_out.get_container(FASTAPI_CONTAINER_NAME).plan
+    plan = state_out.get_container(container_name).plan
     env = plan.services["fastapi"].environment if plan and "fastapi" in plan.services else {}
 
     for key in expected:
@@ -94,6 +95,7 @@ def test_fastapi_logging_environment(
 
 def test_fastapi_json_logging_files_pushed(
     base_state: testing.State,
+    container_name: str,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -108,10 +110,10 @@ def test_fastapi_json_logging_files_pushed(
     )
 
     ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(FASTAPI_CONTAINER_NAME)
+    container = base_state.get_container(container_name)
     state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
 
-    container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
+    container_out = state_out.get_container(container_name)
     fs = container_out.get_filesystem(ctx)
     assert (
         fs / _LOG_CONFIG_DIR.lstrip("/") / _HANDLER_FILE
@@ -121,6 +123,7 @@ def test_fastapi_json_logging_files_pushed(
 
 def test_fastapi_no_files_pushed_without_json_logging(
     base_state: testing.State,
+    container_name: str,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -132,10 +135,10 @@ def test_fastapi_no_files_pushed_without_json_logging(
     monkeypatch.chdir(tmp_path)
 
     ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(FASTAPI_CONTAINER_NAME)
+    container = base_state.get_container(container_name)
     state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
 
-    container_out = state_out.get_container(FASTAPI_CONTAINER_NAME)
+    container_out = state_out.get_container(container_name)
     fs = container_out.get_filesystem(ctx)
     assert not (
         fs / _LOG_CONFIG_DIR.lstrip("/")

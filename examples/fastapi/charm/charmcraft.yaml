@@ -3,7 +3,7 @@
 
 name: fastapi-k8s
 
-base: ubuntu@24.04
+base: ubuntu@26.04
 
 platforms:
   amd64:
@@ -41,7 +41,7 @@ charm-libs:
   version: '0'
 - lib: squid_forward_proxy.http_proxy
   version: '0'
-  
+
 actions:
   rotate-secret-key:
     description: Rotate the secret key. Users will be forced to log in again.
@@ -63,8 +63,8 @@ config:
     webserver-log-level:
       type: string
       description: Set the log level. Valid options are 'critical', 'error', 'warning', 'info', 'debug', 'trace'.
-          Sets the env variable UVICORN_LOG_LEVEL.
-      default: 'info'
+        Sets the env variable UVICORN_LOG_LEVEL.
+      default: "info"
     metrics-port:
       type: int
       description: Port where the prometheus metrics will be scraped.
@@ -75,8 +75,9 @@ config:
       default: /metrics
     app-secret-key:
       type: string
-      description: Long secret you can use for sessions, csrf or any other thing where
-         you need a random secret shared by all units
+      description:
+        Long secret you can use for sessions, csrf or any other thing where
+        you need a random secret shared by all units
     app-secret-key-id:
       type: secret
       description: >-
@@ -151,10 +152,17 @@ type: charm
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
+      - astral-uv
+      - rustup
     override-build: |-
       rustup default stable
       craftctl default
+  config:
+    plugin: dump
+    source: .
+    stage:
+      - paas-config.yaml
+
