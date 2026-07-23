@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 import contextlib
+import ipaddress
 import logging
 import pathlib
 import shutil
@@ -12,9 +13,6 @@ import pytest
 import requests
 import urllib3.util.connection
 import yaml
-from lightkube import Client
-from lightkube.generic_resource import create_namespaced_resource
-from lightkube.resources.core_v1 import Service
 from requests.adapters import HTTPAdapter
 from tenacity import retry, stop_after_attempt, wait_fixed
 from urllib3.util.retry import Retry
@@ -628,42 +626,16 @@ def ingress_provider_fixture(
 
 def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str:
     """Return the load-balancer IP of the gateway application."""
-    gateway_resource = create_namespaced_resource(
-        group="gateway.networking.k8s.io",
-        version="v1",
-        kind="Gateway",
-        plural="gateways",
-    )
-
     @retry(stop=stop_after_attempt(12), wait=wait_fixed(5))
     def _gateway_lb_ip() -> str:
         gateway_app, _ = ingress_provider
-        model_name = juju.status().model.name
-        client = Client()
-        service = client.get(Service, name=gateway_app, namespace=model_name)
-        if (
-            service.status
-            and service.status.loadBalancer
-            and service.status.loadBalancer.ingress
-            and service.status.loadBalancer.ingress[0].ip
-        ):
-            return service.status.loadBalancer.ingress[0].ip
-
-        gateway = client.get(gateway_resource, name=gateway_app, namespace=model_name)
-        gateway_status = getattr(gateway, "status", None)
-        if isinstance(gateway_status, dict):
-            addresses = gateway_status.get("addresses")
-        else:
-            addresses = getattr(gateway_status, "addresses", None)
-        if not addresses:
-            raise ValueError(f"No addresses in Gateway status for resource {gateway_app!r}")
-        if isinstance(addresses[0], dict):
-            address_value = addresses[0].get("value")
-        else:
-            address_value = getattr(addresses[0], "value", None)
-        if not address_value:
-            raise ValueError(f"No Gateway address value set for resource {gateway_app!r}")
-        return address_value
+        message = juju.status().apps[gateway_app].app_status.message or ""
+        for token in message.split():
+            try:
+                return str(ipaddress.ip_address(token.strip("[](),;")))
+            except ValueError:
+                continue
+        raise ValueError(f"Could not parse gateway load-balancer IP from status message: {message!r}")
 
     return _gateway_lb_ip()
 
