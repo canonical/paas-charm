@@ -626,6 +626,7 @@ def ingress_provider_fixture(
 
 def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str:
     """Return the load-balancer IP of the gateway application."""
+
     @retry(stop=stop_after_attempt(12), wait=wait_fixed(5))
     def _gateway_lb_ip() -> str:
         gateway_app, _ = ingress_provider
@@ -635,7 +636,9 @@ def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str
                 return str(ipaddress.ip_address(token.strip("[](),;")))
             except ValueError:
                 continue
-        raise ValueError(f"Could not parse gateway load-balancer IP from status message: {message!r}")
+        raise ValueError(
+            f"Could not parse gateway load-balancer IP from status message: {message!r}"
+        )
 
     return _gateway_lb_ip()
 
