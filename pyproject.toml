@@ -158,7 +158,7 @@ lint = [
     "pydocstyle",
     "pylint",
     "pyproject-flake8",
-    "snowballstemmer<3.0.0",
+    "snowballstemmer<3.1.2",
     "types-PyYAML",
     "types-requests",
 ]
