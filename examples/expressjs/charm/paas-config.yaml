@@ -1,13 +1,9 @@
-# Copyright 2026 Canonical Ltd.
-# See LICENSE file for licensing details.
-
-framework_logging_format: json
 port: 8080
 metrics-port: 8080
 metrics-path: /metrics
 prometheus:
   scrape_configs:
-    - job_name: fastapi-metrics
+    - job_name: expressjs-metrics
       metrics_path: /metrics
       static_configs:
         - targets:

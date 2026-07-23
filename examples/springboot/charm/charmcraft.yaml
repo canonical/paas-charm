@@ -52,21 +52,9 @@ assumes:
 
 config:
   options:
-    app-port:
-      type: int
-      description: Default port where the application will listen
-      default: 8080
     app-profiles:
       type: string
       description: Comma-separated list of Spring Boot active profiles.
-    metrics-port:
-      type: int
-      description: Port where the prometheus metrics will be scraped.
-      default: 8080
-    metrics-path:
-      type: string
-      description: Path where the prometheus metrics will be scraped.
-      default: /actuator/prometheus
     app-secret-key:
       type: string
       description: Long secret you can use for sessions, csrf or any other thing where

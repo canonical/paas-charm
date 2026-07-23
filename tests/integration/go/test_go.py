@@ -72,8 +72,8 @@ def test_open_ports(
 ):
     """
     arrange: after Go charm has been deployed.
-    act: integrate with the traefik charm with the ingress integration and change app-port configuration.
-    assert: charm opened ports should change accordingly.
+    act: integrate with the traefik charm through the ingress integration.
+    assert: the charm opens its configured workload port and ingress routes to it.
     """
     # Integrate go with traefik
     try:
@@ -92,46 +92,7 @@ def test_open_ports(
     model_name = status.model.name
     traefik_ip = list(status.apps[traefik_app.name].units.values())[0].address
 
-    # Check initial opened ports
-    opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
-    assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
-    assert (
-        session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
-            timeout=5,
-        ).status_code
-        == 200
-    )
-
-    # Change port configuration
-    new_port = WORKLOAD_PORT + 10
-    juju.config(go_app.name, {"app-port": str(new_port)})
-    juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
-        delay=3,
-        successes=5,
-    )
-
-    opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
-    assert opened_ports.strip() == f"{new_port}/tcp"
-    assert (
-        session_with_retry.get(
-            f"http://{traefik_ip}",
-            headers={"Host": f"{model_name}-{go_app.name}.{external_hostname}"},
-            timeout=5,
-        ).status_code
-        == 200
-    )
-
-    # Restore original port
-    juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
-    juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, traefik_app.name),
-        delay=3,
-        successes=5,
-    )
-
+    # Check opened ports
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
     assert (

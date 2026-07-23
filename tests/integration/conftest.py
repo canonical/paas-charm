@@ -404,7 +404,6 @@ def go_app_fixture(
         resources={
             "app-image": go_app_image,
         },
-        config={"metrics-port": 8081},
     )
 
 

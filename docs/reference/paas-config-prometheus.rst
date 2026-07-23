@@ -3,13 +3,14 @@
 Prometheus configuration
 ========================
 
-The ``prometheus`` section in ``paas-config.yaml`` allows you to define custom
-Prometheus scrape targets for metrics collection. This configuration is useful when the default
-framework metrics are insufficient for your use case or you want to
-expose additional metrics endpoints.
+The ``prometheus`` section in ``paas-config.yaml`` defines Prometheus scrape targets for metrics
+collection. Jobs listed in ``scrape_configs`` replace the metrics provider's default scrape job.
+If the section is absent or the list is empty, the provider publishes its default ``*:80/metrics``
+job.
 
-The custom scrape configurations are merged with the default framework
-metrics job (if defined), so both can be active when you integrate with Prometheus.
+Scrape configuration does not configure the workload listener. Use the top-level ``metrics-port``
+and ``metrics-path`` fields for workload environment variables or native framework properties, and
+ensure each scrape target matches an endpoint the workload actually serves.
 
 Configuration schema
 --------------------
@@ -68,6 +69,25 @@ Each static configuration defines a set of targets and optional labels.
      - Dictionary
      - Key-value pairs of labels to attach to all metrics from these targets. Optional.
 
+Scrape job example
+------------------
+
+The following example publishes one custom scrape job:
+
+.. code-block:: yaml
+
+   prometheus:
+     scrape_configs:
+       - job_name: custom-metrics
+         metrics_path: /custom-metrics
+         static_configs:
+           - targets:
+               - "*:9090"
+
+This publishes port ``9090`` and path ``/custom-metrics`` to Prometheus only. It does not alter the
+workload environment, create a listener, or probe the endpoint. Configure the workload separately
+with top-level ``metrics-port`` and ``metrics-path`` values when needed.
+
 Target formats
 --------------
 
@@ -110,8 +130,8 @@ You can also specify exact hostnames or IP addresses in the targets section. For
 
    prometheus:
      scrape_configs:
-       # Application metrics from all units
-       - job_name: "flask-app-custom"
+       # Custom metrics from all units
+       - job_name: "flask-custom-metrics"
          metrics_path: "/metrics"
          static_configs:
            - targets:

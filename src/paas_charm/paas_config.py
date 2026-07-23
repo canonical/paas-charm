@@ -104,7 +104,10 @@ class ScrapeConfig(BaseModel):
 
     job_name: str = Field(description="Job name assigned to scraped metrics")
     metrics_path: str = Field(
-        default="/metrics", description="HTTP resource path on which to fetch metrics"
+        default="/metrics",
+        min_length=1,
+        pattern=r"^/",
+        description="HTTP resource path on which to fetch metrics",
     )
     static_configs: typing.List[StaticConfig] = Field(
         description="List of labeled statically configured targets for this job"
@@ -161,6 +164,9 @@ class PaasConfig(BaseModel):
             Defaults to ``LoggingFormat.NONE`` (framework default logging).
             ``LoggingFormat.JSON`` ("json") is supported for FastAPI, Flask, and Django.
         model_config: Pydantic model configuration.
+        port: Optional override for the port on which the application server listens.
+        metrics_port: Optional override for the port on which the application serves metrics.
+        metrics_path: Optional override for the path on which the application serves metrics.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -169,6 +175,27 @@ class PaasConfig(BaseModel):
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",
+    )
+
+    port: int = Field(
+        default=8080,
+        gt=0,
+        le=65535,
+        description="Port on which the application server listens.",
+    )
+    metrics_port: int = Field(
+        default=8080,
+        alias="metrics-port",
+        gt=0,
+        le=65535,
+        description="Port on which the application serves metrics.",
+    )
+    metrics_path: str = Field(
+        default="/metrics",
+        alias="metrics-path",
+        min_length=1,
+        pattern=r"^/.+",
+        description="HTTP resource path on which the application serves metrics.",
     )
 
     @field_validator("framework_logging_format", mode="before")
@@ -184,6 +211,31 @@ class PaasConfig(BaseModel):
             ``LoggingFormat.NONE`` if *v* is ``None``, otherwise *v* unchanged.
         """
         return LoggingFormat.NONE if v is None else v
+
+    def application_port(self, *, default_port: int) -> int:
+        """Return the configured application port or the framework default.
+
+        Args:
+            default_port: Framework-specific application port.
+
+        Returns:
+            The configured application port when explicitly set, otherwise the framework default.
+        """
+        return self.port if "port" in self.model_fields_set else default_port
+
+    def metrics_endpoint(self, *, default_port: int, default_path: str) -> tuple[int, str]:
+        """Return the configured workload metrics endpoint or framework defaults.
+
+        Args:
+            default_port: Framework-specific metrics port.
+            default_path: Framework-specific metrics path.
+
+        Returns:
+            The resolved metrics port and path.
+        """
+        port = self.metrics_port if "metrics_port" in self.model_fields_set else default_port
+        path = self.metrics_path if "metrics_path" in self.model_fields_set else default_path
+        return port, path
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 

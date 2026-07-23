@@ -54,8 +54,8 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         state_dir: the directory in the application container to store states information.
         service_name: the WSGI application pebble service name.
         log_files: list of files to monitor.
-        metrics_target: target to scrape for metrics.
         metrics_path: path to scrape for metrics.
+        metrics_port: port on which the application exposes metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
         tracing_enabled: True if tracing should be enabled.
         logging_format: Structured logging format to use; ``LoggingFormat.NONE`` for default.
@@ -71,8 +71,8 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     state_dir: pathlib.Path
     service_name: str
     log_files: List[pathlib.Path]
-    metrics_target: str | None = None
     metrics_path: str | None = "/metrics"
+    metrics_port: int = 8080
     unit_name: str
     tracing_enabled: bool = False
     logging_format: LoggingFormat = LoggingFormat.NONE
@@ -498,6 +498,10 @@ class App:  # pylint: disable=too-many-instance-attributes
                 f"{framework_config_prefix}{k.upper()}": encode_env(v)
                 for k, v in framework_config.items()
             }
+        )
+        env[f"{framework_config_prefix}METRICS_PORT"] = str(self._workload_config.metrics_port)
+        env[f"{framework_config_prefix}METRICS_PATH"] = (
+            self._workload_config.metrics_path or "/metrics"
         )
 
         if self._charm_state.base_url:

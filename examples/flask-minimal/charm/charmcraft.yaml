@@ -43,15 +43,15 @@ config:
         set the FLASK_PREFERRED_URL_SCHEME environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
-    flask-secret-key:
+    app-secret-key:
       description: The secret key used for securely signing the session cookie and
         for any other security related needs by your Flask application. This configuration
         will set the FLASK_SECRET_KEY environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
-    flask-secret-key-id:
+    app-secret-key-id:
       description: >-
-        This configuration is similar to `flask-secret-key`, but instead accepts a Juju user secret ID.
+        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual Flask secret key.
         To create the secret, run the following command:
         `juju add-secret my-flask-secret-key value=<secret-string> && juju grant-secret my-flask-secret-key flask-k8s`,

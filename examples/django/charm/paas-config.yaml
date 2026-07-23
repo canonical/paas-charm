@@ -1,0 +1,20 @@
+framework_logging_format: json
+metrics-port: 9102
+metrics-path: /metrics
+prometheus:
+  scrape_configs:
+  - job_name: django-custom-metrics
+    metrics_path: /metrics
+    static_configs:
+    - labels:
+        app: django
+        env: example
+      targets:
+      - '*:8081'
+  - job_name: django-scheduler-metrics
+    metrics_path: /metrics
+    static_configs:
+    - labels:
+        role: scheduler
+      targets:
+      - '@scheduler:8082'

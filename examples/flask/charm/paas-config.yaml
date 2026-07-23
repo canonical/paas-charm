@@ -1,20 +1,14 @@
-# Copyright 2025 Canonical Ltd.
-# See LICENSE file for licensing details.
-
 framework_logging_format: json
-
-# Configuration file for the paas-charm library
-
-# Prometheus scrape configuration
-# This demonstrates adding custom scrape jobs alongside the framework default (port 9102)
+metrics-port: 9102
+metrics-path: /metrics
 prometheus:
   scrape_configs:
     # Custom job scraping all units on port 8081
-    - job_name: "flask-app-custom"
+    - job_name: "flask-custom-metrics"
       metrics_path: "/metrics"
       static_configs:
         - targets:
-            - "*:8081"  # Different port from framework default (9102)
+            - "*:8081"  # Additional endpoint independent from metrics_port
           labels:
             app: "flask"
             env: "example"

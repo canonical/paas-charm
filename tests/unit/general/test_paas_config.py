@@ -3,14 +3,22 @@
 
 """Unit tests for paas_config module."""
 
+import json
 import pathlib
 import tempfile
 from unittest.mock import patch
 
 import pytest
 import yaml
+from ops import testing
 from pydantic import ValidationError
 
+from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
+from examples.fastapi.charm.src.charm import FastAPICharm
+from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
+from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
@@ -22,6 +30,8 @@ from paas_charm.paas_config import (
     read_paas_config,
 )
 
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
 
 class TestPaasConfig:
     """Tests for PaasConfig Pydantic model."""
@@ -29,8 +39,12 @@ class TestPaasConfig:
     def test_valid_config_minimal(self):
         """Test valid minimal configuration (empty)."""
         config = PaasConfig()
+        assert config.model_fields_set == set()
         assert config.prometheus is None
         assert config.framework_logging_format is LoggingFormat.NONE
+        assert config.port == 8080
+        assert config.metrics_port == 8080
+        assert config.metrics_path == "/metrics"
 
     def test_valid_config_with_prometheus(self):
         """Test valid configuration with prometheus section."""
@@ -40,11 +54,50 @@ class TestPaasConfig:
                     {"job_name": "test", "static_configs": [{"targets": ["*:8000"]}]}
                 ]
             },
+            port=9090,
         )
         assert config.prometheus is not None
         assert config.prometheus.scrape_configs is not None
         assert len(config.prometheus.scrape_configs) == 1
         assert config.prometheus.scrape_configs[0].job_name == "test"
+        assert config.port == 9090
+
+    def test_metrics_endpoint_uses_framework_defaults_when_omitted(self):
+        """Test that omitted metrics fields preserve framework defaults."""
+        config = PaasConfig()
+
+        assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
+            8080,
+            "/metrics",
+        )
+
+    def test_metrics_endpoint_uses_explicit_fields(self):
+        """Test that top-level metrics fields override framework defaults."""
+        config = PaasConfig.model_validate(
+            {"metrics-port": 9090, "metrics-path": "/custom-metrics"}
+        )
+
+        assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
+            9090,
+            "/custom-metrics",
+        )
+
+    def test_metrics_endpoint_resolves_fields_independently(self):
+        """Test that each omitted metrics field retains its framework default."""
+        config = PaasConfig.model_validate({"metrics-path": "/custom-metrics"})
+
+        assert config.metrics_endpoint(default_port=8080, default_path="/metrics") == (
+            8080,
+            "/custom-metrics",
+        )
+
+    def test_application_port_uses_framework_default_when_omitted(self):
+        """Test that an omitted port preserves the framework application default."""
+        assert PaasConfig().application_port(default_port=8000) == 8000
+
+    def test_application_port_uses_explicit_override(self):
+        """Test that an explicit port overrides the framework application default."""
+        assert PaasConfig(port=9090).application_port(default_port=8000) == 9090
 
     def test_valid_logging_format_json(self):
         """Test that framework_logging_format='json' is accepted and coerced to LoggingFormat."""
@@ -72,6 +125,19 @@ class TestPaasConfig:
             PaasConfig(unknown_field="value")
         errors = exc_info.value.errors()
         assert any("extra" in str(error["type"]).lower() for error in errors)
+
+    @pytest.mark.parametrize("field", ["port", "metrics-port"])
+    @pytest.mark.parametrize("value", [None, 0, 65536])
+    def test_invalid_port_rejected(self, field, value):
+        """Test that ports must be valid TCP port numbers."""
+        with pytest.raises(ValidationError):
+            PaasConfig.model_validate({field: value})
+
+    @pytest.mark.parametrize("value", ["", "/", "metrics"])
+    def test_invalid_metrics_path_rejected(self, value):
+        """Test that the workload metrics path is absolute."""
+        with pytest.raises(ValidationError):
+            PaasConfig.model_validate({"metrics-path": value})
 
 
 class TestReadPaasConfig:
@@ -163,6 +229,8 @@ class TestReadPaasConfig:
         """Test reading a config file with all supported fields."""
         config_path = tmp_path / CONFIG_FILE_NAME
         config_data = {
+            "metrics-port": 9090,
+            "metrics-path": "/custom-metrics",
             "prometheus": {
                 "scrape_configs": [
                     {
@@ -178,6 +246,23 @@ class TestReadPaasConfig:
 
         config = read_paas_config(tmp_path)
         assert config.prometheus is not None
+        assert config.metrics_port == 9090
+        assert config.metrics_path == "/custom-metrics"
+
+    def test_partial_config_uses_defaults_for_missing_keys(self, tmp_path):
+        """Test that omitted keys retain sane generic defaults."""
+        config_path = tmp_path / CONFIG_FILE_NAME
+        config_path.write_text(
+            "port: 9090\nmetrics-port: 9091\nmetrics-path: /custom-metrics\n",
+            encoding="utf-8",
+        )
+
+        config = read_paas_config(tmp_path)
+
+        assert config.model_fields_set == {"port", "metrics_port", "metrics_path"}
+        assert config.port == 9090
+        assert config.metrics_port == 9091
+        assert config.metrics_path == "/custom-metrics"
 
 
 class TestStaticConfig:
@@ -277,7 +362,7 @@ class TestScrapeConfig:
         scrape_config = ScrapeConfig(
             job_name="multi-target",
             static_configs=[
-                StaticConfig(targets=["*:8000"], labels={"type": "app"}),
+                StaticConfig(targets=["*:8000"], labels={"type": "workload"}),
                 StaticConfig(targets=["localhost:9090"], labels={"type": "exporter"}),
             ],
         )
@@ -370,16 +455,18 @@ class TestPrometheusConfig:
             PrometheusConfig(
                 scrape_configs=[
                     ScrapeConfig(
-                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:8000"])]
+                        job_name="workload-metrics",
+                        static_configs=[StaticConfig(targets=["*:8000"])],
                     ),
                     ScrapeConfig(
-                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:9000"])]
+                        job_name="workload-metrics",
+                        static_configs=[StaticConfig(targets=["*:9000"])],
                     ),
                 ]
             )
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "app-metrics" in str(errors[0]["ctx"]["error"])
+        assert "workload-metrics" in str(errors[0]["ctx"]["error"])
         assert "Duplicate job_name" in str(errors[0]["ctx"]["error"])
 
     def test_multiple_duplicate_job_names(self):
@@ -437,3 +524,293 @@ class TestPrometheusConfig:
 
         prom_config = PrometheusConfig(scrape_configs=[])
         assert prom_config.scrape_configs == []
+
+
+CHARM_STATE_PAAS_CONFIG_TEST_PARAMS = [
+    pytest.param(
+        FlaskCharm,
+        "flask",
+        "flask",
+        "flask",
+        {
+            "FLASK_BASE_URL": "http://flask-k8s.test-model:8081",
+            "FLASK_METRICS_PATH": "/alternative_metrics",
+            "FLASK_METRICS_PORT": "8082",
+        },
+        id="flask",
+    ),
+    pytest.param(
+        DjangoCharm,
+        "django",
+        "django",
+        "django",
+        {
+            "DJANGO_BASE_URL": "http://django-k8s.test-model:8081",
+            "DJANGO_METRICS_PATH": "/alternative_metrics",
+            "DJANGO_METRICS_PORT": "8082",
+        },
+        id="django",
+    ),
+    pytest.param(
+        FastAPICharm,
+        "fastapi",
+        "fastapi",
+        "fastapi",
+        {
+            "UVICORN_PORT": "8081",
+            "METRICS_PATH": "/alternative_metrics",
+            "METRICS_PORT": "8082",
+        },
+        id="fastapi",
+    ),
+    pytest.param(
+        ExpressJSCharm,
+        "expressjs",
+        "expressjs",
+        "expressjs",
+        {"PORT": "8081", "METRICS_PATH": "/alternative_metrics", "METRICS_PORT": "8082"},
+        id="expressjs",
+    ),
+    pytest.param(
+        GoCharm,
+        "go",
+        "go",
+        "go",
+        {"PORT": "8081", "METRICS_PATH": "/alternative_metrics", "METRICS_PORT": "8082"},
+        id="go",
+    ),
+    pytest.param(
+        SpringBootCharm,
+        "springboot",
+        "spring_boot",
+        "spring-boot",
+        {
+            "SERVER_PORT": "8081",
+            "management.server.port": "8082",
+            "management.endpoints.web.base-path": "/",
+            "management.endpoints.web.path-mapping.prometheus": "alternative_metrics",
+        },
+        id="springboot",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "charm, example, framework, service, expected_env",
+    CHARM_STATE_PAAS_CONFIG_TEST_PARAMS,
+)
+def test_charm_state_paas_config(
+    request,
+    modify_paas_config,
+    charm: type,
+    example: str,
+    framework: str,
+    service: str,
+    expected_env: dict,
+) -> None:
+    """
+    arrange: none
+    act: set charm configurations.
+    assert: charm_config in the charm state should reflect changes in charm configurations.
+    """
+
+    modify_paas_config(example, 8081, 8082, "/alternative_metrics")
+    base_state = request.getfixturevalue(f"{framework}_base_state")
+    base_state["relations"].append(
+        testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
+    )
+    base_state["leader"] = True
+    ctx = testing.Context(charm)
+    state = testing.State(**base_state)
+
+    out = ctx.run(ctx.on.config_changed(), state)
+
+    plan = list(out.containers)[0].plan
+    service = plan.services[service]
+    for key, value in expected_env.items():
+        assert service.environment.get(key) == value
+    if framework == "spring_boot":
+        assert "APP_METRICS_PORT" not in service.environment
+
+    metrics_relation = out.get_relations("metrics-endpoint")[0]
+    scrape_jobs = json.loads(metrics_relation.local_app_data["scrape_jobs"])
+    assert scrape_jobs
+    assert all(job.get("job_name") != "app" for job in scrape_jobs)
+
+
+@pytest.mark.parametrize(
+    "paas_config, expected_port",
+    [
+        pytest.param(PaasConfig(), "8080", id="missing-file"),
+        pytest.param(PaasConfig(port=9090), "9090", id="partial-file"),
+    ],
+)
+def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
+    request, paas_config: PaasConfig, expected_port: str
+) -> None:
+    """Test that omitted paas-config keys preserve Spring Boot defaults."""
+    base_state = request.getfixturevalue("spring_boot_base_state")
+    with patch("paas_charm.charm.read_paas_config", return_value=paas_config):
+        ctx = testing.Context(SpringBootCharm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    assert environment["SERVER_PORT"] == expected_port
+    assert environment["management.endpoints.web.exposure.include"] == "prometheus"
+    assert environment["management.server.port"] == "8080"
+    assert environment["management.endpoints.web.base-path"] == "/actuator"
+    assert environment["management.endpoints.web.path-mapping.prometheus"] == "prometheus"
+
+
+@pytest.mark.parametrize(
+    "charm, state_fixture, service, app_port_var",
+    [
+        pytest.param(FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", id="fastapi"),
+        pytest.param(ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", id="expressjs"),
+        pytest.param(GoCharm, "go_base_state", "go", "PORT", id="go"),
+    ],
+)
+def test_application_port_override_preserves_default_metrics_endpoint(
+    request, charm: type, state_fixture: str, service: str, app_port_var: str
+) -> None:
+    """Test that changing only the application port does not move the metrics endpoint."""
+    base_state = request.getfixturevalue(state_fixture)
+    with patch("paas_charm.charm.read_paas_config", return_value=PaasConfig(port=9090)):
+        ctx = testing.Context(charm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    environment = list(out.containers)[0].plan.services[service].environment
+    assert environment[app_port_var] == "9090"
+    assert environment["METRICS_PORT"] == "8080"
+    assert environment["METRICS_PATH"] == "/metrics"
+
+
+@pytest.mark.parametrize(
+    "charm, state_fixture, service, expected_metrics",
+    [
+        pytest.param(
+            FlaskCharm,
+            "flask_base_state",
+            "flask",
+            {"FLASK_METRICS_PORT": "9102", "FLASK_METRICS_PATH": "/metrics"},
+            id="flask",
+        ),
+        pytest.param(
+            DjangoCharm,
+            "django_base_state",
+            "django",
+            {"DJANGO_METRICS_PORT": "9102", "DJANGO_METRICS_PATH": "/metrics"},
+            id="django",
+        ),
+        pytest.param(
+            FastAPICharm,
+            "fastapi_base_state",
+            "fastapi",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="fastapi",
+        ),
+        pytest.param(
+            ExpressJSCharm,
+            "expressjs_base_state",
+            "expressjs",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="expressjs",
+        ),
+        pytest.param(
+            GoCharm,
+            "go_base_state",
+            "go",
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            id="go",
+        ),
+        pytest.param(
+            SpringBootCharm,
+            "spring_boot_base_state",
+            "spring-boot",
+            {
+                "management.server.port": "8080",
+                "management.endpoints.web.base-path": "/actuator",
+                "management.endpoints.web.path-mapping.prometheus": "prometheus",
+            },
+            id="springboot",
+        ),
+    ],
+)
+def test_prometheus_jobs_do_not_configure_workload_metrics(
+    request,
+    charm: type,
+    state_fixture: str,
+    service: str,
+    expected_metrics: dict[str, str],
+) -> None:
+    """Test that explicit scrape jobs do not alter the workload metrics endpoint."""
+    base_state = request.getfixturevalue(state_fixture)
+    base_state["relations"].append(
+        testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
+    )
+    base_state["leader"] = True
+    paas_config = PaasConfig(
+        prometheus={
+            "scrape_configs": [
+                {
+                    "job_name": "scrape-only",
+                    "metrics_path": "/scrape-only",
+                    "static_configs": [{"targets": ["*:9999"]}],
+                }
+            ]
+        }
+    )
+
+    with patch("paas_charm.charm.read_paas_config", return_value=paas_config):
+        ctx = testing.Context(charm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    environment = list(out.containers)[0].plan.services[service].environment
+    assert {key: environment[key] for key in expected_metrics} == expected_metrics
+    scrape_jobs = json.loads(
+        out.get_relations("metrics-endpoint")[0].local_app_data["scrape_jobs"]
+    )
+    assert scrape_jobs[0]["job_name"] == "scrape-only"
+    assert scrape_jobs[0]["metrics_path"] == "/scrape-only"
+    assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:9999"]}]
+
+
+def test_no_explicit_jobs_publish_provider_default(request) -> None:
+    """Test that an empty scrape configuration uses the metrics provider default."""
+    base_state = request.getfixturevalue("fastapi_base_state")
+    base_state["relations"].append(
+        testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
+    )
+    base_state["leader"] = True
+
+    with patch("paas_charm.charm.read_paas_config", return_value=PaasConfig()):
+        ctx = testing.Context(FastAPICharm)
+        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    metrics_relation = out.get_relations("metrics-endpoint")[0]
+    assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == [
+        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:80"]}]}
+    ]
+    assert metrics_relation.local_unit_data["prometheus_scrape_unit_address"]
+
+
+@pytest.fixture(name="modify_paas_config")
+def modify_paas_config_fixture():
+    """Temporarily modify paas-config.yaml for a given framework and revert after the test."""
+    originals: dict[pathlib.Path, str] = {}
+
+    def _modify(framework: str, port: int, metrics_port: int, metrics_path: str) -> None:
+        paas_config_path = PROJECT_ROOT / f"examples/{framework}/charm/paas-config.yaml"
+        if paas_config_path not in originals:
+            originals[paas_config_path] = paas_config_path.read_text()
+        config = yaml.safe_load(originals[paas_config_path])
+        config["port"] = port
+        config["metrics-port"] = metrics_port
+        config["metrics-path"] = metrics_path
+        paas_config_path.write_text(yaml.dump(config))
+
+    try:
+        yield _modify
+    finally:
+        for path, content in originals.items():
+            path.write_text(content)

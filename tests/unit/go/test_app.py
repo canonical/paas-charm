@@ -24,7 +24,9 @@ from paas_charm.redis import PaaSRedisRelationData
             {},
             None,
             {
-                "APP_PORT": "8080",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OTHERCONFIG": "othervalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -33,7 +35,7 @@ from paas_charm.redis import PaaSRedisRelationData
         pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
             {"extra-config": "extravalue"},
-            {"metrics-port": "9000", "metrics-path": "/m", "app-secret-key": "notfoobar"},
+            {"app-secret-key": "notfoobar"},
             IntegrationsState(
                 redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
                 rabbitmq=PaaSRabbitMQRelationData(
@@ -46,9 +48,9 @@ from paas_charm.redis import PaaSRedisRelationData
                 ),
             ),
             {
-                "APP_PORT": "8080",
-                "APP_METRICS_PATH": "/m",
-                "APP_METRICS_PORT": "9000",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "notfoobar",
                 "APP_EXTRA-CONFIG": "extravalue",
                 "APP_BASE_URL": "https://paas.example.com",
@@ -108,8 +110,7 @@ def test_go_environment_vars(
         state_dir=base_dir / "state",
         service_name=framework_name,
         log_files=[],
-        metrics_target=f"*:{framework_config.metrics_port}",
-        metrics_path=framework_config.metrics_path,
+        metrics_path="/metrics",
         unit_name="go/0",
     )
 
@@ -128,6 +129,7 @@ def test_go_environment_vars(
         charm_state=charm_state,
         workload_config=workload_config,
         database_migration=MagicMock(),
+        framework_config_prefix="",
     )
     env = app.gen_environment()
     assert env == expected

@@ -241,10 +241,10 @@ def test_get_framework_config_with_prefix(
     [
         pytest.param(
             "flask_harness",
-            "flask-secret-key",
-            ["invalid", "config", "flask-secret-key"],
+            "app-secret-key",
+            ["invalid", "config", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "flask-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "valid string"],
         ),
         pytest.param(
             "expressjs_harness",
@@ -269,10 +269,10 @@ def test_get_framework_config_with_prefix(
         ),
         pytest.param(
             "django_harness",
-            "django-secret-key",
-            ["invalid", "config", "django-secret-key"],
+            "app-secret-key",
+            ["invalid", "config", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "django-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "valid string"],
         ),
     ],
 )
