@@ -315,16 +315,8 @@ def modify_paas_config_fixture():
     def _modify(port: int, metrics_port: int, metrics_path: str) -> None:
         config = yaml.safe_load(original_content)
         config["port"] = port
-        prometheus = config.setdefault("prometheus", {})
-        scrape_configs = prometheus.setdefault("scrape_configs", [])
-        scrape_configs[:] = [job for job in scrape_configs if job.get("job_name") != "app"]
-        scrape_configs.append(
-            {
-                "job_name": "app",
-                "metrics_path": metrics_path,
-                "static_configs": [{"targets": [f"*:{metrics_port}"]}],
-            }
-        )
+        config["metrics_port"] = metrics_port
+        config["metrics_path"] = metrics_path
         paas_config_path.write_text(yaml.dump(config))
 
     yield _modify

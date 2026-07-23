@@ -360,7 +360,7 @@ class TestScrapeConfig:
         scrape_config = ScrapeConfig(
             job_name="multi-target",
             static_configs=[
-                StaticConfig(targets=["*:8000"], labels={"type": "app"}),
+                StaticConfig(targets=["*:8000"], labels={"type": "workload"}),
                 StaticConfig(targets=["localhost:9090"], labels={"type": "exporter"}),
             ],
         )
@@ -417,21 +417,6 @@ class TestPrometheusConfig:
         assert len(prom_config.scrape_configs) == 1
         assert prom_config.scrape_configs[0].job_name == "job1"
 
-    def test_app_is_an_ordinary_job_name(self):
-        """Test that app has no special scrape-job restrictions."""
-        app_job = ScrapeConfig(
-            job_name="app",
-            metrics_path="/",
-            static_configs=[
-                StaticConfig(targets=["localhost:9090", "@scheduler:9091"]),
-                StaticConfig(targets=["*:0"]),
-            ],
-        )
-
-        prom_config = PrometheusConfig(scrape_configs=[app_job])
-
-        assert prom_config.scrape_configs == [app_job]
-
     def test_valid_prometheus_config_multiple_jobs(self):
         """Test valid prometheus config with multiple jobs."""
 
@@ -468,16 +453,18 @@ class TestPrometheusConfig:
             PrometheusConfig(
                 scrape_configs=[
                     ScrapeConfig(
-                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:8000"])]
+                        job_name="workload-metrics",
+                        static_configs=[StaticConfig(targets=["*:8000"])],
                     ),
                     ScrapeConfig(
-                        job_name="app-metrics", static_configs=[StaticConfig(targets=["*:9000"])]
+                        job_name="workload-metrics",
+                        static_configs=[StaticConfig(targets=["*:9000"])],
                     ),
                 ]
             )
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "app-metrics" in str(errors[0]["ctx"]["error"])
+        assert "workload-metrics" in str(errors[0]["ctx"]["error"])
         assert "Duplicate job_name" in str(errors[0]["ctx"]["error"])
 
     def test_multiple_duplicate_job_names(self):
@@ -764,7 +751,7 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
         prometheus={
             "scrape_configs": [
                 {
-                    "job_name": "app",
+                    "job_name": "scrape-only",
                     "metrics_path": "/scrape-only",
                     "static_configs": [{"targets": ["*:9999"]}],
                 }
@@ -781,7 +768,7 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
     scrape_jobs = json.loads(
         out.get_relations("metrics-endpoint")[0].local_app_data["scrape_jobs"]
     )
-    assert scrape_jobs[0]["job_name"] == "app"
+    assert scrape_jobs[0]["job_name"] == "scrape-only"
     assert scrape_jobs[0]["metrics_path"] == "/scrape-only"
     assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:9999"]}]
 

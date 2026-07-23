@@ -3,7 +3,7 @@ metrics_port: 8080
 metrics_path: /actuator/prometheus
 prometheus:
   scrape_configs:
-    - job_name: spring-boot-app
+    - job_name: spring-boot-metrics
       metrics_path: /actuator/prometheus
       static_configs:
         - targets:

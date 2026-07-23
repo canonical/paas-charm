@@ -3,7 +3,7 @@ metrics_port: 8080
 metrics_path: /metrics
 prometheus:
   scrape_configs:
-    - job_name: expressjs-app
+    - job_name: expressjs-metrics
       metrics_path: /metrics
       static_configs:
         - targets:

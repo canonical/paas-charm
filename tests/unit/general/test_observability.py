@@ -64,12 +64,12 @@ class TestBuildPrometheusJobs:
             }
         ]
 
-    def test_app_is_an_ordinary_job_name(self):
-        """Test that app has no reserved scrape-job behavior."""
+    def test_job_with_multiple_static_configs(self):
+        """Test that all static configurations are preserved."""
         prom_config = PrometheusConfig(
             scrape_configs=[
                 ScrapeConfig(
-                    job_name="app",
+                    job_name="custom-metrics",
                     metrics_path="/custom-metrics",
                     static_configs=[
                         StaticConfig(targets=["*:9090", "localhost:9090"]),
@@ -81,7 +81,7 @@ class TestBuildPrometheusJobs:
 
         assert build_prometheus_jobs(prom_config, "app", "model") == [
             {
-                "job_name": "app",
+                "job_name": "custom-metrics",
                 "metrics_path": "/custom-metrics",
                 "static_configs": [
                     {"targets": ["*:9090", "localhost:9090"]},

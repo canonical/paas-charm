@@ -68,19 +68,16 @@ Each static configuration defines a set of targets and optional labels.
      - Dictionary
      - Key-value pairs of labels to attach to all metrics from these targets. Optional.
 
-Application metrics job
------------------------
+Scrape job example
+------------------
 
-Job names have no special behavior. For example, ``app`` can be used as an ordinary name for an
-explicit application scrape job:
-
-For example:
+The following example publishes one custom scrape job:
 
 .. code-block:: yaml
 
    prometheus:
      scrape_configs:
-       - job_name: app
+       - job_name: custom-metrics
          metrics_path: /custom-metrics
          static_configs:
            - targets:
@@ -132,8 +129,8 @@ You can also specify exact hostnames or IP addresses in the targets section. For
 
    prometheus:
      scrape_configs:
-       # Application metrics from all units
-       - job_name: "flask-app-custom"
+       # Custom metrics from all units
+       - job_name: "flask-custom-metrics"
          metrics_path: "/metrics"
          static_configs:
            - targets:
