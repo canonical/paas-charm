@@ -56,7 +56,7 @@ config:
       type: string
       description: Path where the prometheus metrics will be scraped.
       default: production
-    port:
+    app-port:
       type: int
       description: Default port where the application will listen
       default: 8080

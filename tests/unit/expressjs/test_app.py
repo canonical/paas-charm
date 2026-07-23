@@ -35,6 +35,20 @@ from paas_charm.redis import PaaSRedisRelationData
             id="minimal environment",
         ),
         pytest.param(
+            {},
+            {"otherconfig": "othervalue"},
+            {"app-port": "3000"},
+            None,
+            {
+                "PORT": "3000",
+                "NODE_ENV": "production",
+                "APP_SECRET_KEY": "foobar",
+                "APP_OTHERCONFIG": "othervalue",
+                "APP_BASE_URL": "https://paas.example.com",
+            },
+            id="different port",
+        ),
+        pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
             {"extra-config": "extravalue"},
             {

@@ -14,6 +14,7 @@ from tests.integration.types import App
 logger = logging.getLogger(__name__)
 
 WORKLOAD_PORT = 8080
+TEST_PORT = 8181
 
 
 def test_expressjs_is_up(expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
@@ -73,3 +74,20 @@ def test_migration(expressjs_app: App, request: pytest.FixtureRequest, juju: jub
             f"http://{unit.address}:8080/users", json=user_creation_request, timeout=5
         )
         assert response.status_code == 400
+
+
+def test_expressjs_port(expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
+    """
+    arrange: build and deploy the ExpressJS charm.
+    act: call the endpoint.
+    assert: the charm should respond with 200 OK.
+    """
+    status = juju.status()
+    juju.config(expressjs_app.name, {"app-port": TEST_PORT})
+    juju.wait(lambda status: jubilant.all_active(status, expressjs_app.name, "postgresql-k8s"))
+    assert status.apps[expressjs_app.name].units[expressjs_app.name + "/0"].is_active
+    for unit in status.apps[expressjs_app.name].units.values():
+        assert unit.is_active, f"Unit {unit.name} is not active"
+        response = requests.get(f"http://{unit.address}:{TEST_PORT}", timeout=5)
+        assert response.status_code == 200
+        assert "Hello, World!" in response.text
