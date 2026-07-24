@@ -99,7 +99,7 @@ def test_fastapi_config(
         harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
 
     harness.begin_with_initial_hooks()
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
+    harness.charm._secret_key.get_secret_key = unittest.mock.MagicMock(return_value="test")
     harness.update_config(config)
 
     assert harness.model.unit.status == ops.ActiveStatus()

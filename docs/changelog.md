@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
+  and store the auto-generated application secret key in a Juju application-owned
+  secret instead of the peer relation databag. The peer relation is now used only
+  for peer coordination (such as `PEER_FQDNS`). This is a breaking change: on
+  upgrade a fresh application secret key is generated, so users of session-signing
+  frameworks (Flask/Django) must log in again. Use a `type: secret` config option
+  for user-provided secrets.
 * fix: Use the charm application name for the OpenFGA store name.
 
 ## 1.12.0 - 2026-07-03

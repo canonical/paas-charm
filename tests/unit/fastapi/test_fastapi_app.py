@@ -27,13 +27,16 @@ def base_state_fixture(container_name: str) -> testing.State:
         layers={"base": pebble.Layer(DEFAULT_LAYER)},
         service_statuses={"fastapi": pebble.ServiceStatus.INACTIVE},
     )
-    peer_rel = testing.PeerRelation(
-        "secret-storage",
-        local_app_data={"fastapi_secret_key": "test-secret-key"},
+    peer_rel = testing.PeerRelation("peers")
+    secret = testing.Secret(
+        tracked_content={"value": "test-secret-key"},
+        label="fastapi-secret-key",
+        owner="app",
     )
     return testing.State(
         containers=[container],
         relations=[peer_rel],
+        secrets=[secret],
         leader=True,
         config={"non-optional-string": "test-value"},
     )

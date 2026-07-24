@@ -41,17 +41,20 @@ def test_flask_pebble_layer(harness: Harness, container_name: str) -> None:
     container = harness.charm.unit.get_container(container_name)
     # ops.testing framework apply layers by label in lexicographical order...
     container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_storage = unittest.mock.MagicMock()
-    secret_storage.is_initialized = True
+    secret_key = unittest.mock.MagicMock()
+    secret_key.is_ready = True
     test_key = "0" * 16
-    secret_storage.get_secret_key.return_value = test_key
-    secret_storage.get_peer_unit_fdqns.return_value = None
+    secret_key.get_secret_key.return_value = test_key
+    peers = unittest.mock.MagicMock()
+    peers.is_related = True
+    peers.get_peer_unit_fqdns.return_value = None
     charm_state = CharmState.from_charm(
         charm_dir=harness.charm.charm_dir,
         framework_config=Charm.get_framework_config(harness.charm),
         config=harness.charm.config,
         framework="flask",
-        secret_storage=secret_storage,
+        secret_key=secret_key,
+        peers=peers,
         integration_requirers=IntegrationRequirers(databases={}),
     )
     webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
@@ -99,10 +102,10 @@ def test_rotate_secret_key_action(harness: Harness, container_name: str):
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
     action_event = unittest.mock.MagicMock()
-    secret_key = harness.get_relation_data(0, harness.charm.app)["flask_secret_key"]
+    secret_key = harness.charm._secret_key.get_secret_key()
     assert secret_key
     harness.charm._on_rotate_secret_key_action(action_event)
-    new_secret_key = harness.get_relation_data(0, harness.charm.app)["flask_secret_key"]
+    new_secret_key = harness.charm._secret_key.get_secret_key()
     assert secret_key != new_secret_key
 
 
