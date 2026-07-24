@@ -11,5 +11,12 @@
   "vulnerabilityAlerts": {
     "enabled": true,
     "baseBranches": ["$default", "v1"]
-  }
+  },
+  "packageRules": [
+    {
+      "matchFileNames": ["examples/**/charm/pyproject.toml"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["* * 1,15 * *"]
+    }
+  ]
 }
