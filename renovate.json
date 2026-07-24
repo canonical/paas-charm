@@ -14,7 +14,7 @@
   },
   "packageRules": [
     {
-      "matchFileNames": ["examples/**/requirements.txt"],
+      "matchFileNames": ["examples/**/charm/pyproject.toml"],
       "matchUpdateTypes": ["minor", "patch"],
       "schedule": ["* * 1,15 * *"]
     }
