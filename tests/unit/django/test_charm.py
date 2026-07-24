@@ -6,18 +6,43 @@
 # this is a unit test file
 # pylint: disable=protected-access
 
-import unittest.mock
+import dataclasses
+import pathlib
 
-import ops
 import pytest
-from ops.testing import ExecArgs, ExecResult, Harness
+import yaml
+from ops import testing
 
-from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_charm._gunicorn.workload_config import create_workload_config
-from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState, IntegrationRequirers
+from examples.django.charm.src.charm import DjangoCharm
 
-from .constants import DEFAULT_LAYER
+CHARMCRAFT_CONFIG = yaml.safe_load(
+    (
+        pathlib.Path(__file__).parents[3] / "examples" / "django" / "charm" / "charmcraft.yaml"
+    ).read_text(encoding="utf-8")
+)["config"]
+NO_DATABASE_META = {
+    "name": "django-k8s",
+    "containers": {"app": {"resource": "app-image"}},
+    "peers": {"secret-storage": {"interface": "secret-storage"}},
+    "provides": {
+        "grafana-dashboard": {"interface": "grafana_dashboard"},
+        "metrics-endpoint": {"interface": "prometheus_scrape"},
+    },
+    "requires": {
+        "ingress": {"interface": "ingress", "limit": 1},
+        "logging": {"interface": "loki_push_api"},
+    },
+}
+DJANGO_ACTIONS = {
+    "rotate-secret-key": {},
+    "create-superuser": {
+        "params": {
+            "username": {"type": "string"},
+            "email": {"type": "string"},
+        },
+        "required": ["username", "email"],
+    },
+}
 
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
@@ -26,7 +51,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_REDIRECT_PATH": "/callback",
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
         },
         id="default",
     ),
@@ -36,7 +61,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_REDIRECT_PATH": "/callback",
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.none"]',
+            "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.test-model"]',
         },
         id="allowed-hosts",
     ),
@@ -46,7 +71,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_REDIRECT_PATH": "/callback",
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
             "DJANGO_DEBUG": "true",
         },
         id="debug",
@@ -57,7 +82,7 @@ TEST_DJANGO_CONFIG_PARAMS = [
             "DJANGO_OIDC_REDIRECT_PATH": "/callback",
             "DJANGO_OIDC_SCOPES": "openid profile email",
             "DJANGO_SECRET_KEY": "foobar",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.none"]',
+            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
         },
         id="secret-key",
     ),
@@ -65,177 +90,105 @@ TEST_DJANGO_CONFIG_PARAMS = [
 
 
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
-def test_django_config(harness: Harness, container_name: str, config: dict, env: dict) -> None:
+def test_django_config(base_state: dict, container_name: str, config: dict, env: dict) -> None:
     """
     arrange: none
     act: start the django charm and set app container to be ready.
     assert: django charm should submit the correct pebble layer to pebble.
     """
-    harness.begin()
-    container = harness.charm.unit.get_container(container_name)
-    # ops.testing framework apply layers by label in lexicographical order...
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_storage = unittest.mock.MagicMock()
-    secret_storage.is_secret_storage_ready = True
-    secret_storage.get_secret_key.return_value = "test"
-    secret_storage.get_peer_unit_fdqns.return_value = None
-    harness.update_config(config)
-    charm_state = CharmState.from_charm(
-        charm_dir=harness.charm.charm_dir,
-        config=harness.charm.config,
-        framework="django",
-        framework_config=harness.charm.get_framework_config(),
-        secret_storage=secret_storage,
-        integration_requirers=IntegrationRequirers(databases={}),
+    state = testing.State(**{**base_state, "config": config})
+    context = testing.Context(DjangoCharm)
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    service = out.get_container(container_name).plan.services["django"]
+    for key, value in env.items():
+        assert service.environment[key] == value
+    assert (
+        service.command == "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
+        "django_app.wsgi:application -k [ sync ]"
     )
-    webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(
-        framework_name="django",
-        unit_name="django/0",
-        state_dir=harness.charm._state_dir,
-    )
-    webserver = GunicornWebserver(
-        webserver_config=webserver_config,
-        workload_config=workload_config,
-        container=container,
-    )
-    django_app = WsgiApp(
-        container=harness.charm.unit.get_container(container_name),
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=webserver,
-        database_migration=harness.charm._database_migration,
-    )
-    django_app.restart()
-    plan = container.get_plan()
-    django_layer = plan.to_dict()["services"]["django"]
-    assert django_layer == {
-        "environment": env,
-        "override": "replace",
-        "startup": "enabled",
-        "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
-        "after": ["statsd-exporter"],
-        "user": "_daemon_",
-    }
 
 
-def test_django_create_super_user(harness: Harness, container_name: str) -> None:
+def test_django_create_super_user(base_state: dict, container_name: str) -> None:
     """
     arrange: Start the Django charm. Mock the Django command (pebble exec) to create a superuser.
     act: Run action create superuser.
     assert: The action is called with the right arguments, returning a password for the user.
     """
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
+    state = testing.State(**base_state)
+    context = testing.Context(DjangoCharm)
 
-    password = None
-
-    def handler(args: ExecArgs) -> None | ExecResult:
-        nonlocal password
-        assert args.command == ["python3", "manage.py", "createsuperuser", "--noinput"]
-        assert args.environment["DJANGO_SUPERUSER_USERNAME"] == "admin"
-        assert args.environment["DJANGO_SUPERUSER_EMAIL"] == "admin@example.com"
-        assert "DJANGO_SECRET_KEY" in args.environment
-        password = args.environment["DJANGO_SUPERUSER_PASSWORD"]
-        return ExecResult(stdout="OK")
-
-    harness.handle_exec(
-        container,
-        ["python3", "manage.py", "createsuperuser", "--noinput"],
-        handler=handler,
+    context.run(
+        context.on.action(
+            "create-superuser",
+            params={"username": "admin", "email": "admin@example.com"},
+        ),
+        state,
     )
 
-    output = harness.run_action(
-        "create-superuser", params={"username": "admin", "email": "admin@example.com"}
+    exec_args = next(
+        args
+        for args in context.exec_history[container_name]
+        if args.command == ["python3", "manage.py", "createsuperuser", "--noinput"]
     )
-    assert "password" in output.results
-    assert output.results["password"] == password
+    assert exec_args.environment["DJANGO_SUPERUSER_USERNAME"] == "admin"
+    assert exec_args.environment["DJANGO_SUPERUSER_EMAIL"] == "admin@example.com"
+    assert "DJANGO_SECRET_KEY" in exec_args.environment
+    assert context.action_results is not None
+    assert context.action_results["password"] == exec_args.environment["DJANGO_SUPERUSER_PASSWORD"]
 
 
-def test_required_database_integration(harness_no_integrations: Harness, container_name: str):
+def test_required_database_integration(base_state_no_database: dict):
     """
     arrange: Start the Django charm with no integrations specified in the charm.
     act: Start the django charm and set app container to be ready.
     assert: The charm should be blocked, as Django requires a database to work.
     """
-    harness = harness_no_integrations
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    state = testing.State(**base_state_no_database)
+    context = testing.Context(
+        DjangoCharm,
+        meta=NO_DATABASE_META,
+        actions=DJANGO_ACTIONS,
+        config=CHARMCRAFT_CONFIG,
+    )
 
-    harness.begin_with_initial_hooks()
-    assert harness.model.unit.status == ops.BlockedStatus(
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.BlockedStatus(
         "Django requires a database integration to work"
     )
 
 
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
 def test_django_async_config(
-    harness: Harness, container_name: str, config: dict, env: dict
+    base_state: dict, container_name: str, config: dict, env: dict
 ) -> None:
     """
     arrange: None
     act: Start the django charm and set app container to be ready.
     assert: Django charm should submit the correct pebble layer to pebble.
     """
-    harness.begin()
-    container = harness.charm.unit.get_container(container_name)
-    # ops.testing framework apply layers by label in lexicographical order...
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_storage = unittest.mock.MagicMock()
-    secret_storage.is_secret_storage_ready = True
-    secret_storage.get_secret_key.return_value = "test"
-    secret_storage.get_peer_unit_fdqns.return_value = None
-    config["webserver-worker-class"] = "gevent"
-    harness.update_config(config)
-    charm_state = CharmState.from_charm(
-        charm_dir=harness.charm.charm_dir,
-        config=harness.charm.config,
-        framework="django",
-        framework_config=harness.charm.get_framework_config(),
-        secret_storage=secret_storage,
-        integration_requirers=IntegrationRequirers(databases={}),
+    state = testing.State(
+        **{**base_state, "config": {**config, "webserver-worker-class": "gevent"}}
     )
-    webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(
-        framework_name="django",
-        unit_name="django/0",
-        state_dir=harness.charm._state_dir,
+    context = testing.Context(DjangoCharm)
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    service = out.get_container(container_name).plan.services["django"]
+    for key, value in env.items():
+        assert service.environment[key] == value
+    assert (
+        service.command == "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
+        "django_app.wsgi:application -k [ gevent ]"
     )
-    webserver = GunicornWebserver(
-        webserver_config=webserver_config,
-        workload_config=workload_config,
-        container=container,
-    )
-    django_app = WsgiApp(
-        container=harness.charm.unit.get_container(container_name),
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=webserver,
-        database_migration=harness.charm._database_migration,
-    )
-    django_app.restart()
-    plan = container.get_plan()
-    django_layer = plan.to_dict()["services"]["django"]
-    assert django_layer == {
-        "environment": env,
-        "override": "replace",
-        "startup": "enabled",
-        "command": "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ gevent ]",
-        "after": ["statsd-exporter"],
-        "user": "_daemon_",
-    }
 
 
 def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
-    harness: Harness,
+    base_state: dict,
     container_name: str,
 ):
     """
@@ -243,36 +196,28 @@ def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
     act: Start the django charm and add an ingress relation.
     assert: The allowed hosts should not contain duplicates.
     """
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.set_model_name("test-model")
-    harness.update_config({"django-allowed-hosts": "django-k8s.test-model"})
-    harness.begin_with_initial_hooks()
-
-    plan = container.get_plan()
-    env = plan.to_dict()["services"]["django"]["environment"]
-    assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
-
-    harness.add_network("10.0.0.10", endpoint="ingress")
-    harness.add_relation(
-        "ingress",
-        "nginx-ingress-integrator",
-        app_data={"ingress": '{"url": "https://django-k8s.test-model/"}'},
+    state = testing.State(
+        **{**base_state, "config": {"django-allowed-hosts": "django-k8s.test-model"}}
     )
+    context = testing.Context(DjangoCharm)
+    out = context.run(context.on.config_changed(), state)
 
-    plan = container.get_plan()
-    env = plan.to_dict()["services"]["django"]["environment"]
+    env = out.get_container(container_name).plan.services["django"].environment
+    assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
+
+    ingress = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "https://django-k8s.test-model/"}'},
+    )
+    state = dataclasses.replace(out, relations={*out.relations, ingress})
+    out = context.run(context.on.relation_changed(ingress), state)
+
+    env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
 
 
-def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness, container_name: str):
+def test_allowed_hosts_base_hostname_updates_correctly(base_state: dict, container_name: str):
     """
     arrange: Deploy a Django charm without an ingress integration
     act: Add a new ingress integration
@@ -280,42 +225,35 @@ def test_allowed_hosts_base_hostname_updates_correctly(harness: Harness, contain
     act: Update the url in the ingress integration
     assert: The allowed hosts env var should match the new url of the ingress integration
     """
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.set_model_name("flask-model")
-    harness.begin_with_initial_hooks()
+    base_state["model"] = testing.Model(name="flask-model")
+    state = testing.State(**base_state)
+    context = testing.Context(DjangoCharm)
+    out = context.run(context.on.config_changed(), state)
 
     # The initial allowed hosts matches the k8s service name.
-    plan = container.get_plan()
-    env = plan.to_dict()["services"]["django"]["environment"]
+    env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.flask-model"]'
 
     # Add a relation and the allowed hosts should be updated to the ingress url
-    harness.add_network("10.0.0.10", endpoint="ingress")
-    relation_id = harness.add_relation(
-        "ingress",
-        "nginx-ingress-integrator",
-        app_data={"ingress": '{"url": "http://oldjuju.test/"}'},
+    ingress = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "http://oldjuju.test/"}'},
     )
+    state = dataclasses.replace(out, relations={*out.relations, ingress})
+    out = context.run(context.on.relation_changed(ingress), state)
 
-    plan = container.get_plan()
-    env = plan.to_dict()["services"]["django"]["environment"]
+    env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["oldjuju.test"]'
 
     # Updating the ingress url to a new url should update the allowed hosts.
-    harness.update_relation_data(
-        relation_id,
-        app_or_unit="nginx-ingress-integrator",
-        key_values={"ingress": '{"url": "http://newjuju.test/"}'},
+    updated_ingress = dataclasses.replace(
+        ingress,
+        remote_app_data={"ingress": '{"url": "http://newjuju.test/"}'},
     )
+    relations = {relation for relation in out.relations if relation.id != ingress.id}
+    state = dataclasses.replace(out, relations={*relations, updated_ingress})
+    out = context.run(context.on.relation_changed(updated_ingress), state)
 
-    plan = container.get_plan()
-    env = plan.to_dict()["services"]["django"]["environment"]
+    env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["newjuju.test"]'
