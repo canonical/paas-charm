@@ -634,7 +634,8 @@ def test_charm_state_paas_config(
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
     scrape_jobs = json.loads(metrics_relation.local_app_data["scrape_jobs"])
-    assert scrape_jobs
+    assert scrape_jobs[0]["metrics_path"] == "/alternative_metrics"
+    assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:8082"]}]
     assert all(job.get("job_name") != "app" for job in scrape_jobs)
 
 
@@ -770,13 +771,23 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
     scrape_jobs = json.loads(
         out.get_relations("metrics-endpoint")[0].local_app_data["scrape_jobs"]
     )
-    assert scrape_jobs[0]["job_name"] == "scrape-only"
-    assert scrape_jobs[0]["metrics_path"] == "/scrape-only"
-    assert scrape_jobs[0]["static_configs"] == [{"targets": ["*:9999"]}]
+    expected_port, expected_path = {
+        "flask": ("9102", "/metrics"),
+        "django": ("9102", "/metrics"),
+        "fastapi": ("8080", "/metrics"),
+        "expressjs": ("8080", "/metrics"),
+        "go": ("8080", "/metrics"),
+        "spring-boot": ("8080", "/actuator/prometheus"),
+    }[service]
+    assert scrape_jobs[0]["metrics_path"] == expected_path
+    assert scrape_jobs[0]["static_configs"] == [{"targets": [f"*:{expected_port}"]}]
+    assert scrape_jobs[1]["job_name"] == "scrape-only"
+    assert scrape_jobs[1]["metrics_path"] == "/scrape-only"
+    assert scrape_jobs[1]["static_configs"] == [{"targets": ["*:9999"]}]
 
 
-def test_no_explicit_jobs_publish_provider_default(request) -> None:
-    """Test that an empty scrape configuration uses the metrics provider default."""
+def test_no_explicit_jobs_publish_framework_job(request) -> None:
+    """Test that an empty scrape configuration publishes the framework endpoint."""
     base_state = request.getfixturevalue("fastapi_base_state")
     base_state["relations"].append(
         testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
@@ -789,7 +800,7 @@ def test_no_explicit_jobs_publish_provider_default(request) -> None:
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
     assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == [
-        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:80"]}]}
+        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:8080"]}]}
     ]
     assert metrics_relation.local_unit_data["prometheus_scrape_unit_address"]
 

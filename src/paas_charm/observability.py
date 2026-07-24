@@ -29,6 +29,8 @@ class Observability(ops.Object):
         container_name: str,
         cos_dir: str | os.PathLike[str],
         log_files: Iterable[str] | Iterable[os.PathLike[str]],
+        metrics_port: int,
+        metrics_path: str,
         prometheus_config: PrometheusConfig | None = None,
     ):
         """Initialize a new instance of the Observability class.
@@ -39,11 +41,15 @@ class Observability(ops.Object):
             cos_dir: The directories containing the grafana_dashboards, loki_alert_rules and
                 prometheus_alert_rules.
             log_files: List of files to monitor.
+            metrics_port: Port on which the workload serves metrics.
+            metrics_path: Path on which the workload serves metrics.
             prometheus_config: Custom Prometheus configuration from paas-config.yaml.
         """
         super().__init__(charm, "observability")
         self._charm = charm
-        jobs = build_prometheus_jobs(prometheus_config, charm.app.name, charm.model.name)
+        jobs = build_prometheus_jobs(
+            metrics_port, metrics_path, prometheus_config, charm.app.name, charm.model.name
+        )
         self._metrics_endpoint = MetricsEndpointProvider(
             charm,
             alert_rules_path=os.path.join(cos_dir, "prometheus_alert_rules"),
@@ -97,21 +103,30 @@ class Observability(ops.Object):
 
 
 def build_prometheus_jobs(
+    metrics_port: int,
+    metrics_path: str,
     prometheus_config: PrometheusConfig | None,
     app_name: str,
     model_name: str,
 ) -> list[dict[str, typing.Any]]:
-    """Build Prometheus scrape jobs from explicit configuration.
+    """Build Prometheus scrape jobs from workload and explicit configuration.
 
     Args:
+        metrics_port: Port on which the workload serves metrics.
+        metrics_path: Path on which the workload serves metrics.
         prometheus_config: Custom Prometheus configuration from paas-config.yaml.
         app_name: Application name for @scheduler resolution.
         model_name: Juju model name for @scheduler resolution.
 
     Returns:
-        List of Prometheus job configurations (empty list if no jobs are configured).
+        Framework scrape job followed by any explicitly configured jobs.
     """
-    jobs: list[dict[str, typing.Any]] = []
+    jobs: list[dict[str, typing.Any]] = [
+        {
+            "metrics_path": metrics_path,
+            "static_configs": [{"targets": [f"*:{metrics_port}"]}],
+        }
+    ]
     if prometheus_config:
         for scrape_config in prometheus_config.scrape_configs or []:
             static_configs = []

@@ -188,6 +188,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
+            metrics_port=self._workload_config.metrics_port,
+            metrics_path=self._workload_config.metrics_path or "/metrics",
             prometheus_config=self._paas_config.prometheus,
         )
 

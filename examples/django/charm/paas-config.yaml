@@ -3,6 +3,7 @@ metrics-port: 9102
 metrics-path: /metrics
 prometheus:
   scrape_configs:
+  # Additional job scraping all units on port 8081
   - job_name: django-custom-metrics
     metrics_path: /metrics
     static_configs:
@@ -11,6 +12,7 @@ prometheus:
         env: example
       targets:
       - '*:8081'
+  # Additional scheduler-only job
   - job_name: django-scheduler-metrics
     metrics_path: /metrics
     static_configs:

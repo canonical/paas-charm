@@ -39,10 +39,18 @@ class TestResolveSchedulerPlaceholder:
 class TestBuildPrometheusJobs:
     """Tests for build_prometheus_jobs function."""
 
-    def test_no_jobs_configured(self):
-        """Test that no implicit scrape job is generated."""
-        assert build_prometheus_jobs(None, "app", "model") == []
-        assert build_prometheus_jobs(PrometheusConfig(), "app", "model") == []
+    def test_framework_job_without_custom_jobs(self):
+        """Test that the workload metrics endpoint is always published."""
+        expected = [
+            {
+                "metrics_path": "/metrics",
+                "static_configs": [{"targets": ["*:9102"]}],
+            }
+        ]
+        assert build_prometheus_jobs(9102, "/metrics", None, "app", "model") == expected
+        assert (
+            build_prometheus_jobs(9102, "/metrics", PrometheusConfig(), "app", "model") == expected
+        )
 
     def test_explicit_job(self):
         """Test that an explicit scrape job is published."""
@@ -56,12 +64,16 @@ class TestBuildPrometheusJobs:
             ]
         )
 
-        assert build_prometheus_jobs(prom_config, "app", "model") == [
+        assert build_prometheus_jobs(9102, "/metrics", prom_config, "app", "model") == [
+            {
+                "metrics_path": "/metrics",
+                "static_configs": [{"targets": ["*:9102"]}],
+            },
             {
                 "job_name": "custom-job",
                 "metrics_path": "/custom/metrics",
                 "static_configs": [{"targets": ["*:9090"]}],
-            }
+            },
         ]
 
     def test_job_with_multiple_static_configs(self):
@@ -79,7 +91,11 @@ class TestBuildPrometheusJobs:
             ]
         )
 
-        assert build_prometheus_jobs(prom_config, "app", "model") == [
+        assert build_prometheus_jobs(9102, "/metrics", prom_config, "app", "model") == [
+            {
+                "metrics_path": "/metrics",
+                "static_configs": [{"targets": ["*:9102"]}],
+            },
             {
                 "job_name": "custom-metrics",
                 "metrics_path": "/custom-metrics",
@@ -87,7 +103,7 @@ class TestBuildPrometheusJobs:
                     {"targets": ["*:9090", "localhost:9090"]},
                     {"targets": ["*:9091"]},
                 ],
-            }
+            },
         ]
 
     def test_job_with_labels(self):
@@ -106,9 +122,9 @@ class TestBuildPrometheusJobs:
             ]
         )
 
-        jobs = build_prometheus_jobs(prom_config, "app", "model")
+        jobs = build_prometheus_jobs(9102, "/metrics", prom_config, "app", "model")
 
-        assert jobs[0]["static_configs"][0]["labels"] == {
+        assert jobs[1]["static_configs"][0]["labels"] == {
             "env": "production",
             "team": "platform",
         }
@@ -130,9 +146,9 @@ class TestBuildPrometheusJobs:
             ]
         )
 
-        jobs = build_prometheus_jobs(prom_config, "app", "model")
+        jobs = build_prometheus_jobs(9102, "/metrics", prom_config, "app", "model")
 
-        assert [job["job_name"] for job in jobs] == ["job1", "job2"]
+        assert [job.get("job_name") for job in jobs] == [None, "job1", "job2"]
 
     def test_scheduler_placeholder_in_explicit_job(self):
         """Test @scheduler resolution in an explicit job."""
@@ -150,9 +166,9 @@ class TestBuildPrometheusJobs:
             ]
         )
 
-        jobs = build_prometheus_jobs(prom_config, "django", "production")
+        jobs = build_prometheus_jobs(9102, "/metrics", prom_config, "django", "production")
 
-        assert jobs[0]["static_configs"][0] == {
+        assert jobs[1]["static_configs"][0] == {
             "targets": [
                 "*:8000",
                 "django-0.django-endpoints.production.svc.cluster.local:8081",
