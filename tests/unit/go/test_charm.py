@@ -57,7 +57,7 @@ def test_go_config(harness: Harness, config: dict, env: dict, container_name: st
     container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
+    harness.charm._secret_key.get_secret_key = unittest.mock.MagicMock(return_value="test")
     harness.update_config(config)
 
     assert harness.model.unit.status == ops.ActiveStatus()

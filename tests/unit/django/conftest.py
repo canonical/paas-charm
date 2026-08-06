@@ -57,8 +57,8 @@ def harness_no_integrations_fixture() -> typing.Generator[Harness, None, None]:
         resource: app-image
 
     peers:
-      secret-storage:
-        interface: secret-storage
+      peers:
+        interface: peers
     provides:
       grafana-dashboard:
         interface: grafana_dashboard

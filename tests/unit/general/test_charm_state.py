@@ -48,7 +48,8 @@ def test_charm_state_integration_state_build_error(error):
             config=MagicMock(),
             framework="test",
             framework_config=MagicMock(),
-            secret_storage=MagicMock(),
+            secret_key=MagicMock(),
+            peers=MagicMock(),
             integration_requirers=IntegrationRequirers(
                 databases=MagicMock(),
                 redis=MagicMock(),

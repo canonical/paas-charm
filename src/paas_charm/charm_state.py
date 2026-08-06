@@ -16,7 +16,8 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
-from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.peers import Peers
+from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
 # This is just for type checking, no need to cover this code.
@@ -92,7 +93,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         config: dict[str, bool | int | float | str | dict[str, str]],
         framework: str,
         framework_config: BaseModel,
-        secret_storage: KeySecretStorage,
+        secret_key: SecretKeyStorage,
+        peers: Peers,
         integration_requirers: "IntegrationRequirers",
         base_url: str | None = None,
     ) -> "CharmState":
@@ -103,7 +105,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             config: The charm configuration.
             framework: The framework name.
             framework_config: The framework specific configurations.
-            secret_storage: The secret storage manager associated with the charm.
+            secret_key: The application secret key manager.
+            peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
             base_url: Base URL for the service.
 
@@ -214,9 +217,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 relation=exc.relation,
             ) from exc
         peer_fqdns = None
-        if secret_storage.is_initialized and (
-            peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
-        ):
+        if peers.is_related and (peer_unit_fqdns := peers.get_peer_unit_fqdns()):
             peer_fqdns = ",".join(peer_unit_fqdns)
 
         return cls(
@@ -225,10 +226,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             user_defined_config=typing.cast(
                 dict[str, str | int | bool | dict[str, str]], user_defined_config
             ),
-            secret_key=(
-                secret_storage.get_secret_key() if secret_storage.is_initialized else None
-            ),
-            is_secret_storage_ready=secret_storage.is_initialized,
+            secret_key=(secret_key.get_secret_key() if secret_key.is_ready else None),
+            is_secret_storage_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
