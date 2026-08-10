@@ -10,7 +10,9 @@ import typing
 
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
+from charms.openfga_k8s.v1.openfga import OpenFGARequires
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
+from charms.smtp_integrator.v0.smtp import SmtpRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -22,6 +24,8 @@ from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.http_proxy import PaaSHttpProxyRequirer
+from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
 from paas_charm.paas_config import (
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
@@ -30,7 +34,10 @@ from paas_charm.paas_config import (
 )
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
+from paas_charm.s3 import PaaSS3Requirer
+from paas_charm.saml import PaaSSAMLRequirer
 from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
@@ -40,15 +47,6 @@ from paas_charm.utils import (
 from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
-
-from charms.openfga_k8s.v1.openfga import OpenFGARequires
-from charms.smtp_integrator.v0.smtp import SmtpRequires
-
-from paas_charm.http_proxy import PaaSHttpProxyRequirer
-from paas_charm.oauth import PaaSOAuthRequirer
-from paas_charm.s3 import PaaSS3Requirer
-from paas_charm.saml import PaaSSAMLRequirer
-from paas_charm.tracing import PaaSTracingEndpointRequirer
 
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
@@ -152,7 +150,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._reconcile_without_migrations)
-        for database, database_requirer in self._database_requirers.items():
+        for _, database_requirer in self._database_requirers.values():
             self.framework.observe(
                 database_requirer.on.database_created,
                 self._reconcile_with_migrations,
