@@ -919,16 +919,16 @@ def test_secret_storage_relation_departed_hook(
     """
     arrange: Run initial hooks. Add a unit to the secret-storage relation.
     act: Remove one unit from the secret-storage relation.
-    assert: The restart function should be called once.
+    assert: The reconcile function should be called once.
     """
     harness = request.getfixturevalue(app_harness)
     harness.begin_with_initial_hooks()
-    harness.charm.restart = unittest.mock.MagicMock()
+    harness.charm.reconcile = unittest.mock.MagicMock()
     peer_relation_name = "secret-storage"
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.reset_mock()
+    harness.charm.reconcile.reset_mock()
     harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.assert_called_once()
+    harness.charm.reconcile.assert_called_once()
