@@ -747,9 +747,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._ingress._publish_auto_data()
 
     def _reconcile_with_migrations(self, _: DatabaseRequiresEvent) -> None:
-        """Handle database's endpoints-changed event."""
+        """Handle an event that requires re-running migrations."""
         self.reconcile(rerun_migrations=True)
 
     def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle database's relation-broken event."""
+        """Handle an event that doesn't require re-running migrations."""
         self.reconcile()
