@@ -23,7 +23,7 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
@@ -150,7 +150,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._reconcile_without_migrations)
-        for _, database_requirer in self._database_requirers.values():
+        for database_requirer in self._database_requirers.values():
             self.framework.observe(
                 database_requirer.on.database_created,
                 self._reconcile_with_migrations,
@@ -649,19 +649,26 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Args:
             rerun_migrations: whether it is necessary to run the migrations again.
         """
-        if not self.is_ready():
-            return
-
-        if rerun_migrations:
-            self._database_migration.set_status_to_pending()
-
         try:
+            if not self.is_ready():
+                return
+
+            if rerun_migrations:
+                self._database_migration.set_status_to_pending()
+
             if self._oauth:
                 self._oauth.update_client()
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
         except CharmConfigInvalidError as exc:
+            logger.exception("Wrong Charm Configuration")
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
+            return
+        except RelationDataError as exc:
+            logger.exception(
+                "%s relation data is either invalid, missing or unusable.", exc.relation
+            )
+            self.update_app_and_unit_status(ops.BlockedStatus(str(exc)))
             return
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
