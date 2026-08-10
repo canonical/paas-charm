@@ -130,8 +130,8 @@ You can also specify exact hostnames or IP addresses in the targets section. For
 
    prometheus:
      scrape_configs:
-       # Custom metrics from all units
-       - job_name: "flask-custom-metrics"
+       # Application metrics from all units
+       - job_name: "flask-app-custom"
          metrics_path: "/metrics"
          static_configs:
            - targets:
