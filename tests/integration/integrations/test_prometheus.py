@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
         ("django_app", 9102, "/metrics"),
         ("spring_boot_app", 8080, "/actuator/prometheus"),
         ("expressjs_app", 8080, "/metrics"),
-        ("go_app", 8081, "/metrics"),
+        ("go_app", 8080, "/metrics"),
         ("fastapi_app", 8080, "/metrics"),
     ],
 )

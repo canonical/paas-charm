@@ -1,3 +1,6 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 framework_logging_format: json
 metrics-port: 9102
 metrics-path: /metrics

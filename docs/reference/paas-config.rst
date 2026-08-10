@@ -63,8 +63,8 @@ Go uses ``PORT``; Flask and Django configure the port directly in Gunicorn inste
 The charm always passes the resolved ``metrics-port`` and ``metrics-path`` values to the workload.
 Workload code is responsible for consuming this configuration and exposing the corresponding
 endpoint. Flask and Django receive framework-prefixed
-``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive unprefixed
-variables. Spring Boot receives native ``management.*`` properties.
+``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive variables
+without framework prefixes. Spring Boot receives native ``management.*`` properties.
 
 Flask and Django default to ``9102`` and ``/metrics``. The other frameworks default to ``8080``
 and ``/metrics``, except Spring Boot, which uses ``8080`` and ``/actuator/prometheus``.

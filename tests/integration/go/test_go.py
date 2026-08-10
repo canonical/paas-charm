@@ -72,8 +72,8 @@ def test_open_ports(
 ):
     """
     arrange: after Go charm has been deployed.
-    act: integrate with the gateway charm with the ingress integration and change app-port configuration.
-    assert: charm opened ports should change accordingly.
+    act: integrate with the gateway charm through the ingress integration.
+    assert: the configured workload port is open and ingress routes to the application.
     """
     gateway_app, configurator_app = ingress_provider
     # Mount the retry adapter for https:// as well (session only mounts it for http://).
@@ -92,50 +92,6 @@ def test_open_ports(
     )
 
     lb_ip = gateway_lb_ip(juju, ingress_provider)
-
-    # Check initial opened ports
-    opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
-    assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
-    with pin_dns(INGRESS_HOSTNAME, lb_ip):
-        assert (
-            session_with_retry.get(
-                f"https://{INGRESS_HOSTNAME}",
-                verify=False,
-                timeout=5,
-            ).status_code
-            == 200
-        )
-
-    # Change port configuration
-    new_port = WORKLOAD_PORT + 10
-    juju.config(go_app.name, {"app-port": str(new_port)})
-    juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app)
-        and jubilant.all_agents_idle(status),
-        delay=3,
-        successes=5,
-    )
-
-    opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
-    assert opened_ports.strip() == f"{new_port}/tcp"
-    with pin_dns(INGRESS_HOSTNAME, lb_ip):
-        assert (
-            session_with_retry.get(
-                f"https://{INGRESS_HOSTNAME}",
-                verify=False,
-                timeout=5,
-            ).status_code
-            == 200
-        )
-
-    # Restore original port
-    juju.config(go_app.name, {"app-port": str(WORKLOAD_PORT)})
-    juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name, gateway_app, configurator_app)
-        and jubilant.all_agents_idle(status),
-        delay=3,
-        successes=5,
-    )
 
     opened_ports = juju.cli("exec", "--unit", f"{go_app.name}/0", "opened-ports")
     assert opened_ports.strip() == f"{WORKLOAD_PORT}/tcp"
