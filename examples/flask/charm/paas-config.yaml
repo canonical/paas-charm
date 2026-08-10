@@ -10,7 +10,7 @@ framework_logging_format: json
 prometheus:
   scrape_configs:
     # Custom job scraping all units on port 8081
-    - job_name: "app-custom"
+    - job_name: "flask-app-custom"
       metrics_path: "/metrics"
       static_configs:
         - targets:
@@ -20,7 +20,7 @@ prometheus:
             env: "example"
     
     # Scheduler-only job using @scheduler placeholder
-    - job_name: "app-scheduler-metrics"
+    - job_name: "flask-scheduler-metrics"
       metrics_path: "/metrics"
       static_configs:
         - targets:
