@@ -1,5 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
+import contextlib
+import ipaddress
 import logging
 import pathlib
 import shutil
@@ -9,8 +11,10 @@ from typing import cast
 import jubilant
 import pytest
 import requests
+import urllib3.util.connection
 import yaml
 from requests.adapters import HTTPAdapter
+from tenacity import retry, stop_after_attempt, wait_fixed
 from urllib3.util.retry import Retry
 
 from tests.integration.helpers import inject_charm_config, inject_venv
@@ -18,6 +22,8 @@ from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
+
+INGRESS_HOSTNAME = "gateway.internal"
 
 NON_OPTIONAL_CONFIGS = {
     "config": {
@@ -584,16 +590,82 @@ def spring_boot_mysql_app_fixture(
     return App(app_name)
 
 
-@pytest.fixture(scope="module", name="external_hostname")
-def external_hostname_fixture() -> str:
-    """Return the external hostname for ingress-related tests."""
-    return "juju.test"
+@pytest.fixture(scope="module", name="ingress_provider")
+def ingress_provider_fixture(
+    juju: jubilant.Juju,
+):
+    """Deploy gateway-api-integrator and ingress-configurator for ingress-related tests."""
+    juju.deploy(
+        charm="gateway-api-integrator",
+        app="gateway",
+        channel="1/edge",
+        trust=True,
+        config={"gateway-class": "ck-gateway"},
+    )
+    juju.deploy(
+        charm="ingress-configurator",
+        app="configurator",
+        channel="latest/edge",
+        trust=True,
+        config={"hostname": INGRESS_HOSTNAME},
+    )
+    juju.deploy(
+        charm="self-signed-certificates",
+        app="cert",
+        channel="1/edge",
+    )
+    juju.integrate("cert:certificates", "gateway:certificates")
+    juju.integrate("configurator:gateway-route", "gateway:gateway-route")
+    juju.wait(
+        # gateway/configurator can be blocked before the app-ingress relation is created.
+        lambda status: jubilant.all_active(status, "cert") and jubilant.all_agents_idle(status),
+        timeout=10 * 60,
+    )
+    return ("gateway", "configurator")
 
 
-@pytest.fixture(scope="module", name="traefik_app_name")
-def traefik_app_name_fixture() -> str:
-    """Return the name of the traefik application deployed for tests."""
-    return "traefik-k8s"
+def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str:
+    """Return the load-balancer IP of the gateway application."""
+
+    @retry(stop=stop_after_attempt(12), wait=wait_fixed(5))
+    def _gateway_lb_ip() -> str:
+        gateway_app, _ = ingress_provider
+        message = juju.status().apps[gateway_app].app_status.message or ""
+        for token in message.split():
+            try:
+                return str(ipaddress.ip_address(token.strip("[](),;")))
+            except ValueError:
+                continue
+        raise ValueError(
+            f"Could not parse gateway load-balancer IP from status message: {message!r}"
+        )
+
+    return _gateway_lb_ip()
+
+
+@contextlib.contextmanager
+def pin_dns(hostname: str, ip: str):
+    """Resolve ``hostname`` to ``ip`` for every connection made in the context.
+
+    The gateway only routes by the ingress hostname, which exists solely as a
+    Host header in these tests and is not in DNS. Some apps (e.g. the FastAPI
+    app with its ``root_path``) reply with a redirect to that hostname, so we
+    pin its resolution to the gateway load-balancer IP for both the initial
+    request and any connection opened while following redirects.
+    """
+    original_create_connection = urllib3.util.connection.create_connection
+
+    def patched_create_connection(address, *args, **kwargs):
+        host, port = address
+        if host == hostname:
+            address = (ip, port)
+        return original_create_connection(address, *args, **kwargs)
+
+    urllib3.util.connection.create_connection = patched_create_connection
+    try:
+        yield
+    finally:
+        urllib3.util.connection.create_connection = original_create_connection
 
 
 @pytest.fixture(scope="module", name="loki_app_name")
@@ -606,31 +678,6 @@ def loki_app_name_fixture() -> str:
 def grafana_app_name_fixture() -> str:
     """Return the name of the grafana application deployed for tests."""
     return "grafana-k8s"
-
-
-@pytest.fixture(scope="module", name="traefik_app")
-def deploy_traefik_fixture(
-    juju: jubilant.Juju,
-    traefik_app_name: str,
-    external_hostname: str,
-):
-    """Deploy traefik."""
-    if not juju.status().apps.get(traefik_app_name):
-        juju.deploy(
-            "traefik-k8s",
-            app=traefik_app_name,
-            channel="edge",
-            trust=True,
-            config={
-                "external_hostname": external_hostname,
-                "routing_mode": "subdomain",
-            },
-        )
-    juju.wait(
-        lambda status: status.apps[traefik_app_name].is_active,
-        error=jubilant.any_blocked,
-    )
-    return App(traefik_app_name)
 
 
 @pytest.fixture(scope="module", name="redis_k8s_app")

@@ -21,6 +21,14 @@ from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 
+CONTAINER_NAME = "app"
+
+
+@pytest.fixture
+def container_name():
+    """Return the container name."""
+    return CONTAINER_NAME
+
 
 @pytest.fixture
 def database_migration_mock():

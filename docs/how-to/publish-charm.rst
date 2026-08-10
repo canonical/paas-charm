@@ -57,9 +57,9 @@ that resource depends on the framework:
    * - Framework
      - Resource name
    * - Django
-     - ``django-app-image``
+     - ``app-image``
    * - Flask
-     - ``flask-app-image``
+     - ``app-image``
    * - FastAPI
      - ``app-image``
    * - Express.js
@@ -139,7 +139,7 @@ For example:
    charmcraft release my-flask-app \
        --revision=1 \
        --channel=latest/edge \
-       --resource=flask-app-image:1
+       --resource=app-image:1
 
 .. seealso::
 

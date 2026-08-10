@@ -14,6 +14,3 @@ DEFAULT_LAYER = {
         },
     }
 }
-
-
-FASTAPI_CONTAINER_NAME = "app"

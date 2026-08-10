@@ -34,16 +34,11 @@ from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
-from tests.unit.django.constants import DJANGO_CONTAINER_NAME
-from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
-from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
-    FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
     OPENFGA_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
 def _generate_map_integrations_to_env_parameters(prefix: str = ""):
@@ -560,6 +555,28 @@ def test_init_openfga(requires, expected_type):
     assert isinstance(result, expected_type)
 
 
+def test_init_openfga_uses_application_name():
+    """
+    arrange: Set the charm application name and OpenFGA relation metadata.
+    act: Run the _init_openfga function.
+    assert: The application name should be used as the OpenFGA store name.
+    """
+    charm = unittest.mock.MagicMock()
+    charm.app.name = "test-app"
+    requires = {
+        "openfga": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="openfga",
+            raw={"interface": "openfga", "limit": 1},
+        )
+    }
+
+    with patch("paas_charm.charm.OpenFGARequires") as openfga_requires:
+        paas_charm.charm.PaasCharm._init_openfga(self=charm, requires=requires)
+
+    openfga_requires.assert_called_once_with(charm, "test-app")
+
+
 def _test_missing_required_other_integrations_parameters():
     charm_without_relation = unittest.mock.MagicMock()
     charm_with_saml = unittest.mock.MagicMock()
@@ -739,18 +756,17 @@ def test_missing_required_other_integrations(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_relation(
@@ -785,18 +801,17 @@ def test_smtp_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_not_activated(
@@ -826,18 +841,17 @@ def test_smtp_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_relation(
@@ -870,18 +884,17 @@ def test_openfga_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_not_activated(
