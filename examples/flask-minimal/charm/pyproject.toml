@@ -12,5 +12,5 @@ dependencies = [
     "jinja2==3.1.6",
     "jsonschema==4.26.0",
     "ops==3.7.1",
-    "pydantic[email]==2.13.4",
+    "pydantic==2.13.4",
 ]
