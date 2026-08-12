@@ -119,6 +119,8 @@ charm-libs:
   version: '0'
 - lib: data_platform_libs.data_interfaces
   version: '0'
+- lib: openfga-k8s.openfga
+  version: "1"
 
 parts:
   charm:
