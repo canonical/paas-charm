@@ -933,19 +933,19 @@ def test_secret_storage_relation_departed_hook(
     """
     arrange: Run initial hooks. Add a unit to the secret-storage relation.
     act: Remove one unit from the secret-storage relation.
-    assert: The reconcile function should be called once.
+    assert: The _reconcile function should be called once.
     """
     harness = request.getfixturevalue(app_harness)
     harness.begin_with_initial_hooks()
-    harness.charm.reconcile = unittest.mock.MagicMock()
+    harness.charm._reconcile = unittest.mock.MagicMock()
     peer_relation_name = "secret-storage"
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.reconcile.reset_mock()
+    harness.charm._reconcile.reset_mock()
     harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.reconcile.assert_called_once()
+    harness.charm._reconcile.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -972,6 +972,6 @@ def test_reconcile_blocks_on_invalid_data(flask_harness, error, expected_message
     flask_harness.begin()
     flask_harness.charm.is_ready = MagicMock(side_effect=error)
 
-    flask_harness.charm.reconcile()
+    flask_harness.charm._reconcile()
 
     assert flask_harness.model.unit.status == BlockedStatus(expected_message)

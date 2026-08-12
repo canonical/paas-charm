@@ -504,7 +504,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._secret_storage.reset_secret_key()
         event.set_results({"status": "success"})
-        self.reconcile()
+        self._reconcile()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
@@ -643,7 +643,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         yield from self._missing_required_storage_integrations(requires, charm_state)
         yield from self._missing_required_other_integrations(requires, charm_state)
 
-    def reconcile(self, rerun_migrations: bool = False) -> None:
+    def _reconcile(self, rerun_migrations: bool = False) -> None:
         """Restart or start the service if not started with the latest configuration.
 
         Args:
@@ -738,7 +738,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _on_update_status(self, _: ops.HookEvent) -> None:
         """Handle the update-status event."""
         if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED:
-            self.reconcile()
+            self._reconcile()
         # Sometimes the ingress library doesn't properly handle pod
         # restarts,which can cause the IP field inside the ingress
         # relation data to become stale, resulting in ingress failures.
@@ -748,8 +748,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     def _reconcile_with_migrations(self, _: DatabaseRequiresEvent) -> None:
         """Handle an event that requires re-running migrations."""
-        self.reconcile(rerun_migrations=True)
+        self._reconcile(rerun_migrations=True)
 
     def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
         """Handle an event that doesn't require re-running migrations."""
-        self.reconcile()
+        self._reconcile()
