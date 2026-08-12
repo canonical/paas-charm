@@ -1738,7 +1738,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "ops" },
-    { name = "pydantic" },
+    { name = "pydantic", extra = ["email"] },
 ]
 
 [package.dev-dependencies]
@@ -1797,7 +1797,7 @@ requires-dist = [
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "ops", specifier = "==3.8.1" },
-    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "pydantic", extras = ["email"], specifier = "==2.13.4" },
 ]
 
 [package.metadata.requires-dev]
