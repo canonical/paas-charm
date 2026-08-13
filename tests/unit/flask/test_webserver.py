@@ -100,7 +100,7 @@ def test_gunicorn_config(
     charm_state = CharmState(
         framework="flask",
         secret_key="",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
     )
     workload_config = create_workload_config(
         framework_name="flask",
@@ -150,7 +150,7 @@ def test_webserver_reload(
     charm_state = CharmState(
         framework="flask",
         secret_key="",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
     )
     webserver_config = WebserverConfig()
     workload_config = create_workload_config(
@@ -208,7 +208,7 @@ def test_gunicorn_config_with_pebble_log_forwarding(
     charm_state = CharmState(
         framework="flask",
         secret_key="",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
     )
     workload_config = create_workload_config(
         framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir

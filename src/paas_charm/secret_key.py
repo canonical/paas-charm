@@ -77,8 +77,6 @@ class SecretKeyStorage(ops.Object):
     def rotate(self) -> None:
         """Generate a new application secret key value.
 
-        Only the leader unit can rotate the secret.
-
         Raises:
             RuntimeError: If the secret key has not been created yet.
         """

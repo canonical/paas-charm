@@ -95,7 +95,7 @@ def test_rotate_secret_key_action(harness: Harness, container_name: str):
     """
     arrange: none
     act: invoke the rotate-secret-key callback function
-    assert: the action should change the secret key value in the relation data and restart the
+    assert: the action should change the Juju secret key value and restart the
         flask application with the new secret key.
     """
     container = harness.model.unit.get_container(container_name)

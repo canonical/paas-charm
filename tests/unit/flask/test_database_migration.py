@@ -34,7 +34,7 @@ def test_database_migration(harness: Harness, container_name: str):
     harness.set_can_connect(container, True)
     charm_state = CharmState(
         framework="flask",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         secret_key="",
     )
     workload_config = create_workload_config(
@@ -111,7 +111,7 @@ def test_database_migrate_command(
     harness.set_can_connect(container, True)
     charm_state = CharmState(
         framework="flask",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         secret_key="",
     )
     webserver_config = WebserverConfig()

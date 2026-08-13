@@ -48,7 +48,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config: the value of the framework specific charm configuration.
         user_defined_config: user-defined configurations for the application.
         secret_key: the charm managed application secret key.
-        is_secret_storage_ready: whether the secret storage system is ready.
+        is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
     """
 
@@ -56,7 +56,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self,
         *,
         framework: str,
-        is_secret_storage_ready: bool,
+        is_secret_key_ready: bool,
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
@@ -68,10 +68,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Args:
             framework: the framework name.
-            is_secret_storage_ready: whether the secret storage system is ready.
+            is_secret_key_ready: whether the application secret key is ready.
             user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
-            secret_key: The secret storage manager associated with the charm.
+            secret_key: The application secret key value.
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
@@ -79,7 +79,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
         self._user_defined_config = user_defined_config if user_defined_config is not None else {}
-        self._is_secret_storage_ready = is_secret_storage_ready
+        self._is_secret_key_ready = is_secret_key_ready
         self._secret_key = secret_key
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
@@ -227,7 +227,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 dict[str, str | int | bool | dict[str, str]], user_defined_config
             ),
             secret_key=(secret_key.get_secret_key() if secret_key.is_ready else None),
-            is_secret_storage_ready=secret_key.is_ready,
+            is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
@@ -289,13 +289,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         return self._secret_key
 
     @property
-    def is_secret_storage_ready(self) -> bool:
-        """Return whether the secret storage system is ready.
+    def is_secret_key_ready(self) -> bool:
+        """Return whether the application secret key is ready.
 
         Returns:
-            Whether the secret storage system is ready.
+            Whether the application secret key is ready.
         """
-        return self._is_secret_storage_ready
+        return self._is_secret_key_ready
 
 
 @dataclass

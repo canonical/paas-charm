@@ -445,7 +445,7 @@ def test_app_config_class_factory(
         pytest.param("go_harness", "go", "APP", id="go"),
     ],
 )
-def test_secret_storage_config(
+def test_peer_fqdns_config(
     app_harness: str,
     framework: str,
     app_prefix: str,

@@ -177,8 +177,7 @@ def test_worker_multiple_units(harness: Harness, container_name: str):
     harness.framework.model.unit.name = f"{harness._meta.name}/1"
     harness.set_planned_units(3)
 
-    # Just think that we are not the leader unit. The application secret key is a
-    # Juju application-owned secret, readable by all units of the application.
+    # The application secret key is application-owned and readable by all units.
     harness.set_leader(False)
     harness._backend.secret_add({"value": "XX"}, label="flask-secret-key", owner="app")
     harness.add_relation("peers", harness.framework.model.app.name)

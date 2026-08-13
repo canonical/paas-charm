@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Provide the Peers helper for peer coordination (peer unit FQDNs)."""
+"""Provide peer coordination data."""
 
 import typing
 

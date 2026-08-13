@@ -254,7 +254,7 @@ def test_flask_secret_key_id_no_value(flask_base_state):
     """
     # The secret should contain "value", but here we give "wrong-key"
     key_secret = testing.Secret(owner="app", tracked_content={"wrong-key": "foobar"})
-    flask_base_state["secrets"] = [key_secret]
+    flask_base_state["secrets"].append(key_secret)
 
     flask_base_state["config"] = {"flask-secret-key-id": key_secret.id}
 
@@ -273,7 +273,7 @@ def test_flask_secret_key_id_duplication(flask_base_state):
     assert: It should raise CharmConfigInvalidError.
     """
     secret = testing.Secret(tracked_content={"value": "foobar"})
-    flask_base_state["secrets"] = [secret]
+    flask_base_state["secrets"].append(secret)
     flask_base_state["config"] = {
         "flask-secret-key-id": secret.id,
         "flask-secret-key": "test",
