@@ -187,6 +187,8 @@ html_baseurl = f"https://canonical.com/juju/docs/12-factor/{version}/"
 
 sitemap_url_scheme = '{link}'
 
+sitemap_filename = "doc-sitemap.xml"
+
 # Include `lastmod` dates in the sitemap:
 
 sitemap_show_lastmod = True
@@ -369,8 +371,8 @@ if os.path.exists('./reuse/substitutions.yaml'):
 
 intersphinx_mapping = {
     'sphinxcontrib-mermaid': ('https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest', None),
-    'juju': ("https://documentation.ubuntu.com/juju/3.6/", None),
-    'charmcraft': ("https://documentation.ubuntu.com/charmcraft/latest/", None),
+    'juju': ("https://canonical.com/juju/docs/juju-cli/3.6/", None),
+    'charmcraft': ("https://canonical.com/juju/docs/charmcraft/latest/", None),
     'rockcraft': ("https://documentation.ubuntu.com/rockcraft/latest/", None),
     'pebble': ("https://documentation.ubuntu.com/pebble/", None),
     'cos': ("https://documentation.ubuntu.com/observability/latest/", None),

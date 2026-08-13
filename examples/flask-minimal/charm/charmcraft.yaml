@@ -12,17 +12,11 @@ actions:
       This might be useful if a security breach occurs.
 assumes:
   - k8s-api
-bases:
-  - build-on:
-      - architectures:
-          - amd64
-        channel: '22.04'
-        name: ubuntu
-    run-on:
-      - architectures:
-          - amd64
-        channel: '22.04'
-        name: ubuntu
+
+base: ubuntu@26.04
+platforms:
+  amd64:
+
 config:
   options:
     flask-application-root:
@@ -89,8 +83,8 @@ config:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
 containers:
-  flask-app:
-    resource: flask-app-image
+  app:
+    resource: app-image
 peers:
   secret-storage:
     interface: secret-storage
@@ -106,32 +100,47 @@ requires:
   logging:
     interface: loki_push_api
 resources:
-  flask-app-image:
+  app-image:
     description: flask application image.
     type: oci-image
 
 charm-libs:
-- lib: traefik-k8s.ingress
-  version: '2'
-- lib: observability-libs.juju_topology
-  version: '0'
-- lib: grafana-k8s.grafana_dashboard
-  version: '0'
-- lib: loki-k8s.loki_push_api
-  version: '1'
-- lib: prometheus-k8s.prometheus_scrape
-  version: '0'
-- lib: redis_k8s.redis
-  version: '0'
-- lib: data_platform_libs.data_interfaces
-  version: '0'
+  - lib: traefik-k8s.ingress
+    version: "2"
+  - lib: observability-libs.juju_topology
+    version: "0"
+  - lib: grafana-k8s.grafana_dashboard
+    version: "0.35"
+  - lib: loki-k8s.loki_push_api
+    version: "1"
+  - lib: data-platform-libs.data_interfaces
+    version: "0"
+  - lib: prometheus-k8s.prometheus_scrape
+    version: "0"
+  - lib: redis-k8s.redis
+    version: "0"
+  - lib: data-platform-libs.s3
+    version: "0"
+  - lib: saml-integrator.saml
+    version: "0"
+  - lib: openfga-k8s.openfga
+    version: "1"
+  - lib: smtp-integrator.smtp
+    version: "0"
+  - lib: tempo-coordinator-k8s.tracing
+    version: "0"
+  - lib: hydra.oauth
+    version: "0"
+  - lib: squid_forward_proxy.http_proxy
+    version: "0"
 
 parts:
   charm:
-    charm-strict-dependencies: false
-    plugin: charm
+    source: .
+    plugin: uv
     build-snaps:
-    - rustup
+      - astral-uv
+      - rustup
     override-build: |-
       rustup default stable
       craftctl default

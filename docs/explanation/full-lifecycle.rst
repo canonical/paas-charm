@@ -116,7 +116,7 @@ Juju is the engine that will orchestrate the software operators.
 The Juju ecosystem provides a multitude of `curated software operators <https://charmhub.io/>`_
 for your observability stack, database, SSO, and many more and allows their deployment and
 lifecycle management on metal, on VMs, on K8s and on cloud providers
-(see :ref:`substrates <juju:kubernetes-clouds-and-juju>`).
+(see :ref:`substrates <juju:kubernetes-cloud>`).
 
 Your web app will be able to integrate seamlessly with other charms, that can be running in
 Kubernetes or in Machines, and on-premises or in the cloud.

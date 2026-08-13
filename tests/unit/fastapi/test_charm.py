@@ -12,7 +12,7 @@ import ops
 import pytest
 from ops.testing import Harness
 
-from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 
 @pytest.mark.parametrize(
@@ -86,14 +86,14 @@ from .constants import DEFAULT_LAYER, FASTAPI_CONTAINER_NAME
     ],
 )
 def test_fastapi_config(
-    harness: Harness, config: dict, postgresql_relation_data: dict, env: dict
+    harness: Harness, container_name: str, config: dict, postgresql_relation_data: dict, env: dict
 ) -> None:
     """
     arrange: prepare the charm optionally with the postgresql relation.
     act: start the fastapi charm update the config options.
     assert: fastapi charm should submit the correct fastapi pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(FASTAPI_CONTAINER_NAME)
+    container = harness.model.unit.get_container(container_name)
     container.add_layer("a_layer", DEFAULT_LAYER)
     if postgresql_relation_data:
         harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)

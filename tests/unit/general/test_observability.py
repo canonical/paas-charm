@@ -12,17 +12,17 @@ class TestResolveSchedulerPlaceholder:
 
     def test_resolve_scheduler_placeholder(self):
         """Test @scheduler placeholder is resolved to FQDN."""
-        result = _resolve_scheduler_placeholder("flask-app", "my-model", "@scheduler:8081")
-        assert result == "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local:8081"
+        result = _resolve_scheduler_placeholder("app", "my-model", "@scheduler:8081")
+        assert result == "app-0.app-endpoints.my-model.svc.cluster.local:8081"
 
     def test_passthrough_wildcard_target(self):
         """Test wildcard target is not modified."""
-        result = _resolve_scheduler_placeholder("flask-app", "my-model", "*:8000")
+        result = _resolve_scheduler_placeholder("app", "my-model", "*:8000")
         assert result == "*:8000"
 
     def test_passthrough_regular_target(self):
         """Test regular target is not modified."""
-        result = _resolve_scheduler_placeholder("flask-app", "my-model", "localhost:9090")
+        result = _resolve_scheduler_placeholder("app", "my-model", "localhost:9090")
         assert result == "localhost:9090"
 
     def test_different_port_numbers(self):
@@ -178,9 +178,9 @@ class TestBuildPrometheusJobs:
 
     def test_scheduler_placeholder_in_framework_default(self):
         """Test @scheduler placeholder in framework default job."""
-        jobs = build_prometheus_jobs("@scheduler:8081", "/metrics", None, "flask-app", "my-model")
+        jobs = build_prometheus_jobs("@scheduler:8081", "/metrics", None, "app", "my-model")
         assert len(jobs) == 1
-        expected_target = "flask-app-0.flask-app-endpoints.my-model.svc.cluster.local:8081"
+        expected_target = "app-0.app-endpoints.my-model.svc.cluster.local:8081"
         assert jobs[0]["static_configs"][0]["targets"] == [expected_target]
 
     def test_scheduler_placeholder_in_custom_job(self):

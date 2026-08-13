@@ -56,7 +56,7 @@ def test_proxy(
     )
 
     resources = {
-        "flask-app-image": test_flask_image,
+        "app-image": test_flask_image,
     }
 
     # Deploy the charm

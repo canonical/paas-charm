@@ -9,8 +9,37 @@ warn-timeout: 1h
 backends:
   integration-test:
     type: integration-test
+    disk: 50G
     systems:
       - ubuntu-24.04
+    debug: |
+      set +e
+
+      echo "=== Disk usage ==="
+      df -h
+
+      echo "=== Kubernetes resources ==="
+      k8s kubectl get nodes -o wide
+      k8s kubectl get pods,pvc,pv,storageclass -A -o wide
+
+      echo "=== Kubernetes events ==="
+      k8s kubectl get events -A --sort-by=.lastTimestamp
+
+      echo "=== Controller namespace ==="
+      k8s kubectl describe pods -n controller-concierge-k8s
+      k8s kubectl describe pvc -n controller-concierge-k8s
+
+      echo "=== Rawfile CSI logs ==="
+      for pod in $(k8s kubectl get pods -n kube-system \
+          -o name | grep ck-storage-rawfile-csi); do
+        echo "--- $pod ---"
+        k8s kubectl logs -n kube-system "$pod" \
+          --all-containers --tail=500
+      done
+
+      echo "=== Juju state ==="
+      sudo -u ubuntu -H juju controllers
+      sudo -u ubuntu -H juju models --all
 
 environment:
   CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'

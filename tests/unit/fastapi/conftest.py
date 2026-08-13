@@ -13,8 +13,6 @@ from ops.testing import Harness
 
 from examples.fastapi.charm.src.charm import FastAPICharm
 
-from .constants import FASTAPI_CONTAINER_NAME
-
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 _TEMPLATES_DIR = PROJECT_ROOT / "src" / "paas_charm" / "templates" / "fastapi"
 
@@ -28,13 +26,13 @@ def cwd():
 
 
 @pytest.fixture(name="harness")
-def harness_fixture() -> typing.Generator[Harness, None, None]:
+def harness_fixture(container_name: str) -> typing.Generator[Harness, None, None]:
     """Ops testing framework harness fixture."""
     harness = Harness(FastAPICharm)
     harness.set_leader()
-    root = harness.get_filesystem_root(FASTAPI_CONTAINER_NAME)
+    root = harness.get_filesystem_root(container_name)
     (root / "app").mkdir(parents=True)
-    harness.set_can_connect(FASTAPI_CONTAINER_NAME, True)
+    harness.set_can_connect(container_name, True)
     harness.update_config({"non-optional-string": "non-optional-value"})
 
     yield harness

@@ -3,7 +3,7 @@ name: Integration tests
 on:
   pull_request:
   schedule:
-  - cron: "0 15 * * SAT"
+    - cron: "0 15 * * SAT"
 
 jobs:
   integration-test:
@@ -11,7 +11,11 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: canonical/charm-ci/.github/workflows/integration-test.yml@main
+    uses: canonical/charm-ci/.github/workflows/integration-test.yml@v0.0.1-alpha.10
+    secrets: inherit
+    with:
+      charmcraft-channel: latest/edge
+      rockcraft-channel: latest/edge
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest

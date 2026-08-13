@@ -12,6 +12,3 @@ DEFAULT_LAYER = {
         },
     }
 }
-
-
-GO_CONTAINER_NAME = "app"

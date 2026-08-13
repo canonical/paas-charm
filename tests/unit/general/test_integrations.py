@@ -19,7 +19,7 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
-from ops import ActiveStatus, RelationMeta, RelationRole
+from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
 
 import paas_charm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
@@ -28,22 +28,18 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.databases import PaaSDatabaseRelationData
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
-from tests.unit.django.constants import DJANGO_CONTAINER_NAME
-from tests.unit.expressjs.constants import EXPRESSJS_CONTAINER_NAME
-from tests.unit.fastapi.constants import FASTAPI_CONTAINER_NAME
 from tests.unit.flask.constants import (
-    FLASK_CONTAINER_NAME,
     INTEGRATIONS_RELATION_DATA,
     OPENFGA_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
-from tests.unit.go.constants import GO_CONTAINER_NAME
 
 
 def _generate_map_integrations_to_env_parameters(prefix: str = ""):
@@ -560,6 +556,28 @@ def test_init_openfga(requires, expected_type):
     assert isinstance(result, expected_type)
 
 
+def test_init_openfga_uses_application_name():
+    """
+    arrange: Set the charm application name and OpenFGA relation metadata.
+    act: Run the _init_openfga function.
+    assert: The application name should be used as the OpenFGA store name.
+    """
+    charm = unittest.mock.MagicMock()
+    charm.app.name = "test-app"
+    requires = {
+        "openfga": RelationMeta(
+            role=RelationRole.requires,
+            relation_name="openfga",
+            raw={"interface": "openfga", "limit": 1},
+        )
+    }
+
+    with patch("paas_charm.charm.OpenFGARequires") as openfga_requires:
+        paas_charm.charm.PaasCharm._init_openfga(self=charm, requires=requires)
+
+    openfga_requires.assert_called_once_with(charm, "test-app")
+
+
 def _test_missing_required_other_integrations_parameters():
     charm_without_relation = unittest.mock.MagicMock()
     charm_with_saml = unittest.mock.MagicMock()
@@ -739,18 +757,17 @@ def test_missing_required_other_integrations(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_relation(
@@ -785,18 +802,17 @@ def test_smtp_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_not_activated(
@@ -826,18 +842,17 @@ def test_smtp_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_relation(
@@ -870,18 +885,17 @@ def test_openfga_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, container_name",
+    "app_harness, framework",
     [
-        pytest.param("flask_harness", "flask", FLASK_CONTAINER_NAME, id="flask"),
-        pytest.param("django_harness", "django", DJANGO_CONTAINER_NAME, id="django"),
+        pytest.param("flask_harness", "flask", id="flask"),
+        pytest.param("django_harness", "django", id="django"),
         pytest.param(
             "fastapi_harness",
             "fastapi",
-            FASTAPI_CONTAINER_NAME,
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", GO_CONTAINER_NAME, id="go"),
-        pytest.param("expressjs_harness", "expressjs", EXPRESSJS_CONTAINER_NAME, id="expressjs"),
+        pytest.param("go_harness", "go", id="go"),
+        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_not_activated(
@@ -919,16 +933,45 @@ def test_secret_storage_relation_departed_hook(
     """
     arrange: Run initial hooks. Add a unit to the secret-storage relation.
     act: Remove one unit from the secret-storage relation.
-    assert: The restart function should be called once.
+    assert: The _reconcile function should be called once.
     """
     harness = request.getfixturevalue(app_harness)
     harness.begin_with_initial_hooks()
-    harness.charm.restart = unittest.mock.MagicMock()
+    harness.charm._reconcile = unittest.mock.MagicMock()
     peer_relation_name = "secret-storage"
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.reset_mock()
+    harness.charm._reconcile.reset_mock()
     harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.assert_called_once()
+    harness.charm._reconcile.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "error, expected_message",
+    [
+        pytest.param(
+            CharmConfigInvalidError("invalid options: app-secret-key"),
+            "invalid options: app-secret-key",
+            id="invalid charm config",
+        ),
+        pytest.param(
+            RelationDataError("Invalid s3 relation data.", relation="s3"),
+            "Invalid s3 relation data.",
+            id="invalid relation data",
+        ),
+    ],
+)
+def test_reconcile_blocks_on_invalid_data(flask_harness, error, expected_message):
+    """
+    arrange: Configure readiness validation to reject charm or relation data.
+    act: Reconcile the charm.
+    assert: The error is translated into a blocked status instead of escaping the hook.
+    """
+    flask_harness.begin()
+    flask_harness.charm.is_ready = MagicMock(side_effect=error)
+
+    flask_harness.charm._reconcile()
+
+    assert flask_harness.model.unit.status == BlockedStatus(expected_message)

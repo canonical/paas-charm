@@ -10,6 +10,7 @@ import re
 import jubilant
 import pytest
 import requests
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import expect, sync_playwright
 
 from tests.integration.types import App
@@ -100,7 +101,9 @@ def test_oauth_integrations(
     response = session_with_retry.get(res[app.name]["url"], timeout=5, verify=False)
     assert response.status_code == 200
 
-    _assert_idp_login_success(res[app.name]["url"], endpoint, test_email, test_password)
+    _assert_idp_login_success(
+        res[app.name]["url"], endpoint, test_email, test_username, test_password
+    )
 
 
 def _admin_identity_exists(juju, test_email):
@@ -112,21 +115,50 @@ def _admin_identity_exists(juju, test_email):
         return False
 
 
-def _assert_idp_login_success(app_url: str, endpoint: str, test_email: str, test_password: str):
+def _assert_idp_login_success(
+    app_url: str,
+    endpoint: str,
+    test_email: str,
+    test_username: str,
+    test_password: str,
+):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
-        page.goto(f"{app_url}/{endpoint}")
-        logger.info("Page content: %s", page.content())
-        expect(page).not_to_have_title(re.compile("Sign in failed"))
-        page.get_by_label("Email").fill(test_email)
-        page.get_by_label("Password").fill(test_password)
-        page.get_by_role("button", name="Sign in").click()
         try:
-            page.wait_for_url(f"{app_url}/**")
-            expect(page).to_have_url(re.compile(f"^{app_url}/profile.*"))
+            page.goto(f"{app_url}/{endpoint}")
+            logger.info("Page content: %s", page.content())
+            expect(page).not_to_have_title(re.compile("Sign in failed"))
+            login_identifiers = (test_email, test_username)
+            login_succeeded = False
+            for identifier in login_identifiers:
+                page.locator("input[name='identifier']").fill(identifier)
+                page.locator("input[type='password']").first.fill(test_password)
+                page.get_by_role("button", name="Sign in").click()
+                try:
+                    page.wait_for_url(
+                        re.compile(f"^{re.escape(app_url)}/profile.*"), timeout=15000
+                    )
+                    login_succeeded = True
+                    break
+                except PlaywrightTimeoutError:
+                    logger.warning(
+                        "Login attempt failed with identifier %r; current url=%s",
+                        identifier,
+                        page.url,
+                    )
+                    if "Invalid identifier" not in page.content():
+                        break
+
+            if not login_succeeded:
+                logger.error("Page content at error: %s", page.content())
+                raise AssertionError(
+                    f"OIDC login did not reach profile page, final url={page.url}"
+                )
+
+            expect(page).to_have_url(re.compile(f"^{re.escape(app_url)}/profile.*"))
+            assert f"Welcome, {test_email}!" in page.content()
         finally:
             logger.info("Final page url %s", page.url)
             logger.info("Final Page content %s", page.content())
-        assert f"Welcome, {test_email}!" in page.content()

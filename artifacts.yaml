@@ -29,19 +29,19 @@ charms:
   - name: flask-k8s
     charmcraft-yaml: examples/flask/charm/charmcraft.yaml
     resources:
-      flask-app-image:
+      app-image:
         type: oci-image
         rock: test-flask
   - name: flask-minimal-k8s
     charmcraft-yaml: examples/flask-minimal/charm/charmcraft.yaml
     resources:
-      flask-app-image:
+      app-image:
         type: oci-image
         rock: flask-minimal-app
   - name: django-k8s
     charmcraft-yaml: examples/django/charm/charmcraft.yaml
     resources:
-      django-app-image:
+      app-image:
         type: oci-image
         rock: django-app
   - name: expressjs-k8s
