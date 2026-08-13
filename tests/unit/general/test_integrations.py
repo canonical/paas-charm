@@ -19,7 +19,7 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
-from ops import ActiveStatus, RelationMeta, RelationRole
+from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
 
 import paas_charm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
@@ -28,6 +28,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.databases import PaaSDatabaseRelationData
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.redis import PaaSRedisRelationData
@@ -930,18 +931,47 @@ def test_peers_relation_departed_hook(
     request: pytest.FixtureRequest,
 ):
     """
-    arrange: Run initial hooks. Add a unit to the peers relation.
-    act: Remove one unit from the peers relation.
-    assert: The restart function should be called once.
+    arrange: Run initial hooks. Add a unit to the secret-storage relation.
+    act: Remove one unit from the secret-storage relation.
+    assert: The _reconcile function should be called once.
     """
     harness = request.getfixturevalue(app_harness)
     harness.begin_with_initial_hooks()
-    harness.charm.restart = unittest.mock.MagicMock()
-    peer_relation_name = "peers"
+    harness.charm._reconcile = unittest.mock.MagicMock()
+    peer_relation_name = "secret-storage"
     rel_id = harness.model.get_relation(peer_relation_name).id
     harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.reset_mock()
+    harness.charm._reconcile.reset_mock()
     harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
 
-    harness.charm.restart.assert_called_once()
+    harness.charm._reconcile.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "error, expected_message",
+    [
+        pytest.param(
+            CharmConfigInvalidError("invalid options: app-secret-key"),
+            "invalid options: app-secret-key",
+            id="invalid charm config",
+        ),
+        pytest.param(
+            RelationDataError("Invalid s3 relation data.", relation="s3"),
+            "Invalid s3 relation data.",
+            id="invalid relation data",
+        ),
+    ],
+)
+def test_reconcile_blocks_on_invalid_data(flask_harness, error, expected_message):
+    """
+    arrange: Configure readiness validation to reject charm or relation data.
+    act: Reconcile the charm.
+    assert: The error is translated into a blocked status instead of escaping the hook.
+    """
+    flask_harness.begin()
+    flask_harness.charm.is_ready = MagicMock(side_effect=error)
+
+    flask_harness.charm._reconcile()
+
+    assert flask_harness.model.unit.status == BlockedStatus(expected_message)
