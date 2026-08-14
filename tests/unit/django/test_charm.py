@@ -23,7 +23,7 @@ CHARMCRAFT_CONFIG = yaml.safe_load(
 NO_DATABASE_META = {
     "name": "django-k8s",
     "containers": {"app": {"resource": "app-image"}},
-    "peers": {"secret-storage": {"interface": "secret-storage"}},
+    "peers": {"peers": {"interface": "peers"}},
     "provides": {
         "grafana-dashboard": {"interface": "grafana_dashboard"},
         "metrics-endpoint": {"interface": "prometheus_scrape"},

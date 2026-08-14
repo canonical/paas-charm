@@ -25,7 +25,7 @@ def _base_state(*, with_database: bool) -> dict:
     """Build the common Scenario state for Django tests."""
     relations: list[testing.RelationBase] = [
         testing.PeerRelation(
-            "secret-storage",
+            "peers",
             local_app_data={"django_secret_key": "test"},
         )
     ]

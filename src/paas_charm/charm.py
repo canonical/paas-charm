@@ -140,7 +140,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             prometheus_config=paas_config.prometheus,
         )
 
-
         self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
@@ -507,20 +506,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._secret_key.rotate()
         event.set_results({"status": "success"})
-        self.restart()
+        self._reconcile()
 
     def _on_leader_elected(self, _: ops.EventBase) -> None:
         """Handle the leader-elected event."""
         self._secret_key.initialize()
-        self.restart()
+        self._reconcile()
 
     def _on_peers_relation_changed(self, _: ops.RelationEvent) -> None:
         """Handle the peers-relation-changed event."""
-        self.restart()
+        self._reconcile()
 
     def _on_peers_relation_departed(self, _: ops.HookEvent) -> None:
         """Handle the peers-relation-departed event."""
-        self.restart()
+        self._reconcile()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
