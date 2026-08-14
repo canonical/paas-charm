@@ -141,8 +141,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
 
         self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
-        self.framework.observe(self.on.leader_elected, self._on_leader_elected)
+        self.framework.observe(self.on.leader_elected, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
+        self.framework.observe(
+            self.on.peers_relation_created,
+            self._reconcile_without_migrations,
+        )
         self.framework.observe(
             self.on.peers_relation_changed,
             self._reconcile_without_migrations,
@@ -510,11 +514,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._reconcile()
         self._reconcile()
 
-    def _on_leader_elected(self, _: ops.EventBase) -> None:
-        """Create the application secret key after leadership is acquired."""
-        self._secret_key.initialize()
-        self._reconcile()
-
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
 
@@ -660,6 +659,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             rerun_migrations: whether it is necessary to run the migrations again.
         """
         try:
+            if self.unit.is_leader() and not self._secret_key.is_ready:
+                self._secret_key.initialize()
             if not self.is_ready():
                 return
 

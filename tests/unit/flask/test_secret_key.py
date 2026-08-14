@@ -6,10 +6,8 @@
 import pytest
 
 from .constants import DEFAULT_LAYER
-from .constants import DEFAULT_LAYER
 
 
-def test_secret_key_created_on_leader_elected(harness, container_name):
 def test_secret_key_created_on_leader_elected(harness, container_name):
     """
     arrange: A leader Flask charm.
@@ -17,7 +15,6 @@ def test_secret_key_created_on_leader_elected(harness, container_name):
     assert: An application-owned secret key is created and readable.
     """
     harness.set_leader(True)
-    harness.model.unit.get_container(container_name).add_layer("a_layer", DEFAULT_LAYER)
     harness.model.unit.get_container(container_name).add_layer("a_layer", DEFAULT_LAYER)
     harness.begin_with_initial_hooks()
 
@@ -98,13 +95,14 @@ def test_peers_not_related(harness):
     assert harness.charm._peers.get_peer_unit_fqdns() is None
 
 
-def test_peer_unit_fqdns(harness):
+def test_peer_unit_fqdns(harness, container_name):
     """
     arrange: A Flask charm with two peer units.
     act: Read peer unit FQDNs.
     assert: The peer FQDNs are returned in unit-name order.
     """
     harness.set_model_name("test-model")
+    harness.model.unit.get_container(container_name).add_layer("a_layer", DEFAULT_LAYER)
     harness.begin()
     relation_id = harness.add_relation("peers", harness.charm.app.name)
     harness.add_relation_unit(relation_id, f"{harness.charm.app.name}/2")
