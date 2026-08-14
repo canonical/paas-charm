@@ -105,8 +105,6 @@ class ScrapeConfig(BaseModel):
     job_name: str = Field(description="Job name assigned to scraped metrics")
     metrics_path: str = Field(
         default="/metrics",
-        min_length=1,
-        pattern=r"^/",
         description="HTTP resource path on which to fetch metrics",
     )
     static_configs: typing.List[StaticConfig] = Field(
@@ -193,8 +191,6 @@ class PaasConfig(BaseModel):
     metrics_path: str = Field(
         default="/metrics",
         alias="metrics-path",
-        min_length=1,
-        pattern=r"^/.+",
         description="HTTP resource path on which the application serves metrics.",
     )
 

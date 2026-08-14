@@ -133,12 +133,6 @@ class TestPaasConfig:
         with pytest.raises(ValidationError):
             PaasConfig.model_validate({field: value})
 
-    @pytest.mark.parametrize("value", ["", "/", "metrics"])
-    def test_invalid_metrics_path_rejected(self, value):
-        """Test that the workload metrics path is absolute."""
-        with pytest.raises(ValidationError):
-            PaasConfig.model_validate({"metrics-path": value})
-
 
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""
@@ -355,6 +349,26 @@ class TestScrapeConfig:
         )
         assert scrape_config.job_name == "custom-job"
         assert scrape_config.metrics_path == "/custom/metrics"
+
+    def test_valid_scrape_config_relative_path(self):
+        """Test scrape config metrics path does not require a leading slash."""
+
+        scrape_config = ScrapeConfig(
+            job_name="relative-job",
+            metrics_path="custom/metrics",
+            static_configs=[StaticConfig(targets=["localhost:9090"])],
+        )
+        assert scrape_config.metrics_path == "custom/metrics"
+
+    def test_valid_scrape_config_empty_path(self):
+        """Test scrape config metrics path allows an empty string."""
+
+        scrape_config = ScrapeConfig(
+            job_name="empty-path-job",
+            metrics_path="",
+            static_configs=[StaticConfig(targets=["localhost:9090"])],
+        )
+        assert scrape_config.metrics_path == ""
 
     def test_valid_scrape_config_multiple_static_configs(self):
         """Test valid scrape config with multiple static configs."""
