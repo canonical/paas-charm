@@ -508,6 +508,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._secret_key.rotate()
         event.set_results({"status": "success"})
         self._reconcile()
+        self._reconcile()
 
     def _on_leader_elected(self, _: ops.EventBase) -> None:
         """Create the application secret key after leadership is acquired."""
