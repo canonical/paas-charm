@@ -5,12 +5,11 @@
 
 import os
 import pathlib
-import typing
 
 import pytest
-from ops.testing import Harness
+from ops import testing
 
-from examples.go.charm.src.charm import GoCharm
+from .constants import DEFAULT_LAYER
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -20,14 +19,23 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/go/charm")
 
 
-@pytest.fixture(name="harness")
-def harness_fixture(container_name) -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
-    harness = Harness(GoCharm)
-    harness.set_leader()
-    root = harness.get_filesystem_root(container_name)
-    (root / "app").mkdir(parents=True)
-    harness.set_can_connect(container_name, True)
-
-    yield harness
-    harness.cleanup()
+@pytest.fixture(name="base_state")
+def base_state_fixture():
+    """State with the Go container and secret storage relation."""
+    yield {
+        "leader": True,
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage",
+                local_app_data={"go_secret_key": "test"},
+            )
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                _base_plan=DEFAULT_LAYER,
+            )
+        },
+        "model": testing.Model(name="test-model"),
+    }
