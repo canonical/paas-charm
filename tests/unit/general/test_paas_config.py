@@ -680,13 +680,22 @@ def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
 @pytest.mark.parametrize(
     "charm, state_fixture, service, app_port_var, metrics_port_var",
     [
-        pytest.param(FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", "8000", id="fastapi"),
-        pytest.param(ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", "9464", id="expressjs"),
+        pytest.param(
+            FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", "8000", id="fastapi"
+        ),
+        pytest.param(
+            ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", "9464", id="expressjs"
+        ),
         pytest.param(GoCharm, "go_base_state", "go", "PORT", "8080", id="go"),
     ],
 )
 def test_application_port_override_preserves_default_metrics_endpoint(
-    request, charm: type, state_fixture: str, service: str, app_port_var: str, metrics_port_var: str
+    request,
+    charm: type,
+    state_fixture: str,
+    service: str,
+    app_port_var: str,
+    metrics_port_var: str,
 ) -> None:
     """Test that changing only the application port does not move the metrics endpoint."""
     base_state = request.getfixturevalue(state_fixture)
