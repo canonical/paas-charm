@@ -59,7 +59,7 @@ tracer = trace.get_tracer(__name__)
 # Collect metrics and exposes the /metrics endpoint
 # This may be not appropriate for a production environment, as the metrics
 # may be publicly accessible
-Instrumentator().instrument(app).expose(app)
+# Instrumentator().instrument(app).expose(app)
 
 engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
 

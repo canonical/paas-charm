@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
         ("spring_boot_app", 8080, "/actuator/prometheus"),
         ("expressjs_app", 9464, "/metrics"),
         ("go_app", 8080, "/metrics"),
-        ("fastapi_app", 8000, "/metrics"),
+        ("fastapi_app", 9464, "/metrics"),
     ],
 )
 def test_prometheus_integration(

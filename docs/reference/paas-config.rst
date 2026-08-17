@@ -66,8 +66,9 @@ endpoint. Flask and Django receive framework-prefixed
 ``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive variables
 without framework prefixes. Spring Boot receives native ``management.*`` properties.
 
-Flask and Django default to ``9102`` and ``/metrics``. The other frameworks default to ``8080``
-and ``/metrics``, except Spring Boot, which uses ``8080`` and ``/actuator/prometheus``.
+Flask and Django default to ``9102`` and ``/metrics``. Go default to ``8080``
+and ``/metrics``, Spring Boot, which uses ``8080`` and ``/actuator/prometheus``, and ExpressJS and
+FastAPI default to ``9464`` and ``/metrics``.
 
 The charm publishes a Prometheus scrape job for the resolved ``metrics-port`` and ``metrics-path``.
 Additional scrape jobs can be configured independently under ``prometheus.scrape_configs``. Their
