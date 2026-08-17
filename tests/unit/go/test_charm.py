@@ -6,8 +6,6 @@
 import pytest
 from ops import testing
 
-from examples.go.charm.src.charm import GoCharm
-
 
 @pytest.mark.parametrize(
     "config, env",
@@ -15,10 +13,10 @@ from examples.go.charm.src.charm import GoCharm
         pytest.param(
             {},
             {
-                "APP_PORT": "8080",
+                "PORT": "8080",
                 "APP_BASE_URL": "http://go-k8s.test-model:8080",
-                "APP_METRICS_PORT": "8080",
-                "APP_METRICS_PATH": "/metrics",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -30,10 +28,10 @@ from examples.go.charm.src.charm import GoCharm
                 "app-secret-key": "foobar",
             },
             {
-                "APP_PORT": "8080",
+                "PORT": "8080",
                 "APP_BASE_URL": "http://go-k8s.test-model:8080",
-                "APP_METRICS_PORT": "8080",
-                "APP_METRICS_PATH": "/othermetrics",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -42,7 +40,7 @@ from examples.go.charm.src.charm import GoCharm
         ),
     ],
 )
-def test_go_config(base_state, config: dict, env: dict) -> None:
+def test_go_config(go_context, base_state, config: dict, env: dict) -> None:
     """
     arrange: none
     act: start the go charm and set go-app container to be ready.
@@ -50,8 +48,7 @@ def test_go_config(base_state, config: dict, env: dict) -> None:
     """
     base_state["config"] = config
     state = testing.State(**base_state)
-    context = testing.Context(charm_type=GoCharm)
-    out = context.run(context.on.config_changed(), state)
+    out = go_context.run(go_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
     go_layer = out.get_container("app").plan.services["go"].to_dict()
@@ -63,3 +60,31 @@ def test_go_config(base_state, config: dict, env: dict) -> None:
         "user": "_daemon_",
         "working-dir": "/app",
     }
+
+
+def test_metrics_config(go_context, base_state) -> None:
+    """
+    arrange: Charm with a metrics-endpoint integration
+    act: Start the charm with a config-changed event.
+    assert: The correct port and path for scraping should be in the relation data.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="metrics-endpoint",
+            interface="prometheus_scrape",
+        )
+    )
+    state = testing.State(**base_state)
+
+    out = go_context.run(go_context.on.config_changed(), state)
+
+    metrics_endpoint_relations = out.get_relations("metrics-endpoint")
+    assert len(metrics_endpoint_relations) == 1
+
+    relation_data_unit = metrics_endpoint_relations[0].local_unit_data
+    assert relation_data_unit["prometheus_scrape_unit_address"]
+    assert relation_data_unit["prometheus_scrape_unit_name"] == "go-k8s/0"
+
+    scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
+    assert "/metrics" in scrape_jobs
+    assert "*:8080" in scrape_jobs
