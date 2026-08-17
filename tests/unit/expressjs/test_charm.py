@@ -20,9 +20,9 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
-                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
+                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "test",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -45,16 +45,13 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             {
                 "node-env": "production",
                 "app-secret-key": "foobar",
-                "port": 9000,
-                "metrics-port": 9001,
-                "metrics-path": "/othermetrics",
             },
             {
                 "NODE_ENV": "production",
-                "PORT": "9000",
-                "APP_BASE_URL": "http://expressjs-k8s.test-model:9000",
-                "METRICS_PORT": "9001",
-                "METRICS_PATH": "/othermetrics",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
+                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "foobar",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -105,7 +102,6 @@ def test_metrics_config(base_state) -> None:
     assert: The correct port and path for scraping should be in the relation data.
     """
 
-    base_state["config"] = {"metrics-port": 9999, "metrics-path": "/metricspath"}
     base_state["relations"].append(
         testing.Relation(
             endpoint="metrics-endpoint",
@@ -125,5 +121,5 @@ def test_metrics_config(base_state) -> None:
     assert relation_data_unit["prometheus_scrape_unit_name"] == "expressjs-k8s/0"
 
     scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
-    assert "/metricspath" in scrape_jobs
-    assert "*:9999" in scrape_jobs
+    assert "/metrics" in scrape_jobs
+    assert "*:8080" in scrape_jobs

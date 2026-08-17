@@ -347,6 +347,7 @@ def fastapi_base_state_fixture():
                 },
             )
         },
+        "config": {"non-optional-string": "non-optional-value"},
         "model": testing.Model(name="test-model"),
     }
 
