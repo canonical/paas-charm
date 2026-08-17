@@ -8,6 +8,7 @@ import pathlib
 from secrets import token_hex
 
 import pytest
+import yaml
 from ops import testing
 
 from examples.flask.charm.src.charm import FlaskCharm
@@ -63,7 +64,7 @@ CHARM_STATE_FLASK_CONFIG_TEST_PARAMS = [
         id="debug",
     ),
     pytest.param(
-        {"flask-secret-key": "1234"},
+        {"app-secret-key": "1234"},
         {"FLASK_SECRET_KEY": "1234", "FLASK_PREFERRED_URL_SCHEME": "HTTPS"},
         id="secret-key",
     ),
@@ -101,7 +102,7 @@ def test_charm_state_flask_config(
     "charm_config",
     [
         pytest.param({"flask-env": ""}, id="env"),
-        pytest.param({"flask-secret-key": ""}, id="secret-key"),
+        pytest.param({"app-secret-key": ""}, id="secret-key"),
         pytest.param(
             {"flask-preferred-url-scheme": "tls"},
             id="preferred-url-scheme",
@@ -242,7 +243,7 @@ def test_secret_configuration(flask_base_state):
 
 def test_flask_secret_key_id_no_value(flask_base_state):
     """
-    arrange: Prepare an invalid flask-secret-key-id secret.
+    arrange: Prepare an invalid app-secret-key-id secret.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
@@ -250,7 +251,7 @@ def test_flask_secret_key_id_no_value(flask_base_state):
     key_secret = testing.Secret(owner="app", tracked_content={"wrong-key": "foobar"})
     flask_base_state["secrets"] = [key_secret]
 
-    flask_base_state["config"] = {"flask-secret-key-id": key_secret.id}
+    flask_base_state["config"] = {"app-secret-key-id": key_secret.id}
 
     ctx = testing.Context(FlaskCharm)
     state = testing.State(**flask_base_state)
@@ -262,15 +263,15 @@ def test_flask_secret_key_id_no_value(flask_base_state):
 
 def test_flask_secret_key_id_duplication(flask_base_state):
     """
-    arrange: Provide both the flask-secret-key-id and flask-secret-key configuration.
+    arrange: Provide both the app-secret-key-id and app-secret-key configuration.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
     secret = testing.Secret(tracked_content={"value": "foobar"})
     flask_base_state["secrets"] = [secret]
     flask_base_state["config"] = {
-        "flask-secret-key-id": secret.id,
-        "flask-secret-key": "test",
+        "app-secret-key-id": secret.id,
+        "app-secret-key": "test",
     }
 
     ctx = testing.Context(FlaskCharm)
@@ -279,3 +280,45 @@ def test_flask_secret_key_id_duplication(flask_base_state):
 
     assert isinstance(out.unit_status, testing.BlockedStatus)
     assert "invalid option" in out.unit_status.message
+
+
+@pytest.mark.parametrize("charm_config, expected_env", CHARM_STATE_FLASK_CONFIG_TEST_PARAMS)
+def test_charm_state_paas_config(
+    flask_base_state, modify_paas_config, charm_config: dict, expected_env: dict
+) -> None:
+    """
+    arrange: none
+    act: set flask_* charm configurations.
+    assert: flask_config in the charm state should reflect changes in charm configurations.
+    """
+    flask_base_state["config"] = charm_config
+
+    modify_paas_config(8081, 8082, "/alternative_metrics")
+
+    ctx = testing.Context(FlaskCharm)
+    state = testing.State(**flask_base_state)
+
+    out = ctx.run(ctx.on.config_changed(), state)
+
+    plan = list(out.containers)[0].plan
+    service = plan.services["flask"]
+    for key, value in expected_env.items():
+        assert service.environment.get(key) == value
+
+
+@pytest.fixture(name="modify_paas_config")
+def modify_paas_config_fixture():
+    """Temporarily modify paas-config.yaml and revert to the original after the test."""
+    paas_config_path = PROJECT_ROOT / "examples/flask/charm/paas-config.yaml"
+    original_content = paas_config_path.read_text()
+
+    def _modify(port: int, metrics_port: int, metrics_path: str) -> None:
+        config = yaml.safe_load(original_content)
+        config["port"] = port
+        config["metrics-port"] = metrics_port
+        config["metrics-path"] = metrics_path
+        paas_config_path.write_text(yaml.dump(config))
+
+    yield _modify
+
+    paas_config_path.write_text(original_content)

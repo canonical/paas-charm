@@ -71,15 +71,15 @@ config:
     django-debug:
       description: Whether Django debug mode is enabled.
       type: boolean
-    django-secret-key:
+    app-secret-key:
       description:
         The secret key used for securely signing the session cookie and
         for any other security related needs by your Django application. This configuration
         will set the DJANGO_SECRET_KEY environment variable.
       type: string
-    django-secret-key-id:
+    app-secret-key-id:
       description: >-
-        This configuration is similar to `django-secret-key`, but instead accepts a Juju user secret ID.
+        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual Django secret key.
         To create the secret, run the following command:
         `juju add-secret my-django-secret-key value=<secret-string> && juju grant-secret my-django-secret-key django-k8s`,
