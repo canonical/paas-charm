@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
         ("flask_app", 9102, "/metrics"),
         ("django_app", 9102, "/metrics"),
         ("spring_boot_app", 8080, "/actuator/prometheus"),
-        ("expressjs_app", 8080, "/metrics"),
+        ("expressjs_app", 9464, "/metrics"),
         ("go_app", 8080, "/metrics"),
-        ("fastapi_app", 8080, "/metrics"),
+        ("fastapi_app", 8000, "/metrics"),
     ],
 )
 def test_prometheus_integration(

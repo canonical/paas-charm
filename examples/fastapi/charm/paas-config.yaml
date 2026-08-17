@@ -2,6 +2,6 @@
 # See LICENSE file for licensing details.
 
 framework_logging_format: json
-port: 8080
-metrics-port: 8080
+port: 8000
+metrics-port: 8000
 metrics-path: /metrics

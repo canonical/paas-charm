@@ -438,7 +438,6 @@ class Charm(PaasCharm):
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
-            framework_config_prefix="",
         )
 
     def get_cos_default_dir(self) -> pathlib.Path:
