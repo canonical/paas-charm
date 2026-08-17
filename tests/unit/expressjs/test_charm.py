@@ -51,7 +51,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
                 "PORT": "8080",
                 "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://expressjs-k8s.test-model:9000",
+                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "foobar",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
