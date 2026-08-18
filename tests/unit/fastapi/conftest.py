@@ -3,37 +3,55 @@
 
 """pytest fixtures for the fastapi unit test."""
 
-import os
 import pathlib
-import sys
 import typing
+from unittest import mock
 
 import pytest
-from ops.testing import Harness
+from ops import testing
 
 from examples.fastapi.charm.src.charm import FastAPICharm
+from paas_charm.paas_config import PaasConfig, read_paas_config
+
+from .constants import DEFAULT_LAYER
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
-_TEMPLATES_DIR = PROJECT_ROOT / "src" / "paas_charm" / "templates" / "fastapi"
-
-if str(_TEMPLATES_DIR) not in sys.path:
-    sys.path.insert(0, str(_TEMPLATES_DIR))
+FASTAPI_CHARM_ROOT = PROJECT_ROOT / "examples/fastapi/charm"
 
 
-@pytest.fixture(autouse=True, scope="package")
-def cwd():
-    return os.chdir(PROJECT_ROOT / "examples/fastapi/charm")
+@pytest.fixture(name="fastapi_context")
+def fastapi_context_fixture(
+    request: pytest.FixtureRequest,
+) -> typing.Generator[testing.Context[FastAPICharm], None, None]:
+    """Context rooted at the FastAPI example charm."""
+    paas_config = typing.cast(PaasConfig | None, getattr(request, "param", None))
+    if paas_config is None:
+        paas_config = read_paas_config(FASTAPI_CHARM_ROOT)
+    with (
+        mock.patch("paas_charm.charm.read_paas_config", return_value=paas_config),
+        testing.Context(FastAPICharm, charm_root=FASTAPI_CHARM_ROOT) as context,
+    ):
+        yield context
 
 
-@pytest.fixture(name="harness")
-def harness_fixture(container_name: str) -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
-    harness = Harness(FastAPICharm)
-    harness.set_leader()
-    root = harness.get_filesystem_root(container_name)
-    (root / "app").mkdir(parents=True)
-    harness.set_can_connect(container_name, True)
-    harness.update_config({"non-optional-string": "non-optional-value"})
-
-    yield harness
-    harness.cleanup()
+@pytest.fixture(name="base_state")
+def base_state_fixture():
+    """State with the FastAPI container and secret storage relation."""
+    return {
+        "leader": True,
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage",
+                local_app_data={"fastapi_secret_key": "test"},
+            )
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                _base_plan=DEFAULT_LAYER,
+            )
+        },
+        "model": testing.Model(name="test-model"),
+        "config": {"non-optional-string": "non-optional-value"},
+    }
