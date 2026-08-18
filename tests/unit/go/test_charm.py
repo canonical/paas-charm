@@ -3,13 +3,8 @@
 
 """Go charm unit tests."""
 
-import unittest
-
-import ops
 import pytest
-from ops.testing import Harness
-
-from .constants import DEFAULT_LAYER
+from ops import testing
 
 
 @pytest.mark.parametrize(
@@ -19,9 +14,9 @@ from .constants import DEFAULT_LAYER
             {},
             {
                 "PORT": "8080",
+                "APP_BASE_URL": "http://go-k8s.test-model:8080",
                 "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -34,9 +29,9 @@ from .constants import DEFAULT_LAYER
             },
             {
                 "PORT": "8080",
+                "APP_BASE_URL": "http://go-k8s.test-model:8080",
                 "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://go-k8s.None:8080",
                 "APP_SECRET_KEY": "foobar",
                 "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -45,21 +40,18 @@ from .constants import DEFAULT_LAYER
         ),
     ],
 )
-def test_go_config(harness: Harness, config: dict, env: dict, container_name: str) -> None:
+def test_go_config(go_context, base_state, config: dict, env: dict) -> None:
     """
     arrange: none
     act: start the go charm and set go-app container to be ready.
     assert: go charm should submit the correct go pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
-    harness.charm._secret_key.get_secret_key = unittest.mock.MagicMock(return_value="test")
-    harness.update_config(config)
+    base_state["config"] = config
+    state = testing.State(**base_state)
+    out = go_context.run(go_context.on.config_changed(), state)
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    plan = container.get_plan()
-    go_layer = plan.to_dict()["services"]["go"]
+    assert out.unit_status == testing.ActiveStatus()
+    go_layer = out.get_container("app").plan.services["go"].to_dict()
     assert go_layer == {
         "environment": env,
         "override": "replace",
@@ -70,26 +62,29 @@ def test_go_config(harness: Harness, config: dict, env: dict, container_name: st
     }
 
 
-def test_metrics_config(harness: Harness, container_name: str) -> None:
+def test_metrics_config(go_context, base_state) -> None:
     """
     arrange: Charm with a metrics-endpoint integration
-    act: Start the charm with all initial hooks
+    act: Start the charm with a config-changed event.
     assert: The correct port and path for scraping should be in the relation data.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.add_relation("metrics-endpoint", "prometheus-k8s")
-    harness.begin_with_initial_hooks()
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="metrics-endpoint",
+            interface="prometheus_scrape",
+        )
+    )
+    state = testing.State(**base_state)
 
-    metrics_endpoint_relation = harness.model.relations["metrics-endpoint"]
-    assert len(metrics_endpoint_relation) == 1
-    relation_data = metrics_endpoint_relation[0].data
+    out = go_context.run(go_context.on.config_changed(), state)
 
-    relation_data_unit = relation_data[harness.model.unit]
+    metrics_endpoint_relations = out.get_relations("metrics-endpoint")
+    assert len(metrics_endpoint_relations) == 1
+
+    relation_data_unit = metrics_endpoint_relations[0].local_unit_data
     assert relation_data_unit["prometheus_scrape_unit_address"]
-    assert relation_data_unit["prometheus_scrape_unit_name"] == harness.model.unit.name
+    assert relation_data_unit["prometheus_scrape_unit_name"] == "go-k8s/0"
 
-    relation_data_app = relation_data[harness.model.app]
-    scrape_jobs = relation_data_app["scrape_jobs"]
+    scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
     assert "/metrics" in scrape_jobs
     assert "*:8080" in scrape_jobs

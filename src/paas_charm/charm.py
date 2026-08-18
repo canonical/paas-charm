@@ -547,6 +547,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             True if the charm is ready to start the workload application.
         """
+        self._secret_key.initialize()
         charm_state = self._create_charm_state()
         if not self._container.can_connect():
             logger.info(
@@ -555,7 +556,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False
-        self._secret_key.initialize()
         if not charm_state.is_secret_storage_ready:
             logger.info("application secret key is not initialized")
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
