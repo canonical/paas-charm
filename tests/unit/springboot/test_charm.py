@@ -6,11 +6,10 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
+import json
 
 import pytest
 from ops import testing
-
-from examples.springboot.charm.src.charm import SpringBootCharm
 
 
 @pytest.mark.parametrize(
@@ -94,7 +93,7 @@ from examples.springboot.charm.src.charm import SpringBootCharm
         ),
     ],
 )
-def test_springboot_config(base_state, config: dict, env: dict) -> None:
+def test_springboot_config(springboot_context, base_state, config: dict, env: dict) -> None:
     """
     arrange: set the springboot charm config.
     act: start the springboot charm and set springboot-app container to be ready.
@@ -102,14 +101,11 @@ def test_springboot_config(base_state, config: dict, env: dict) -> None:
     """
     base_state["config"] = config
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
 
-    springboot_layer = list(out.containers)[0].plan.services["spring-boot"].to_dict()
+    springboot_layer = out.get_container("app").plan.services["spring-boot"].to_dict()
     assert springboot_layer == {
         "environment": env,
         "startup": "enabled",
@@ -119,25 +115,23 @@ def test_springboot_config(base_state, config: dict, env: dict) -> None:
 
 
 def test_metrics_config(
+    springboot_context,
     base_state,
 ) -> None:
     """
-    arrange: add prometheus-k8s relation to the base state.
+    arrange: add a Prometheus scrape relation to the base state.
     act: start the springboot charm and set springboot-app container to be ready.
-    assert: prometheus-k8s relation should have the springboot charm unit name.
+    assert: relation data should contain the Spring Boot unit and workload scrape endpoint.
     """
     base_state["relations"].append(
         testing.Relation(
             endpoint="metrics-endpoint",
-            interface="prometheus-k8s",
+            interface="prometheus_scrape",
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
 
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
 
@@ -147,3 +141,9 @@ def test_metrics_config(
     relation_data_unit = metrics_endpoint_relation[0].local_unit_data
     assert relation_data_unit["prometheus_scrape_unit_address"]
     assert relation_data_unit["prometheus_scrape_unit_name"] == "spring-boot-k8s/0"
+    assert json.loads(metrics_endpoint_relation[0].local_app_data["scrape_jobs"]) == [
+        {
+            "metrics_path": "/actuator/prometheus",
+            "static_configs": [{"targets": ["*:8080"]}],
+        }
+    ]
