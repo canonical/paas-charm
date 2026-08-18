@@ -119,6 +119,20 @@ def test_django_config(base_state: dict, container_name: str, config: dict, env:
     )
 
 
+def test_config_changed_initializes_secret_in_same_reconciliation(base_state: dict) -> None:
+    """
+    arrange: Start the Django charm without a pre-existing application secret.
+    act: Emit config-changed.
+    assert: The charm creates the secret and becomes active in the same reconciliation.
+    """
+    state = testing.State(**{**base_state, "secrets": []})
+    context = testing.Context(DjangoCharm)
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+
+
 def test_django_create_super_user(base_state: dict, container_name: str) -> None:
     """
     arrange: Start the Django charm. Mock the Django command (pebble exec) to create a superuser.
