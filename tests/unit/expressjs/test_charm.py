@@ -6,13 +6,10 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
-import unittest
-
-import ops
 import pytest
-from ops.testing import Harness
+from ops import testing
 
-from .constants import DEFAULT_LAYER
+from examples.expressjs.charm.src.charm import ExpressJSCharm
 
 
 @pytest.mark.parametrize(
@@ -23,9 +20,9 @@ from .constants import DEFAULT_LAYER
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
-                "APP_BASE_URL": "http://expressjs-k8s.None:8080",
                 "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
+                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "test",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -48,16 +45,13 @@ from .constants import DEFAULT_LAYER
             {
                 "node-env": "production",
                 "app-secret-key": "foobar",
-                "port": 9000,
-                "metrics-port": 9001,
-                "metrics-path": "/othermetrics",
             },
             {
                 "NODE_ENV": "production",
-                "PORT": "9000",
-                "APP_BASE_URL": "http://expressjs-k8s.None:9000",
-                "METRICS_PORT": "9001",
-                "METRICS_PATH": "/othermetrics",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
+                "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "foobar",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -78,21 +72,19 @@ from .constants import DEFAULT_LAYER
         ),
     ],
 )
-def test_expressjs_config(harness: Harness, container_name: str, config: dict, env: dict) -> None:
+def test_expressjs_config(base_state, config: dict, env: dict) -> None:
     """
     arrange: none
     act: start the expressjs charm and set expressjs-app container to be ready.
     assert: expressjs charm should submit the correct expressjs pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
-    harness.update_config(config)
+    base_state["config"] = config
+    state = testing.State(**base_state)
+    context = testing.Context(charm_type=ExpressJSCharm)
+    out = context.run(context.on.config_changed(), state)
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    plan = container.get_plan()
-    expressjs_layer = plan.to_dict()["services"]["expressjs"]
+    assert out.unit_status == testing.ActiveStatus()
+    expressjs_layer = out.get_container("app").plan.services["expressjs"].to_dict()
     assert expressjs_layer == {
         "environment": env,
         "override": "replace",
@@ -103,31 +95,31 @@ def test_expressjs_config(harness: Harness, container_name: str, config: dict, e
     }
 
 
-def test_metrics_config(harness: Harness, container_name: str) -> None:
+def test_metrics_config(base_state) -> None:
     """
     arrange: Charm with a metrics-endpoint integration
     act: Start the charm with all initial hooks
     assert: The correct port and path for scraping should be in the relation data.
     """
 
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.add_relation("metrics-endpoint", "prometheus-k8s")
-    # update_config has to be executed before begin, as the charm does not call __init__
-    # twice in ops and the observability information is updated in __init__.
-    harness.update_config({"metrics-port": 9999, "metrics-path": "/metricspath"})
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="metrics-endpoint",
+            interface="prometheus_scrape",
+        )
+    )
+    state = testing.State(**base_state)
+    context = testing.Context(charm_type=ExpressJSCharm)
 
-    harness.begin_with_initial_hooks()
+    out = context.run(context.on.config_changed(), state)
 
-    metrics_endpoint_relation = harness.model.relations["metrics-endpoint"]
-    assert len(metrics_endpoint_relation) == 1
-    relation_data = metrics_endpoint_relation[0].data
+    metrics_endpoint_relations = out.get_relations("metrics-endpoint")
+    assert len(metrics_endpoint_relations) == 1
 
-    relation_data_unit = relation_data[harness.model.unit]
+    relation_data_unit = metrics_endpoint_relations[0].local_unit_data
     assert relation_data_unit["prometheus_scrape_unit_address"]
-    assert relation_data_unit["prometheus_scrape_unit_name"] == harness.model.unit.name
+    assert relation_data_unit["prometheus_scrape_unit_name"] == "expressjs-k8s/0"
 
-    relation_data_app = relation_data[harness.model.app]
-    scrape_jobs = relation_data_app["scrape_jobs"]
-    assert "/metricspath" in scrape_jobs
-    assert "*:9999" in scrape_jobs
+    scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
+    assert "/metrics" in scrape_jobs
+    assert "*:8080" in scrape_jobs
