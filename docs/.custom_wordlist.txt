@@ -13,6 +13,7 @@ CPUs
 Customizable
 customizable
 deployable
+databag
 Disposability
 downscaled
 entrypoint
