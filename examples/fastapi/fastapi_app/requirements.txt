@@ -6,11 +6,11 @@ psycopg2-binary==2.9.12
 opentelemetry-api==1.42.1
 opentelemetry-sdk==1.42.1
 opentelemetry-instrumentation-fastapi==0.63b1
+opentelemetry-exporter-prometheus==0.63b1
 opentelemetry-exporter-otlp==1.42.1
 opentelemetry-exporter-otlp-proto-http==1.42.1
 fastapi-mail==1.6.4
 openfga_sdk==0.10.3
-prometheus-fastapi-instrumentator==8.0.0
 Authlib==1.7.2
 httpx==0.28.1
 itsdangerous==2.2.0
