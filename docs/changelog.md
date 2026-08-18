@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   upgrade a fresh application secret key is generated, so users of session-signing
   frameworks (Flask/Django) must log in again. Use a `type: secret` config option
   for user-provided secrets.
+* feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
+  and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
+  defaults to workloads.
+* feat: Support additional Prometheus jobs through `prometheus.scrape_configs` while preserving
+  framework metrics scraping.
+* breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
+  `app-secret-key-id` while preserving their framework-prefixed workload variables.
 * fix: Use the charm application name for the OpenFGA store name.
 
 ## 1.12.0 - 2026-07-03

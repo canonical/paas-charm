@@ -43,6 +43,8 @@ from paas_charm.charm_state import CharmState, IntegrationsState
             {
                 "APP_SECRET_KEY": "foobar",
                 "APP_BASE_URL": "https://paas.example.com",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "HTTP_PROXY": "http://proxy.test",
                 "HTTPS_PROXY": "http://proxy.test",
                 "NO_PROXY": "127.0.0.1,localhost,::1",
@@ -67,6 +69,8 @@ from paas_charm.charm_state import CharmState, IntegrationsState
             {
                 "APP_SECRET_KEY": "foobar",
                 "APP_BASE_URL": "https://paas.example.com",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "HTTP_PROXY": "http://squid.internal:3128",
                 "HTTPS_PROXY": "http://squid.internal:3128",
                 "NO_PROXY": "127.0.0.1,localhost,::1",
