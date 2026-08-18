@@ -7,7 +7,7 @@ concurrency:
 
 jobs:
   rtd-docs-checks:
-    uses: canonical/operator-workflows/.github/workflows/docs_rtd.yaml@df449f1e3d1b8babbe9df48bbebcff1e58c9fda9
+    uses: canonical/operator-workflows/.github/workflows/docs_rtd.yaml@72ba44455ad0ba7ec1c51027d5360357d1925733
     secrets: inherit
     with:
       python-version: '3.12'
