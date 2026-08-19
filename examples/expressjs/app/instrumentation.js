@@ -2,7 +2,6 @@
  * Copyright 2025 Canonical Ltd.
  * See LICENSE file for licensing details.
  */
-
 const { NodeSDK } = require("@opentelemetry/sdk-node");
 const {
   OTLPTraceExporter,
@@ -22,7 +21,20 @@ const metricsExporter = new PrometheusExporter({
 const sdk = new NodeSDK({
   metricReader: metricsExporter,
   traceExporter: new OTLPTraceExporter(),
+  metricReader: prometheusExporter, // Add the configured exporter here
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
-sdk.start();
+// Initialize the SDK
+sdk.start()
+  .then(() => console.log(`Tracing initialized. Metrics exposed on port ${metricsPort} at ${metricsPath}`))
+  .catch((error) => console.log('Error initializing tracing', error));
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  sdk.shutdown()
+    .then(() => console.log('Tracing terminated'))
+    .catch((error) => console.log('Error terminating tracing', error))
+    .finally(() => process.exit(0));
+});
+
