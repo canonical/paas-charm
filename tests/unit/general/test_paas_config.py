@@ -684,7 +684,7 @@ def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
             FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", "8000", id="fastapi"
         ),
         pytest.param(
-            ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", "9464", id="expressjs"
+            ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", "9090", id="expressjs"
         ),
         pytest.param(GoCharm, "go_base_state", "go", "PORT", "8080", id="go"),
     ],
@@ -737,7 +737,7 @@ def test_application_port_override_preserves_default_metrics_endpoint(
             ExpressJSCharm,
             "expressjs_base_state",
             "expressjs",
-            {"METRICS_PORT": "9464", "METRICS_PATH": "/metrics"},
+            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
             id="expressjs",
         ),
         pytest.param(
@@ -798,7 +798,7 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
         "flask": ("9102", "/metrics"),
         "django": ("9102", "/metrics"),
         "fastapi": ("8000", "/metrics"),
-        "expressjs": ("9464", "/metrics"),
+        "expressjs": ("8080", "/metrics"),
         "go": ("8080", "/metrics"),
         "spring-boot": ("8080", "/actuator/prometheus"),
     }[service]

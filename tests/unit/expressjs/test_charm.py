@@ -20,7 +20,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
-                "METRICS_PORT": "9464",
+                "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "test",
@@ -49,7 +49,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             {
                 "NODE_ENV": "production",
                 "PORT": "8080",
-                "METRICS_PORT": "9464",
+                "METRICS_PORT": "8080",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
                 "APP_SECRET_KEY": "foobar",
@@ -122,4 +122,4 @@ def test_metrics_config(base_state) -> None:
 
     scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
     assert "/metrics" in scrape_jobs
-    assert "*:9464" in scrape_jobs
+    assert "*:8080" in scrape_jobs
