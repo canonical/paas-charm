@@ -39,11 +39,15 @@ def base_state_fixture():
     """State with the FastAPI container and secret storage relation."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"fastapi_secret_key": "test"},
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="fastapi-secret-key",
+                owner="app",
             )
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
         ],
         "containers": {
             testing.Container(
