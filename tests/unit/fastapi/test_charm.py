@@ -3,16 +3,10 @@
 
 """FastAPI charm unit tests."""
 
-# this is a unit test file
-# pylint: disable=protected-access
+import json
 
-import unittest
-
-import ops
 import pytest
-from ops.testing import Harness
-
-from .constants import DEFAULT_LAYER
+from ops import testing
 
 
 @pytest.mark.parametrize(
@@ -29,7 +23,7 @@ from .constants import DEFAULT_LAYER
                 "UVICORN_HOST": "0.0.0.0",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://fastapi-k8s.None:8000",
+                "APP_BASE_URL": "http://fastapi-k8s.test-model:8080",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -57,7 +51,7 @@ from .constants import DEFAULT_LAYER
                 "UVICORN_HOST": "0.0.0.0",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://fastapi-k8s.None:8000",
+                "APP_BASE_URL": "http://fastapi-k8s.test-model:8080",
                 "APP_SECRET_KEY": "foobar",
                 "APP_USER_DEFINED_CONFIG": "userdefined",
                 # pylint: disable=line-too-long
@@ -83,25 +77,32 @@ from .constants import DEFAULT_LAYER
     ],
 )
 def test_fastapi_config(
-    harness: Harness, container_name: str, config: dict, postgresql_relation_data: dict, env: dict
+    fastapi_context,
+    base_state,
+    config: dict,
+    postgresql_relation_data: dict,
+    env: dict,
 ) -> None:
     """
     arrange: prepare the charm optionally with the postgresql relation.
     act: start the fastapi charm update the config options.
     assert: fastapi charm should submit the correct fastapi pebble layer to pebble.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
     if postgresql_relation_data:
-        harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
+        base_state["relations"].append(
+            testing.Relation(
+                endpoint="postgresql",
+                interface="postgresql_client",
+                remote_app_data=postgresql_relation_data,
+            )
+        )
+    base_state["config"].update(config)
+    state = testing.State(**base_state)
 
-    harness.begin_with_initial_hooks()
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="test")
-    harness.update_config(config)
+    state_out = fastapi_context.run(fastapi_context.on.config_changed(), state)
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    plan = container.get_plan()
-    fastapi_layer = plan.to_dict()["services"]["fastapi"]
+    assert state_out.unit_status == testing.ActiveStatus()
+    fastapi_layer = state_out.get_container("app").plan.services["fastapi"].to_dict()
     assert fastapi_layer == {
         "environment": env,
         "override": "replace",
@@ -110,3 +111,32 @@ def test_fastapi_config(
         "user": "_daemon_",
         "working-dir": "/app",
     }
+
+
+def test_metrics_config(fastapi_context, base_state) -> None:
+    """
+    arrange: add a Prometheus scrape relation to the FastAPI state.
+    act: start the charm with a config-changed event.
+    assert: relation data contains the FastAPI unit and configured workload endpoint.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="metrics-endpoint",
+            interface="prometheus_scrape",
+        )
+    )
+    state = testing.State(**base_state)
+
+    state_out = fastapi_context.run(fastapi_context.on.config_changed(), state)
+
+    assert state_out.unit_status == testing.ActiveStatus()
+    metrics_relations = state_out.get_relations("metrics-endpoint")
+    assert len(metrics_relations) == 1
+    assert metrics_relations[0].local_unit_data["prometheus_scrape_unit_address"]
+    assert metrics_relations[0].local_unit_data["prometheus_scrape_unit_name"] == "fastapi-k8s/0"
+    assert json.loads(metrics_relations[0].local_app_data["scrape_jobs"]) == [
+        {
+            "metrics_path": "/metrics",
+            "static_configs": [{"targets": ["*:8080"]}],
+        }
+    ]
