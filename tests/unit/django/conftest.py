@@ -51,13 +51,6 @@ def _base_state(*, with_database: bool) -> dict:
             ),
         ],
         "relations": relations,
-        "secrets": [
-            testing.Secret(
-                tracked_content={"value": "test"},
-                label="django-secret-key",
-                owner="app",
-            )
-        ],
         "containers": {container},
         "model": testing.Model(name="test-model"),
     }
