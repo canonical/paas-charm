@@ -10,8 +10,6 @@
 import pytest
 from ops import testing
 
-from examples.springboot.charm.src.charm import SpringBootCharm
-
 
 @pytest.mark.parametrize(
     "config, env",
@@ -94,7 +92,7 @@ from examples.springboot.charm.src.charm import SpringBootCharm
         ),
     ],
 )
-def test_springboot_config(base_state, config: dict, env: dict) -> None:
+def test_springboot_config(springboot_context, base_state, config: dict, env: dict) -> None:
     """
     arrange: set the springboot charm config.
     act: start the springboot charm and set springboot-app container to be ready.
@@ -102,10 +100,7 @@ def test_springboot_config(base_state, config: dict, env: dict) -> None:
     """
     base_state["config"] = config
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
 
@@ -119,6 +114,7 @@ def test_springboot_config(base_state, config: dict, env: dict) -> None:
 
 
 def test_metrics_config(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -133,11 +129,7 @@ def test_metrics_config(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
 
