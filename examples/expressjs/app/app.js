@@ -10,18 +10,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const promBundle = require("express-prom-bundle");
 const session = require('express-session');
 const { auth, requiresAuth } = require('express-openid-connect');
-
-// Add the options to the prometheus middleware most option are for http_request_duration_seconds histogram metric
-const metricsApp = express();
-const metricsMiddleware = promBundle({
-  autoregister: false,
-  includeMethod: true,
-  metricsApp: metricsApp,
-  metricsPath: process.env.METRICS_PATH || "/metrics",
-});
 
 var indexRouter = require("./routes/index");
 var tableRouter = require("./routes/table");
@@ -30,16 +20,11 @@ var mailRouter = require("./routes/send_mail");
 var envRouter = require("./routes/env");
 var profileRouter = require("./routes/profile");
 
-require("./instrumentation");
-
 var app = express();
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
-
-// add the prometheus middleware to all routes
-app.use(metricsMiddleware);
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -83,8 +68,6 @@ app.get('/login', (req, res) =>
     returnTo: 'profile',
   })
 );
-
-app.metricsApp = metricsApp;
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
