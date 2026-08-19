@@ -3,65 +3,37 @@
 
 """Scenario-style unit tests for FastAPIApp structured logging integration."""
 
-import pathlib
-
 import pytest
-from ops import pebble, testing
+from ops import testing
 
-from examples.fastapi.charm.src.charm import FastAPICharm
-from paas_charm.paas_config import LoggingFormat
-
-from .constants import DEFAULT_LAYER
+from paas_charm.paas_config import LoggingFormat, PaasConfig
 
 _LOG_CONFIG_DIR = "/tmp/fastapi/log_config"
 _HANDLER_FILE = "uvicorn_log_handler.py"
 _CONFIG_FILE = "uvicorn-log-config.json"
 
 
-@pytest.fixture(scope="function", name="base_state")
-def base_state_fixture(container_name: str) -> testing.State:
-    """Return a minimal State with the app container connected and peer relation initialised."""
-    container = testing.Container(
-        name=container_name,
-        can_connect=True,
-        layers={"base": pebble.Layer(DEFAULT_LAYER)},
-        service_statuses={"fastapi": pebble.ServiceStatus.INACTIVE},
-    )
-    peer_rel = testing.PeerRelation("peers")
-    secret = testing.Secret(
-        tracked_content={"value": "test-secret-key"},
-        label="fastapi-secret-key",
-        owner="app",
-    )
-    return testing.State(
-        containers=[container],
-        relations=[peer_rel],
-        secrets=[secret],
-        leader=True,
-        config={"non-optional-string": "test-value"},
-    )
-
-
 @pytest.mark.parametrize(
-    "logging_format, expected, absent",
+    "fastapi_context, expected, absent",
     [
         pytest.param(
-            LoggingFormat.NONE, [], ["UVICORN_LOG_CONFIG", "PYTHONPATH"], id="no-json-logging"
+            PaasConfig(framework_logging_format=LoggingFormat.NONE),
+            [],
+            ["UVICORN_LOG_CONFIG", "PYTHONPATH"],
+            id="no-json-logging",
         ),
         pytest.param(
-            LoggingFormat.JSON,
+            PaasConfig(framework_logging_format=LoggingFormat.JSON),
             ["UVICORN_LOG_CONFIG", "PYTHONPATH"],
             [],
             id="json-logging-enabled",
         ),
     ],
+    indirect=["fastapi_context"],
 )
 def test_fastapi_logging_environment(
-    base_state: testing.State,
-    container_name: str,
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: pathlib.Path,
-    logging_format: LoggingFormat,
+    fastapi_context,
+    base_state,
     expected: list[str],
     absent: list[str],
 ) -> None:
@@ -70,17 +42,14 @@ def test_fastapi_logging_environment(
     act: run pebble-ready.
     assert: UVICORN_LOG_CONFIG / PYTHONPATH are present (or absent) as expected.
     """
-    monkeypatch.chdir(tmp_path)
-    if logging_format != LoggingFormat.NONE:
-        (tmp_path / "paas-config.yaml").write_text(
-            f"framework_logging_format: {logging_format.value}\n", encoding="utf-8"
-        )
+    state = testing.State(**base_state)
+    container = state.get_container("app")
+    state_out = fastapi_context.run(
+        fastapi_context.on.pebble_ready(container=container),
+        state,
+    )
 
-    ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(container_name)
-    state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
-
-    plan = state_out.get_container(container_name).plan
+    plan = state_out.get_container("app").plan
     env = plan.services["fastapi"].environment if plan and "fastapi" in plan.services else {}
 
     for key in expected:
@@ -88,58 +57,58 @@ def test_fastapi_logging_environment(
     for key in absent:
         assert key not in env, f"Unexpected env var {key!r} present"
 
-    if logging_format == LoggingFormat.JSON:
+    if "UVICORN_LOG_CONFIG" in expected:
         assert env["UVICORN_LOG_CONFIG"] == f"{_LOG_CONFIG_DIR}/{_CONFIG_FILE}"
         assert env["PYTHONPATH"].startswith(_LOG_CONFIG_DIR)
 
 
 def test_fastapi_json_logging_files_pushed(
-    base_state: testing.State,
-    container_name: str,
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: pathlib.Path,
+    fastapi_context,
+    base_state,
 ) -> None:
     """
-    arrange: set framework_logging_format=json.
+    arrange: use the real FastAPI paas-config with framework_logging_format=json.
     act: run pebble-ready.
     assert: formatter and log-config files are pushed to /tmp/fastapi/log_config/ in the container.
     """
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "paas-config.yaml").write_text(
-        "framework_logging_format: json\n", encoding="utf-8"
+    state = testing.State(**base_state)
+    container = state.get_container("app")
+    state_out = fastapi_context.run(
+        fastapi_context.on.pebble_ready(container=container),
+        state,
     )
 
-    ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(container_name)
-    state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
-
-    container_out = state_out.get_container(container_name)
-    fs = container_out.get_filesystem(ctx)
+    container_out = state_out.get_container("app")
+    fs = container_out.get_filesystem(fastapi_context)
     assert (
         fs / _LOG_CONFIG_DIR.lstrip("/") / _HANDLER_FILE
     ).exists(), f"{_HANDLER_FILE} not pushed"
     assert (fs / _LOG_CONFIG_DIR.lstrip("/") / _CONFIG_FILE).exists(), f"{_CONFIG_FILE} not pushed"
 
 
+@pytest.mark.parametrize(
+    "fastapi_context",
+    [PaasConfig(framework_logging_format=LoggingFormat.NONE)],
+    indirect=True,
+)
 def test_fastapi_no_files_pushed_without_json_logging(
-    base_state: testing.State,
-    container_name: str,
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: pathlib.Path,
+    fastapi_context,
+    base_state,
 ) -> None:
     """
     arrange: no framework_logging_format set (default).
     act: run pebble-ready.
     assert: /tmp/fastapi/log_config/ is not created in the container.
     """
-    monkeypatch.chdir(tmp_path)
+    state = testing.State(**base_state)
+    container = state.get_container("app")
+    state_out = fastapi_context.run(
+        fastapi_context.on.pebble_ready(container=container),
+        state,
+    )
 
-    ctx = testing.Context(FastAPICharm)
-    container = base_state.get_container(container_name)
-    state_out = ctx.run(ctx.on.pebble_ready(container=container), base_state)
-
-    container_out = state_out.get_container(container_name)
-    fs = container_out.get_filesystem(ctx)
+    container_out = state_out.get_container("app")
+    fs = container_out.get_filesystem(fastapi_context)
     assert not (
         fs / _LOG_CONFIG_DIR.lstrip("/")
     ).exists(), "/tmp/fastapi/log_config should not be created"
