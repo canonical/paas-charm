@@ -33,8 +33,9 @@ def test_smtp_integration(
         )
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     smtp_relation = out.get_relations("smtp")
@@ -72,7 +73,7 @@ def test_saml_integration(
     )
     state = testing.State(**base_state)
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     saml_relation = out.get_relations("saml")
@@ -128,8 +129,9 @@ def test_redis_integration(
         )
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     redis_relation = out.get_relations("redis")
@@ -168,8 +170,9 @@ def test_s3_integration(
         testing.Relation(endpoint="s3", interface="s3", remote_app_data=s3_app_data)
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     s3_relation = out.get_relations("s3")
@@ -204,8 +207,9 @@ def test_mongodb_integration(
         )
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     mongodb_relation = out.get_relations("mongodb")
@@ -227,8 +231,9 @@ def test_mysql_integration(
     assert: the springboot charm should have the mysql related env variables.
     """
     state = testing.State(**mysql_base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     mysql_relation = out.get_relations("mysql")
@@ -263,8 +268,9 @@ def test_openfga_integration(
         )
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     openfga_relation = out.get_relations("openfga")
@@ -303,8 +309,9 @@ def test_rabbitmq_integration(
         )
     )
     state = testing.State(**base_state)
+
     out = springboot_context.run(springboot_context.on.config_changed(), state)
-    environment = list(out.containers)[0].plan.services["spring-boot"].environment
+    environment = out.get_container("app").plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
     rabbitmq_relation = out.get_relations("rabbitmq")
