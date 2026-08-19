@@ -23,7 +23,7 @@ from ops import testing
                 "UVICORN_HOST": "0.0.0.0",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://fastapi-k8s.test-model:8080",
+                "APP_BASE_URL": "http://fastapi-k8s.test-model:8000",
                 "APP_SECRET_KEY": "test",
                 "APP_OIDC_REDIRECT_PATH": "/callback",
                 "APP_OIDC_SCOPES": "openid profile email",
@@ -51,7 +51,7 @@ from ops import testing
                 "UVICORN_HOST": "0.0.0.0",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
-                "APP_BASE_URL": "http://fastapi-k8s.test-model:8080",
+                "APP_BASE_URL": "http://fastapi-k8s.test-model:8000",
                 "APP_SECRET_KEY": "foobar",
                 "APP_USER_DEFINED_CONFIG": "userdefined",
                 # pylint: disable=line-too-long
@@ -137,6 +137,6 @@ def test_metrics_config(fastapi_context, base_state) -> None:
     assert json.loads(metrics_relations[0].local_app_data["scrape_jobs"]) == [
         {
             "metrics_path": "/metrics",
-            "static_configs": [{"targets": ["*:8080"]}],
+            "static_configs": [{"targets": ["*:9464"]}],
         }
     ]
