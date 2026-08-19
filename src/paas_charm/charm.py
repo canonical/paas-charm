@@ -521,7 +521,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._secret_key.rotate()
         event.set_results({"status": "success"})
         self._reconcile()
-        self._reconcile()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.

@@ -14,7 +14,6 @@ Customizable
 customizable
 databag
 deployable
-databag
 Disposability
 downscaled
 entrypoint

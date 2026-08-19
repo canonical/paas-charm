@@ -15,9 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and store the auto-generated application secret key in a Juju application-owned
   secret instead of the peer relation databag. The peer relation is now used only
   for peer coordination (such as `PEER_FQDNS`). This is a breaking change: on
-  upgrade a fresh application secret key is generated, so users of session-signing
-  frameworks (Flask/Django) must log in again. Use a `type: secret` config option
-  for user-provided secrets.
+  upgrade a fresh application secret key is generated. Applications that use this
+  key for session signing (including Flask, Django, FastAPI, ExpressJS, and Spring
+  Boot) may invalidate existing sessions. Use a `type: secret` config option for
+  user-provided secrets.
 * feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
   and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
   defaults to workloads.
