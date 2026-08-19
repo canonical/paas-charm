@@ -18,6 +18,7 @@ var http = require('http');
  */
 
 var port = normalizePort(process.env.PORT || '3000');
+var metricsPort = normalizePort(process.env.METRICS_PORT || '9464');
 app.set('port', port);
 
 /**
@@ -25,14 +26,21 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+var metricsServer = http.createServer(app.metricsApp);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
 server.listen(port);
-server.on('error', onError);
+server.on('error', function(error) {
+  onError(error, port);
+});
 server.on('listening', onListening);
+metricsServer.listen(metricsPort);
+metricsServer.on('error', function(error) {
+  onError(error, metricsPort);
+});
 
 /**
  * Normalize a port into a number, string, or false.
@@ -58,14 +66,14 @@ function normalizePort(val) {
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+function onError(error, listeningPort) {
   if (error.syscall !== 'listen') {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof listeningPort === 'string'
+    ? 'Pipe ' + listeningPort
+    : 'Port ' + listeningPort;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {

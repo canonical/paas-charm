@@ -15,8 +15,12 @@ const session = require('express-session');
 const { auth, requiresAuth } = require('express-openid-connect');
 
 // Add the options to the prometheus middleware most option are for http_request_duration_seconds histogram metric
+const metricsApp = express();
 const metricsMiddleware = promBundle({
+  autoregister: false,
   includeMethod: true,
+  metricsApp: metricsApp,
+  metricsPath: process.env.METRICS_PATH || "/metrics",
 });
 
 var indexRouter = require("./routes/index");
@@ -80,6 +84,7 @@ app.get('/login', (req, res) =>
   })
 );
 
+app.metricsApp = metricsApp;
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

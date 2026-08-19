@@ -18,7 +18,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             {},
             {
                 "PORT": "8080",
-                "METRICS_PORT": "8080",
+                "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "NODE_ENV": "production",
             },
@@ -31,7 +31,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
             },
             {
                 "PORT": "8080",
-                "METRICS_PORT": "8080",
+                "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "NODE_ENV": "production",
                 "APP_SECRET_KEY": "notfoobar",
