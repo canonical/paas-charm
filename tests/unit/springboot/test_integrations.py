@@ -8,10 +8,9 @@
 
 from ops import testing
 
-from examples.springboot.charm.src.charm import SpringBootCharm
-
 
 def test_smtp_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -34,11 +33,7 @@ def test_smtp_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -54,6 +49,7 @@ def test_smtp_integration(
 
 
 def test_saml_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -75,10 +71,7 @@ def test_saml_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -110,6 +103,7 @@ def test_saml_integration(
 
 
 def test_redis_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -134,11 +128,7 @@ def test_redis_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -159,6 +149,7 @@ def test_redis_integration(
 
 
 def test_s3_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -177,11 +168,7 @@ def test_s3_integration(
         testing.Relation(endpoint="s3", interface="s3", remote_app_data=s3_app_data)
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -196,6 +183,7 @@ def test_s3_integration(
 
 
 def test_mongodb_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -216,11 +204,7 @@ def test_mongodb_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -234,6 +218,7 @@ def test_mongodb_integration(
 
 
 def test_mysql_integration(
+    springboot_context,
     mysql_base_state,
 ) -> None:
     """
@@ -242,11 +227,7 @@ def test_mysql_integration(
     assert: the springboot charm should have the mysql related env variables.
     """
     state = testing.State(**mysql_base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -261,6 +242,7 @@ def test_mysql_integration(
 
 
 def test_openfga_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -281,11 +263,7 @@ def test_openfga_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
@@ -299,6 +277,7 @@ def test_openfga_integration(
 
 
 def test_rabbitmq_integration(
+    springboot_context,
     base_state,
 ) -> None:
     """
@@ -324,11 +303,7 @@ def test_rabbitmq_integration(
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=SpringBootCharm,
-    )
-
-    out = context.run(context.on.config_changed(), state)
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert out.unit_status == testing.ActiveStatus()
 
