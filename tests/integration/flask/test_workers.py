@@ -17,27 +17,27 @@ from tests.integration.types import App
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="module", name="redis_k8s_app")
-def redis_k8s_app_fixture(juju: jubilant.Juju):
-    """Deploy Redis k8s charm."""
-    redis_app_name = "redis-k8s"
-    if not juju.status().apps.get(redis_app_name):
-        juju.deploy(redis_app_name, channel="edge")
-    juju.wait(lambda status: status.apps[redis_app_name].is_active)
-    return App(redis_app_name)
+@pytest.fixture(scope="module", name="valkey_app")
+def valkey_app_fixture(juju: jubilant.Juju):
+    """Deploy the Valkey charm."""
+    valkey_app_name = "valkey"
+    if not juju.status().apps.get(valkey_app_name):
+        juju.deploy(valkey_app_name, channel="9/edge", trust=True)
+    juju.wait(lambda status: status.apps[valkey_app_name].is_active)
+    return App(valkey_app_name)
 
 
 @pytest.fixture
-def integrate_redis_k8s_flask(juju: jubilant.Juju, flask_app: App, redis_k8s_app: App):
-    """Integrate redis_k8s with flask apps."""
+def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App):
+    """Integrate Valkey with Flask apps."""
     try:
-        juju.integrate(flask_app.name, redis_k8s_app.name)
+        juju.integrate(flask_app.name, valkey_app.name)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: status.apps[redis_k8s_app.name].is_active, timeout=10 * 60)
+    juju.wait(lambda status: status.apps[valkey_app.name].is_active, timeout=10 * 60)
     yield
-    juju.remove_relation(flask_app.name, f"{redis_k8s_app.name}:redis")
+    juju.remove_relation(flask_app.name, valkey_app.name)
     juju.wait(lambda status: status.apps[flask_app.name].is_active, timeout=10 * 60)
 
 
@@ -45,7 +45,7 @@ def integrate_redis_k8s_flask(juju: jubilant.Juju, flask_app: App, redis_k8s_app
     "num_units",
     [1, 3],
 )
-@pytest.mark.usefixtures("integrate_redis_k8s_flask")
+@pytest.mark.usefixtures("integrate_valkey_flask")
 def test_workers_and_scheduler_services(
     juju: jubilant.Juju,
     flask_app: App,
@@ -53,13 +53,13 @@ def test_workers_and_scheduler_services(
     num_units: int,
 ):
     """
-    arrange: Flask and redis deployed and integrated.
+    arrange: Flask and Valkey deployed and integrated.
     act: Scale the app to the desired number of units.
     assert: There should be only one scheduler and as many workers as units. That will
             be checked because the scheduler is constantly sending tasks with its hostname
             to the workers, and the workers will put its own hostname and the schedulers
-            hostname in Redis sets. Those sets are checked through the Flask app,
-            that queries Redis.
+            hostname in Valkey sets. Those sets are checked through the Flask app,
+            that queries Valkey.
     """
     for n in range(1, num_units):
         juju.add_unit(flask_app.name)
@@ -72,7 +72,7 @@ def test_workers_and_scheduler_services(
     def check_correct_celery_stats(num_schedulers, num_workers):
         """Check that the expected number of workers and schedulers is right."""
         response = session_with_retry.get(
-            f"http://{flask_unit_ip}:8000/redis/celery_stats", timeout=5
+            f"http://{flask_unit_ip}:8000/valkey/celery_stats", timeout=5
         )
         assert response.status_code == 200
         data = response.json()
@@ -86,7 +86,7 @@ def test_workers_and_scheduler_services(
 
     # clean the current celery stats
     response = session_with_retry.get(
-        f"http://{flask_unit_ip}:8000/redis/clear_celery_stats", timeout=5
+        f"http://{flask_unit_ip}:8000/valkey/clear_celery_stats", timeout=5
     )
     assert response.status_code == 200
     assert "SUCCESS" == response.text
