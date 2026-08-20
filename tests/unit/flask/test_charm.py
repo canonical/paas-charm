@@ -133,16 +133,15 @@ def test_ingress(harness: Harness, container_name: str):
 
 def test_integrations_wiring(harness: Harness, container_name: str):
     """
-    arrange: Prepare a Redis a database, a S3 integration and a SAML integration
+    arrange: Prepare a Valkey a database, a S3 integration and a SAML integration
     act: Start the flask charm and set app container to be ready.
     assert: The flask service should have environment variables in its plan
         for each of the integrations.
     """
-    redis_relation_data = {
-        "hostname": "10.1.88.132",
-        "port": "6379",
+    valkey_relation_data = {
+        "requests": '[{"resource": "*", "request-id": "a2b7f513afa07883", "endpoints": "valkey://10.1.88.132:6379", "salt": "Uh39g15ZlrWSwJtk"}]',
     }
-    harness.add_relation("redis", "redis-k8s", unit_data=redis_relation_data)
+    harness.add_relation("valkey", "valkey", app_data=valkey_relation_data)
     postgresql_relation_data = {
         "database": "test-database",
         "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
@@ -166,7 +165,7 @@ def test_integrations_wiring(harness: Harness, container_name: str):
     assert harness.model.unit.status == ops.ActiveStatus()
     service_env = container.get_plan().services["flask"].environment
     assert "MYSQL_DB_CONNECT_STRING" not in service_env
-    assert service_env["REDIS_DB_CONNECT_STRING"] == "redis://10.1.88.132:6379"
+    assert service_env["VALKEY_DB_CONNECT_STRING"] == "valkey://10.1.88.132:6379"
     assert (
         service_env["POSTGRESQL_DB_CONNECT_STRING"]
         == "postgresql://test-username:test-password@test-postgresql:5432/test-database"
@@ -286,10 +285,10 @@ def test_rabbitmq_remove_integration(harness: Harness, container_name: str):
     "integrate_to,required_integrations",
     [
         pytest.param(["saml"], ["s3"], id="s3 fails"),
-        pytest.param(["redis", "s3"], ["mysql", "postgresql"], id="postgresql and mysql fail"),
+        pytest.param(["valkey", "s3"], ["mysql", "postgresql"], id="postgresql and mysql fail"),
         pytest.param(
             [],
-            ["mysql", "postgresql", "mongodb", "s3", "redis", "saml", "rabbitmq"],
+            ["mysql", "postgresql", "mongodb", "s3", "valkey", "saml", "rabbitmq"],
             id="all fail",
         ),
     ],

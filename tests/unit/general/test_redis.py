@@ -1,11 +1,11 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Redis charm integration unit tests."""
+"""Valkey charm integration unit tests."""
 
 import pytest
 
-from paas_charm.redis import InvalidRedisRelationDataError, PaaSRedisRelationData
+from paas_charm.valkey import InvalidValkeyRelationDataError, PaaSValkeyRelationData
 
 
 @pytest.mark.parametrize(
@@ -18,60 +18,60 @@ from paas_charm.redis import InvalidRedisRelationDataError, PaaSRedisRelationDat
             id="none relation data",
         ),
         pytest.param(
-            {"hostname": "redis.url", "port": "8888"},
+            {"hostname": "valkey.url", "port": "8888"},
             {},
-            PaaSRedisRelationData(url="redis://redis.url:8888"),
+            PaaSValkeyRelationData(url="valkey://valkey.url:8888"),
             id="minimum url data",
         ),
         pytest.param(
-            {"hostname": "user:pass@redis.url", "port": "8888"},
+            {"hostname": "user:pass@valkey.url", "port": "8888"},
             {},
-            PaaSRedisRelationData(url="redis://user:pass@redis.url:8888"),
+            PaaSValkeyRelationData(url="valkey://user:pass@valkey.url:8888"),
             id="all url data",
         ),
         pytest.param(
-            {"hostname": "user:pass@redis.url", "port": "8888"},
-            {"leader-host": "leader:host@redis.url"},
-            PaaSRedisRelationData(url="redis://leader:host@redis.url:8888"),
+            {"hostname": "user:pass@valkey.url", "port": "8888"},
+            {"leader-host": "leader:host@valkey.url"},
+            PaaSValkeyRelationData(url="valkey://leader:host@valkey.url:8888"),
             id="all url data with leader host",
         ),
     ],
 )
-def test_paas_redis_requirer_to_relation_data(
+def test_paas_valkey_requirer_to_relation_data(
     flask_harness, unit_relation_data, app_relation_data, expected_relation_data
 ):
     """
-    arrange: given redis relation.
+    arrange: given valkey relation.
     act: when to_relation_data is called.
     assert: expected relation data is returned.
     """
     flask_harness.begin()
     # Define some relations.
-    rel_id = flask_harness.add_relation("redis", "redis")
-    flask_harness.add_relation_unit(rel_id, "redis/0")
+    rel_id = flask_harness.add_relation("valkey", "valkey")
+    flask_harness.add_relation_unit(rel_id, "valkey/0")
     flask_harness.update_relation_data(
         rel_id,
-        "redis/0",
+        "valkey/0",
         unit_relation_data,
     )
     flask_harness.update_relation_data(
         rel_id,
-        "redis",
+        "valkey",
         app_relation_data,
     )
 
-    assert flask_harness.charm._redis.to_relation_data() == expected_relation_data
+    assert flask_harness.charm._valkey.to_relation_data() == expected_relation_data
 
 
-def test_paas_redis_url():
+def test_paas_valkey_url():
     """
-    arrange: given redis relation data.
+    arrange: given valkey relation data.
     act: when url is stringified.
     assert: expected URL string is returned.
     """
-    relation_data = PaaSRedisRelationData(url="redis://user:password@redis.url")
+    relation_data = PaaSValkeyRelationData(url="valkey://user:password@valkey.url")
 
-    assert str(relation_data.url) == "redis://user:password@redis.url"
+    assert str(relation_data.url) == "valkey://user:password@valkey.url"
 
 
 @pytest.mark.parametrize(
@@ -98,28 +98,28 @@ def test_paas_redis_url():
         ),
     ],
 )
-def test_redis_url_invalid(flask_harness, unit_relation_data, app_relation_data):
+def test_valkey_url_invalid(flask_harness, unit_relation_data, app_relation_data):
     """
-    arrange: given invalid redis relation data.
+    arrange: given invalid valkey relation data.
     act: when to_relation_data is called.
-    assert: InvalidRedisRelationDataError is raised.
+    assert: InvalidValkeyRelationDataError is raised.
     """
     # Define some relations.
-    rel_id = flask_harness.add_relation("redis", "redis")
-    flask_harness.add_relation_unit(rel_id, "redis/0")
+    rel_id = flask_harness.add_relation("valkey", "valkey")
+    flask_harness.add_relation_unit(rel_id, "valkey/0")
     flask_harness.update_relation_data(
         rel_id,
-        "redis/0",
+        "valkey/0",
         unit_relation_data,
     )
     flask_harness.update_relation_data(
         rel_id,
-        "redis",
+        "valkey",
         app_relation_data,
     )
     flask_harness.begin()
 
-    with pytest.raises(InvalidRedisRelationDataError) as exc:
-        print(flask_harness.charm._redis.to_relation_data())
+    with pytest.raises(InvalidValkeyRelationDataError) as exc:
+        print(flask_harness.charm._valkey.to_relation_data())
 
-    assert "Invalid PaaSRedisRelationData" in str(exc.value)
+    assert "Invalid PaaSValkeyRelationData" in str(exc.value)

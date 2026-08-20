@@ -5,7 +5,6 @@
 
 package com.canonical.sampleapp.web.rest;
 
-import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,15 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.canonical.sampleapp.domain.ValkeyUser;
 
+import io.valkey.springframework.data.valkey.core.ReactiveValkeyOperations;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/valkey")
 public class ValkeyController {
-    private final ReactiveRedisOperations<String, ValkeyUser> valkeyOps;
+    private final ReactiveValkeyOperations<String, ValkeyUser> valkeyOps;
 
-    ValkeyController(ReactiveRedisOperations<String, ValkeyUser> valkeyOps) {
+    ValkeyController(ReactiveValkeyOperations<String, ValkeyUser> valkeyOps) {
         this.valkeyOps = valkeyOps;
     }
 

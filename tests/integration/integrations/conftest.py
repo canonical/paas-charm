@@ -257,7 +257,7 @@ def mongodb_app_name_fixture() -> str:
 
 @pytest.fixture(scope="module", name="mongodb_app")
 def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
-    """Deploy and set up Redis."""
+    """Deploy and set up MongoDB."""
     juju.deploy(
         mongodb_app_name,
         channel="6/beta",
@@ -275,7 +275,7 @@ def mysql_app_name_fixture() -> str:
 
 @pytest.fixture(scope="module", name="mysql_app")
 def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
-    """Deploy and set up Redis."""
+    """Deploy and set up MySQL."""
     if not juju.status().apps.get(mysql_app_name):
         juju.deploy(
             mysql_app_name,

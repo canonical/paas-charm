@@ -5,48 +5,31 @@
 
 package com.canonical.sampleapp.config;
 
+import com.canonical.sampleapp.domain.ValkeyUser;
+
+import io.valkey.springframework.data.valkey.connection.ReactiveValkeyConnectionFactory;
+import io.valkey.springframework.data.valkey.core.ReactiveValkeyOperations;
+import io.valkey.springframework.data.valkey.core.ReactiveValkeyTemplate;
+import io.valkey.springframework.data.valkey.serializer.Jackson2JsonValkeySerializer;
+import io.valkey.springframework.data.valkey.serializer.StringValkeySerializer;
+import io.valkey.springframework.data.valkey.serializer.ValkeySerializationContext;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisPassword;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.ReactiveRedisOperations;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import com.canonical.sampleapp.domain.ValkeyUser;
 
 @Configuration
 public class ValkeyConfiguration {
     @Bean
-    ReactiveRedisConnectionFactory valkeyConnectionFactory() {
-        String hostname = System.getenv().getOrDefault("VALKEY_DB_HOSTNAME", "localhost");
-        int port = Integer.parseInt(System.getenv().getOrDefault("VALKEY_DB_PORT", "6379"));
-        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(hostname, port);
-        String username = System.getenv("VALKEY_DB_USERNAME");
-        String password = System.getenv("VALKEY_DB_PASSWORD");
-        if (username != null) {
-            configuration.setUsername(username);
-        }
-        if (password != null) {
-            configuration.setPassword(RedisPassword.of(password));
-        }
-        return new LettuceConnectionFactory(configuration);
-    }
+    ReactiveValkeyOperations<String, ValkeyUser> valkeyOperations(ReactiveValkeyConnectionFactory factory) {
+        Jackson2JsonValkeySerializer<ValkeyUser> serializer = new Jackson2JsonValkeySerializer<>(
+                ValkeyUser.class);
 
-    @Bean
-    ReactiveRedisOperations<String, ValkeyUser> valkeyOperations(ReactiveRedisConnectionFactory factory) {
-        Jackson2JsonRedisSerializer<ValkeyUser> serializer = new Jackson2JsonRedisSerializer<>(ValkeyUser.class);
+        ValkeySerializationContext.ValkeySerializationContextBuilder<String, ValkeyUser> builder = ValkeySerializationContext
+                .newSerializationContext(new StringValkeySerializer());
 
-        RedisSerializationContext.RedisSerializationContextBuilder<String, ValkeyUser> builder = RedisSerializationContext
-                .newSerializationContext(new StringRedisSerializer());
+        ValkeySerializationContext<String, ValkeyUser> context = builder.value(serializer).build();
 
-        RedisSerializationContext<String, ValkeyUser> context = builder.value(serializer).build();
-
-        return new ReactiveRedisTemplate<>(factory, context);
+        return new ReactiveValkeyTemplate<>(factory, context);
     }
 
 }
