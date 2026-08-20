@@ -9,6 +9,8 @@
  * Module dependencies.
  */
 
+require('../instrumentation');
+
 var app = require('../app');
 var debug = require('debug')('app:server');
 var http = require('http');
