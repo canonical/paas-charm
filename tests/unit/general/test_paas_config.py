@@ -678,15 +678,24 @@ def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
 
 
 @pytest.mark.parametrize(
-    "charm, state_fixture, service, app_port_var",
+    "charm, state_fixture, service, app_port_var, metrics_port_var",
     [
-        pytest.param(FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", id="fastapi"),
-        pytest.param(ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", id="expressjs"),
-        pytest.param(GoCharm, "go_base_state", "go", "PORT", id="go"),
+        pytest.param(
+            FastAPICharm, "fastapi_base_state", "fastapi", "UVICORN_PORT", "8000", id="fastapi"
+        ),
+        pytest.param(
+            ExpressJSCharm, "expressjs_base_state", "expressjs", "PORT", "9464", id="expressjs"
+        ),
+        pytest.param(GoCharm, "go_base_state", "go", "PORT", "8080", id="go"),
     ],
 )
 def test_application_port_override_preserves_default_metrics_endpoint(
-    request, charm: type, state_fixture: str, service: str, app_port_var: str
+    request,
+    charm: type,
+    state_fixture: str,
+    service: str,
+    app_port_var: str,
+    metrics_port_var: str,
 ) -> None:
     """Test that changing only the application port does not move the metrics endpoint."""
     base_state = request.getfixturevalue(state_fixture)
@@ -696,7 +705,7 @@ def test_application_port_override_preserves_default_metrics_endpoint(
 
     environment = list(out.containers)[0].plan.services[service].environment
     assert environment[app_port_var] == "9090"
-    assert environment["METRICS_PORT"] == "8080"
+    assert environment["METRICS_PORT"] == metrics_port_var
     assert environment["METRICS_PATH"] == "/metrics"
 
 
@@ -721,14 +730,14 @@ def test_application_port_override_preserves_default_metrics_endpoint(
             FastAPICharm,
             "fastapi_base_state",
             "fastapi",
-            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            {"METRICS_PORT": "8000", "METRICS_PATH": "/metrics"},
             id="fastapi",
         ),
         pytest.param(
             ExpressJSCharm,
             "expressjs_base_state",
             "expressjs",
-            {"METRICS_PORT": "8080", "METRICS_PATH": "/metrics"},
+            {"METRICS_PORT": "9464", "METRICS_PATH": "/metrics"},
             id="expressjs",
         ),
         pytest.param(
@@ -788,8 +797,8 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
     expected_port, expected_path = {
         "flask": ("9102", "/metrics"),
         "django": ("9102", "/metrics"),
-        "fastapi": ("8080", "/metrics"),
-        "expressjs": ("8080", "/metrics"),
+        "fastapi": ("8000", "/metrics"),
+        "expressjs": ("9464", "/metrics"),
         "go": ("8080", "/metrics"),
         "spring-boot": ("8080", "/actuator/prometheus"),
     }[service]
@@ -814,7 +823,7 @@ def test_no_explicit_jobs_publish_framework_job(request) -> None:
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
     assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == [
-        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:8080"]}]}
+        {"metrics_path": "/metrics", "static_configs": [{"targets": ["*:8000"]}]}
     ]
     assert metrics_relation.local_unit_data["prometheus_scrape_unit_address"]
 
