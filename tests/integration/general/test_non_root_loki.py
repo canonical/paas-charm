@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
     [
         pytest.param("flask_non_root_app", 8000, id="Flask non-root"),
         pytest.param("django_non_root_app", 8000, id="Django non-root"),
-        pytest.param("fastapi_non_root_app", 8080, id="FastAPI non-root"),
+        pytest.param("fastapi_non_root_app", 8000, id="FastAPI non-root"),
         pytest.param("go_non_root_app", 8080, id="Go non-root"),
         pytest.param("expressjs_non_root_app", 8080, id="ExpressJS non-root"),
     ],

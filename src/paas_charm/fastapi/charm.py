@@ -28,7 +28,7 @@ class FastAPIConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    uvicorn_port: int = Field(alias="webserver-port", default=8080, gt=0)
+    uvicorn_port: int = Field(alias="webserver-port", default=8000, gt=0)
     uvicorn_host: str = Field(alias="webserver-host", default="0.0.0.0")  # nosec
     web_concurrency: int = Field(alias="webserver-workers", default=1, gt=0)
     uvicorn_log_level: typing.Literal["critical", "error", "warning", "info", "debug", "trace"] = (
@@ -67,7 +67,7 @@ class Charm(PaasCharm):
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
         metrics_port, metrics_path = self._paas_config.metrics_endpoint(
-            default_port=8080, default_path="/metrics"
+            default_port=8000, default_path="/metrics"
         )
         return WorkloadConfig(
             framework=framework_name,
