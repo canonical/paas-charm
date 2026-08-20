@@ -2,5 +2,5 @@
 # See LICENSE file for licensing details.
 
 port: 8080
-metrics-port: 8080
+metrics-port: 9464
 metrics-path: /metrics

@@ -60,7 +60,7 @@ class Charm(PaasCharm):
         base_dir = pathlib.Path("/app")
         framework_config = typing.cast(ExpressJSConfig, self.get_framework_config())
         metrics_port, metrics_path = self._paas_config.metrics_endpoint(
-            default_port=8080, default_path="/metrics"
+            default_port=9464, default_path="/metrics"
         )
         return WorkloadConfig(
             framework=self._framework_name,
@@ -87,5 +87,4 @@ class Charm(PaasCharm):
             charm_state=charm_state,
             workload_config=self._workload_config,
             database_migration=self._database_migration,
-            framework_config_prefix="",
         )

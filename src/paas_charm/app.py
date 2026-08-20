@@ -421,7 +421,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         charm_state: CharmState,
         workload_config: WorkloadConfig,
         database_migration: DatabaseMigration,
-        framework_config_prefix: str = "APP_",
+        framework_config_prefix: str = "",
         configuration_prefix: str = "APP_",
         integrations_prefix: str = "",
     ):

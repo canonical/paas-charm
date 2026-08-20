@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
             "fastapi_non_root_app",
             "fastapi-k8s",
             "table/users",
-            8080,
+            8000,
             id="FastAPI non-root",
         ),
         pytest.param(
