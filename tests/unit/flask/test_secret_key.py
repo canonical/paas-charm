@@ -3,7 +3,11 @@
 
 """Unit tests for application secret-key and peer coordination helpers."""
 
+import unittest.mock
+
 import pytest
+
+from paas_charm.flask import Charm
 
 from .constants import DEFAULT_LAYER
 
@@ -20,6 +24,20 @@ def test_secret_key_created_on_leader_elected(harness, container_name):
 
     assert harness.charm._secret_key.is_ready
     assert harness.charm._secret_key.get_secret_key()
+
+
+def test_leader_elected_does_not_reconcile(harness):
+    """
+    arrange: A running non-leader Flask charm without an application secret key.
+    act: Promote the unit to leader.
+    assert: The key is initialized without reconciling before relation data is ready.
+    """
+    with unittest.mock.patch.object(Charm, "_reconcile") as reconcile:
+        harness.begin()
+        harness.set_leader(True)
+
+    assert harness.charm._secret_key.is_ready
+    reconcile.assert_not_called()
 
 
 def test_secret_key_not_created_by_non_leader(harness):
