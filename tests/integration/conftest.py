@@ -645,34 +645,34 @@ def grafana_app_name_fixture() -> str:
     return "grafana-k8s"
 
 
-@pytest.fixture(scope="module", name="redis_k8s_app")
-def deploy_redis_k8s_jubilant_fixture(juju: jubilant.Juju):
-    """Deploy Redis k8s charm using jubilant."""
-    app_name = "redis-k8s"
+@pytest.fixture(scope="module", name="valkey_app")
+def deploy_valkey_jubilant_fixture(juju: jubilant.Juju):
+    """Deploy the Valkey charm using jubilant."""
+    app_name = "valkey"
     if not juju.status().apps.get(app_name):
-        juju.deploy(app_name, channel="edge")
+        juju.deploy(app_name, channel="9/edge", trust=True)
     juju.wait(lambda status: status.apps[app_name].is_active, error=jubilant.any_blocked)
     return App(app_name)
 
 
-@pytest.fixture(scope="function", name="integrate_redis_k8s_flask")
-def integrate_redis_k8s_flask_fixture(
+@pytest.fixture(scope="function", name="integrate_valkey_flask")
+def integrate_valkey_flask_fixture(
     juju: jubilant.Juju,
     flask_app: App,
-    redis_k8s_app: App,
+    valkey_app: App,
 ):
-    """Integrate redis_k8s with flask apps using jubilant."""
+    """Integrate Valkey with Flask apps using jubilant."""
     try:
-        juju.integrate(flask_app.name, redis_k8s_app.name)
+        juju.integrate(flask_app.name, valkey_app.name)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, redis_k8s_app.name))
+    juju.wait(lambda status: jubilant.all_active(status, flask_app.name, valkey_app.name))
 
     yield
 
     # Teardown - remove relation
-    juju.cli("remove-relation", flask_app.name, redis_k8s_app.name)
+    juju.cli("remove-relation", flask_app.name, valkey_app.name)
     juju.wait(lambda status: status.apps.get(flask_app.name) is not None, timeout=5 * 60)
 
 

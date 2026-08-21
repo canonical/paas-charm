@@ -16,7 +16,6 @@ import psycopg
 import pymongo
 import pymongo.database
 import pymysql
-import redis
 import urllib3
 import valkey
 from authlib.integrations.flask_client import OAuth
@@ -37,7 +36,7 @@ def hostname():
 
 
 def celery_init_app(app: Flask, broker_url: str) -> Celery:
-    """Initialise celery using the redis connection string.
+    """Initialise Celery using the Valkey connection string.
 
     See https://flask.palletsprojects.com/en/3.0.x/patterns/celery/#integrate-celery-with-flask.
     """
@@ -100,10 +99,11 @@ oauth.register(
     jwks_uri=os.getenv("FLASK_OIDC_JWKS_URL"),
 )
 
-broker_url = os.environ.get("REDIS_DB_CONNECT_STRING")
-# Configure Celery only if Redis is configured
+valkey_url = os.environ.get("VALKEY_DB_CONNECT_STRING")
+# Celery uses the Redis transport to communicate with the Valkey-compatible server.
+broker_url = valkey_url.replace("valkey://", "redis://", 1) if valkey_url else None
 celery_app = celery_init_app(app, broker_url)
-redis_client = redis.Redis.from_url(broker_url) if broker_url else None
+valkey_client = valkey.Valkey.from_url(valkey_url) if valkey_url else None
 
 FlaskInstrumentor().instrument_app(app)
 tracer = trace.get_tracer(__name__)
@@ -211,17 +211,17 @@ def scheduled_task(scheduler_hostname):
     """Function to run a schedule task in a worker.
 
     The worker that will run this task will add the scheduler hostname argument
-    to the "schedulers" set in Redis, and the worker's hostname to the "workers"
-    set in Redis.
+    to the "schedulers" set in Valkey, and the worker's hostname to the "workers"
+    set in Valkey.
     """
     worker_hostname = hostname()
     logging.info(
         "scheduler host received %s in worker host %s", scheduler_hostname, worker_hostname
     )
-    redis_client.sadd("schedulers", scheduler_hostname)
-    redis_client.sadd("workers", worker_hostname)
-    logging.info("schedulers: %s", redis_client.smembers("schedulers"))
-    logging.info("workers: %s", redis_client.smembers("workers"))
+    valkey_client.sadd("schedulers", scheduler_hostname)
+    valkey_client.sadd("workers", worker_hostname)
+    logging.info("schedulers: %s", valkey_client.smembers("schedulers"))
+    logging.info("workers: %s", valkey_client.smembers("workers"))
     # The goal is to have all workers busy in all processes.
     # For that it maybe necessary to exhaust all workers, but not to get the pending tasks
     # too big, so all schedulers can manage to run their scheduled tasks.
@@ -275,16 +275,6 @@ def get_mongodb_database() -> pymongo.database.Database | None:
         else:
             return None
     return g.mongodb_db
-
-
-def get_redis_database() -> redis.Redis | None:
-    if "redis_db" not in g:
-        if "REDIS_DB_CONNECT_STRING" in os.environ:
-            uri = os.environ["REDIS_DB_CONNECT_STRING"]
-            g.redis_db = redis.Redis.from_url(uri)
-        else:
-            return None
-    return g.redis_db
 
 
 def get_rabbitmq_connection() -> pika.BlockingConnection | None:
@@ -424,18 +414,6 @@ def mongodb_status():
     return "FAIL", 500
 
 
-@app.route("/redis/status")
-def redis_status():
-    """Redis status endpoint."""
-    if database := get_redis_database():
-        try:
-            database.set("foo", "bar")
-            return "SUCCESS"
-        except redis.exceptions.RedisError:
-            logging.exception("Error querying redis")
-    return "FAIL", 500
-
-
 def get_valkey_database() -> valkey.Valkey | None:
     """Get valkey connection."""
     if "valkey_db" not in g:
@@ -459,29 +437,29 @@ def valkey_status():
     return "FAIL", 500
 
 
-@app.route("/redis/clear_celery_stats")
-def redis_celery_clear_stats():
-    """Reset Redis statistics about workers and schedulers."""
-    if database := get_redis_database():
+@app.route("/valkey/clear_celery_stats")
+def valkey_celery_clear_stats():
+    """Reset Valkey statistics about workers and schedulers."""
+    if database := get_valkey_database():
         try:
             database.delete("workers")
             database.delete("schedulers")
             return "SUCCESS"
-        except redis.exceptions.RedisError:
-            logging.exception("Error querying redis")
+        except valkey.exceptions.ValkeyError:
+            logging.exception("Error querying valkey")
     return "FAIL", 500
 
 
-@app.route("/redis/celery_stats")
-def redis_celery_stats():
-    """Read Redis statistics about workers and schedulers."""
-    if database := get_redis_database():
+@app.route("/valkey/celery_stats")
+def valkey_celery_stats():
+    """Read Valkey statistics about workers and schedulers."""
+    if database := get_valkey_database():
         try:
             worker_set = [str(host) for host in database.smembers("workers")]
             beat_set = [str(host) for host in database.smembers("schedulers")]
             return jsonify({"workers": worker_set, "schedulers": beat_set})
-        except redis.exceptions.RedisError:
-            logging.exception("Error querying redis")
+        except valkey.exceptions.ValkeyError:
+            logging.exception("Error querying valkey")
     return "FAIL", 500
 
 

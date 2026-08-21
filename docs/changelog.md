@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* breaking: Replace Redis integration examples and tests with Valkey, including Spring Data
+  Valkey support in the Spring Boot example.
 * feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
   and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
   defaults to workloads.

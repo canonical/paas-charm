@@ -235,7 +235,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
     [
         pytest.param(
             {},
-            "redis",
+            "valkey",
             [],
             id="0 relation",
         ),
@@ -250,7 +250,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey", "limit": 1},
                     )
                 ),
                 "oauth": RelationMeta(
@@ -259,7 +259,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
+            "valkey",
             [("cache", cache_relation)],
             id="1 relation",
         ),
@@ -274,14 +274,14 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey", "limit": 1},
                     )
                 ),
                 "second_cache": (
                     second_cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="second_cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey", "limit": 1},
                     )
                 ),
                 "oauth": RelationMeta(
@@ -290,7 +290,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
+            "valkey",
             [
                 ("cache", cache_relation),
                 ("second_cache", second_cache_relation),
