@@ -1,89 +1,58 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Flask charm unit tests."""
+"""Flask charm Scenario tests."""
 
-# this is a unit test file
-# pylint: disable=protected-access
-
-# Very similar cases to other frameworks. Disable duplicated checks.
-# pylint: disable=R0801
-
-import unittest.mock
 from secrets import token_hex
 
-import ops
 import pytest
-from ops.pebble import ServiceStatus
-from ops.testing import Harness
-
-from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_charm._gunicorn.workload_config import create_workload_config
-from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState, IntegrationRequirers
-from paas_charm.database_migration import DatabaseMigrationStatus
-from paas_charm.flask import Charm
+from ops import testing
 
 from .constants import (
-    DEFAULT_LAYER,
     INTEGRATIONS_RELATION_DATA,
     SAML_APP_RELATION_DATA_EXAMPLE,
 )
 
 
-def test_flask_pebble_layer(harness: Harness, container_name: str) -> None:
+def _relation(endpoint: str, relation_data: dict) -> testing.Relation:
+    """Build an integration relation from the shared relation data shape."""
+    return testing.Relation(
+        endpoint=endpoint,
+        interface={
+            "postgresql": "postgresql_client",
+            "mysql": "mysql_client",
+            "mongodb": "mongodb_client",
+            "redis": "redis",
+            "s3": "s3",
+            "saml": "saml",
+        }.get(endpoint, endpoint),
+        remote_app_data=relation_data.get("app_data", {}),
+        remote_units_data={0: relation_data.get("unit_data", {})},
+    )
+
+
+def test_flask_pebble_layer(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: none
-    act: start the flask charm and set app container to be ready.
-    assert: flask charm should submit the correct flask pebble layer to pebble.
+    arrange: prepare a leader Flask unit with its peer relation and workload container.
+    act: reconcile the charm on config-changed.
+    assert: the charm submits the exact Flask Pebble service definition.
     """
-    harness.begin()
-    container = harness.charm.unit.get_container(container_name)
-    # ops.testing framework apply layers by label in lexicographical order...
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    secret_key = unittest.mock.MagicMock()
-    secret_key.is_ready = True
-    test_key = "0" * 16
-    secret_key.get_secret_key.return_value = test_key
-    peers = unittest.mock.MagicMock()
-    peers.is_related = True
-    peers.get_peer_unit_fqdns.return_value = None
-    charm_state = CharmState.from_charm(
-        charm_dir=harness.charm.charm_dir,
-        framework_config=Charm.get_framework_config(harness.charm),
-        config=harness.charm.config,
-        framework="flask",
-        secret_key=secret_key,
-        peers=peers,
-        integration_requirers=IntegrationRequirers(databases={}),
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
     )
-    webserver_config = WebserverConfig.from_charm_config(harness.charm.config)
-    workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
-    )
-    webserver = GunicornWebserver(
-        webserver_config=webserver_config,
-        workload_config=workload_config,
-        container=container,
-    )
-    flask_app = WsgiApp(
-        container=container,
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=webserver,
-        database_migration=harness.charm._database_migration,
-    )
-    flask_app.restart()
-    plan = container.get_plan()
-    flask_layer = plan.to_dict()["services"]["flask"]
-    assert flask_layer == {
+
+    app_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
+    assert out.unit_status == testing.ActiveStatus()
+    assert out.get_container(container_name).plan.services["flask"].to_dict() == {
         "environment": {
+            "FLASK_BASE_URL": "http://flask-k8s.test-model:8000",
+            "FLASK_METRICS_PATH": "/metrics",
+            "FLASK_METRICS_PORT": "9102",
             "FLASK_OIDC_REDIRECT_PATH": "/callback",
             "FLASK_OIDC_SCOPES": "openid profile email",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
-            "FLASK_METRICS_PORT": "9102",
-            "FLASK_METRICS_PATH": "/metrics",
-            "FLASK_SECRET_KEY": "0000000000000000",
+            "FLASK_SECRET_KEY": app_secret,
         },
         "override": "replace",
         "startup": "enabled",
@@ -93,88 +62,82 @@ def test_flask_pebble_layer(harness: Harness, container_name: str) -> None:
     }
 
 
-def test_rotate_secret_key_action(harness: Harness, container_name: str):
+def test_rotate_secret_key_action(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: none
-    act: invoke the rotate-secret-key callback function
-    assert: the action should change the Juju secret key value and restart the
-        flask application with the new secret key.
+    arrange: prepare an initialized leader Flask unit.
+    act: run the rotate-secret-key action.
+    assert: the secret store and the workload environment contain a new key and the action
+        succeeds.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
-    action_event = unittest.mock.MagicMock()
-    secret_key = harness.charm._secret_key.get_secret_key()
-    assert secret_key
-    harness.charm._on_rotate_secret_key_action(action_event)
-    new_secret_key = harness.charm._secret_key.get_secret_key()
-    assert secret_key != new_secret_key
+    state = testing.State(**base_state)
+    old_secret = state.get_secret(label="flask-secret-key").tracked_content["value"]
 
-
-def test_ingress(harness: Harness, container_name: str):
-    """
-    arrange: Integrate the charm with an ingress provider.
-    act: Run all initial hooks.
-    assert: The flask service should have the environment variable FLASK_BASE_URL from
-        the ingress url relation.
-    """
-    harness.set_model_name("flask-model")
-    harness.add_relation(
-        "ingress",
-        "nginx-ingress-integrator",
-        app_data={"ingress": '{"url": "http://juju.test/"}'},
+    out = flask_context.run(
+        flask_context.on.action("rotate-secret-key"),
+        state,
     )
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
 
-    harness.begin_with_initial_hooks()
+    new_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
+    assert new_secret
+    assert new_secret != old_secret
+    assert flask_context.action_results == {"status": "success"}
+    service = out.get_container(container_name).plan.services["flask"]
+    assert service.environment["FLASK_SECRET_KEY"] == new_secret
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    assert service_env["FLASK_BASE_URL"] == "http://juju.test/"
 
-
-def test_integrations_wiring(harness: Harness, container_name: str):
+def test_ingress(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: Prepare a Redis a database, a S3 integration and a SAML integration
-    act: Start the flask charm and set app container to be ready.
-    assert: The flask service should have environment variables in its plan
-        for each of the integrations.
+    arrange: integrate the Flask charm with an ingress provider.
+    act: reconcile the relation.
+    assert: the workload base URL is the related ingress URL.
     """
-    redis_relation_data = {
-        "hostname": "10.1.88.132",
-        "port": "6379",
-    }
-    harness.add_relation("redis", "redis-k8s", unit_data=redis_relation_data)
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    s3_relation_data = {
-        "access-key": token_hex(16),
-        "secret-key": token_hex(16),
-        "bucket": "flask-bucket",
-    }
-    harness.add_relation("s3", "s3-integration", app_data=s3_relation_data)
-    harness.add_relation("saml", "saml-integrator", app_data=SAML_APP_RELATION_DATA_EXAMPLE)
+    ingress = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
+    )
+    base_state["model"] = testing.Model(name="flask-model")
+    base_state["relations"].append(ingress)
 
-    harness.set_leader(True)
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    out = flask_context.run(
+        flask_context.on.relation_changed(ingress),
+        testing.State(**base_state),
+    )
 
-    harness.begin_with_initial_hooks()
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    assert "MYSQL_DB_CONNECT_STRING" not in service_env
-    assert service_env["REDIS_DB_CONNECT_STRING"] == "redis://10.1.88.132:6379"
+    assert out.unit_status == testing.ActiveStatus()
+    service = out.get_container(container_name).plan.services["flask"]
+    assert service.environment["FLASK_BASE_URL"] == "http://juju.test/"
+
+
+def test_integrations_wiring(flask_context, base_state, container_name: str) -> None:
+    """
+    arrange: relate Redis, PostgreSQL, S3, and SAML integrations.
+    act: reconcile the charm.
+    assert: the workload receives the exact integration environment values.
+    """
+    relations = [
+        _relation("redis", INTEGRATIONS_RELATION_DATA["redis"]),
+        _relation("postgresql", INTEGRATIONS_RELATION_DATA["postgresql"]),
+        _relation("s3", INTEGRATIONS_RELATION_DATA["s3"]),
+        _relation("saml", INTEGRATIONS_RELATION_DATA["saml"]),
+    ]
+    base_state["relations"].extend(relations)
+
+    out = flask_context.run(
+        flask_context.on.relation_changed(relations[0], remote_unit=0),
+        testing.State(**base_state),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert "MYSQL_DB_CONNECT_STRING" not in environment
+    assert environment["REDIS_DB_CONNECT_STRING"] == "redis://10.1.88.132:6379"
     assert (
-        service_env["POSTGRESQL_DB_CONNECT_STRING"]
+        environment["POSTGRESQL_DB_CONNECT_STRING"]
         == "postgresql://test-username:test-password@test-postgresql:5432/test-database"
     )
-    assert service_env["SAML_ENTITY_ID"] == SAML_APP_RELATION_DATA_EXAMPLE["entity_id"]
+    assert environment["S3_BUCKET"] == "flask-bucket"
+    assert environment["SAML_ENTITY_ID"] == SAML_APP_RELATION_DATA_EXAMPLE["entity_id"]
 
 
 @pytest.mark.parametrize(
@@ -197,7 +160,6 @@ def test_integrations_wiring(harness: Harness, container_name: str):
                 "RABBITMQ_USERNAME": "flask-k8s",
                 "RABBITMQ_PASSWORD": "3m036hhyiDHs",
                 "RABBITMQ_VHOST": "/",
-                "RABBITMQ_CONNECT_STRING": "amqp://flask-k8s:3m036hhyiDHs@rabbitmq-k8s-endpoints.testing.svc.cluster.local:5672/%2F",
             },
             id="rabbitmq-k8s version",
         ),
@@ -215,173 +177,170 @@ def test_integrations_wiring(harness: Harness, container_name: str):
                 "RABBITMQ_USERNAME": "flask-k8s",
                 "RABBITMQ_PASSWORD": "LGg6HMJXPF8G3cHMcMg28ZpwSWRfS6hb8s57Jfkt5TW3rtgV5ypZkV8ZY4GcrhW8",
                 "RABBITMQ_VHOST": "/",
-                "RABBITMQ_CONNECT_STRING": "amqp://flask-k8s:LGg6HMJXPF8G3cHMcMg28ZpwSWRfS6hb8s57Jfkt5TW3rtgV5ypZkV8ZY4GcrhW8@10.58.171.158:5672/%2F",
             },
             id="rabbitmq-server version",
         ),
     ],
 )
 def test_rabbitmq_integration(
-    harness: Harness, container_name: str, rabbitmq_relation_data, expected_env_vars
-):
+    flask_context,
+    base_state,
+    container_name: str,
+    rabbitmq_relation_data: dict,
+    expected_env_vars: dict,
+) -> None:
     """
-    arrange: Prepare a rabbitmq integration (RabbitMQ)
-    act: Start the flask charm and set app container to be ready.
-    assert: The flask service should have environment variables in its plan
-        for each of the integrations.
+    arrange: relate a RabbitMQ provider using either supported data shape.
+    act: reconcile the relation.
+    assert: every RabbitMQ workload environment value is exact.
     """
-    harness.add_relation("rabbitmq", "rabbitmq", **rabbitmq_relation_data)
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    relation = _relation("rabbitmq", rabbitmq_relation_data)
+    base_state["relations"].append(relation)
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    for env, env_val in expected_env_vars.items():
-        assert env in service_env
-        assert service_env[env] == env_val
-
-
-def test_rabbitmq_integration_with_relation_data_empty(harness: Harness, container_name: str):
-    """
-    arrange: Prepare a rabbitmq integration (RabbitMQ), with missing data.
-    act: Start the flask charm and set app container to be ready.
-    assert: The flask service should not have environment variables related to RabbitMQ
-    """
-    harness.add_relation("rabbitmq", "rabbitmq")
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    for env in service_env.keys():
-        assert "RABBITMQ" not in env
-
-
-def test_rabbitmq_remove_integration(harness: Harness, container_name: str):
-    """
-    arrange: Prepare a charm with a complete rabbitmq integration (RabbitMQ).
-    act: Remove the relation.
-    assert: The relation should not have the env variables related to RabbitMQ.
-    """
-    relation_id = harness.add_relation(
-        "rabbitmq",
-        "rabbitmq",
-        app_data={"hostname": "example.com", "password": token_hex(16)},
+    out = flask_context.run(
+        flask_context.on.relation_changed(relation, remote_unit=0),
+        testing.State(**base_state),
     )
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    assert "RABBITMQ_HOSTNAME" in service_env
 
-    harness.remove_relation(relation_id)
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert {key: environment[key] for key in expected_env_vars} == expected_env_vars
+    relation_data = rabbitmq_relation_data["app_data"] or rabbitmq_relation_data["unit_data"]
+    assert environment["RABBITMQ_CONNECT_STRING"] == (
+        f"amqp://flask-k8s:{relation_data['password']}@" f"{relation_data['hostname']}:5672/%2F"
+    )
 
-    service_env = container.get_plan().services["flask"].environment
-    assert "RABBITMQ_HOSTNAME" not in service_env
+
+def test_rabbitmq_integration_with_relation_data_empty(
+    flask_context,
+    base_state,
+    container_name: str,
+) -> None:
+    """
+    arrange: relate RabbitMQ without connection data.
+    act: reconcile the relation.
+    assert: the workload has no RabbitMQ environment values.
+    """
+    relation = _relation("rabbitmq", {})
+    base_state["relations"].append(relation)
+
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert not {key for key in environment if key.startswith("RABBITMQ_")}
+
+
+def test_rabbitmq_remove_integration(
+    flask_context,
+    base_state,
+    container_name: str,
+) -> None:
+    """
+    arrange: reconcile a complete RabbitMQ relation.
+    act: reconcile the output state after removing that relation.
+    assert: RabbitMQ environment values are removed from the workload plan.
+    """
+    relation = _relation(
+        "rabbitmq",
+        {"app_data": {"hostname": "example.com", "password": token_hex(16)}},
+    )
+    base_state["relations"].append(relation)
+    out = flask_context.run(
+        flask_context.on.relation_changed(relation, remote_unit=0),
+        testing.State(**base_state),
+    )
+    assert "RABBITMQ_HOSTNAME" in (
+        out.get_container(container_name).plan.services["flask"].environment
+    )
+
+    out = flask_context.run(
+        flask_context.on.relation_broken(relation),
+        out,
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert not {key for key in environment if key.startswith("RABBITMQ_")}
 
 
 @pytest.mark.parametrize(
-    "integrate_to,required_integrations",
+    "integrate_to,required_integrations,expected_message",
     [
-        pytest.param(["saml"], ["s3"], id="s3 fails"),
-        pytest.param(["redis", "s3"], ["mysql", "postgresql"], id="postgresql and mysql fail"),
+        pytest.param(["saml"], ["s3"], "missing integrations: s3", id="s3 fails"),
+        pytest.param(
+            ["redis", "s3"],
+            ["mysql", "postgresql"],
+            "missing integrations: mysql, postgresql",
+            id="postgresql and mysql fail",
+        ),
         pytest.param(
             [],
             ["mysql", "postgresql", "mongodb", "s3", "redis", "saml", "rabbitmq"],
+            "missing integrations: mongodb, mysql, postgresql, rabbitmq, redis, s3, saml",
             id="all fail",
         ),
     ],
 )
 def test_missing_integrations(
-    harness: Harness, container_name: str, integrate_to, required_integrations
-):
+    flask_context,
+    base_state,
+    integrate_to: list[str],
+    required_integrations: list[str],
+    expected_message: str,
+) -> None:
     """
-    arrange: Prepare the harness. Instantiate the charm with some required integrations.
-    act: Integrate with some integrations (but not all the required ones).
-    assert: The charm should be blocked. The message should list only the required integrations
-         that are missing.
+    arrange: mark selected integrations as required and relate only a subset.
+    act: reconcile the incomplete state.
+    assert: status lists every and only missing required integration in stable order.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
     for integration in required_integrations:
-        harness.framework.meta.requires[integration].optional = False
-    harness.begin_with_initial_hooks()
-    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-
-    for integration in integrate_to:
-        harness.add_relation(integration, integration, **INTEGRATIONS_RELATION_DATA[integration])
-
-    integrations_that_should_fail = set(required_integrations) - set(integrate_to)
-    integrations_that_should_not_fail = (
-        set(INTEGRATIONS_RELATION_DATA.keys()) - integrations_that_should_fail
+        flask_context.charm_spec.meta["requires"][integration]["optional"] = False
+    base_state["relations"].extend(
+        _relation(integration, INTEGRATIONS_RELATION_DATA[integration])
+        for integration in integrate_to
     )
-    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-    for integration in integrations_that_should_fail:
-        assert integration in harness.model.unit.status.message
-    for integration in integrations_that_should_not_fail:
-        assert integration not in harness.model.unit.status.message
+
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
+    )
+
+    assert out.unit_status == testing.BlockedStatus(expected_message)
 
 
-def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
-    harness: Harness,
-    container_name: str,
-):
+def test_invalid_config(flask_context, base_state) -> None:
     """
-    arrange: Prepare the harness. Instantiate the charm with all the required integrations
-        so it is active. Include a migrate.sh file so migrations run.
-    act: Remove one required integration.
-    assert: The charm should be blocked. All services should be stopped and the
-        database migration pending.
+    arrange: configure an empty Flask environment value.
+    act: reconcile the charm.
+    assert: the unit is blocked with the exact invalid-option message.
     """
-    container = harness.model.unit.get_container(container_name)
-    root = harness.get_filesystem_root(container)
-    (root / "flask/app/migrate.sh").touch()
-    harness.handle_exec(container, [], result=0)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.framework.meta.requires["s3"].optional = False
-    relation_id = harness.add_relation("s3", "s3", **INTEGRATIONS_RELATION_DATA["s3"])
-    harness.begin_with_initial_hooks()
-    assert isinstance(harness.model.unit.status, ops.model.ActiveStatus)
-    for service in container.get_services().values():
-        assert service.current == ServiceStatus.ACTIVE
-    assert harness._charm._database_migration.get_status() == DatabaseMigrationStatus.COMPLETED
+    state = testing.State(**{**base_state, "config": {"flask-env": ""}})
 
-    harness.remove_relation(relation_id)
+    out = flask_context.run(flask_context.on.config_changed(), state)
 
-    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-    for service in container.get_services().values():
-        assert service.current == ServiceStatus.INACTIVE
-    assert harness._charm._database_migration.get_status() == DatabaseMigrationStatus.PENDING
+    assert out.unit_status == testing.BlockedStatus("        invalid options: flask-env")
 
 
-def test_invalid_config(harness: Harness):
+def test_invalid_integration(flask_context, base_state) -> None:
     """
-    arrange: Prepare the harness. Instantiate the charm.
-    act: update the config to an invalid env variables (must be more than 1 chars).
-    assert: The flask service is blocked with invalid configuration.
+    arrange: relate S3 data missing its required access and secret keys.
+    act: reconcile the relation.
+    assert: the charm reports the invalid S3 relation data.
     """
-    harness.begin()
-    harness.update_config({"flask-env": ""})
-    assert isinstance(harness.model.unit.status, ops.model.BlockedStatus)
-    assert "flask-env" in harness.model.unit.status.message
+    relation = testing.Relation(
+        endpoint="s3",
+        interface="s3",
+        remote_app_data={"bucket": "flask-bucket"},
+    )
+    base_state["relations"].append(relation)
 
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
+    )
 
-def test_invalid_integration(harness: Harness):
-    """
-    arrange: Prepare the harness. Instantiate the charm.
-    act: Integrate with an invalid integration.
-    assert: The flask service is blocked because the integration data is wrong.
-    """
-    s3_relation_data = {
-        # Missing required access-key and secret-key.
-        "bucket": "flask-bucket",
-    }
-    harness.add_relation("s3", "s3-integration", app_data=s3_relation_data)
-    harness.begin_with_initial_hooks()
-    assert isinstance(harness.model.unit.status, ops.BlockedStatus)
-    assert "Invalid s3 relation data" in str(harness.model.unit.status.message)
+    assert out.unit_status == testing.BlockedStatus("Invalid s3 relation data.")

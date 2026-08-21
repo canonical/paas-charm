@@ -6,127 +6,148 @@
 import unittest.mock
 
 import pytest
+from ops import testing
 
-from paas_charm.flask import Charm
-
-from .constants import DEFAULT_LAYER
+from paas_charm.charm import PaasCharm
 
 
-def test_secret_key_created_on_leader_elected(harness, container_name):
+def test_secret_key_created_on_leader_elected(flask_context, base_state):
     """
-    arrange: A leader Flask charm.
-    act: Run the initial hooks.
+    arrange: A leader Flask charm without an application secret key.
+    act: Emit the leader-elected event.
     assert: An application-owned secret key is created and readable.
     """
-    harness.set_leader(True)
-    harness.model.unit.get_container(container_name).add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin_with_initial_hooks()
+    state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
-    assert harness.charm._secret_key.is_ready
-    assert harness.charm._secret_key.get_secret_key()
+    with flask_context(flask_context.on.leader_elected(), state) as manager:
+        manager.run()
+
+        assert manager.charm._secret_key.is_ready
+        assert manager.charm._secret_key.get_secret_key()
 
 
-def test_leader_elected_does_not_reconcile(harness):
+def test_leader_elected_does_not_reconcile(flask_context, base_state):
     """
-    arrange: A running non-leader Flask charm without an application secret key.
-    act: Promote the unit to leader.
-    assert: The key is initialized without reconciling before relation data is ready.
+    arrange: A leader Flask charm without an application secret key.
+    act: Emit the leader-elected event.
+    assert: The key is initialized without reconciling.
     """
-    with unittest.mock.patch.object(Charm, "_reconcile") as reconcile:
-        harness.begin()
-        harness.set_leader(True)
+    state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
-    assert harness.charm._secret_key.is_ready
+    with (
+        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
+        flask_context(flask_context.on.leader_elected(), state) as manager,
+    ):
+        manager.run()
+
+        assert manager.charm._secret_key.is_ready
+
     reconcile.assert_not_called()
 
 
-def test_secret_key_not_created_by_non_leader(harness):
+def test_secret_key_not_created_by_non_leader(flask_context, base_state):
     """
     arrange: A non-leader Flask charm.
     act: Initialize application secret-key storage.
     assert: The application secret key remains unavailable.
     """
-    harness.set_leader(False)
-    harness.begin()
+    state = testing.State(**{**base_state, "leader": False, "secrets": []})
 
-    harness.charm._secret_key.initialize()
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        manager.charm._secret_key.initialize()
 
-    assert not harness.charm._secret_key.is_ready
+        assert not manager.charm._secret_key.is_ready
+
+        manager.run()
 
 
-def test_secret_key_initialization_is_idempotent(harness):
+def test_secret_key_initialization_is_idempotent(flask_context, base_state):
     """
     arrange: A leader Flask charm with an initialized application secret key.
     act: Initialize the storage again.
     assert: The existing secret value is retained.
     """
-    harness.set_leader(True)
-    harness.begin()
-    harness.charm._secret_key.initialize()
-    initial_key = harness.charm._secret_key.get_secret_key()
+    state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
-    harness.charm._secret_key.initialize()
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        manager.charm._secret_key.initialize()
+        initial_key = manager.charm._secret_key.get_secret_key()
 
-    assert harness.charm._secret_key.get_secret_key() == initial_key
+        manager.charm._secret_key.initialize()
+
+        assert manager.charm._secret_key.get_secret_key() == initial_key
+
+        manager.run()
 
 
-def test_secret_key_rotation_changes_value(harness):
+def test_secret_key_rotation_changes_value(flask_context, base_state):
     """
     arrange: A leader Flask charm with an initialized application secret key.
     act: Rotate the secret key.
     assert: Juju exposes a different current value.
     """
-    harness.set_leader(True)
-    harness.begin()
-    harness.charm._secret_key.initialize()
-    initial_key = harness.charm._secret_key.get_secret_key()
+    state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
-    harness.charm._secret_key.rotate()
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        manager.charm._secret_key.initialize()
+        initial_key = manager.charm._secret_key.get_secret_key()
 
-    assert harness.charm._secret_key.get_secret_key() != initial_key
+        manager.charm._secret_key.rotate()
+
+        assert manager.charm._secret_key.get_secret_key() != initial_key
+
+        manager.run()
 
 
-def test_missing_secret_key_raises(harness):
+def test_missing_secret_key_raises(flask_context, base_state):
     """
     arrange: A Flask charm without an application secret key.
     act: Read and rotate the missing key.
     assert: Both operations report that initialization is incomplete.
     """
-    harness.set_leader(False)
-    harness.begin()
+    state = testing.State(**{**base_state, "leader": False, "secrets": []})
 
-    with pytest.raises(RuntimeError, match="not initialized"):
-        harness.charm._secret_key.get_secret_key()
-    with pytest.raises(RuntimeError, match="not initialized"):
-        harness.charm._secret_key.rotate()
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        with pytest.raises(RuntimeError, match="not initialized"):
+            manager.charm._secret_key.get_secret_key()
+        with pytest.raises(RuntimeError, match="not initialized"):
+            manager.charm._secret_key.rotate()
+
+        manager.run()
 
 
-def test_peers_not_related(harness):
+def test_peers_not_related(flask_context, base_state):
     """
-    arrange: A Flask charm without initial hooks.
+    arrange: A Flask charm without a peer relation.
     act: Inspect peer coordination state.
     assert: The peer relation is absent.
     """
-    harness.begin()
+    state = testing.State(**{**base_state, "relations": []})
 
-    assert not harness.charm._peers.is_related
-    assert harness.charm._peers.get_peer_unit_fqdns() is None
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        assert not manager.charm._peers.is_related
+        assert manager.charm._peers.get_peer_unit_fqdns() is None
+
+        manager.run()
 
 
-def test_peer_unit_fqdns(harness, container_name):
+def test_peer_unit_fqdns(flask_context, base_state):
     """
     arrange: A Flask charm with two peer units.
     act: Read peer unit FQDNs.
     assert: The peer FQDNs are returned in unit-name order.
     """
-    harness.set_model_name("test-model")
-    harness.model.unit.get_container(container_name).add_layer("a_layer", DEFAULT_LAYER)
-    harness.begin()
-    relation_id = harness.add_relation("peers", harness.charm.app.name)
-    harness.add_relation_unit(relation_id, f"{harness.charm.app.name}/2")
-    harness.add_relation_unit(relation_id, f"{harness.charm.app.name}/1")
+    state = testing.State(
+        **{
+            **base_state,
+            "relations": [testing.PeerRelation("peers", peers_data={1: {}, 2: {}})],
+        }
+    )
 
-    assert harness.charm._peers.get_peer_unit_fqdns() == [
-        "flask-k8s-1.flask-k8s-endpoints.test-model.svc.cluster.local",
-        "flask-k8s-2.flask-k8s-endpoints.test-model.svc.cluster.local",
-    ]
+    with flask_context(flask_context.on.update_status(), state) as manager:
+        assert manager.charm._peers.get_peer_unit_fqdns() == [
+            "flask-k8s-1.flask-k8s-endpoints.test-model.svc.cluster.local",
+            "flask-k8s-2.flask-k8s-endpoints.test-model.svc.cluster.local",
+        ]
+
+        manager.run()
