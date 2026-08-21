@@ -30,15 +30,32 @@ def valkey_app_fixture(juju: jubilant.Juju):
 @pytest.fixture
 def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App):
     """Integrate Valkey with Flask apps."""
+
+    def relation_exists(status: jubilant.Status) -> bool:
+        """Check whether Flask is related to Valkey."""
+        return any(
+            relation.related_app == valkey_app.name
+            for relation in status.apps[flask_app.name].relations.get("valkey", [])
+        )
+
     try:
         juju.integrate(flask_app.name, valkey_app.name)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
-    juju.wait(lambda status: status.apps[valkey_app.name].is_active, timeout=10 * 60)
+    juju.wait(
+        lambda status: relation_exists(status)
+        and jubilant.all_active(status, flask_app.name, valkey_app.name),
+        timeout=10 * 60,
+    )
     yield
-    juju.remove_relation(flask_app.name, valkey_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active, timeout=10 * 60)
+    if relation_exists(juju.status()):
+        juju.remove_relation(flask_app.name, valkey_app.name)
+        juju.wait(
+            lambda status: not relation_exists(status)
+            and jubilant.all_active(status, flask_app.name, valkey_app.name),
+            timeout=10 * 60,
+        )
 
 
 @pytest.mark.parametrize(
@@ -61,9 +78,14 @@ def test_workers_and_scheduler_services(
             hostname in Valkey sets. Those sets are checked through the Flask app,
             that queries Valkey.
     """
-    for n in range(1, num_units):
+    current_units = len(juju.status().apps[flask_app.name].units)
+    for _ in range(current_units, num_units):
         juju.add_unit(flask_app.name)
-    juju.wait(lambda status: status.apps[flask_app.name].is_active)
+    juju.wait(
+        lambda status: len(status.apps[flask_app.name].units) == num_units
+        and jubilant.all_active(status, flask_app.name),
+        timeout=10 * 60,
+    )
 
     # the flask unit is not important. Take the first one
     status = juju.status()

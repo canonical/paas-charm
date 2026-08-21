@@ -19,6 +19,7 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
+from dpcharmlibs.interfaces import ValkeyResponseModel
 from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
 
 import paas_charm
@@ -34,7 +35,6 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
-from paas_charm.valkey import PaaSValkeyRelationData
 from tests.unit.flask.constants import (
     INTEGRATIONS_RELATION_DATA,
     OPENFGA_RELATION_DATA_EXAMPLE,
@@ -251,8 +251,10 @@ def _test_integrations_env_parameters():
         ),
         pytest.param(
             IntegrationsState(
-                valkey=PaaSValkeyRelationData(
-                    url="valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5"
+                valkey=ValkeyResponseModel(
+                    endpoints="valkey://localhost:6379?db=0&timeout=5",
+                    username="testingusername",
+                    password="testingpassword",
                 ),
             ),
             {
@@ -265,8 +267,12 @@ def _test_integrations_env_parameters():
                 "VALKEY_DB_PATH": "",
                 "VALKEY_DB_PORT": "6379",
                 "VALKEY_DB_QUERY": "db=0&timeout=5",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
                 "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
                 "VALKEY_DB_USERNAME": "testingusername",
+                "VALKEY_MODE": "",
+                "VALKEY_VERSION": "",
             },
             id="Valkey",
         ),

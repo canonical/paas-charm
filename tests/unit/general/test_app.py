@@ -14,14 +14,12 @@ from paas_charm.app import (
     generate_s3_env,
     generate_saml_env,
     generate_tempo_env,
-    generate_valkey_env,
 )
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
-from paas_charm.valkey import PaaSValkeyRelationData
 
 
 @pytest.mark.parametrize(
@@ -184,65 +182,6 @@ def test_rabbitmq_environ_mapper_generate_env(relation_data, expected_env):
     assert: expected environment variables are generated.
     """
     assert generate_rabbitmq_env(relation_data) == expected_env
-
-
-@pytest.mark.parametrize(
-    "relation_data, expected_env",
-    [
-        pytest.param(None, {}, id="No relation data"),
-        pytest.param(
-            PaaSValkeyRelationData.model_construct(url="valkey://localhost"),
-            {
-                "VALKEY_DB_CONNECT_STRING": "valkey://localhost",
-                "VALKEY_DB_FRAGMENT": "",
-                "VALKEY_DB_HOSTNAME": "localhost",
-                "VALKEY_DB_NETLOC": "localhost",
-                "VALKEY_DB_PARAMS": "",
-                "VALKEY_DB_PATH": "",
-                "VALKEY_DB_QUERY": "",
-                "VALKEY_DB_SCHEME": "valkey",
-            },
-            id="Minimum valkey DSN",
-        ),
-        pytest.param(
-            PaaSValkeyRelationData.model_construct(url="valkey://secret@localhost/1"),
-            {
-                "VALKEY_DB_CONNECT_STRING": "valkey://secret@localhost/1",
-                "VALKEY_DB_FRAGMENT": "",
-                "VALKEY_DB_HOSTNAME": "localhost",
-                "VALKEY_DB_NAME": "1",
-                "VALKEY_DB_NETLOC": "secret@localhost",
-                "VALKEY_DB_PARAMS": "",
-                "VALKEY_DB_PATH": "/1",
-                "VALKEY_DB_QUERY": "",
-                "VALKEY_DB_SCHEME": "valkey",
-                "VALKEY_DB_USERNAME": "secret",
-            },
-            id="Max valkey DSN",
-        ),
-        pytest.param(
-            PaaSValkeyRelationData.model_construct(url="http://valkeyuri"),
-            {
-                "VALKEY_DB_CONNECT_STRING": "http://valkeyuri",
-                "VALKEY_DB_FRAGMENT": "",
-                "VALKEY_DB_HOSTNAME": "valkeyuri",
-                "VALKEY_DB_NETLOC": "valkeyuri",
-                "VALKEY_DB_PARAMS": "",
-                "VALKEY_DB_PATH": "",
-                "VALKEY_DB_QUERY": "",
-                "VALKEY_DB_SCHEME": "http",
-            },
-            id="http valkey DSN",
-        ),
-    ],
-)
-def test_valkey_environ_mapper_generate_env(relation_data, expected_env):
-    """
-    arrange: given Valkey relation data.
-    act: when generate_env method is called.
-    assert: expected environment variables are generated.
-    """
-    assert generate_valkey_env(relation_data) == expected_env
 
 
 @pytest.mark.parametrize(
