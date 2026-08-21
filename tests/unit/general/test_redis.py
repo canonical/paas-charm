@@ -4,7 +4,9 @@
 """Redis charm integration unit tests."""
 
 import pytest
+from ops import testing
 
+from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm.redis import InvalidRedisRelationDataError, PaaSRedisRelationData
 
 
@@ -38,29 +40,29 @@ from paas_charm.redis import InvalidRedisRelationDataError, PaaSRedisRelationDat
     ],
 )
 def test_paas_redis_requirer_to_relation_data(
-    flask_harness, unit_relation_data, app_relation_data, expected_relation_data
+    context_factory,
+    flask_base_state,
+    unit_relation_data,
+    app_relation_data,
+    expected_relation_data,
 ):
     """
     arrange: given redis relation.
     act: when to_relation_data is called.
     assert: expected relation data is returned.
     """
-    flask_harness.begin()
-    # Define some relations.
-    rel_id = flask_harness.add_relation("redis", "redis")
-    flask_harness.add_relation_unit(rel_id, "redis/0")
-    flask_harness.update_relation_data(
-        rel_id,
-        "redis/0",
-        unit_relation_data,
+    relation = testing.Relation(
+        endpoint="redis",
+        interface="redis",
+        remote_app_data=app_relation_data,
+        remote_units_data={0: unit_relation_data},
     )
-    flask_harness.update_relation_data(
-        rel_id,
-        "redis",
-        app_relation_data,
-    )
-
-    assert flask_harness.charm._redis.to_relation_data() == expected_relation_data
+    flask_base_state["relations"].append(relation)
+    context = context_factory(FlaskCharm)
+    with context(
+        context.on.relation_changed(relation), testing.State(**flask_base_state)
+    ) as manager:
+        assert manager.charm._redis.to_relation_data() == expected_relation_data
 
 
 def test_paas_redis_url():
@@ -98,28 +100,26 @@ def test_paas_redis_url():
         ),
     ],
 )
-def test_redis_url_invalid(flask_harness, unit_relation_data, app_relation_data):
+def test_redis_url_invalid(
+    context_factory, flask_base_state, unit_relation_data, app_relation_data
+):
     """
     arrange: given invalid redis relation data.
     act: when to_relation_data is called.
     assert: InvalidRedisRelationDataError is raised.
     """
-    # Define some relations.
-    rel_id = flask_harness.add_relation("redis", "redis")
-    flask_harness.add_relation_unit(rel_id, "redis/0")
-    flask_harness.update_relation_data(
-        rel_id,
-        "redis/0",
-        unit_relation_data,
+    relation = testing.Relation(
+        endpoint="redis",
+        interface="redis",
+        remote_app_data=app_relation_data,
+        remote_units_data={0: unit_relation_data},
     )
-    flask_harness.update_relation_data(
-        rel_id,
-        "redis",
-        app_relation_data,
-    )
-    flask_harness.begin()
-
-    with pytest.raises(InvalidRedisRelationDataError) as exc:
-        print(flask_harness.charm._redis.to_relation_data())
+    flask_base_state["relations"].append(relation)
+    context = context_factory(FlaskCharm)
+    with context(
+        context.on.relation_changed(relation), testing.State(**flask_base_state)
+    ) as manager:
+        with pytest.raises(InvalidRedisRelationDataError) as exc:
+            manager.charm._redis.to_relation_data()
 
     assert "Invalid PaaSRedisRelationData" in str(exc.value)

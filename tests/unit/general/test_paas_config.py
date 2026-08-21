@@ -3,9 +3,13 @@
 
 """Unit tests for paas_config module."""
 
+# Pylint resolves Pydantic model fields as FieldInfo rather than their annotated types.
+# pylint: disable=no-member
+
 import json
 import pathlib
 import tempfile
+import typing
 from unittest.mock import patch
 
 import pytest
@@ -22,6 +26,7 @@ from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
+    FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     LoggingFormat,
     PaasConfig,
     PrometheusConfig,
@@ -57,9 +62,10 @@ class TestPaasConfig:
             port=9090,
         )
         assert config.prometheus is not None
-        assert config.prometheus.scrape_configs is not None
-        assert len(config.prometheus.scrape_configs) == 1
-        assert config.prometheus.scrape_configs[0].job_name == "test"
+        prometheus = typing.cast(PrometheusConfig, config.prometheus)
+        assert prometheus.scrape_configs is not None
+        assert len(prometheus.scrape_configs) == 1
+        assert prometheus.scrape_configs[0].job_name == "test"
         assert config.port == 9090
 
     def test_metrics_endpoint_uses_framework_defaults_when_omitted(self):
@@ -112,8 +118,6 @@ class TestPaasConfig:
 
     def test_frameworks_supporting_json_logging(self):
         """Test that flask, django, and fastapi are in FRAMEWORKS_SUPPORTING_LOGGING_FORMAT."""
-        from paas_charm.paas_config import FRAMEWORKS_SUPPORTING_LOGGING_FORMAT
-
         supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT[LoggingFormat.JSON]
         assert "fastapi" in supported
         assert "flask" in supported
@@ -152,7 +156,8 @@ class TestReadPaasConfig:
 
         config = read_paas_config(tmp_path)
         assert config.prometheus is not None
-        assert config.prometheus.scrape_configs == []
+        prometheus = typing.cast(PrometheusConfig, config.prometheus)
+        assert prometheus.scrape_configs == []
 
     def test_empty_file_returns_empty_config(self, tmp_path):
         """Test that empty config file returns empty PaasConfig."""
@@ -616,6 +621,7 @@ CHARM_STATE_PAAS_CONFIG_TEST_PARAMS = [
 def test_charm_state_paas_config(
     request,
     modify_paas_config,
+    context_factory,
     charm: type,
     example: str,
     framework: str,
@@ -628,13 +634,13 @@ def test_charm_state_paas_config(
     assert: charm_config in the charm state should reflect changes in charm configurations.
     """
 
-    modify_paas_config(example, 8081, 8082, "/alternative_metrics")
+    paas_config = modify_paas_config(example, 8081, 8082, "/alternative_metrics")
     base_state = request.getfixturevalue(f"{framework}_base_state")
     base_state["relations"].append(
         testing.Relation(endpoint="metrics-endpoint", interface="prometheus-k8s")
     )
     base_state["leader"] = True
-    ctx = testing.Context(charm)
+    ctx = context_factory(charm, paas_config=paas_config)
     state = testing.State(**base_state)
 
     out = ctx.run(ctx.on.config_changed(), state)
@@ -661,13 +667,12 @@ def test_charm_state_paas_config(
     ],
 )
 def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
-    request, paas_config: PaasConfig, expected_port: str
+    request, context_factory, paas_config: PaasConfig, expected_port: str
 ) -> None:
     """Test that omitted paas-config keys preserve Spring Boot defaults."""
     base_state = request.getfixturevalue("spring_boot_base_state")
-    with patch("paas_charm.charm.read_paas_config", return_value=paas_config):
-        ctx = testing.Context(SpringBootCharm)
-        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+    ctx = context_factory(SpringBootCharm, paas_config=paas_config)
+    out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
 
     environment = list(out.containers)[0].plan.services["spring-boot"].environment
     assert environment["SERVER_PORT"] == expected_port
@@ -691,6 +696,7 @@ def test_springboot_uses_framework_defaults_for_missing_paas_config_keys(
 )
 def test_application_port_override_preserves_default_metrics_endpoint(
     request,
+    context_factory,
     charm: type,
     state_fixture: str,
     service: str,
@@ -699,9 +705,8 @@ def test_application_port_override_preserves_default_metrics_endpoint(
 ) -> None:
     """Test that changing only the application port does not move the metrics endpoint."""
     base_state = request.getfixturevalue(state_fixture)
-    with patch("paas_charm.charm.read_paas_config", return_value=PaasConfig(port=9090)):
-        ctx = testing.Context(charm)
-        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+    ctx = context_factory(charm, paas_config=PaasConfig(port=9090))
+    out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
 
     environment = list(out.containers)[0].plan.services[service].environment
     assert environment[app_port_var] == "9090"
@@ -762,6 +767,7 @@ def test_application_port_override_preserves_default_metrics_endpoint(
 )
 def test_prometheus_jobs_do_not_configure_workload_metrics(
     request,
+    context_factory,
     charm: type,
     state_fixture: str,
     service: str,
@@ -785,9 +791,8 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
         }
     )
 
-    with patch("paas_charm.charm.read_paas_config", return_value=paas_config):
-        ctx = testing.Context(charm)
-        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+    ctx = context_factory(charm, paas_config=paas_config)
+    out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
 
     environment = list(out.containers)[0].plan.services[service].environment
     assert {key: environment[key] for key in expected_metrics} == expected_metrics
@@ -809,7 +814,7 @@ def test_prometheus_jobs_do_not_configure_workload_metrics(
     assert scrape_jobs[1]["static_configs"] == [{"targets": ["*:9999"]}]
 
 
-def test_no_explicit_jobs_publish_framework_job(request) -> None:
+def test_no_explicit_jobs_publish_framework_job(request, context_factory) -> None:
     """Test that an empty scrape configuration publishes the framework endpoint."""
     base_state = request.getfixturevalue("fastapi_base_state")
     base_state["relations"].append(
@@ -817,9 +822,8 @@ def test_no_explicit_jobs_publish_framework_job(request) -> None:
     )
     base_state["leader"] = True
 
-    with patch("paas_charm.charm.read_paas_config", return_value=PaasConfig()):
-        ctx = testing.Context(FastAPICharm)
-        out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+    ctx = context_factory(FastAPICharm, paas_config=PaasConfig())
+    out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
 
     metrics_relation = out.get_relations("metrics-endpoint")[0]
     assert json.loads(metrics_relation.local_app_data["scrape_jobs"]) == [
@@ -830,21 +834,14 @@ def test_no_explicit_jobs_publish_framework_job(request) -> None:
 
 @pytest.fixture(name="modify_paas_config")
 def modify_paas_config_fixture():
-    """Temporarily modify paas-config.yaml for a given framework and revert after the test."""
-    originals: dict[pathlib.Path, str] = {}
+    """Build a modified PaasConfig from a framework's real configuration file."""
 
-    def _modify(framework: str, port: int, metrics_port: int, metrics_path: str) -> None:
+    def _modify(framework: str, port: int, metrics_port: int, metrics_path: str) -> PaasConfig:
         paas_config_path = PROJECT_ROOT / f"examples/{framework}/charm/paas-config.yaml"
-        if paas_config_path not in originals:
-            originals[paas_config_path] = paas_config_path.read_text()
-        config = yaml.safe_load(originals[paas_config_path])
+        config = yaml.safe_load(paas_config_path.read_text())
         config["port"] = port
         config["metrics-port"] = metrics_port
         config["metrics-path"] = metrics_path
-        paas_config_path.write_text(yaml.dump(config))
+        return PaasConfig.model_validate(config)
 
-    try:
-        yield _modify
-    finally:
-        for path, content in originals.items():
-            path.write_text(content)
+    return _modify
