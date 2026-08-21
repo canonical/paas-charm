@@ -3,30 +3,35 @@
 
 """Utils unit tests."""
 
-import os
 import pathlib
 import unittest
 
 import ops
 import pytest
 import yaml
-from ops.testing import Harness
+from ops import testing
 from pydantic import Field
 
 import paas_charm
+from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
+from examples.fastapi.charm.src.charm import FastAPICharm
+from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
+from tests.unit.scenario import charm_root
 
 
 @pytest.mark.parametrize(
-    "blocked_harness_fixture",
+    "charm_type",
     [
-        "flask_harness",
-        "go_harness",
-        "fastapi_harness",
-        "django_harness",
-        "expressjs_harness",
+        FlaskCharm,
+        GoCharm,
+        FastAPICharm,
+        DjangoCharm,
+        ExpressJSCharm,
     ],
 )
 @pytest.mark.parametrize(
@@ -35,7 +40,7 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-bool": {
+                    "non-optional-bool": {
                         "description": "A non-optional config option for testing.",
                         "type": "boolean",
                         "optional": False,
@@ -50,7 +55,7 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-int": {
+                    "non-optional-int": {
                         "description": "A non-optional config option for testing.",
                         "type": "int",
                         "optional": False,
@@ -65,7 +70,7 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-float": {
+                    "non-optional-float": {
                         "description": "A non-optional config option for testing.",
                         "type": "float",
                         "optional": False,
@@ -80,7 +85,7 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-string": {
+                    "non-optional-string": {
                         "description": "A non-optional config option for testing.",
                         "type": "string",
                         "optional": False,
@@ -95,7 +100,7 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-secret": {
+                    "non-optional-secret": {
                         "description": "A non-optional config option for testing.",
                         "type": "secret",
                         "optional": False,
@@ -110,35 +115,35 @@ from paas_charm.utils import config_metadata
         pytest.param(
             [
                 {
-                    "optional-test-bool": {
+                    "non-optional-bool": {
                         "description": "A non-optional config option for testing.",
                         "type": "boolean",
                         "optional": False,
                     }
                 },
                 {
-                    "optional-test-int": {
+                    "non-optional-int": {
                         "description": "A non-optional config option for testing.",
                         "type": "int",
                         "optional": False,
                     }
                 },
                 {
-                    "optional-test-float": {
+                    "non-optional-float": {
                         "description": "A non-optional config option for testing.",
                         "type": "float",
                         "optional": False,
                     }
                 },
                 {
-                    "optional-test-string": {
+                    "non-optional-string": {
                         "description": "A non-optional config option for testing.",
                         "type": "string",
                         "optional": False,
                     }
                 },
                 {
-                    "optional-test-secret": {
+                    "non-optional-secret": {
                         "description": "A non-optional config option for testing.",
                         "type": "secret",
                         "optional": False,
@@ -168,25 +173,24 @@ from paas_charm.utils import config_metadata
     ],
 )
 def test_non_optional_config(
-    request,
-    blocked_harness_fixture: Harness,
+    charm_type: type,
+    context_factory,
+    framework_state_factory,
     required_configs: list[dict],
     expected_status_message_substrs: list[str],
     unexpected_status_message_substrs: list[str],
     expected_log_message_substrs: list[str],
     monkeypatch,
+    caplog,
 ) -> None:
     """
     arrange: Deploy charm with fake config options in charmcraft.yaml.
     act: Try to create charm state.
     assert: The charm should be in blocked state with correct message and logs.
     """
-    blocked_harness = request.getfixturevalue(blocked_harness_fixture)
-
-    charm_dir = pathlib.Path(os.getcwd())
+    charm_dir = charm_root(charm_type)
     config_file = charm_dir / "charmcraft.yaml"
-    if config_file.exists():
-        yaml_dict = yaml.safe_load(config_file.read_text())
+    yaml_dict = yaml.safe_load(config_file.read_text())
     for config in required_configs:
         yaml_dict["config"]["options"].update(config)
     monkeypatch.setattr(
@@ -194,113 +198,136 @@ def test_non_optional_config(
         "config_metadata",
         unittest.mock.MagicMock(return_value=yaml_dict["config"]),
     )
-    blocked_harness.begin_with_initial_hooks()
-    with pytest.raises(CharmConfigInvalidError) as exc:
-        blocked_harness.charm._create_charm_state()
-        assert isinstance(blocked_harness.model.unit.status, ops.model.BlockedStatus)
-        for substr in expected_log_message_substrs:
-            assert substr in str(exc).lower()
-        for substr in expected_status_message_substrs:
-            assert substr in str(blocked_harness.model.unit.status.message).lower()
-        for substr in unexpected_status_message_substrs:
-            assert substr not in str(blocked_harness.model.unit.status.message).lower()
+    context = context_factory(charm_type)
+    state_dict = framework_state_factory(charm_type)
+    if any("non-optional-string" in config for config in required_configs):
+        state_dict["config"].pop("non-optional-string", None)
+    state = testing.State(**state_dict)
+    with context(context.on.config_changed(), state) as manager:
+        with pytest.raises(CharmConfigInvalidError) as exc:
+            manager.charm._create_charm_state()
+    assert "missing options" in str(exc.value).lower()
+    out = context.run(context.on.config_changed(), state)
+    assert isinstance(out.unit_status, ops.model.BlockedStatus)
+    for substr in expected_log_message_substrs:
+        assert substr in caplog.text.lower()
+    for substr in expected_status_message_substrs:
+        assert substr in out.unit_status.message.lower()
+    for substr in unexpected_status_message_substrs:
+        assert substr not in out.unit_status.message.lower()
 
 
 @pytest.mark.parametrize(
-    "parametrized_harness_fixture, prefix",
+    "charm_type, prefix",
     [
-        ["flask_harness", "flask"],
-        ["go_harness", "app"],
-        ["expressjs_harness", "app"],
-        ["fastapi_harness", "app"],
-        ["django_harness", "django"],
+        [FlaskCharm, "flask"],
+        [GoCharm, "app"],
+        [ExpressJSCharm, "app"],
+        [FastAPICharm, "app"],
+        [DjangoCharm, "django"],
     ],
 )
 def test_get_framework_config_with_prefix(
-    parametrized_harness_fixture: str, prefix: str, request
+    charm_type: type,
+    prefix: str,
+    context_factory,
+    framework_state_factory,
 ) -> None:
     """
     arrange: Get the config options with framework related prefix.
     act: Start the charm and get the framework config object
     assert: Framework config object should have the framework related prefixed config options as attributes.
     """
-    harness = request.getfixturevalue(parametrized_harness_fixture)
-    harness.begin()
-    metadata = config_metadata(pathlib.Path(os.getcwd()))
+    charm_dir = charm_root(charm_type)
+    metadata = config_metadata(charm_dir)
     framework_keys = [
         option[6:].replace("-", "_") for option in metadata["options"] if option.startswith(prefix)
     ]
 
-    framework_config = harness.charm.get_framework_config()
+    context = context_factory(charm_type)
+    with context(
+        context.on.config_changed(),
+        testing.State(**framework_state_factory(charm_type)),
+    ) as manager:
+        framework_config = manager.charm.get_framework_config()
 
     assert list(framework_config.__annotations__.keys()).sort() == framework_keys.sort()
 
 
 @pytest.mark.parametrize(
-    "parametrized_harness_fixture, secret_key, expected_status_message_substrs, unexpected_status_message_substrs, expected_log_message_substrs",
+    "charm_type, secret_key, expected_status_message_substrs, unexpected_status_message_substrs, expected_log_message_substrs",
     [
         pytest.param(
-            "flask_harness",
+            FlaskCharm,
             "app-secret-key",
-            ["invalid", "config", "app-secret-key"],
+            ["invalid", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "app-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "at least 1 character"],
         ),
         pytest.param(
-            "expressjs_harness",
+            ExpressJSCharm,
             "app-secret-key",
-            ["invalid", "config", "app-secret-key"],
+            ["invalid", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "app-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "at least 1 character"],
         ),
         pytest.param(
-            "go_harness",
+            GoCharm,
             "app-secret-key",
-            ["invalid", "config", "app-secret-key"],
+            ["invalid", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "app-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "at least 1 character"],
         ),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "app-secret-key",
-            ["invalid", "config", "app-secret-key"],
+            ["invalid", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "app-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "at least 1 character"],
         ),
         pytest.param(
-            "django_harness",
+            DjangoCharm,
             "app-secret-key",
-            ["invalid", "config", "app-secret-key"],
+            ["invalid", "app-secret-key"],
             ["valid string"],
-            ["invalid", "config", "app-secret-key", "valid string"],
+            ["invalid", "config", "app-secret-key", "at least 1 character"],
         ),
     ],
 )
 def test_get_framework_config_invalid(
-    parametrized_harness_fixture: str,
+    charm_type: type,
     secret_key: str,
     expected_status_message_substrs: list[str],
     unexpected_status_message_substrs: list[str],
     expected_log_message_substrs: list[str],
-    request,
+    context_factory,
+    framework_state_factory,
+    caplog,
 ) -> None:
     """
     arrange: Get the charm.
     act: Set a config option to empty string.
     assert: Charm should raise a CharmConfigInvalidError.
     """
-    harness = request.getfixturevalue(parametrized_harness_fixture)
-    harness.begin()
-    harness.update_config({secret_key: ""})
-
-    with pytest.raises(CharmConfigInvalidError) as exc:
-        framework_config = harness.charm.get_framework_config()
-        for substr in expected_log_message_substrs:
-            assert substr in str(exc).lower()
-        for substr in expected_status_message_substrs:
-            assert substr in str(harness.model.unit.status.message).lower()
-        for substr in unexpected_status_message_substrs:
-            assert substr not in str(harness.model.unit.status.message).lower()
+    context = context_factory(charm_type)
+    state_dict = framework_state_factory(charm_type)
+    with context(context.on.config_changed(), testing.State(**state_dict)) as manager:
+        manager.charm.config._lazy_data = {
+            **manager.charm.config,
+            secret_key: "",
+        }
+        with pytest.raises(CharmConfigInvalidError) as exc:
+            manager.charm.get_framework_config()
+        manager.charm._reconcile()
+        status = manager.charm.unit.status
+    assert "invalid options" in str(exc.value).lower()
+    assert isinstance(status, ops.model.BlockedStatus)
+    for substr in expected_log_message_substrs:
+        assert substr in caplog.text.lower()
+    for substr in expected_status_message_substrs:
+        assert substr in status.message.lower()
+    for substr in unexpected_status_message_substrs:
+        assert substr not in status.message.lower()
 
 
 def _test_app_config_parameters():
@@ -385,8 +412,8 @@ def _test_app_config_class_factory_parameters():
             (config_name_8 := "optional-str"): {"type": "string", "optional": True},
             (config_name_9 := "secret"): {"type": "secret", "optional": False},
             (config_name_10 := "optional-secret"): {"type": "secret", "optional": True},
-            (config_name_12 := "webserver-option"): {"type": "string"},
-            (config_name_13 := "app-option"): {"type": "string"},
+            "webserver-option": {"type": "string"},
+            "app-option": {"type": "string"},
         }
     }
     expected_output = {
@@ -432,43 +459,48 @@ def test_app_config_class_factory(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework, app_prefix",
+    "charm_type, framework, app_prefix",
     [
-        pytest.param("flask_harness", "flask", "FLASK", id="flask"),
-        pytest.param("django_harness", "django", "DJANGO", id="django"),
+        pytest.param(FlaskCharm, "flask", "FLASK", id="flask"),
+        pytest.param(DjangoCharm, "django", "DJANGO", id="django"),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "fastapi",
             "APP",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", "APP", id="go"),
+        pytest.param(GoCharm, "go", "APP", id="go"),
     ],
 )
 def test_secret_storage_config(
-    app_harness: str,
+    charm_type: type,
     framework: str,
     app_prefix: str,
-    container_name: str,
-    request: pytest.FixtureRequest,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Run initial hooks.
     act: Add two units to the secret-storage relation.
     assert: The app service must have the right peer configuration.
     """
-    harness = request.getfixturevalue(app_harness)
-    harness.set_model_name("test-model")
-    harness.begin_with_initial_hooks()
-
-    peer_relation_name = "secret-storage"
-    harness.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(return_value="foobar")
-    rel_id = harness.model.get_relation(peer_relation_name).id
-    harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
-    harness.add_relation_unit(rel_id, f"{harness._meta.name}/2")
-
-    harness.update_config()
-    container = harness.model.unit.get_container(container_name)
-    service_env = container.get_plan().services[framework].environment
+    state_dict = framework_state_factory(charm_type)
+    peer_relation = next(
+        relation for relation in state_dict["relations"] if relation.endpoint == "secret-storage"
+    )
+    state_dict["relations"].remove(peer_relation)
+    peer_relation = testing.PeerRelation(
+        "secret-storage",
+        local_app_data=peer_relation.local_app_data,
+        peers_data={1: {}, 2: {}},
+    )
+    state_dict["relations"].append(peer_relation)
+    context = context_factory(charm_type)
+    with context(context.on.config_changed(), testing.State(**state_dict)) as manager:
+        manager.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(
+            return_value="foobar"
+        )
+        out = manager.run()
+    service_env = out.get_container("app").plan.services[framework].environment
     expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.test-model.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.test-model.svc.cluster.local"
     assert service_env[f"{app_prefix}_PEER_FQDNS"] == expected_output

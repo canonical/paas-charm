@@ -19,9 +19,14 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
-from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
+from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole, testing
 
 import paas_charm
+from examples.django.charm.src.charm import DjangoCharm
+from examples.expressjs.charm.src.charm import ExpressJSCharm
+from examples.fastapi.charm.src.charm import FastAPICharm
+from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
 from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
 from paas_charm._gunicorn.workload_config import create_workload_config
 from paas_charm._gunicorn.wsgi_app import WsgiApp
@@ -40,6 +45,15 @@ from tests.unit.flask.constants import (
     OPENFGA_RELATION_DATA_EXAMPLE,
     SMTP_RELATION_DATA_EXAMPLE,
 )
+
+S3_CA_CHAIN = [
+    "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
+    "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
+]
+S3_ATTRIBUTES = [
+    "header1:value1",
+    "header2:value2",
+]
 
 
 def _generate_map_integrations_to_env_parameters(prefix: str = ""):
@@ -282,18 +296,8 @@ def _test_integrations_env_parameters():
                     path="uploads/",
                     s3_api_version="2006-03-01",
                     s3_uri_style="path",
-                    tls_ca_chain=(
-                        ca_chain := [
-                            "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                            "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                        ]
-                    ),
-                    attributes=(
-                        attributes := [
-                            "header1:value1",
-                            "header2:value2",
-                        ]
-                    ),
+                    tls_ca_chain=S3_CA_CHAIN,
+                    attributes=S3_ATTRIBUTES,
                 )
             ),
             {
@@ -307,8 +311,8 @@ def _test_integrations_env_parameters():
                 "S3_SECRET_KEY": "TESTINGSECRETKEY",
                 "S3_STORAGE_CLASS": "STANDARD",
                 "S3_URI_STYLE": "path",
-                "S3_ATTRIBUTES": json.dumps(attributes),
-                "S3_TLS_CA_CHAIN": json.dumps(ca_chain),
+                "S3_ATTRIBUTES": json.dumps(S3_ATTRIBUTES),
+                "S3_TLS_CA_CHAIN": json.dumps(S3_CA_CHAIN),
             },
             id="S3",
         ),
@@ -420,7 +424,6 @@ def test_generate_integration_environments(
     ],
 )
 def test_integrations_env(
-    monkeypatch,
     database_migration_mock,
     container_mock,
     integrations,
@@ -757,42 +760,42 @@ def test_missing_required_other_integrations(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework",
+    "charm_type, framework",
     [
-        pytest.param("flask_harness", "flask", id="flask"),
-        pytest.param("django_harness", "django", id="django"),
+        pytest.param(FlaskCharm, "flask", id="flask"),
+        pytest.param(DjangoCharm, "django", id="django"),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "fastapi",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", id="go"),
-        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
+        pytest.param(GoCharm, "go", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_relation(
-    app_harness: str,
+    charm_type: type,
     framework: str,
-    container_name: str,
-    request: pytest.FixtureRequest,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Integrate the charm with the smtp-integrator charm.
     act: Run all initial hooks.
     assert: The app service should have the environment variables related to smtp.
     """
-    harness = request.getfixturevalue(app_harness)
-    harness.add_relation(
-        "smtp",
-        "smtp-integrator",
-        app_data=SMTP_RELATION_DATA_EXAMPLE,
+    relation = testing.Relation(
+        endpoint="smtp",
+        interface="smtp",
+        remote_app_data=SMTP_RELATION_DATA_EXAMPLE,
     )
-    container = harness.model.unit.get_container(container_name)
+    state_dict = framework_state_factory(charm_type)
+    state_dict["relations"].append(relation)
+    context = context_factory(charm_type)
+    out = context.run(context.on.relation_changed(relation), testing.State(**state_dict))
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ActiveStatus()
-    service_env = container.get_plan().services[framework].environment
+    assert out.unit_status == ActiveStatus()
+    service_env = out.get_container("app").plan.services[framework].environment
     assert service_env.get("SMTP_AUTH_TYPE") is None
     assert service_env["SMTP_DOMAIN"] == SMTP_RELATION_DATA_EXAMPLE["domain"]
     assert service_env["SMTP_HOST"] == SMTP_RELATION_DATA_EXAMPLE["host"]
@@ -802,37 +805,38 @@ def test_smtp_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework",
+    "charm_type, framework",
     [
-        pytest.param("flask_harness", "flask", id="flask"),
-        pytest.param("django_harness", "django", id="django"),
+        pytest.param(FlaskCharm, "flask", id="flask"),
+        pytest.param(DjangoCharm, "django", id="django"),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "fastapi",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", id="go"),
-        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
+        pytest.param(GoCharm, "go", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", id="expressjs"),
     ],
 )
 def test_smtp_not_activated(
-    app_harness: str,
+    charm_type: type,
     framework: str,
-    container_name: str,
-    request: pytest.FixtureRequest,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Deploy the charm without a relation to the smtp-integrator charm.
     act: Run all initial hooks.
     assert: The app service should not have the environment variables related to smtp.
     """
-    harness = request.getfixturevalue(app_harness)
-    container = harness.model.unit.get_container(container_name)
+    context = context_factory(charm_type)
+    out = context.run(
+        context.on.config_changed(),
+        testing.State(**framework_state_factory(charm_type)),
+    )
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ActiveStatus()
-    service_env = container.get_plan().services[framework].environment
+    assert out.unit_status == ActiveStatus()
+    service_env = out.get_container("app").plan.services[framework].environment
     assert service_env.get("SMTP_AUTH_TYPE") is None
     assert service_env.get("SMTP_DOMAIN") is None
     assert service_env.get("SMTP_HOST") is None
@@ -842,42 +846,42 @@ def test_smtp_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework",
+    "charm_type, framework",
     [
-        pytest.param("flask_harness", "flask", id="flask"),
-        pytest.param("django_harness", "django", id="django"),
+        pytest.param(FlaskCharm, "flask", id="flask"),
+        pytest.param(DjangoCharm, "django", id="django"),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "fastapi",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", id="go"),
-        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
+        pytest.param(GoCharm, "go", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_relation(
-    app_harness: str,
+    charm_type: type,
     framework: str,
-    container_name: str,
-    request: pytest.FixtureRequest,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Integrate the charm with the openfga charm.
     act: Run all initial hooks.
     assert: The app service should have the environment variables related to openfga.
     """
-    harness = request.getfixturevalue(app_harness)
-    harness.add_relation(
-        "openfga",
-        "openfga",
-        app_data=OPENFGA_RELATION_DATA_EXAMPLE,
+    relation = testing.Relation(
+        endpoint="openfga",
+        interface="openfga",
+        remote_app_data=OPENFGA_RELATION_DATA_EXAMPLE,
     )
-    container = harness.model.unit.get_container(container_name)
+    state_dict = framework_state_factory(charm_type)
+    state_dict["relations"].append(relation)
+    context = context_factory(charm_type)
+    out = context.run(context.on.relation_changed(relation), testing.State(**state_dict))
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ActiveStatus()
-    service_env = container.get_plan().services[framework].environment
+    assert out.unit_status == ActiveStatus()
+    service_env = out.get_container("app").plan.services[framework].environment
     assert service_env["FGA_STORE_ID"] == OPENFGA_RELATION_DATA_EXAMPLE["store_id"]
     assert service_env["FGA_TOKEN"] == OPENFGA_RELATION_DATA_EXAMPLE["token"]
     assert service_env["FGA_GRPC_API_URL"] == OPENFGA_RELATION_DATA_EXAMPLE["grpc_api_url"]
@@ -885,37 +889,38 @@ def test_openfga_relation(
 
 
 @pytest.mark.parametrize(
-    "app_harness, framework",
+    "charm_type, framework",
     [
-        pytest.param("flask_harness", "flask", id="flask"),
-        pytest.param("django_harness", "django", id="django"),
+        pytest.param(FlaskCharm, "flask", id="flask"),
+        pytest.param(DjangoCharm, "django", id="django"),
         pytest.param(
-            "fastapi_harness",
+            FastAPICharm,
             "fastapi",
             id="fastapi",
         ),
-        pytest.param("go_harness", "go", id="go"),
-        pytest.param("expressjs_harness", "expressjs", id="expressjs"),
+        pytest.param(GoCharm, "go", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", id="expressjs"),
     ],
 )
 def test_openfga_not_activated(
-    app_harness: str,
+    charm_type: type,
     framework: str,
-    container_name: str,
-    request: pytest.FixtureRequest,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Deploy the charm without a relation to the openfga charm.
     act: Run all initial hooks.
     assert: The app service should not have the environment variables related to openfga.
     """
-    harness = request.getfixturevalue(app_harness)
-    container = harness.model.unit.get_container(container_name)
+    context = context_factory(charm_type)
+    out = context.run(
+        context.on.config_changed(),
+        testing.State(**framework_state_factory(charm_type)),
+    )
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ActiveStatus()
-    service_env = container.get_plan().services[framework].environment
+    assert out.unit_status == ActiveStatus()
+    service_env = out.get_container("app").plan.services[framework].environment
     assert service_env.get("FGA_STORE_ID") is None
     assert service_env.get("FGA_TOKEN") is None
     assert service_env.get("FGA_GRPC_API_URL") is None
@@ -923,29 +928,38 @@ def test_openfga_not_activated(
 
 
 @pytest.mark.parametrize(
-    "app_harness",
-    ["flask_harness", "django_harness", "fastapi_harness", "go_harness", "expressjs_harness"],
+    "charm_type",
+    [FlaskCharm, DjangoCharm, FastAPICharm, GoCharm, ExpressJSCharm],
 )
 def test_secret_storage_relation_departed_hook(
-    app_harness: str,
-    request: pytest.FixtureRequest,
+    charm_type: type,
+    context_factory,
+    framework_state_factory,
 ):
     """
     arrange: Run initial hooks. Add a unit to the secret-storage relation.
     act: Remove one unit from the secret-storage relation.
     assert: The _reconcile function should be called once.
     """
-    harness = request.getfixturevalue(app_harness)
-    harness.begin_with_initial_hooks()
-    harness.charm._reconcile = unittest.mock.MagicMock()
-    peer_relation_name = "secret-storage"
-    rel_id = harness.model.get_relation(peer_relation_name).id
-    harness.add_relation_unit(rel_id, f"{harness._meta.name}/1")
-
-    harness.charm._reconcile.reset_mock()
-    harness.remove_relation_unit(rel_id, f"{harness._meta.name}/1")
-
-    harness.charm._reconcile.assert_called_once()
+    state_dict = framework_state_factory(charm_type)
+    peer_relation = next(
+        relation for relation in state_dict["relations"] if relation.endpoint == "secret-storage"
+    )
+    state_dict["relations"].remove(peer_relation)
+    peer_relation = testing.PeerRelation(
+        "secret-storage",
+        local_app_data=peer_relation.local_app_data,
+        peers_data={1: {}},
+    )
+    state_dict["relations"].append(peer_relation)
+    context = context_factory(charm_type)
+    with context(
+        context.on.relation_departed(peer_relation, remote_unit=1),
+        testing.State(**state_dict),
+    ) as manager:
+        manager.charm._reconcile = unittest.mock.MagicMock()
+        manager.run()
+        manager.charm._reconcile.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -963,15 +977,16 @@ def test_secret_storage_relation_departed_hook(
         ),
     ],
 )
-def test_reconcile_blocks_on_invalid_data(flask_harness, error, expected_message):
+def test_reconcile_blocks_on_invalid_data(
+    context_factory, flask_base_state, error, expected_message
+):
     """
     arrange: Configure readiness validation to reject charm or relation data.
     act: Reconcile the charm.
     assert: The error is translated into a blocked status instead of escaping the hook.
     """
-    flask_harness.begin()
-    flask_harness.charm.is_ready = MagicMock(side_effect=error)
-
-    flask_harness.charm._reconcile()
-
-    assert flask_harness.model.unit.status == BlockedStatus(expected_message)
+    context = context_factory(FlaskCharm)
+    with context(context.on.config_changed(), testing.State(**flask_base_state)) as manager:
+        manager.charm.is_ready = MagicMock(side_effect=error)
+        manager.charm._reconcile()
+        assert manager.charm.unit.status == BlockedStatus(expected_message)

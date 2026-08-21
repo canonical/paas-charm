@@ -19,6 +19,17 @@ from paas_charm.utils import (
     validate_cos_custom_dir,
 )
 
+CACHE_RELATION = RelationMeta(
+    role=RelationRole.requires,
+    relation_name="cache",
+    raw={"interface": "redis", "limit": 1},
+)
+SECOND_CACHE_RELATION = RelationMeta(
+    role=RelationRole.requires,
+    relation_name="second_cache",
+    raw={"interface": "redis", "limit": 1},
+)
+
 
 def _test_build_validation_error_message_parameters():
     return [
@@ -246,13 +257,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     relation_name="db",
                     raw={"interface": "postgresql", "limit": 1},
                 ),
-                "cache": (
-                    cache_relation := RelationMeta(
-                        role=RelationRole.requires,
-                        relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
-                    )
-                ),
+                "cache": CACHE_RELATION,
                 "oauth": RelationMeta(
                     role=RelationRole.requires,
                     relation_name="oauth",
@@ -260,7 +265,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                 ),
             },
             "redis",
-            [("cache", cache_relation)],
+            [("cache", CACHE_RELATION)],
             id="1 relation",
         ),
         pytest.param(
@@ -270,20 +275,8 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     relation_name="db",
                     raw={"interface": "postgresql", "limit": 1},
                 ),
-                "cache": (
-                    cache_relation := RelationMeta(
-                        role=RelationRole.requires,
-                        relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
-                    )
-                ),
-                "second_cache": (
-                    second_cache_relation := RelationMeta(
-                        role=RelationRole.requires,
-                        relation_name="second_cache",
-                        raw={"interface": "redis", "limit": 1},
-                    )
-                ),
+                "cache": CACHE_RELATION,
+                "second_cache": SECOND_CACHE_RELATION,
                 "oauth": RelationMeta(
                     role=RelationRole.requires,
                     relation_name="oauth",
@@ -292,8 +285,8 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
             },
             "redis",
             [
-                ("cache", cache_relation),
-                ("second_cache", second_cache_relation),
+                ("cache", CACHE_RELATION),
+                ("second_cache", SECOND_CACHE_RELATION),
             ],
             id="2 relation",
         ),
@@ -448,7 +441,7 @@ def test_merge_cos_directories_uses_default_only_when_custom_missing(
     merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
-    assert list((merged_dir / "grafana_dashboards").glob("custom_*")) == []
+    assert not list((merged_dir / "grafana_dashboards").glob("custom_*"))
 
 
 def test_merge_cos_directories_uses_default_only_when_custom_invalid(

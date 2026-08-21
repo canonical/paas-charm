@@ -4,14 +4,12 @@
 """Charm unit tests for Oauth relation."""
 
 # Very similar cases to other frameworks. Disable duplicated checks.
-# pylint: disable=R0801
+# pylint: disable=R0801,C0302
 
 
 from secrets import token_hex
-from unittest.mock import patch
 
 import pytest
-from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
@@ -20,7 +18,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
-from paas_charm.utils import config_metadata
+from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
@@ -281,7 +279,14 @@ from paas_charm.utils import config_metadata
     ],
 )
 def test_oauth_config_wrong_relation_order(
-    base_state: dict, charm, framework: str, config: dict, command: str, env: dict, request
+    base_state: dict,
+    charm,
+    framework: str,
+    config: dict,
+    command: str,
+    env: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -300,9 +305,7 @@ def test_oauth_config_wrong_relation_order(
     base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
 
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(oauth_relation), state)
 
     assert out.unit_status == testing.BlockedStatus(
@@ -585,7 +588,14 @@ def test_oauth_config_wrong_relation_order(
     ],
 )
 def test_oauth_config_correct_relation_order(
-    base_state: dict, charm, framework: str, config: dict, command: str, env: dict, request
+    base_state: dict,
+    charm,
+    framework: str,
+    config: dict,
+    command: str,
+    env: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -602,9 +612,7 @@ def test_oauth_config_correct_relation_order(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.ActiveStatus()
 
@@ -689,7 +697,7 @@ def test_oauth_config_correct_relation_order(
     ],
 )
 def test_oauth_config_remove_ingress_integration_should_block(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -706,9 +714,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -793,7 +799,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
     ],
 )
 def test_oauth_config_remove_oauth_integration_should_not_block(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -810,9 +816,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -894,7 +898,9 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         ),
     ],
 )
-def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request) -> None:
+def test_oauth_config_wrong_scope(
+    base_state: dict, charm, config: dict, request, context_factory
+) -> None:
     """
     arrange: set the workload charm config.
     act: start the workload charm and integrate with oauth and ingress using wrong scope.
@@ -917,9 +923,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus(
         "The 'openid' scope is required for OAuth integration, please add it to the scopes."
@@ -987,7 +991,9 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
         ),
     ],
 )
-def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict, request) -> None:
+def test_blocked_when_relation_data_empty(
+    base_state: dict, charm, config: dict, request, context_factory
+) -> None:
     """
     arrange: set the workload charm config.
     act: start the workload charm and integrate with oauth and ingress using wrong scope.
@@ -1008,15 +1014,13 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus("Please check OIDC_CHARM charm!")
 
 
 @pytest.mark.parametrize(
-    "base_state, charm, config, multiple_oauth_integrations",
+    "base_state, charm, config, additional_oauth",
     [
         pytest.param(
             "flask_base_state",
@@ -1094,10 +1098,14 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
             id="expressjs",
         ),
     ],
-    indirect=["multiple_oauth_integrations"],
 )
 def test_oauth_multiple_oauth_integrations(
-    base_state: dict, multiple_oauth_integrations, charm, config: dict, request
+    base_state: dict,
+    additional_oauth: dict,
+    charm,
+    config: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -1121,13 +1129,8 @@ def test_oauth_multiple_oauth_integrations(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
-    # `config_metadata` function is cached and we modify the metadata
-    # in the `multiple_oauth_integrations` fixture
-    with patch("paas_charm.utils.config_metadata", new=config_metadata.__wrapped__):
-        out = context.run(context.on.relation_changed(ingress_relation), state)
+    context = context_factory(charm, additional_oauth=bool(additional_oauth))
+    out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus(
         "Multiple OAuth relations are not supported at the moment"
     )

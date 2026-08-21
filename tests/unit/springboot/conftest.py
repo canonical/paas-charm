@@ -3,57 +3,14 @@
 
 """pytest fixtures for the Springboot unit test."""
 
-import pathlib
-import typing
-from unittest import mock
-
 import pytest
 from ops import testing
 
-from examples.springboot.charm.src.charm import SpringBootCharm
-from paas_charm.paas_config import read_paas_config
-from tests.unit.conftest import postgresql_relation
-
-from .constants import DEFAULT_LAYER
-
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
-SPRINGBOOT_CHARM_ROOT = PROJECT_ROOT / "examples/springboot/charm"
-
-
-@pytest.fixture(name="springboot_context")
-def springboot_context_fixture() -> typing.Generator[testing.Context[SpringBootCharm], None, None]:
-    """Context rooted at the Spring Boot example charm."""
-    with (
-        mock.patch(
-            "paas_charm.charm.read_paas_config",
-            return_value=read_paas_config(SPRINGBOOT_CHARM_ROOT),
-        ),
-        testing.Context(SpringBootCharm, charm_root=SPRINGBOOT_CHARM_ROOT) as context,
-    ):
-        yield context
-
 
 @pytest.fixture(name="base_state")
-def base_state_fixture():
-    """State with container and config file set."""
-    return {
-        "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
-            ),
-            postgresql_relation("spring-boot-k8s"),
-        ],
-        "containers": {
-            testing.Container(
-                name="app",
-                can_connect=True,
-                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
-                _base_plan=DEFAULT_LAYER,
-            )
-        },
-        "model": testing.Model(name="test-model"),
-    }
+def base_state_fixture(spring_boot_framework_state):
+    """Expose the focused Spring Boot state under the framework-local name."""
+    return spring_boot_framework_state
 
 
 @pytest.fixture(name="mysql_relation")
@@ -73,23 +30,12 @@ def mysql_relation_fixture():
 
 
 @pytest.fixture(name="mysql_base_state")
-def base_state_fixture_with_mysql(mysql_relation):
-    """State with container and config file set."""
-    return {
-        "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
-            ),
-            mysql_relation,
-        ],
-        "containers": {
-            testing.Container(
-                name="app",
-                can_connect=True,
-                mounts={"data": testing.Mount(location="/app/saml.cert", source="cert")},
-                _base_plan=DEFAULT_LAYER,
-            )
-        },
-        "model": testing.Model(name="test-model"),
-    }
+def base_state_fixture_with_mysql(spring_boot_framework_state, mysql_relation):
+    """Return the Spring Boot state with MySQL replacing PostgreSQL."""
+    spring_boot_framework_state["relations"] = [
+        relation
+        for relation in spring_boot_framework_state["relations"]
+        if relation.endpoint != "postgresql"
+    ]
+    spring_boot_framework_state["relations"].append(mysql_relation)
+    return spring_boot_framework_state
