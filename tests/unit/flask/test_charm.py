@@ -42,6 +42,7 @@ def test_flask_pebble_layer(flask_context, base_state, container_name: str) -> N
         testing.State(**base_state),
     )
 
+    app_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
     assert out.unit_status == testing.ActiveStatus()
     assert out.get_container(container_name).plan.services["flask"].to_dict() == {
         "environment": {
@@ -51,7 +52,7 @@ def test_flask_pebble_layer(flask_context, base_state, container_name: str) -> N
             "FLASK_OIDC_REDIRECT_PATH": "/callback",
             "FLASK_OIDC_SCOPES": "openid profile email",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
-            "FLASK_SECRET_KEY": "test",
+            "FLASK_SECRET_KEY": app_secret,
         },
         "override": "replace",
         "startup": "enabled",
@@ -65,18 +66,18 @@ def test_rotate_secret_key_action(flask_context, base_state, container_name: str
     """
     arrange: prepare an initialized leader Flask unit.
     act: run the rotate-secret-key action.
-    assert: peer data and the workload environment contain a new key and the action succeeds.
+    assert: the secret store and the workload environment contain a new key and the action
+        succeeds.
     """
     state = testing.State(**base_state)
-    peer_relation = base_state["relations"][0]
-    old_secret = state.get_relation(peer_relation).local_app_data["flask_secret_key"]
+    old_secret = state.get_secret(label="flask-secret-key").tracked_content["value"]
 
     out = flask_context.run(
         flask_context.on.action("rotate-secret-key"),
         state,
     )
 
-    new_secret = out.get_relation(peer_relation).local_app_data["flask_secret_key"]
+    new_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
     assert new_secret
     assert new_secret != old_secret
     assert flask_context.action_results == {"status": "success"}

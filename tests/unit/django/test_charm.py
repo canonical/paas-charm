@@ -23,7 +23,7 @@ CHARMCRAFT_CONFIG = yaml.safe_load(
 NO_DATABASE_META = {
     "name": "django-k8s",
     "containers": {"app": {"resource": "app-image"}},
-    "peers": {"secret-storage": {"interface": "secret-storage"}},
+    "peers": {"peers": {"interface": "peers"}},
     "provides": {
         "grafana-dashboard": {"interface": "grafana_dashboard"},
         "metrics-endpoint": {"interface": "prometheus_scrape"},
@@ -117,6 +117,20 @@ def test_django_config(base_state: dict, container_name: str, config: dict, env:
         service.command == "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
         "django_app.wsgi:application -k [ sync ]"
     )
+
+
+def test_config_changed_initializes_secret_in_same_reconciliation(base_state: dict) -> None:
+    """
+    arrange: Start the Django charm without a pre-existing application secret.
+    act: Emit config-changed.
+    assert: The charm creates the secret and becomes active in the same reconciliation.
+    """
+    state = testing.State(**{**base_state, "secrets": []})
+    context = testing.Context(DjangoCharm)
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
 
 
 def test_django_create_super_user(base_state: dict, container_name: str) -> None:

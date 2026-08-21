@@ -95,12 +95,14 @@ def base_state_fixture(tmp_path: pathlib.Path) -> dict:
     """Return a leader Flask state with its container and peer relation."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"flask_secret_key": "test"},
-            )
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="flask-secret-key",
+                owner="app",
+            ),
         ],
+        "relations": [testing.PeerRelation("peers")],
         "containers": {flask_container(mount_source=tmp_path / "flask")},
         "model": testing.Model(name="test-model"),
     }

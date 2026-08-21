@@ -297,7 +297,7 @@ def test_oauth_config_wrong_relation_order(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     context = testing.Context(
@@ -614,7 +614,7 @@ def test_oauth_config_correct_relation_order(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -717,7 +717,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -821,7 +821,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -909,7 +909,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",
@@ -1000,7 +1000,7 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
         endpoint="oidc", interface="oauth", remote_app_data={}, remote_app_name="OIDC_CHARM"
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",
@@ -1113,7 +1113,7 @@ def test_oauth_multiple_oauth_integrations(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",

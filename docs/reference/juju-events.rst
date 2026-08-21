@@ -15,16 +15,19 @@ For a web app charm, the following events are observed:
   * - :ref:`\<container name\>_pebble_ready <juju:hook-container-pebble-ready>`
     - Fired on Kubernetes charms when the requested container is ready.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``config_changed```
+  * - ``config_changed``
     - Usually fired in response to a configuration change using the CLI.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``secret_storage_relation_created``
-    - Fired when the relation is first created.
-    - Generate a new secret and store it in the relation data.
-  * - ``secret_storage_relation_changed``
+  * - ``leader_elected``
+    - Fired when a new leader unit is elected.
+    - Create the application secret key if it does not exist, then restart the workload.
+  * - ``peers_relation_created``
+    - Fired when the peer relation is first created.
+    - Make peer coordination data (such as peer unit FQDNs) available.
+  * - ``peers_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``secret_storage_relation_departed``
+  * - ``peers_relation_departed``
     - Fired when a unit departs from an existing relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``update_status``

@@ -23,12 +23,7 @@ def cwd():
 
 def _base_state(*, with_database: bool) -> dict:
     """Build the common Scenario state for Django tests."""
-    relations: list[testing.RelationBase] = [
-        testing.PeerRelation(
-            "secret-storage",
-            local_app_data={"django_secret_key": "test"},
-        )
-    ]
+    relations: list[testing.RelationBase] = [testing.PeerRelation("peers")]
     if with_database:
         relations.append(postgresql_relation("django-k8s"))
     container = testing.Container(
@@ -47,9 +42,16 @@ def _base_state(*, with_database: bool) -> dict:
         _base_plan=DEFAULT_LAYER,
     )
     return {
+        "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="django-secret-key",
+                owner="app",
+            ),
+        ],
         "relations": relations,
         "containers": {container},
-        "leader": True,
         "model": testing.Model(name="test-model"),
     }
 

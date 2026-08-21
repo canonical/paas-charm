@@ -38,10 +38,15 @@ def base_state_fixture():
     """State with container and config file set."""
     return {
         "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="spring-boot-secret-key",
+                owner="app",
+            )
+        ],
         "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
-            ),
+            testing.PeerRelation("peers"),
             postgresql_relation("spring-boot-k8s"),
         ],
         "containers": {
@@ -77,10 +82,15 @@ def base_state_fixture_with_mysql(mysql_relation):
     """State with container and config file set."""
     return {
         "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="spring-boot-secret-key",
+                owner="app",
+            )
+        ],
         "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"spring-boot_secret_key": "test"}
-            ),
+            testing.PeerRelation("peers"),
             mysql_relation,
         ],
         "containers": {

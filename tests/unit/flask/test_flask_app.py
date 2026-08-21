@@ -46,7 +46,7 @@ def test_flask_env(
     charm_state = CharmState(
         framework="flask",
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         framework_config=flask_config,
         user_defined_config=user_defined_config,
     )
@@ -132,7 +132,7 @@ def test_http_proxy(
     charm_state = CharmState(
         framework="flask",
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
     )
     workload_config = create_workload_config(
         framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")

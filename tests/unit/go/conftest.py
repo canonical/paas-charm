@@ -34,14 +34,18 @@ def go_context_fixture() -> typing.Generator[testing.Context[GoCharm], None, Non
 
 @pytest.fixture(name="base_state")
 def base_state_fixture():
-    """State with the Go container and secret storage relation."""
+    """State with the Go container, application secret, and peer relation."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"go_secret_key": "test"},
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="go-secret-key",
+                owner="app",
             )
+        ],
+        "relations": [
+            testing.PeerRelation("peers"),
         ],
         "containers": {
             testing.Container(

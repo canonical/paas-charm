@@ -26,10 +26,15 @@ def base_state_fixture():
     """State with the ExpressJS container and required relations."""
     yield {
         "leader": True,
+        "secrets": [
+            testing.Secret(
+                tracked_content={"value": "test"},
+                label="expressjs-secret-key",
+                owner="app",
+            )
+        ],
         "relations": [
-            testing.PeerRelation(
-                "secret-storage", local_app_data={"expressjs_secret_key": "test"}
-            ),
+            testing.PeerRelation("peers"),
             postgresql_relation("test-database"),
         ],
         "containers": {
