@@ -588,26 +588,30 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._saml and not charm_state.integrations.saml:
-            if not requires["saml"].optional:
-                yield "saml"
+        if self._saml and not charm_state.integrations.saml and not requires["saml"].optional:
+            yield "saml"
 
-        if self._tracing and not charm_state.integrations.tracing:
-            if not requires["tracing"].optional:
-                yield "tracing"
+        if (
+            self._tracing
+            and not charm_state.integrations.tracing
+            and not requires["tracing"].optional
+        ):
+            yield "tracing"
 
-        if self._smtp and not charm_state.integrations.smtp:
-            if not requires["smtp"].optional:
-                yield "smtp"
+        if self._smtp and not charm_state.integrations.smtp and not requires["smtp"].optional:
+            yield "smtp"
 
         if self._oauth and not charm_state.integrations.oauth:
             oauth_endpoint_name = get_endpoints_by_interface_name(requires, "oauth")[0][0]
             if not requires[oauth_endpoint_name].optional:
                 yield "oauth"
 
-        if self._valkey and not charm_state.integrations.valkey:
-            if not requires["valkey"].optional:
-                yield "valkey"
+        if (
+            self._valkey
+            and not charm_state.integrations.valkey
+            and not requires["valkey"].optional
+        ):
+            yield "valkey"
 
     def _missing_required_integrations(
         self, charm_state: CharmState
