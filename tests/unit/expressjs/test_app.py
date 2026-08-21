@@ -4,39 +4,86 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
-import pytest
-from ops import testing
+import pathlib
+from unittest.mock import MagicMock
 
-from examples.expressjs.charm.src.charm import ExpressJSCharm
+import pytest
+
+from paas_charm.app import App, WorkloadConfig
+from paas_charm.charm_state import CharmState, IntegrationsState
+from paas_charm.expressjs.charm import ExpressJSConfig
+from paas_charm.rabbitmq import PaaSRabbitMQRelationData
+from paas_charm.redis import PaaSRedisRelationData
 
 
 @pytest.mark.parametrize(
-    "set_env, config, expected",
+    "set_env, user_defined_config, framework_config, integrations, expected",
     [
         pytest.param(
             {},
+            {"otherconfig": "othervalue"},
             {},
+            None,
             {
                 "PORT": "8080",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "NODE_ENV": "production",
+                "APP_SECRET_KEY": "foobar",
+                "APP_OTHERCONFIG": "othervalue",
+                "APP_BASE_URL": "https://paas.example.com",
             },
             id="minimal environment",
         ),
         pytest.param(
             {"JUJU_CHARM_HTTP_PROXY": "http://proxy.test"},
+            {"extra-config": "extravalue"},
             {
                 "app-secret-key": "notfoobar",
             },
+            IntegrationsState(
+                redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
+                rabbitmq=PaaSRabbitMQRelationData(
+                    port=5672,
+                    hostname="rabbitmq.example.com",
+                    username="expressjs-app",
+                    password="test-password",
+                    vhost="test-vhost",
+                ),
+            ),
             {
                 "PORT": "8080",
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "NODE_ENV": "production",
                 "APP_SECRET_KEY": "notfoobar",
+                "APP_EXTRA-CONFIG": "extravalue",
+                "APP_BASE_URL": "https://paas.example.com",
                 "HTTP_PROXY": "http://proxy.test",
                 "http_proxy": "http://proxy.test",
+                "REDIS_DB_CONNECT_STRING": "redis://10.1.88.132:6379",
+                "REDIS_DB_FRAGMENT": "",
+                "REDIS_DB_HOSTNAME": "10.1.88.132",
+                "REDIS_DB_NETLOC": "10.1.88.132:6379",
+                "REDIS_DB_PARAMS": "",
+                "REDIS_DB_PATH": "",
+                "REDIS_DB_PORT": "6379",
+                "REDIS_DB_QUERY": "",
+                "REDIS_DB_SCHEME": "redis",
+                "RABBITMQ_HOSTNAME": "rabbitmq.example.com",
+                "RABBITMQ_PASSWORD": "test-password",
+                "RABBITMQ_USERNAME": "expressjs-app",
+                "RABBITMQ_CONNECT_STRING": (
+                    "amqp://expressjs-app:test-password@rabbitmq.example.com:5672/test-vhost"
+                ),
+                "RABBITMQ_FRAGMENT": "",
+                "RABBITMQ_NETLOC": "expressjs-app:test-password@rabbitmq.example.com:5672",
+                "RABBITMQ_PARAMS": "",
+                "RABBITMQ_PATH": "/test-vhost",
+                "RABBITMQ_VHOST": "test-vhost",
+                "RABBITMQ_PORT": "5672",
+                "RABBITMQ_QUERY": "",
+                "RABBITMQ_SCHEME": "amqp",
             },
             id="all configurable values set",
         ),
@@ -45,9 +92,10 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
 def test_expressjs_environment_vars(
     monkeypatch,
     set_env,
-    config,
+    user_defined_config,
+    framework_config,
+    integrations,
     expected,
-    base_state,
 ):
     """
     arrange: set juju charm generic app with distinct combinations of configuration.
@@ -57,12 +105,38 @@ def test_expressjs_environment_vars(
     for set_env_name, set_env_value in set_env.items():
         monkeypatch.setenv(set_env_name, set_env_value)
 
-    base_state["config"] = config
-    state = testing.State(**base_state)
-    context = testing.Context(charm_type=ExpressJSCharm)
+    framework_name = "expressjs"
+    framework_config = ExpressJSConfig.model_validate(framework_config)
+    base_dir = pathlib.Path("/app")
+    workload_config = WorkloadConfig(
+        framework=framework_name,
+        container_name="app",
+        port=framework_config.port,
+        base_dir=base_dir,
+        app_dir=base_dir,
+        state_dir=base_dir / "state",
+        service_name=framework_name,
+        log_files=[],
+        metrics_path="/metrics",
+        metrics_port=9464,
+        unit_name="expressjs/0",
+    )
 
-    out = context.run(context.on.config_changed(), state)
+    charm_state = CharmState(
+        framework="expressjs",
+        secret_key="foobar",
+        is_secret_storage_ready=True,
+        framework_config=framework_config.dict(exclude_none=True),
+        base_url="https://paas.example.com",
+        user_defined_config=user_defined_config,
+        integrations=integrations,
+    )
 
-    assert out.unit_status == testing.ActiveStatus()
-    env = out.get_container("app").plan.services["expressjs"].environment
-    assert {key: env[key] for key in expected} == expected
+    app = App(
+        container=MagicMock(),
+        charm_state=charm_state,
+        workload_config=workload_config,
+        database_migration=MagicMock(),
+        framework_config_prefix="",
+    )
+    assert app.gen_environment() == expected

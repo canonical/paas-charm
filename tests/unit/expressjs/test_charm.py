@@ -6,10 +6,10 @@
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
+import json
+
 import pytest
 from ops import testing
-
-from examples.expressjs.charm.src.charm import ExpressJSCharm
 
 
 @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ from examples.expressjs.charm.src.charm import ExpressJSCharm
         ),
     ],
 )
-def test_expressjs_config(base_state, config: dict, env: dict) -> None:
+def test_expressjs_config(expressjs_context, base_state, config: dict, env: dict) -> None:
     """
     arrange: none
     act: start the expressjs charm and set expressjs-app container to be ready.
@@ -80,8 +80,7 @@ def test_expressjs_config(base_state, config: dict, env: dict) -> None:
     """
     base_state["config"] = config
     state = testing.State(**base_state)
-    context = testing.Context(charm_type=ExpressJSCharm)
-    out = context.run(context.on.config_changed(), state)
+    out = expressjs_context.run(expressjs_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
     expressjs_layer = out.get_container("app").plan.services["expressjs"].to_dict()
@@ -95,7 +94,7 @@ def test_expressjs_config(base_state, config: dict, env: dict) -> None:
     }
 
 
-def test_metrics_config(base_state) -> None:
+def test_metrics_config(expressjs_context, base_state) -> None:
     """
     arrange: Charm with a metrics-endpoint integration
     act: Start the charm with all initial hooks
@@ -109,9 +108,8 @@ def test_metrics_config(base_state) -> None:
         )
     )
     state = testing.State(**base_state)
-    context = testing.Context(charm_type=ExpressJSCharm)
 
-    out = context.run(context.on.config_changed(), state)
+    out = expressjs_context.run(expressjs_context.on.config_changed(), state)
 
     metrics_endpoint_relations = out.get_relations("metrics-endpoint")
     assert len(metrics_endpoint_relations) == 1
@@ -120,6 +118,9 @@ def test_metrics_config(base_state) -> None:
     assert relation_data_unit["prometheus_scrape_unit_address"]
     assert relation_data_unit["prometheus_scrape_unit_name"] == "expressjs-k8s/0"
 
-    scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
-    assert "/metrics" in scrape_jobs
-    assert "*:9464" in scrape_jobs
+    assert json.loads(metrics_endpoint_relations[0].local_app_data["scrape_jobs"]) == [
+        {
+            "metrics_path": "/metrics",
+            "static_configs": [{"targets": ["*:9464"]}],
+        }
+    ]
