@@ -10,7 +10,6 @@
 from secrets import token_hex
 
 import pytest
-from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
@@ -19,6 +18,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
+from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(

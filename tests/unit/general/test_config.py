@@ -9,7 +9,6 @@ import unittest
 import ops
 import pytest
 import yaml
-from conftest import charm_root
 from ops import testing
 from pydantic import Field
 
@@ -22,6 +21,7 @@ from examples.go.charm.src.charm import GoCharm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
+from tests.unit.scenario import charm_root
 
 
 @pytest.mark.parametrize(
