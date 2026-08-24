@@ -21,7 +21,7 @@ from ops import testing
                 "WEB_CONCURRENCY": "1",
                 "UVICORN_LOG_LEVEL": "info",
                 "UVICORN_HOST": "0.0.0.0",
-                "METRICS_PORT": "9464",
+                "METRICS_PORT": "8000",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://fastapi-k8s.test-model:8000",
                 "APP_SECRET_KEY": "test",
@@ -49,7 +49,7 @@ from ops import testing
                 "WEB_CONCURRENCY": "1",
                 "UVICORN_LOG_LEVEL": "info",
                 "UVICORN_HOST": "0.0.0.0",
-                "METRICS_PORT": "9464",
+                "METRICS_PORT": "8000",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://fastapi-k8s.test-model:8000",
                 "APP_SECRET_KEY": "foobar",
@@ -137,6 +137,6 @@ def test_metrics_config(fastapi_context, base_state) -> None:
     assert json.loads(metrics_relations[0].local_app_data["scrape_jobs"]) == [
         {
             "metrics_path": "/metrics",
-            "static_configs": [{"targets": ["*:9464"]}],
+            "static_configs": [{"targets": ["*:8000"]}],
         }
     ]

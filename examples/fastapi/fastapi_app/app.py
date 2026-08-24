@@ -21,7 +21,7 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
-from prometheus_client import start_http_server
+from prometheus_client import make_asgi_app
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -57,7 +57,7 @@ set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
 metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
-start_http_server(port=int(os.getenv("METRICS_PORT", "9464")), addr="0.0.0.0")  # nosec
+app.mount("/metrics", make_asgi_app())
 
 FastAPIInstrumentor.instrument_app(app)
 tracer = trace.get_tracer(__name__)
