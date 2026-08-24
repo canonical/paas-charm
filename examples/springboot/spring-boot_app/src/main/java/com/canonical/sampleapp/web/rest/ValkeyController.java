@@ -5,6 +5,7 @@
 
 package com.canonical.sampleapp.web.rest;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import io.valkey.springframework.data.valkey.core.ReactiveValkeyOperations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@ConditionalOnProperty(name = "spring.data.valkey.host")
 @RestController
 @RequestMapping("/valkey")
 public class ValkeyController {

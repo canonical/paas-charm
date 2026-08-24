@@ -14,9 +14,11 @@ import io.valkey.springframework.data.valkey.serializer.Jackson2JsonValkeySerial
 import io.valkey.springframework.data.valkey.serializer.StringValkeySerializer;
 import io.valkey.springframework.data.valkey.serializer.ValkeySerializationContext;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@ConditionalOnProperty(name = "spring.data.valkey.host")
 @Configuration
 public class ValkeyConfiguration {
     @Bean
