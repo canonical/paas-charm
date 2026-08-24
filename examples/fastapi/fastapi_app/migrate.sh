@@ -2,4 +2,4 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-alembic upgrade head
+METRICS_PORT=9465 alembic upgrade head
