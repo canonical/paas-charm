@@ -12,7 +12,7 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.go.charm import GoConfig
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.redis import PaaSRedisRelationData
+from paas_charm.valkey import ValkeyResponseModel
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,7 @@ from paas_charm.redis import PaaSRedisRelationData
             {"extra-config": "extravalue"},
             {"app-secret-key": "notfoobar"},
             IntegrationsState(
-                redis=PaaSRedisRelationData(url="redis://10.1.88.132:6379"),
+                valkey=ValkeyResponseModel(endpoints="valkey://10.1.88.132:6379"),
                 rabbitmq=PaaSRabbitMQRelationData(
                     vhost="/",
                     port=5672,
@@ -56,15 +56,19 @@ from paas_charm.redis import PaaSRedisRelationData
                 "APP_BASE_URL": "https://paas.example.com",
                 "HTTP_PROXY": "http://proxy.test",
                 "http_proxy": "http://proxy.test",
-                "REDIS_DB_CONNECT_STRING": "redis://10.1.88.132:6379",
-                "REDIS_DB_FRAGMENT": "",
-                "REDIS_DB_HOSTNAME": "10.1.88.132",
-                "REDIS_DB_NETLOC": "10.1.88.132:6379",
-                "REDIS_DB_PARAMS": "",
-                "REDIS_DB_PATH": "",
-                "REDIS_DB_PORT": "6379",
-                "REDIS_DB_QUERY": "",
-                "REDIS_DB_SCHEME": "redis",
+                "VALKEY_DB_CONNECT_STRING": "valkey://10.1.88.132:6379",
+                "VALKEY_DB_FRAGMENT": "",
+                "VALKEY_DB_HOSTNAME": "10.1.88.132",
+                "VALKEY_DB_NETLOC": "10.1.88.132:6379",
+                "VALKEY_DB_PARAMS": "",
+                "VALKEY_DB_PATH": "",
+                "VALKEY_DB_PORT": "6379",
+                "VALKEY_DB_QUERY": "",
+                "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
+                "VALKEY_MODE": "",
+                "VALKEY_VERSION": "",
                 "RABBITMQ_HOSTNAME": "rabbitmq.example.com",
                 "RABBITMQ_PASSWORD": "test-password",
                 "RABBITMQ_USERNAME": "go-app",

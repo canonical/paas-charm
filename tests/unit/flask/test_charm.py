@@ -22,7 +22,7 @@ def _relation(endpoint: str, relation_data: dict) -> testing.Relation:
             "postgresql": "postgresql_client",
             "mysql": "mysql_client",
             "mongodb": "mongodb_client",
-            "redis": "redis",
+            "valkey": "valkey_client",
             "s3": "s3",
             "saml": "saml",
         }.get(endpoint, endpoint),
@@ -110,12 +110,12 @@ def test_ingress(flask_context, base_state, container_name: str) -> None:
 
 def test_integrations_wiring(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: relate Redis, PostgreSQL, S3, and SAML integrations.
+    arrange: relate Valkey, PostgreSQL, S3, and SAML integrations.
     act: reconcile the charm.
     assert: the workload receives the exact integration environment values.
     """
     relations = [
-        _relation("redis", INTEGRATIONS_RELATION_DATA["redis"]),
+        _relation("valkey", INTEGRATIONS_RELATION_DATA["valkey"]),
         _relation("postgresql", INTEGRATIONS_RELATION_DATA["postgresql"]),
         _relation("s3", INTEGRATIONS_RELATION_DATA["s3"]),
         _relation("saml", INTEGRATIONS_RELATION_DATA["saml"]),
@@ -123,14 +123,14 @@ def test_integrations_wiring(flask_context, base_state, container_name: str) -> 
     base_state["relations"].extend(relations)
 
     out = flask_context.run(
-        flask_context.on.relation_changed(relations[0], remote_unit=0),
+        flask_context.on.config_changed(),
         testing.State(**base_state),
     )
 
     assert out.unit_status == testing.ActiveStatus()
     environment = out.get_container(container_name).plan.services["flask"].environment
     assert "MYSQL_DB_CONNECT_STRING" not in environment
-    assert environment["REDIS_DB_CONNECT_STRING"] == "redis://10.1.88.132:6379"
+    assert environment["VALKEY_DB_CONNECT_STRING"] == "valkey://10.1.88.132:6379"
     assert (
         environment["POSTGRESQL_DB_CONNECT_STRING"]
         == "postgresql://test-username:test-password@test-postgresql:5432/test-database"
@@ -271,15 +271,15 @@ def test_rabbitmq_remove_integration(
     [
         pytest.param(["saml"], ["s3"], "missing integrations: s3", id="s3 fails"),
         pytest.param(
-            ["redis", "s3"],
+            ["valkey", "s3"],
             ["mysql", "postgresql"],
             "missing integrations: mysql, postgresql",
             id="postgresql and mysql fail",
         ),
         pytest.param(
             [],
-            ["mysql", "postgresql", "mongodb", "s3", "redis", "saml", "rabbitmq"],
-            "missing integrations: mongodb, mysql, postgresql, rabbitmq, redis, s3, saml",
+            ["mysql", "postgresql", "mongodb", "s3", "valkey", "saml", "rabbitmq"],
+            "missing integrations: mongodb, mysql, postgresql, rabbitmq, s3, saml, valkey",
             id="all fail",
         ),
     ],
