@@ -20,7 +20,9 @@ For a web app charm, the following events are observed:
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``leader_elected``
     - Fired when a new leader unit is elected.
-    - Create the application secret key if it does not exist, then restart the workload.
+    - Create the application secret key during initial deployment. If the key already exists and
+      the workload is running, validate the charm configuration, run pending migrations and
+      restart the workload.
   * - ``peers_relation_created``
     - Fired when the peer relation is first created.
     - Make peer coordination data (such as peer unit FQDNs) available.

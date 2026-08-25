@@ -26,11 +26,11 @@ def test_secret_key_created_on_leader_elected(flask_context, base_state):
         assert manager.charm._secret_key.get_secret_key()
 
 
-def test_leader_elected_does_not_reconcile(flask_context, base_state):
+def test_initial_leader_elected_does_not_reconcile(flask_context, base_state):
     """
     arrange: A leader Flask charm without an application secret key.
     act: Emit the leader-elected event.
-    assert: The key is initialized without reconciling.
+    assert: The key is initialized without prematurely reconciling the workload.
     """
     state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
@@ -41,6 +41,44 @@ def test_leader_elected_does_not_reconcile(flask_context, base_state):
         manager.run()
 
         assert manager.charm._secret_key.is_ready
+
+    reconcile.assert_not_called()
+
+
+def test_established_leader_elected_reconciles(flask_context, base_state):
+    """
+    arrange: A leader Flask charm with an established application secret key.
+    act: Emit the leader-elected event.
+    assert: The workload is reconciled so it restarts under the new leader.
+    """
+    state = testing.State(**{**base_state, "leader": True})
+    established_state = flask_context.run(flask_context.on.config_changed(), state)
+
+    with (
+        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
+        flask_context(flask_context.on.leader_elected(), established_state) as manager,
+    ):
+        existing_key = manager.charm._secret_key.get_secret_key()
+        manager.run()
+
+        assert manager.charm._secret_key.get_secret_key() == existing_key
+
+    reconcile.assert_called_once_with()
+
+
+def test_pre_start_leader_elected_does_not_reconcile(flask_context, base_state):
+    """
+    arrange: A leader Flask charm with a secret but a workload that has not started.
+    act: Emit the leader-elected event.
+    assert: Reconciliation waits for a later lifecycle event with complete relation data.
+    """
+    state = testing.State(**{**base_state, "leader": True})
+
+    with (
+        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
+        flask_context(flask_context.on.leader_elected(), state) as manager,
+    ):
+        manager.run()
 
     reconcile.assert_not_called()
 

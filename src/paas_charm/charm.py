@@ -523,8 +523,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._reconcile()
 
     def _on_leader_elected(self, _: ops.HookEvent) -> None:
-        """Initialize the application secret key when this unit becomes leader."""
+        """Initialize the application secret key or reconcile an established workload."""
+        secret_key_exists = self._secret_key.is_ready
+        services = self._container.get_services() if self._container.can_connect() else {}
+        workload_service = services.get(self._workload_config.service_name)
+        workload_is_running = workload_service is not None and workload_service.is_running()
         self._secret_key.initialize()
+        if secret_key_exists and workload_is_running:
+            self._reconcile()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
