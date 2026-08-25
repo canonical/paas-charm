@@ -22,7 +22,7 @@ def _relation(endpoint: str, relation_data: dict) -> testing.Relation:
             "postgresql": "postgresql_client",
             "mysql": "mysql_client",
             "mongodb": "mongodb_client",
-            "valkey": "valkey",
+            "valkey": "valkey_client",
             "s3": "s3",
             "saml": "saml",
         }.get(endpoint, endpoint),
