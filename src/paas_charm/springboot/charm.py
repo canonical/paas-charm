@@ -213,7 +213,6 @@ def generate_valkey_env(
         "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
         "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
         "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
-        "spring.data.valkey.client-type": "lettuce",
     }
     if username := base_env.get("VALKEY_DB_USERNAME"):
         env["spring.data.valkey.username"] = username

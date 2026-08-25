@@ -28,7 +28,7 @@ def test_valkey_environment_with_credentials() -> None:
     """
     arrange: Valkey relation data with credentials.
     act: generate the Spring Boot Valkey environment variables.
-    assert: the URL components, credentials, and reactive client are mapped.
+    assert: the URL components and credentials are mapped without selecting a client.
     """
     credential = "test-value"
     relation_data = MagicMock(
@@ -47,7 +47,6 @@ def test_valkey_environment_with_credentials() -> None:
         "spring.data.valkey.port": "6379",
         "spring.data.valkey.username": "application",
         "spring.data.valkey.password": credential,
-        "spring.data.valkey.client-type": "lettuce",
     }
 
 
@@ -216,7 +215,7 @@ def test_valkey_integration(
     assert environment["spring.data.valkey.host"] == "valkey-primary"
     assert environment["spring.data.valkey.port"] == "6379"
     assert environment["spring.data.valkey.url"] == "valkey://valkey-primary:6379"
-    assert environment["spring.data.valkey.client-type"] == "lettuce"
+    assert "spring.data.valkey.client-type" not in environment
     assert environment.get("spring.data.valkey.username") is None
     assert environment.get("spring.data.valkey.password") is None
 
