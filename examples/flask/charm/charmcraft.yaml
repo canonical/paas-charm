@@ -37,59 +37,15 @@ charm-libs:
     version: "0"
   - lib: temporal-k8s.temporal_host_info
     version: "0"
-
-actions:
-  rotate-secret-key:
-    description:
-      Rotate the flask secret key. Users will be forced to log in again.
-      This might be useful if a security breach occurs.
-assumes:
-  - k8s-api
-
-base: ubuntu@26.04
-
-platforms:
-  amd64:
-
-config:
-  options:
-    flask-application-root:
-      description:
-        Path in which the application / web server is mounted. This configuration
-        will set the FLASK_APPLICATION_ROOT environment variable. Run `app.config.from_prefixed_env()`
-        in your Flask application in order to receive this configuration.
-      type: string
-    flask-debug:
-      description: Whether Flask debug mode is enabled.
-      type: boolean
-    flask-env:
-      description: What environment the Flask app is running in, by default it's 'production'.
-      type: string
-    flask-permanent-session-lifetime:
-      description:
-        Time in seconds for the cookie to expire in the Flask application
-        permanent sessions. This configuration will set the FLASK_PERMANENT_SESSION_LIFETIME
-        environment variable. Run `app.config.from_prefixed_env()` in your Flask application
-        in order to receive this configuration.
-      type: int
-    flask-preferred-url-scheme:
-      default: HTTPS
-      description:
-        Scheme for generating external URLs when not in a request context
-        in the Flask application. By default, it's "HTTPS". This configuration will
-        set the FLASK_PREFERRED_URL_SCHEME environment variable. Run `app.config.from_prefixed_env()`
-        in your Flask application in order to receive this configuration.
-      type: string
-    flask-secret-key:
       description:
         The secret key used for securely signing the session cookie and
         for any other security related needs by your Flask application. This configuration
         will set the FLASK_SECRET_KEY environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
-    flask-secret-key-id:
+    app-secret-key-id:
       description: >-
-        This configuration is similar to `flask-secret-key`, but instead accepts a Juju user secret ID.
+        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual Flask secret key.
         To create the secret, run the following command:
         `juju add-secret my-flask-secret-key value=<secret-string> && juju grant-secret my-flask-secret-key flask-k8s`,

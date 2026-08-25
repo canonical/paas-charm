@@ -5,14 +5,13 @@
 
 import os
 import pathlib
-import typing
 
 import pytest
-from ops.testing import Harness
+from ops import testing
 
-from examples.expressjs.charm.src.charm import ExpressJSCharm
+from tests.unit.conftest import postgresql_relation
 
-from .constants import EXPRESSJS_CONTAINER_NAME
+from .constants import DEFAULT_LAYER
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -22,23 +21,23 @@ def cwd():
     return os.chdir(PROJECT_ROOT / "examples/expressjs/charm")
 
 
-@pytest.fixture(name="harness")
-def harness_fixture() -> typing.Generator[Harness, None, None]:
-    """Ops testing framework harness fixture."""
-    harness = Harness(ExpressJSCharm)
-    harness.set_leader()
-    root = harness.get_filesystem_root(EXPRESSJS_CONTAINER_NAME)
-    (root / "app").mkdir(parents=True)
-    harness.set_can_connect(EXPRESSJS_CONTAINER_NAME, True)
-    harness.add_relation(
-        "postgresql",
-        "postgresql-k8s",
-        app_data={
-            "database": "test-database",
-            "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-            "password": "test-password",
-            "username": "test-username",
+@pytest.fixture(name="base_state")
+def base_state_fixture():
+    """State with the ExpressJS container and required relations."""
+    yield {
+        "leader": True,
+        "relations": [
+            testing.PeerRelation(
+                "secret-storage", local_app_data={"expressjs_secret_key": "test"}
+            ),
+            postgresql_relation("test-database"),
+        ],
+        "containers": {
+            testing.Container(
+                name="app",
+                can_connect=True,
+                _base_plan=DEFAULT_LAYER,
+            )
         },
-    )
-    yield harness
-    harness.cleanup()
+        "model": testing.Model(name="test-model"),
+    }

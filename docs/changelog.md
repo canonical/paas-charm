@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
+  and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
+  defaults to workloads.
+* feat: Support additional Prometheus jobs through `prometheus.scrape_configs` while preserving
+  framework metrics scraping.
+* fix: Use OpenTelemetry auto-instrumentation for metrics in the FastAPI example application.
+* fix: Serve ExpressJS Prometheus metrics on the configured `METRICS_PORT`.
+* breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
+  `app-secret-key-id` while preserving their framework-prefixed workload variables.
+* fix: Use the charm application name for the OpenFGA store name.
+
+## 1.12.0 - 2026-07-03
+
 * fix: Set `alert_rules_path` of `LogProxyConsumer` and `LogForwarder` when
   using the v1 version of the Loki library.
 * docs: Migrate the RTD documentation URL under the Canonical domain.

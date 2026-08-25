@@ -6,6 +6,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from ops import testing
 
 from paas_charm.charm import PaasCharm
 from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
@@ -165,15 +166,26 @@ DATABASE_GET_URI_TEST_PARAMS = [
     ],
 )
 def test_paas_database_requires_to_relation_data(
-    monkeypatch, harness, database, relation_data, expected
+    monkeypatch,
+    flask_context,
+    base_state,
+    database,
+    relation_data,
+    expected,
 ):
     """
     arrange: given relation data.
     act: when PaaSDatabaseRequires.to_relation_data() is called.
     assert: expected DatabaseRelationData is returned.
     """
-    harness.begin()
-    charm: PaasCharm = harness.charm
-    db_requires: PaaSDatabaseRequires = charm._database_requirers[database]
-    monkeypatch.setattr(db_requires, "fetch_relation_data", MagicMock(return_value=relation_data))
-    assert db_requires.to_relation_data() == expected
+    state = testing.State(**base_state)
+    with flask_context(flask_context.on.config_changed(), state) as manager:
+        charm: PaasCharm = manager.charm
+        db_requires: PaaSDatabaseRequires = charm._database_requirers[database]
+        monkeypatch.setattr(
+            db_requires,
+            "fetch_relation_data",
+            MagicMock(return_value=relation_data),
+        )
+        assert db_requires.to_relation_data() == expected
+        manager.run()

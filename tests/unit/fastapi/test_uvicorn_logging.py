@@ -9,8 +9,10 @@ End-to-end verification (real Uvicorn + charm) is covered by the integration
 tests in ``tests/integration/fastapi/test_fastapi.py``.
 """
 
+import importlib.util
 import json
 import logging
+import pathlib
 import sys
 import unittest.mock
 
@@ -19,11 +21,24 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import (  # pylint: disable=import-error,no-name-in-module
     TracerProvider,
 )
-from uvicorn_log_handler import (  # pylint: disable=import-error
-    OtelCorrelationFilter,
-    UvicornJsonFormatter,
-    _span_context_var,
+
+_TEMPLATE_PATH = (
+    pathlib.Path(__file__).parents[3]
+    / "src"
+    / "paas_charm"
+    / "templates"
+    / "fastapi"
+    / "uvicorn_log_handler.py"
 )
+_MODULE_SPEC = importlib.util.spec_from_file_location("uvicorn_log_handler", _TEMPLATE_PATH)
+if _MODULE_SPEC is None or _MODULE_SPEC.loader is None:
+    raise ImportError(f"Unable to load {_TEMPLATE_PATH}")
+_MODULE = importlib.util.module_from_spec(_MODULE_SPEC)
+_MODULE_SPEC.loader.exec_module(_MODULE)
+
+OtelCorrelationFilter = _MODULE.OtelCorrelationFilter
+UvicornJsonFormatter = _MODULE.UvicornJsonFormatter
+_span_context_var = _MODULE._span_context_var
 
 trace.set_tracer_provider(TracerProvider())
 _TRACER = trace.get_tracer("test")

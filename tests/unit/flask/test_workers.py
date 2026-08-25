@@ -1,29 +1,39 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Unit tests for worker services."""
+"""Scenario tests for Flask worker services."""
 
-import ops
+import dataclasses
+
 import pytest
-from ops.testing import ExecResult, Harness
+from ops import testing
 
-from .constants import DEFAULT_LAYER, FLASK_CONTAINER_NAME, LAYER_WITH_WORKER
+from .constants import DEFAULT_LAYER, LAYER_WITH_WORKER
 
 
-def test_worker(harness: Harness):
+def _status(name: str, message: str):
+    """Build the expected Scenario status."""
+    if name == "active":
+        return testing.ActiveStatus(message)
+    return testing.BlockedStatus(message)
+
+
+def test_worker(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: Prepare a unit with workers and schedulers.
-    act: Run initial hooks.
-    assert: The workers should have all the environment variables. Also the schedulers, as
-            the unit is 0.
+    arrange: prepare a unit with worker, scheduler, and unrelated services.
+    act: reconcile the charm.
+    assert: workers and unit-zero schedulers receive the workload environment.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    container.add_layer("a_layer", LAYER_WITH_WORKER)
+    container = dataclasses.replace(
+        next(iter(base_state["containers"])),
+        _base_plan=LAYER_WITH_WORKER,
+    )
+    state = testing.State(**{**base_state, "containers": {container}})
 
-    harness.begin_with_initial_hooks()
+    out = flask_context.run(flask_context.on.config_changed(), state)
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    services = container.get_plan().services
+    assert out.unit_status == testing.ActiveStatus()
+    services = out.get_container(container_name).plan.services
     assert "FLASK_SECRET_KEY" in services["flask"].environment
     assert services["flask"].environment == services["real-worker"].environment
     assert services["flask"].environment == services["Another-Real-WorkeR"].environment
@@ -35,61 +45,25 @@ def test_worker(harness: Harness):
 
 
 @pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message, exec_res",
-    [
-        (
-            "eventlet",
-            "blocked",
-            "Only 'gevent' and 'sync' are allowed. https://bit.ly/flask-async-doc",
-            1,
-        ),
-        ("gevent", "active", "", 0),
-        ("sync", "active", "", 0),
-    ],
-)
-def test_async_workers_config(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
-):
-    """
-    arrange: Prepare a unit and run initial hooks.
-    act: Set the `webserver-worker-class` config.
-    assert: The charm should be blocked if the `webserver-worker-class` config is anything other
-    then `sync` or `gevent`.
-    """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-
-    harness.handle_exec(
-        container.name,
-        ["python3", "-c", "import gevent"],
-        result=ExecResult(exit_code=exec_res),
-    )
-
-    harness.begin_with_initial_hooks()
-    harness.update_config({"webserver-worker-class": worker_class})
-    assert harness.model.unit.status == ops.StatusBase.from_name(
-        name=expected_status, message=expected_message
-    )
-
-
-@pytest.mark.parametrize(
-    "flask_layer, worker_class, expected_status, expected_message, exec_res",
+    "flask_layer,worker_class,gevent_result,gunicorn_result,expected_status,expected_message",
     [
         pytest.param(
             DEFAULT_LAYER,
             "eventlet",
+            1,
+            0,
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/flask-async-doc",
-            1,
-            id="fail-eventlet",
+            id="unsupported-eventlet",
         ),
         pytest.param(
             DEFAULT_LAYER,
             "gevent",
+            1,
+            0,
             "blocked",
             "gunicorn[gevent] must be installed in the rock. https://bit.ly/flask-async-doc",
-            1,
-            id="fail-gevent",
+            id="missing-gevent",
         ),
         pytest.param(
             {
@@ -101,87 +75,102 @@ def test_async_workers_config(
                 },
             },
             "gevent",
+            0,
+            0,
             "blocked",
             "Worker class is set through `juju config` but the `-k` worker class argument is not in the service command.",
+            id="missing-worker-selector",
+        ),
+        pytest.param(
+            DEFAULT_LAYER,
+            "gevent",
             0,
-            id="fail-no-k",
+            0,
+            "active",
+            "",
+            id="gevent",
         ),
         pytest.param(
             DEFAULT_LAYER,
             "sync",
+            0,
+            0,
             "active",
             "",
-            0,
-            id="success-sync",
+            id="sync",
         ),
     ],
 )
-def test_async_workers_config_fail(
-    harness: Harness, flask_layer, worker_class, expected_status, expected_message, exec_res
-):
+def test_async_workers_config(
+    flask_context,
+    base_state,
+    flask_layer: dict,
+    worker_class: str,
+    gevent_result: int,
+    gunicorn_result: int,
+    expected_status: str,
+    expected_message: str,
+) -> None:
     """
-    arrange: Prepare a unit and run initial hooks.
-    act: Set the `webserver-worker-class` config.
-    assert: The charm should be blocked if the `webserver-worker-class` config is anything other
-    then `sync`.
+    arrange: configure worker class, Pebble command, and exec outcomes.
+    act: reconcile the charm.
+    assert: unsupported or unavailable classes block with exact messages.
     """
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    container.add_layer("a_layer", flask_layer)
-
-    harness.handle_exec(
-        container.name,
-        ["python3", "-c", "import gevent"],
-        result=ExecResult(exit_code=exec_res),
+    container = dataclasses.replace(
+        next(iter(base_state["containers"])),
+        _base_plan=flask_layer,
+        execs={
+            testing.Exec(
+                ["python3", "-c", "import gevent"],
+                return_code=gevent_result,
+            ),
+            testing.Exec(["/bin/python3"], return_code=gunicorn_result),
+        },
+    )
+    state = testing.State(
+        **{
+            **base_state,
+            "config": {"webserver-worker-class": worker_class},
+            "containers": {container},
+        }
     )
 
-    harness.handle_exec(
-        container.name,
-        [
-            "/bin/python3",
-            "-m",
-            "gunicorn",
-            "-c",
-            "/flask/gunicorn.conf.py",
-            "app:app",
-            "--check-config",
-        ],
-        result=ExecResult(exit_code=exec_res),
-    )
-    harness.begin_with_initial_hooks()
-    harness.update_config({"webserver-worker-class": worker_class})
-    assert harness.model.unit.status == ops.StatusBase.from_name(
-        name=expected_status, message=expected_message
-    )
+    out = flask_context.run(flask_context.on.config_changed(), state)
+
+    assert out.unit_status == _status(expected_status, expected_message)
+    if expected_status == "active":
+        service = out.get_container("app").plan.services["flask"]
+        assert f"-k [ {worker_class} ]" in service.command
 
 
-def test_worker_multiple_units(harness: Harness):
+@pytest.mark.parametrize("flask_context", [{"unit_id": 1}], indirect=True)
+def test_worker_multiple_units(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: Prepare a unit with workers that is not the first one (number 1)
-    act: Run initial hooks.
-    assert: The workers should have all the environment variables. The schedulers should be
-            disabled and not have the environment variables
+    arrange: prepare non-leader unit one with three planned units and peer secret data.
+    act: reconcile the charm.
+    assert: workers run with environment while schedulers are disabled and empty.
     """
-
-    # This is tricky and could be problematic
-    harness.framework.model.unit.name = f"{harness._meta.name}/1"
-    harness.set_planned_units(3)
-
-    # Just think that we are not the leader unit. For this it is necessary to put data
-    # in the peer relation for the secret..
-    harness.set_leader(False)
-    harness.add_relation(
-        "secret-storage", harness.framework.model.app.name, app_data={"flask_secret_key": "XX"}
+    container = dataclasses.replace(
+        next(iter(base_state["containers"])),
+        _base_plan=LAYER_WITH_WORKER,
+    )
+    state = testing.State(
+        **{
+            **base_state,
+            "leader": False,
+            "planned_units": 3,
+            "containers": {container},
+        }
     )
 
-    container = harness.model.unit.get_container(FLASK_CONTAINER_NAME)
-    container.add_layer("a_layer", LAYER_WITH_WORKER)
+    out = flask_context.run(flask_context.on.config_changed(), state)
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ops.ActiveStatus()
-    services = container.get_plan().services
+    assert out.unit_status == testing.ActiveStatus()
+    services = out.get_container(container_name).plan.services
     assert "FLASK_SECRET_KEY" in services["flask"].environment
     assert services["flask"].environment == services["real-worker"].environment
     assert services["real-scheduler"].startup == "disabled"
     assert "FLASK_SECRET_KEY" not in services["real-scheduler"].environment
+    assert services["ANOTHER-REAL-SCHEDULER"].startup == "disabled"
+    assert "FLASK_SECRET_KEY" not in services["ANOTHER-REAL-SCHEDULER"].environment
     assert "FLASK_SECRET_KEY" not in services["not-worker-service"].environment

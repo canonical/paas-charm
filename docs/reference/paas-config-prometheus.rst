@@ -3,13 +3,14 @@
 Prometheus configuration
 ========================
 
-The ``prometheus`` section in ``paas-config.yaml`` allows you to define custom
-Prometheus scrape targets for metrics collection. This configuration is useful when the default
-framework metrics are insufficient for your use case or you want to
-expose additional metrics endpoints.
+The charm publishes a framework scrape job using the top-level ``metrics-port`` and
+``metrics-path`` values. The ``prometheus`` section in ``paas-config.yaml`` defines additional
+Prometheus scrape targets for metrics collection. Jobs listed in ``scrape_configs`` are appended to
+the framework job.
 
-The custom scrape configurations are merged with the default framework
-metrics job (if defined), so both can be active when you integrate with Prometheus.
+Scrape configuration does not configure the workload listener. Use the top-level ``metrics-port``
+and ``metrics-path`` fields for workload environment variables or native framework properties, and
+ensure each scrape target matches an endpoint the workload actually serves.
 
 Configuration schema
 --------------------
@@ -67,6 +68,25 @@ Each static configuration defines a set of targets and optional labels.
    * - ``labels``
      - Dictionary
      - Key-value pairs of labels to attach to all metrics from these targets. Optional.
+
+Scrape job example
+------------------
+
+The following example publishes one custom scrape job in addition to the framework job:
+
+.. code-block:: yaml
+
+   prometheus:
+     scrape_configs:
+       - job_name: custom-metrics
+         metrics_path: /custom-metrics
+         static_configs:
+           - targets:
+               - "*:9090"
+
+This publishes port ``9090`` and path ``/custom-metrics`` to Prometheus only. It does not alter the
+workload environment, create a listener, or probe the endpoint. Configure the workload separately
+with top-level ``metrics-port`` and ``metrics-path`` values when needed.
 
 Target formats
 --------------

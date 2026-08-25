@@ -3,11 +3,21 @@
 
 """Unit tests for worker services."""
 
-import ops
-import pytest
-from ops.testing import ExecResult, Harness
+import dataclasses
 
-from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
+import pytest
+from ops import testing
+
+from examples.django.charm.src.charm import DjangoCharm
+
+from .constants import DEFAULT_LAYER
+
+
+def _status(name: str, message: str):
+    """Build the expected Scenario status."""
+    if name == "active":
+        return testing.ActiveStatus(message)
+    return testing.BlockedStatus(message)
 
 
 @pytest.mark.parametrize(
@@ -55,7 +65,12 @@ from .constants import DEFAULT_LAYER, DJANGO_CONTAINER_NAME
     ],
 )
 def test_async_workers_config(
-    harness: Harness, django_layer, worker_class, expected_status, expected_message, exec_res
+    base_state: dict,
+    django_layer,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -63,39 +78,27 @@ def test_async_workers_config(
     assert: The charm should be blocked if the `webserver-worker-class` config is anything other
     then `sync` or `gevent`.
     """
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
-    container.add_layer("a_layer", django_layer)
+    container = next(iter(base_state["containers"]))
+    container = dataclasses.replace(
+        container,
+        _base_plan=django_layer,
+        execs={
+            testing.Exec(["python3", "-c", "import gevent"], return_code=exec_res),
+            testing.Exec(["/bin/python3", "-m", "gunicorn"], return_code=exec_res),
+        },
+    )
+    state = testing.State(
+        **{
+            **base_state,
+            "config": {"webserver-worker-class": worker_class},
+            "containers": {container},
+        }
+    )
+    context = testing.Context(DjangoCharm)
 
-    harness.handle_exec(
-        container.name,
-        ["python3", "-c", "import gevent"],
-        result=ExecResult(exit_code=exec_res),
-    )
-    harness.handle_exec(
-        container.name,
-        [
-            "/bin/python3",
-            "-m",
-            "gunicorn",
-            "-c",
-            "/django/gunicorn.conf.py",
-            "django_app.wsgi:application",
-            "--check-config",
-        ],
-        result=ExecResult(exit_code=exec_res),
-    )
-    harness.begin_with_initial_hooks()
-    harness.update_config({"webserver-worker-class": worker_class})
-    assert harness.model.unit.status == ops.StatusBase.from_name(
-        name=expected_status, message=expected_message
-    )
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == _status(expected_status, expected_message)
 
 
 @pytest.mark.parametrize(
@@ -117,7 +120,11 @@ def test_async_workers_config(
     ],
 )
 def test_async_workers_config_fail(
-    harness: Harness, worker_class, expected_status, expected_message, exec_res
+    base_state: dict,
+    worker_class,
+    expected_status,
+    expected_message,
+    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -125,22 +132,24 @@ def test_async_workers_config_fail(
     assert: The charm should be blocked if the `webserver-worker-class` config is anything other
     then `sync`.
     """
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
-    container = harness.model.unit.get_container(DJANGO_CONTAINER_NAME)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    harness.handle_exec(
-        container.name,
-        ["python3", "-c", "import gevent"],
-        result=ExecResult(exit_code=exec_res),
+    container = next(iter(base_state["containers"]))
+    container = dataclasses.replace(
+        container,
+        _base_plan=DEFAULT_LAYER,
+        execs={
+            testing.Exec(["python3", "-c", "import gevent"], return_code=exec_res),
+            testing.Exec(["/bin/python3"], return_code=0),
+        },
     )
-    harness.begin_with_initial_hooks()
-    harness.update_config({"webserver-worker-class": worker_class})
-    assert harness.model.unit.status == ops.StatusBase.from_name(
-        name=expected_status, message=expected_message
+    state = testing.State(
+        **{
+            **base_state,
+            "config": {"webserver-worker-class": worker_class},
+            "containers": {container},
+        }
     )
+    context = testing.Context(DjangoCharm)
+
+    out = context.run(context.on.config_changed(), state)
+
+    assert out.unit_status == _status(expected_status, expected_message)

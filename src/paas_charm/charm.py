@@ -10,7 +10,9 @@ import typing
 
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
+from charms.openfga_k8s.v1.openfga import OpenFGARequires
 from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
+from charms.smtp_integrator.v0.smtp import SmtpRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -21,10 +23,11 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
+from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm import integrations
+from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
-from paas_charm.openfga import STORE_NAME
 from paas_charm.paas_config import (
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     LoggingFormat,
@@ -32,7 +35,10 @@ from paas_charm.paas_config import (
 )
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.redis import PaaSRedisRequires
+from paas_charm.s3 import PaaSS3Requirer
+from paas_charm.saml import PaaSSAMLRequirer
 from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
@@ -43,66 +49,6 @@ from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
 
-# Until charmcraft fetch-libs is implemented, the charm will not fail
-# if new optional libs are not fetched, as it will not be backwards compatible.
-try:
-    # pylint: disable=ungrouped-imports
-    from paas_charm.s3 import PaaSS3Requirer
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from paas_charm.saml import PaaSSAMLRequirer
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from paas_charm.tracing import PaaSTracingEndpointRequirer
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run "
-        "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from charms.smtp_integrator.v0.smtp import SmtpRequires
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from charms.openfga_k8s.v1.openfga import OpenFGARequires
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from paas_charm.oauth import PaaSOAuthRequirer
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run `charmcraft fetch-lib charms.hydra.v0.oauth`"
-    )
-
-try:
-    # pylint: disable=ungrouped-imports
-    from paas_charm.http_proxy import PaaSHttpProxyRequirer
-except ImportError:
-    logger.warning(
-        "Missing charm library, please run "
-        "`charmcraft fetch-lib charms.squid_forward_proxy.v0.http_proxy`"
-    )
-
 
 class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-attributes
     """PaasCharm base charm service mixin.
@@ -110,9 +56,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     Attrs:
         on: charm events replaced by Redis ones for the Redis charm library.
         framework_config_class: base class for the framework config.
+        paas_config_framework_fields: Mapping from framework fields to paas-config fields.
     """
 
     framework_config_class: type[BaseModel]
+    paas_config_framework_fields: dict[str, str] = {}
 
     @property
     @abc.abstractmethod
@@ -145,6 +93,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         super().__init__(framework)
         self._framework_name = framework_name
+        self._paas_config = read_paas_config()
 
         self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
         self._database_requirers = make_database_requirers(self, self.app.name)
@@ -192,14 +141,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration.setup(self._integration_handle)
             self._custom_integrations.append(integration)
 
-        paas_config = read_paas_config()
-        if paas_config.framework_logging_format != LoggingFormat.NONE:
+        if self._paas_config.framework_logging_format != LoggingFormat.NONE:
             supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
-                paas_config.framework_logging_format, set()
+                self._paas_config.framework_logging_format, set()
             )
             if self._framework_name not in supported:
                 raise CharmConfigInvalidError(
-                    f"framework_logging_format '{paas_config.framework_logging_format}' "
+                    f"framework_logging_format '{self._paas_config.framework_logging_format}' "
                     f"is not supported for the '{self._framework_name}' framework. "
                     f"Supported frameworks: {sorted(supported) or 'none'}."
                 )
@@ -208,41 +156,41 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
-            metrics_target=self._workload_config.metrics_target,
-            metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus,
+            metrics_port=self._workload_config.metrics_port,
+            metrics_path=self._workload_config.metrics_path or "/metrics",
+            prometheus_config=self._paas_config.prometheus,
         )
 
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
             self.on.secret_storage_relation_changed,
-            self._on_secret_storage_relation_changed,
+            self._reconcile_without_migrations,
         )
         self.framework.observe(
             self.on.secret_storage_relation_departed,
-            self._on_secret_storage_relation_departed,
+            self._reconcile_without_migrations,
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
-        self.framework.observe(self.on.secret_changed, self._on_secret_changed)
-        for database, database_requirer in self._database_requirers.items():
+        self.framework.observe(self.on.secret_changed, self._reconcile_without_migrations)
+        for database_requirer in self._database_requirers.values():
             self.framework.observe(
                 database_requirer.on.database_created,
-                getattr(self, f"_on_{database}_database_database_created"),
+                self._reconcile_with_migrations,
             )
             self.framework.observe(
                 database_requirer.on.endpoints_changed,
-                getattr(self, f"_on_{database}_database_endpoints_changed"),
+                self._reconcile_with_migrations,
             )
             self.framework.observe(
                 self.on[database_requirer.relation_name].relation_broken,
-                getattr(self, f"_on_{database}_database_relation_broken"),
+                self._reconcile_without_migrations,
             )
-        self.framework.observe(self._ingress.on.ready, self._on_ingress_ready)
-        self.framework.observe(self._ingress.on.revoked, self._on_ingress_revoked)
+        self.framework.observe(self._ingress.on.ready, self._reconcile_without_migrations)
+        self.framework.observe(self._ingress.on.revoked, self._reconcile_without_migrations)
         self.framework.observe(
             self.on[self._workload_config.container_name].pebble_ready,
-            self._on_pebble_ready,
+            self._reconcile_without_migrations,
         )
 
     def custom_integrations(self) -> "list[type[integrations.CustomIntegration]]":
@@ -277,7 +225,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             try:
                 _redis = PaaSRedisRequires(charm=self, relation_name="redis")
                 self.framework.observe(
-                    self.on.redis_relation_updated, self._on_redis_relation_updated
+                    self.on.redis_relation_updated, self._reconcile_with_migrations
                 )
             except NameError:
                 logger.exception(
@@ -301,7 +249,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             _valkey = ValkeyClientRequirer(charm=self, relation_name="valkey")
             self.framework.observe(
                 _valkey.valkey_interface.on.resource_created,
-                self._on_valkey_resource_created,
+                self._reconcile_with_migrations,
             )
 
         return _valkey
@@ -322,7 +270,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             try:
                 _http_proxy = PaaSHttpProxyRequirer(self)
                 self.framework.observe(
-                    self.on["http-proxy"].relation_changed, self._on_http_proxy_changed
+                    self.on["http-proxy"].relation_changed, self._reconcile_without_migrations
                 )
             except NameError:
                 logger.exception(
@@ -345,8 +293,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if "s3" in requires and requires["s3"].interface_name == "s3":
             try:
                 _s3 = PaaSS3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
-                self.framework.observe(_s3.on.credentials_changed, self._on_s3_credential_changed)
-                self.framework.observe(_s3.on.credentials_gone, self._on_s3_credential_gone)
+                self.framework.observe(_s3.on.credentials_changed, self._reconcile_with_migrations)
+                self.framework.observe(_s3.on.credentials_gone, self._reconcile_without_migrations)
             except NameError:
                 logger.exception(
                     "Missing charm library, "
@@ -367,7 +315,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if "saml" in requires and requires["saml"].interface_name == "saml":
             try:
                 _saml = PaaSSAMLRequirer(self)
-                self.framework.observe(_saml.on.saml_data_available, self._on_saml_data_available)
+                self.framework.observe(
+                    _saml.on.saml_data_available, self._reconcile_with_migrations
+                )
             except NameError:
                 logger.exception(
                     "Missing charm library, "
@@ -392,9 +342,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 username=self.app.name,
                 vhost="/",
             )
-            self.framework.observe(_rabbitmq.on.connected, self._on_rabbitmq_connected)
-            self.framework.observe(_rabbitmq.on.ready, self._on_rabbitmq_ready)
-            self.framework.observe(_rabbitmq.on.departed, self._on_rabbitmq_departed)
+            self.framework.observe(_rabbitmq.on.connected, self._reconcile_with_migrations)
+            self.framework.observe(_rabbitmq.on.ready, self._reconcile_with_migrations)
+            self.framework.observe(_rabbitmq.on.departed, self._reconcile_without_migrations)
 
         return _rabbitmq
 
@@ -416,10 +366,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                     self, relation_name="tracing", protocols=["otlp_http"]
                 )
                 self.framework.observe(
-                    _tracing.on.endpoint_changed, self._on_tracing_relation_changed
+                    _tracing.on.endpoint_changed, self._reconcile_without_migrations
                 )
                 self.framework.observe(
-                    _tracing.on.endpoint_removed, self._on_tracing_relation_broken
+                    _tracing.on.endpoint_removed, self._reconcile_without_migrations
                 )
             except NameError:
                 logger.exception(
@@ -441,7 +391,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if "smtp" in requires and requires["smtp"].interface_name == "smtp":
             try:
                 _smtp = SmtpRequires(self)
-                self.framework.observe(_smtp.on.smtp_data_available, self._on_smtp_data_available)
+                self.framework.observe(
+                    _smtp.on.smtp_data_available, self._reconcile_without_migrations
+                )
             except NameError:
                 logger.exception(
                     "Missing charm library, please run "
@@ -461,9 +413,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         openfga = None
         if "openfga" in requires and requires["openfga"].interface_name == "openfga":
             try:
-                openfga = OpenFGARequires(self, STORE_NAME)
+                openfga = OpenFGARequires(self, self.app.name)
                 self.framework.observe(
-                    openfga.on.openfga_store_created, self._on_openfga_store_created
+                    openfga.on.openfga_store_created, self._reconcile_without_migrations
                 )
             except NameError:
                 logger.exception(
@@ -493,8 +445,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 relation_name=endpoint_name,
                 charm_config=self.config,
             )
-            self.framework.observe(_oauth.on.oauth_info_changed, self._on_oauth_info_changed)
-            self.framework.observe(_oauth.on.oauth_info_removed, self._on_oauth_info_removed)
+            self.framework.observe(
+                _oauth.on.oauth_info_changed, self._reconcile_without_migrations
+            )
+            self.framework.observe(
+                _oauth.on.oauth_info_removed, self._reconcile_without_migrations
+            )
         except NameError:
             logger.exception(
                 "Missing charm library, please run `charmcraft fetch-lib charms.hydra.v0.oauth`"
@@ -521,6 +477,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+        for framework_field, paas_config_field in self.paas_config_framework_fields.items():
+            if paas_config_field not in self._paas_config.model_fields_set:
+                continue
+            model_field = framework_config_class.model_fields[framework_field]
+            config[model_field.alias or framework_field] = getattr(
+                self._paas_config, paas_config_field
+            )
 
         try:
             return framework_config_class.model_validate(config)
@@ -604,16 +567,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         return self.unit.get_container(self._workload_config.container_name)
 
     @block_if_invalid_data
-    def _on_config_changed(self, _: ops.EventBase) -> None:
-        """Configure the application pebble service layer."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_secret_changed(self, _: ops.EventBase) -> None:
-        """Configure the application Pebble service layer."""
-        self.restart()
-
-    @block_if_invalid_data
     def _on_rotate_secret_key_action(self, event: ops.ActionEvent) -> None:
         """Handle the rotate-secret-key action.
 
@@ -628,17 +581,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return
         self._secret_storage.reset_secret_key()
         event.set_results({"status": "success"})
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_secret_storage_relation_changed(self, _: ops.RelationEvent) -> None:
-        """Handle the secret-storage-relation-changed event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_secret_storage_relation_departed(self, _: ops.HookEvent) -> None:
-        """Handle the secret-storage-relation-departed event."""
-        self.restart()
+        self._reconcile()
 
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
@@ -777,25 +720,32 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         yield from self._missing_required_storage_integrations(requires, charm_state)
         yield from self._missing_required_other_integrations(requires, charm_state)
 
-    def restart(self, rerun_migrations: bool = False) -> None:
+    def _reconcile(self, rerun_migrations: bool = False) -> None:
         """Restart or start the service if not started with the latest configuration.
 
         Args:
             rerun_migrations: whether it is necessary to run the migrations again.
         """
-        if not self.is_ready():
-            return
-
-        if rerun_migrations:
-            self._database_migration.set_status_to_pending()
-
         try:
+            if not self.is_ready():
+                return
+
+            if rerun_migrations:
+                self._database_migration.set_status_to_pending()
+
             if self._oauth:
                 self._oauth.update_client()
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
         except CharmConfigInvalidError as exc:
+            logger.exception("Wrong Charm Configuration")
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
+            return
+        except RelationDataError as exc:
+            logger.exception(
+                "%s relation data is either invalid, missing or unusable.", exc.relation
+            )
+            self.update_app_and_unit_status(ops.BlockedStatus(str(exc)))
             return
         self._ingress.provide_ingress_requirements(port=self._workload_config.port)
         self.unit.set_ports(ops.Port(protocol="tcp", port=self._workload_config.port))
@@ -875,11 +825,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return self._ingress.url
         return f"http://{self.app.name}.{self.model.name}:{self._workload_config.port}"
 
-    @block_if_invalid_data
     def _on_update_status(self, _: ops.HookEvent) -> None:
         """Handle the update-status event."""
         if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED:
-            self.restart()
+            self._reconcile()
         # Sometimes the ingress library doesn't properly handle pod
         # restarts,which can cause the IP field inside the ingress
         # relation data to become stale, resulting in ingress failures.
@@ -887,137 +836,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         # (especially the ip field) on every update status.
         self._ingress._publish_auto_data()
 
-    @block_if_invalid_data
-    def _on_mysql_database_database_created(self, _: DatabaseRequiresEvent) -> None:
-        """Handle mysql's database-created event."""
-        self.restart(rerun_migrations=True)
+    def _reconcile_with_migrations(self, _: DatabaseRequiresEvent) -> None:
+        """Handle an event that requires re-running migrations."""
+        self._reconcile(rerun_migrations=True)
 
-    @block_if_invalid_data
-    def _on_mysql_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
-        """Handle mysql's endpoints-changed event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_mysql_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle mysql's relation-broken event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_postgresql_database_database_created(self, _: DatabaseRequiresEvent) -> None:
-        """Handle postgresql's database-created event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_postgresql_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
-        """Handle mysql's endpoints-changed event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_postgresql_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle postgresql's relation-broken event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_mongodb_database_database_created(self, _: DatabaseRequiresEvent) -> None:
-        """Handle mongodb's database-created event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_mongodb_database_endpoints_changed(self, _: DatabaseRequiresEvent) -> None:
-        """Handle mysql's endpoints-changed event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_mongodb_database_relation_broken(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle postgresql's relation-broken event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_redis_relation_updated(self, _: DatabaseRequiresEvent) -> None:
-        """Handle redis's database-created event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_valkey_resource_created(self, _: ops.HookEvent) -> None:
-        """Handle valkey's resource-created event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_s3_credential_changed(self, _: ops.HookEvent) -> None:
-        """Handle s3 credentials-changed event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_s3_credential_gone(self, _: ops.HookEvent) -> None:
-        """Handle s3 credentials-gone event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_saml_data_available(self, _: ops.HookEvent) -> None:
-        """Handle saml data available event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_ingress_revoked(self, _: ops.HookEvent) -> None:
-        """Handle event for ingress revoked."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_ingress_ready(self, _: ops.HookEvent) -> None:
-        """Handle event for ingress ready."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_pebble_ready(self, _: ops.PebbleReadyEvent) -> None:
-        """Handle the pebble-ready event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_rabbitmq_connected(self, _: ops.HookEvent) -> None:
-        """Handle rabbitmq connected event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_rabbitmq_ready(self, _: ops.HookEvent) -> None:
-        """Handle rabbitmq ready event."""
-        self.restart(rerun_migrations=True)
-
-    @block_if_invalid_data
-    def _on_rabbitmq_departed(self, _: ops.HookEvent) -> None:
-        """Handle rabbitmq departed event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_tracing_relation_changed(self, _: ops.HookEvent) -> None:
-        """Handle tracing relation changed event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_tracing_relation_broken(self, _: ops.HookEvent) -> None:
-        """Handle tracing relation broken event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_smtp_data_available(self, _: ops.HookEvent) -> None:
-        """Handle smtp data available event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_openfga_store_created(self, _: ops.HookEvent) -> None:
-        """Handle openfga store created event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_oauth_info_changed(self, _: ops.HookEvent) -> None:
-        """Handle the OAuth info changed event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_oauth_info_removed(self, _: ops.HookEvent) -> None:
-        """Handle the OAuth info removed event."""
-        self.restart()
-
-    @block_if_invalid_data
-    def _on_http_proxy_changed(self, _: ops.HookEvent) -> None:
-        """Handle http-proxy relation changed."""
-        self.restart()
+    def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
+        """Handle an event that doesn't require re-running migrations."""
+        self._reconcile()

@@ -57,7 +57,7 @@ def test_django_database_migration(django_app: App, juju: jubilant.Juju):
             {"ALLOWED_HOSTS": ["test", "django-k8s.testing"]},
             id="allowed-host",
         ),
-        pytest.param({"django-secret-key": "test"}, {"SECRET_KEY": "test"}, id="secret-key"),
+        pytest.param({"app-secret-key": "test"}, {"SECRET_KEY": "test"}, id="secret-key"),
     ],
     indirect=["update_config"],
 )

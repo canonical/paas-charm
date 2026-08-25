@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
         ("flask_app", 9102, "/metrics"),
         ("django_app", 9102, "/metrics"),
         ("spring_boot_app", 8080, "/actuator/prometheus"),
-        ("expressjs_app", 8080, "/metrics"),
-        ("go_app", 8081, "/metrics"),
-        ("fastapi_app", 8080, "/metrics"),
+        ("expressjs_app", 9464, "/metrics"),
+        ("go_app", 8080, "/metrics"),
+        ("fastapi_app", 9464, "/metrics"),
     ],
 )
 def test_prometheus_integration(
@@ -84,9 +84,9 @@ def test_prometheus_custom_scrape_configs(
     """
     arrange: flask charm with paas-config.yaml containing custom scrape_configs, scaled to 2 units.
     act: establish relation with prometheus charm.
-    assert: prometheus scrapes framework default jobs (port 9102 on 2 units), custom jobs
+    assert: prometheus scrapes the framework job (port 9102 on 2 units), custom job
         (port 8081 on 2 units using wildcard), and scheduler-only job (port 8082 on unit 0 only
-        using @scheduler placeholder). Verify custom labels and @scheduler resolves to unit 0 FQDN.
+        using @scheduler placeholder). Verify custom labels and @scheduler resolution.
     """
     try:
         juju.add_unit(flask_app.name)
@@ -116,7 +116,7 @@ def test_prometheus_custom_scrape_configs(
         _assert_scrape_targets_for_app(
             custom_targets, [unit_0_ip, unit_1_ip], 8081, {"app": "flask", "env": "example"}
         )
-        assert "app-custom" in custom_targets[0]["labels"]["job"]
+        assert "flask-custom-metrics" in custom_targets[0]["labels"]["job"]
 
         # @scheduler placeholder uses FQDN
         scheduler_fqdn = (

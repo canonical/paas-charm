@@ -43,15 +43,15 @@ config:
         set the FLASK_PREFERRED_URL_SCHEME environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
-    flask-secret-key:
+    app-secret-key:
       description: The secret key used for securely signing the session cookie and
         for any other security related needs by your Flask application. This configuration
         will set the FLASK_SECRET_KEY environment variable. Run `app.config.from_prefixed_env()`
         in your Flask application in order to receive this configuration.
       type: string
-    flask-secret-key-id:
+    app-secret-key-id:
       description: >-
-        This configuration is similar to `flask-secret-key`, but instead accepts a Juju user secret ID.
+        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual Flask secret key.
         To create the secret, run the following command:
         `juju add-secret my-flask-secret-key value=<secret-string> && juju grant-secret my-flask-secret-key flask-k8s`,
@@ -105,20 +105,34 @@ resources:
     type: oci-image
 
 charm-libs:
-- lib: traefik-k8s.ingress
-  version: '2'
-- lib: observability-libs.juju_topology
-  version: '0'
-- lib: grafana-k8s.grafana_dashboard
-  version: '0'
-- lib: loki-k8s.loki_push_api
-  version: '1'
-- lib: prometheus-k8s.prometheus_scrape
-  version: '0'
-- lib: redis_k8s.redis
-  version: '0'
-- lib: data_platform_libs.data_interfaces
-  version: '0'
+  - lib: traefik-k8s.ingress
+    version: "2"
+  - lib: observability-libs.juju_topology
+    version: "0"
+  - lib: grafana-k8s.grafana_dashboard
+    version: "0.35"
+  - lib: loki-k8s.loki_push_api
+    version: "1"
+  - lib: data-platform-libs.data_interfaces
+    version: "0"
+  - lib: prometheus-k8s.prometheus_scrape
+    version: "0"
+  - lib: redis-k8s.redis
+    version: "0"
+  - lib: data-platform-libs.s3
+    version: "0"
+  - lib: saml-integrator.saml
+    version: "0"
+  - lib: openfga-k8s.openfga
+    version: "1"
+  - lib: smtp-integrator.smtp
+    version: "0"
+  - lib: tempo-coordinator-k8s.tracing
+    version: "0"
+  - lib: hydra.oauth
+    version: "0"
+  - lib: squid_forward_proxy.http_proxy
+    version: "0"
 
 parts:
   charm:

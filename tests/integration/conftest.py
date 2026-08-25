@@ -1,5 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
+import contextlib
+import ipaddress
 import logging
 import pathlib
 import shutil
@@ -10,8 +12,11 @@ from typing import cast
 import jubilant
 import pytest
 import requests
+import urllib3.util.connection
 import yaml
+from opcli.pytest_plugin import artifacts_root_from_yaml_path, build_rock_images
 from requests.adapters import HTTPAdapter
+from tenacity import retry, stop_after_attempt, wait_fixed
 from urllib3.util.retry import Retry
 
 from tests.integration.helpers import inject_charm_config, inject_venv
@@ -19,6 +24,8 @@ from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 logger = logging.getLogger(__name__)
+
+INGRESS_HOSTNAME = "gateway.internal"
 
 NON_OPTIONAL_CONFIGS = {
     "config": {
@@ -50,70 +57,35 @@ def fixture_session_with_retry():
 
 
 @pytest.fixture(scope="session", name="rock_images")
-def fixture_rock_images() -> dict[str, str]:
+def fixture_rock_images(opcli_artifacts, opcli_build_yaml_path: pathlib.Path) -> dict[str, str]:
     """Return dict of built rock images from opcli artifacts.build.yaml.
 
     Maps rock names (e.g., "test-flask", "django-app") to OCI image URLs or
-    local .rock file paths. Requires artifacts.build.yaml to exist; run
-    'opcli artifacts build' to generate it before running integration tests.
+    local .rock file paths, filtered to the current machine's architecture.
+
+    Delegates to opcli's own ``build_rock_images`` helper (see
+    ``opcli.pytest_plugin``) so discovery of artifacts.build.yaml (CLI
+    override, OPCLI_ARTIFACTS_BUILD_YAML env var, or walk-up to the repo's
+    build/ directory) and arch selection stay in sync with opcli itself,
+    instead of being reimplemented here.
     """
-    artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
-    if not artifacts_build.exists():
-        pytest.fail(
-            f"{artifacts_build} not found. Run 'opcli artifacts build' to generate "
-            "build artifacts before running integration tests."
-        )
-    data = yaml.safe_load(artifacts_build.read_text())
-    # artifacts.build.yaml uses a list of GeneratedRock objects:
-    # rocks:
-    #   - name: test-flask
-    #     builds:
-    #       - arch: amd64
-    #         image: ghcr.io/...   (registry build)
-    #         # or file: ./path/to.rock  (local build)
-    result = {}
-    for rock in data.get("rocks", []):
-        name = rock["name"]
-        for build in rock.get("builds", []):
-            ref = build.get("image") or build.get("file") or ""
-            if ref:
-                result[name] = ref
-                break
-    return result
+    return build_rock_images(opcli_artifacts, artifacts_root_from_yaml_path(opcli_build_yaml_path))
 
 
 @pytest.fixture(scope="session", name="charm_paths")
-def fixture_charm_paths() -> dict[str, pathlib.Path]:
+def fixture_charm_paths(charm_paths) -> dict[str, pathlib.Path]:
     """Return dict of pre-built charm paths from opcli artifacts.build.yaml.
 
     Maps charm names (e.g., "flask-k8s", "django-k8s") to local .charm file
-    paths. Requires artifacts.build.yaml to exist; run 'opcli artifacts build'
-    to generate it before running integration tests.
+    paths.
+
+    This overrides opcli's own ``charm_paths`` fixture (requested here by the
+    same name, per pytest's fixture-override mechanism) to adapt its
+    multi-base ``CharmPathList`` values down to a single ``pathlib.Path`` per
+    charm, which is the shape this test suite's fixtures/tests expect. All
+    artifacts.build.yaml discovery and arch selection is delegated to opcli.
     """
-    artifacts_build = PROJECT_ROOT / "artifacts.build.yaml"
-    if not artifacts_build.exists():
-        pytest.fail(
-            f"{artifacts_build} not found. Run 'opcli artifacts build' to generate "
-            "build artifacts before running integration tests."
-        )
-    data = yaml.safe_load(artifacts_build.read_text())
-    # artifacts.build.yaml uses a list of GeneratedCharm objects:
-    # charms:
-    #   - name: flask-k8s
-    #     builds:
-    #       - arch: amd64
-    #         path: ./flask-k8s_ubuntu@26.04-amd64.charm
-    result = {}
-    for charm in data.get("charms", []):
-        name = charm["name"]
-        for build in charm.get("builds", []):
-            path = build.get("path")
-            if path:
-                # Resolve relative to PROJECT_ROOT so shutil.copy2 can
-                # find the file regardless of the pytest working directory.
-                result[name] = (PROJECT_ROOT / path).resolve()
-                break
-    return result
+    return {name: pathlib.Path(paths.path) for name, paths in charm_paths.items()}
 
 
 @pytest.fixture(scope="module", name="test_flask_image")
@@ -405,7 +377,6 @@ def go_app_fixture(
         resources={
             "app-image": go_app_image,
         },
-        config={"metrics-port": 8081},
     )
 
 
@@ -585,16 +556,82 @@ def spring_boot_mysql_app_fixture(
     return App(app_name)
 
 
-@pytest.fixture(scope="module", name="external_hostname")
-def external_hostname_fixture() -> str:
-    """Return the external hostname for ingress-related tests."""
-    return "juju.test"
+@pytest.fixture(scope="module", name="ingress_provider")
+def ingress_provider_fixture(
+    juju: jubilant.Juju,
+):
+    """Deploy gateway-api-integrator and ingress-configurator for ingress-related tests."""
+    juju.deploy(
+        charm="gateway-api-integrator",
+        app="gateway",
+        channel="1/edge",
+        trust=True,
+        config={"gateway-class": "ck-gateway"},
+    )
+    juju.deploy(
+        charm="ingress-configurator",
+        app="configurator",
+        channel="latest/edge",
+        trust=True,
+        config={"hostname": INGRESS_HOSTNAME},
+    )
+    juju.deploy(
+        charm="self-signed-certificates",
+        app="cert",
+        channel="1/edge",
+    )
+    juju.integrate("cert:certificates", "gateway:certificates")
+    juju.integrate("configurator:gateway-route", "gateway:gateway-route")
+    juju.wait(
+        # gateway/configurator can be blocked before the app-ingress relation is created.
+        lambda status: jubilant.all_active(status, "cert") and jubilant.all_agents_idle(status),
+        timeout=10 * 60,
+    )
+    return ("gateway", "configurator")
 
 
-@pytest.fixture(scope="module", name="traefik_app_name")
-def traefik_app_name_fixture() -> str:
-    """Return the name of the traefik application deployed for tests."""
-    return "traefik-k8s"
+def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str:
+    """Return the load-balancer IP of the gateway application."""
+
+    @retry(stop=stop_after_attempt(12), wait=wait_fixed(5))
+    def _gateway_lb_ip() -> str:
+        gateway_app, _ = ingress_provider
+        message = juju.status().apps[gateway_app].app_status.message or ""
+        for token in message.split():
+            try:
+                return str(ipaddress.ip_address(token.strip("[](),;")))
+            except ValueError:
+                continue
+        raise ValueError(
+            f"Could not parse gateway load-balancer IP from status message: {message!r}"
+        )
+
+    return _gateway_lb_ip()
+
+
+@contextlib.contextmanager
+def pin_dns(hostname: str, ip: str):
+    """Resolve ``hostname`` to ``ip`` for every connection made in the context.
+
+    The gateway only routes by the ingress hostname, which exists solely as a
+    Host header in these tests and is not in DNS. Some apps (e.g. the FastAPI
+    app with its ``root_path``) reply with a redirect to that hostname, so we
+    pin its resolution to the gateway load-balancer IP for both the initial
+    request and any connection opened while following redirects.
+    """
+    original_create_connection = urllib3.util.connection.create_connection
+
+    def patched_create_connection(address, *args, **kwargs):
+        host, port = address
+        if host == hostname:
+            address = (ip, port)
+        return original_create_connection(address, *args, **kwargs)
+
+    urllib3.util.connection.create_connection = patched_create_connection
+    try:
+        yield
+    finally:
+        urllib3.util.connection.create_connection = original_create_connection
 
 
 @pytest.fixture(scope="module", name="loki_app_name")
@@ -607,31 +644,6 @@ def loki_app_name_fixture() -> str:
 def grafana_app_name_fixture() -> str:
     """Return the name of the grafana application deployed for tests."""
     return "grafana-k8s"
-
-
-@pytest.fixture(scope="module", name="traefik_app")
-def deploy_traefik_fixture(
-    juju: jubilant.Juju,
-    traefik_app_name: str,
-    external_hostname: str,
-):
-    """Deploy traefik."""
-    if not juju.status().apps.get(traefik_app_name):
-        juju.deploy(
-            "traefik-k8s",
-            app=traefik_app_name,
-            channel="edge",
-            trust=True,
-            config={
-                "external_hostname": external_hostname,
-                "routing_mode": "subdomain",
-            },
-        )
-    juju.wait(
-        lambda status: status.apps[traefik_app_name].is_active,
-        error=jubilant.any_blocked,
-    )
-    return App(traefik_app_name)
 
 
 @pytest.fixture(scope="module", name="redis_k8s_app")

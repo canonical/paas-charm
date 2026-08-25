@@ -54,7 +54,7 @@ Then replace the file with its equivalent ``pyproject.toml``:
        "dpcharmlibs-interfaces==1.0.2",
        "jinja2==3.1.6",
        "jsonschema==4.26",
-       "ops==3.7.1",
+       "ops==3.8.0",
        "pydantic==2.13.3",
        "paas-charm==1.11.3",
    ]

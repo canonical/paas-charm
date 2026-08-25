@@ -89,17 +89,6 @@ dependencies = [
     { name = "tomli-w" },
 ]
 
-[package.metadata]
-requires-dist = [
-    { name = "cosl", specifier = "==1.9.1" },
-    { name = "dpcharmlibs-interfaces", specifier = "==1.0.2" },
-    { name = "jinja2", specifier = "==3.1.6" },
-    { name = "jsonschema", specifier = "==4.26" },
-    { name = "ops", specifier = "==3.7.1" },
-    { name = "pydantic", extras = ["email"], specifier = "==2.13.3" },
-    { name = "tomli-w", specifier = ">=1.0.0" },
-]
-
 [[package]]
 name = "idna"
 version = "3.18"
