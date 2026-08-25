@@ -21,7 +21,6 @@ from examples.go.charm.src.charm import GoCharm
 from paas_charm.charm_state import _create_config_attribute
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.utils import config_metadata
-from tests.unit.scenario import charm_root
 
 
 @pytest.mark.parametrize(
@@ -180,6 +179,7 @@ def test_non_optional_config(
     expected_status_message_substrs: list[str],
     unexpected_status_message_substrs: list[str],
     expected_log_message_substrs: list[str],
+    charm_root,
     monkeypatch,
     caplog,
 ) -> None:
@@ -230,6 +230,7 @@ def test_non_optional_config(
 def test_get_framework_config_with_prefix(
     charm_type: type,
     prefix: str,
+    charm_root,
     context_factory,
     framework_state_factory,
 ) -> None:

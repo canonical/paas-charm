@@ -4,7 +4,7 @@
 """Charm unit tests for Oauth relation."""
 
 # Very similar cases to other frameworks. Disable duplicated checks.
-# pylint: disable=R0801,C0302
+# pylint: disable=duplicate-code,too-many-lines
 
 
 from secrets import token_hex

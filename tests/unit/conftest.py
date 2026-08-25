@@ -31,11 +31,28 @@ from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LA
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
 from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
-from tests.unit.scenario import CHARM_ROOTS, FRAMEWORKS
 from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 from tests.unit.test_charm.src.charm import TestCharm
 
 CONTAINER_NAME = "app"
+PROJECT_ROOT = Path(__file__).parents[2]
+CHARM_ROOTS = {
+    TestCharm: PROJECT_ROOT / "tests/unit/test_charm",
+    FlaskCharm: PROJECT_ROOT / "examples/flask/charm",
+    DjangoCharm: PROJECT_ROOT / "examples/django/charm",
+    FastAPICharm: PROJECT_ROOT / "examples/fastapi/charm",
+    GoCharm: PROJECT_ROOT / "examples/go/charm",
+    ExpressJSCharm: PROJECT_ROOT / "examples/expressjs/charm",
+    SpringBootCharm: PROJECT_ROOT / "examples/springboot/charm",
+}
+FRAMEWORKS = {
+    FlaskCharm: "flask",
+    DjangoCharm: "django",
+    FastAPICharm: "fastapi",
+    GoCharm: "go",
+    ExpressJSCharm: "expressjs",
+    SpringBootCharm: "spring-boot",
+}
 GENERAL_DEFAULT_LAYERS = {
     FlaskCharm: {
         "services": {
@@ -185,6 +202,12 @@ def postgresql_relation(db_name):
         interface="postgresql_client",
         remote_app_data=relation_data,
     )
+
+
+@pytest.fixture(name="charm_root")
+def charm_root_fixture() -> typing.Callable[[type], Path]:
+    """Return a resolver for explicit test charm roots."""
+    return CHARM_ROOTS.__getitem__
 
 
 def _add_oauth_metadata(charmcraft: dict) -> None:
