@@ -515,3 +515,17 @@ def rabbitmq_receive():
 def get_env():
     """Return environment variables"""
     return jsonify(dict(os.environ))
+
+
+@app.route("/temporal/status")
+def temporal_status():
+    """Return Temporal connection info from env vars set by the custom integration.
+
+    The temporal-host-info CustomIntegration exposes TEMPORAL_HOST and
+    TEMPORAL_PORT when a temporal-k8s relation is present.
+    """
+    host = os.environ.get("TEMPORAL_HOST")
+    port = os.environ.get("TEMPORAL_PORT")
+    if not host or not port:
+        return jsonify({"configured": False}), 503
+    return jsonify({"configured": True, "host": host, "port": port})

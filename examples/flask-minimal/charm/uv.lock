@@ -41,28 +41,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dnspython"
-version = "2.8.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8c/8b/57666417c0f90f08bcafa776861060426765fdb422eb10212086fb811d26/dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f", size = 368251, upload-time = "2025-09-07T18:58:00.022Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/5a/18ad964b0086c6e62e2e7500f7edc89e3faa45033c71c1893d34eed2b2de/dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af", size = 331094, upload-time = "2025-09-07T18:57:58.071Z" },
-]
-
-[[package]]
-name = "dpcharmlibs-interfaces"
-version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ops" },
-    { name = "pydantic" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/13/f2/e32d91b27744a22e3a155856a76e78a43408e635e3e43b091c167154371b/dpcharmlibs_interfaces-1.0.2.tar.gz", hash = "sha256:5cc88791d4844c1d485188e10c04fbc6651de16b841fe2fb09da5643bf3af981", size = 203946, upload-time = "2026-03-31T15:28:29.319Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/bb/3156ee9b052450cf26e9d5e9fe7ef3a3f7af1047026b06cfd2a21951a77b/dpcharmlibs_interfaces-1.0.2-py3-none-any.whl", hash = "sha256:1fa1005e55a0fa000bcf340831ab33ff7e7f6225678d6d07ca1383c36a658326", size = 37015, upload-time = "2026-03-31T15:28:27.676Z" },
-]
-
-[[package]]
 name = "email-validator"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
