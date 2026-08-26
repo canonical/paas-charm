@@ -98,7 +98,7 @@ def base_state_fixture(tmp_path: pathlib.Path) -> dict:
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="flask-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],

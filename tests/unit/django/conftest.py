@@ -3,6 +3,9 @@
 
 """Pytest fixtures for the Django unit tests."""
 
+# Framework Scenario fixtures intentionally share the same state structure.
+# pylint: disable=R0801
+
 import os
 import pathlib
 
@@ -46,7 +49,7 @@ def _base_state(*, with_database: bool) -> dict:
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="django-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],

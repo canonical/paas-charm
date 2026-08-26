@@ -191,7 +191,7 @@ def flask_base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="flask-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],
@@ -233,7 +233,7 @@ def spring_boot_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="spring-boot-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],
@@ -299,7 +299,7 @@ def django_base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="django-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],
@@ -342,7 +342,7 @@ def fastapi_base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="fastapi-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],
@@ -385,7 +385,7 @@ def go_base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="go-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],
@@ -427,7 +427,7 @@ def expressjs_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="expressjs-secret-key",
+                label="app-secret-key",
                 owner="app",
             ),
         ],

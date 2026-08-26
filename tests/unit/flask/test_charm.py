@@ -42,7 +42,7 @@ def test_flask_pebble_layer(flask_context, base_state, container_name: str) -> N
         testing.State(**base_state),
     )
 
-    app_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
+    app_secret = out.get_secret(label="app-secret-key").tracked_content["value"]
     assert out.unit_status == testing.ActiveStatus()
     assert out.get_container(container_name).plan.services["flask"].to_dict() == {
         "environment": {
@@ -70,14 +70,14 @@ def test_rotate_secret_key_action(flask_context, base_state, container_name: str
         succeeds.
     """
     state = testing.State(**base_state)
-    old_secret = state.get_secret(label="flask-secret-key").tracked_content["value"]
+    old_secret = state.get_secret(label="app-secret-key").tracked_content["value"]
 
     out = flask_context.run(
         flask_context.on.action("rotate-secret-key"),
         state,
     )
 
-    new_secret = out.get_secret(label="flask-secret-key").tracked_content["value"]
+    new_secret = out.get_secret(label="app-secret-key").tracked_content["value"]
     assert new_secret
     assert new_secret != old_secret
     assert flask_context.action_results == {"status": "success"}

@@ -41,7 +41,7 @@ def base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="spring-boot-secret-key",
+                label="app-secret-key",
                 owner="app",
             )
         ],
@@ -85,7 +85,7 @@ def base_state_fixture_with_mysql(mysql_relation):
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="spring-boot-secret-key",
+                label="app-secret-key",
                 owner="app",
             )
         ],

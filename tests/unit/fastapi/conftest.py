@@ -3,6 +3,9 @@
 
 """pytest fixtures for the fastapi unit test."""
 
+# Framework Scenario fixtures intentionally share the same state structure.
+# pylint: disable=R0801
+
 import pathlib
 import typing
 from unittest import mock
@@ -42,7 +45,7 @@ def base_state_fixture():
         "secrets": [
             testing.Secret(
                 tracked_content={"value": "test"},
-                label="fastapi-secret-key",
+                label="app-secret-key",
                 owner="app",
             )
         ],

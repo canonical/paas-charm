@@ -90,7 +90,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._framework_name = framework_name
         self._paas_config = read_paas_config()
 
-        self._secret_key = SecretKeyStorage(charm=self, label=f"{framework_name}-secret-key")
+        self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
         self._peers = Peers(charm=self)
         self._database_requirers = make_database_requirers(self, self.app.name)
 
