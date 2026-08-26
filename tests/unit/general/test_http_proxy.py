@@ -154,7 +154,7 @@ def test_http_proxy(
     ],
 )
 def test_blocked_status_when_proxy_unavailable(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the base state and add an empty http proxy relation.
@@ -173,9 +173,7 @@ def test_blocked_status_when_proxy_unavailable(
     base_state["relations"].append(http_proxy_relation)
 
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.config_changed(), state)
 
     assert out.unit_status == testing.BlockedStatus(

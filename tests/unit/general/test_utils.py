@@ -448,7 +448,7 @@ def test_merge_cos_directories_uses_default_only_when_custom_missing(
     merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
-    assert list((merged_dir / "grafana_dashboards").glob("custom_*")) == []
+    assert not list((merged_dir / "grafana_dashboards").glob("custom_*"))
 
 
 def test_merge_cos_directories_uses_default_only_when_custom_invalid(
