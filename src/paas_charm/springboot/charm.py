@@ -13,17 +13,18 @@ from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
+from paas_charm.app import generate_valkey_env as base_generate_valkey_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
 if typing.TYPE_CHECKING:
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
+    from dpcharmlibs.interfaces import ValkeyResponseModel
 
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
     from paas_charm.tracing import PaaSTracingRelationData
@@ -175,10 +176,10 @@ def generate_rabbitmq_env(
     """Generate environment variable from RabbitMQ relation data.
 
     Args:
-        relation_data: The charm Redis integration relation data.
+        relation_data: The charm RabbitMQ integration relation data.
 
     Returns:
-        Redis environment mappings if Redis relation data is available, empty
+        RabbitMQ environment mappings if RabbitMQ relation data is available, empty
         dictionary otherwise.
     """
     if not relation_data:
@@ -192,31 +193,31 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_redis_env(
-    relation_data: "PaaSRedisRelationData | None" = None,
+def generate_valkey_env(
+    relation_data: "ValkeyResponseModel | None" = None,
 ) -> dict[str, str]:
-    """Generate environment variable from Redis relation data.
+    """Generate Spring Boot environment variables from Valkey relation data.
 
     Args:
-        relation_data: The charm Redis integration relation data.
+        relation_data: The charm Valkey integration relation data.
 
     Returns:
-        Redis environment mappings if Redis relation data is available, empty
+        Spring Boot Valkey environment mappings if relation data is available, empty
         dictionary otherwise.
     """
-    if not relation_data:
+    base_env = base_generate_valkey_env(relation_data)
+    if not base_env:
         return {}
-    parsed = urlparse(str(relation_data.url))
-    env = {"spring.data.redis.url": str(relation_data.url)}
-    if parsed.hostname:
-        env["spring.data.redis.host"] = parsed.hostname
-    if parsed.port:
-        env["spring.data.redis.port"] = str(parsed.port)
-    if parsed.username:
-        env["spring.data.redis.username"] = parsed.username
-    if parsed.password:
-        env["spring.data.redis.password"] = parsed.password
 
+    env = {
+        "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
+        "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
+        "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
+    }
+    if username := base_env.get("VALKEY_DB_USERNAME"):
+        env["spring.data.valkey.username"] = username
+    if password := base_env.get("VALKEY_DB_PASSWORD"):
+        env["spring.data.valkey.password"] = password
     return env
 
 
@@ -289,16 +290,21 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     """
     if not relation_data:
         return {}
-    return {
+    env = {
         "spring.mail.host": relation_data.host,
-        "spring.mail.port": relation_data.port,
-        "spring.mail.username": f"{relation_data.user}@{relation_data.domain}",
-        "spring.mail.password": relation_data.password,
-        "spring.mail.properties.mail.smtp.auth": relation_data.auth_type.value,
+        "spring.mail.port": str(relation_data.port),
+        "spring.mail.properties.mail.smtp.auth": str(
+            relation_data.auth_type.value != "none"
+        ).lower(),
         "spring.mail.properties.mail.smtp.starttls.enable": str(
             relation_data.transport_security.value == "starttls"
         ).lower(),
     }
+    if relation_data.user:
+        env["spring.mail.username"] = f"{relation_data.user}@{relation_data.domain}"
+    if relation_data.password:
+        env["spring.mail.password"] = relation_data.password
+    return env
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
@@ -334,7 +340,7 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_redis_env: Maps Redis connection information to environment variables.
+        generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
@@ -346,7 +352,7 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_redis_env = staticmethod(generate_redis_env)
+    generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)

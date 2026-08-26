@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
     from paas_charm.tracing import PaaSTracingRelationData
@@ -150,21 +149,6 @@ def generate_rabbitmq_env(
     if relation_data.amqp_uris:
         envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
     return envvars
-
-
-def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from Redis relation data.
-
-    Args:
-        relation_data: The charm Redis integration relation data.
-
-    Returns:
-        Redis environment mappings if Redis relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return _db_url_to_env_variables("REDIS", str(relation_data.url))
 
 
 def generate_valkey_env(
@@ -392,7 +376,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_redis_env: Maps Redis connection information to environment variables.
         generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
@@ -405,7 +388,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_redis_env = staticmethod(generate_redis_env)
     generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
@@ -532,7 +514,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
-        env.update(self.generate_redis_env(relation_data=self._charm_state.integrations.redis))
         env.update(self.generate_valkey_env(relation_data=self._charm_state.integrations.valkey))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (

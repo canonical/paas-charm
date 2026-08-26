@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   key for session signing (including Flask, Django, FastAPI, ExpressJS, and Spring
   Boot) may invalidate existing sessions. Use a `type: secret` config option for
   user-provided secrets.
+* breaking: Replace Redis integration examples and tests with Valkey, including Spring Data
+  Valkey support in the Spring Boot example.
+* fix: Activate the Spring Boot Valkey example only when a Valkey relation is available.
 * feat: Move application and metrics endpoint customization to top-level `port`, `metrics-port`,
   and `metrics-path` fields in `paas-config.yaml` while always exposing the resolved framework
   defaults to workloads.

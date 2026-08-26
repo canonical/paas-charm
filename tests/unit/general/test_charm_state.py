@@ -10,9 +10,9 @@ import pytest
 
 from paas_charm.charm_state import CharmState, IntegrationRequirers, RelationDataError
 from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
-from paas_charm.redis import InvalidRedisRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
 from paas_charm.saml import InvalidSAMLRelationDataError
+from paas_charm.valkey import InvalidValkeyRelationDataError
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 
@@ -25,8 +25,8 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
             id="Invalid RabbitMQ relation data",
         ),
         pytest.param(
-            InvalidRedisRelationDataError("Invalid Redis relation data"),
-            id="Invalid Redis relation data",
+            InvalidValkeyRelationDataError("Invalid Valkey relation data"),
+            id="Invalid Valkey relation data",
         ),
         pytest.param(
             InvalidS3RelationDataError("Invalid S3 relation data"),
@@ -52,7 +52,7 @@ def test_charm_state_integration_state_build_error(error):
             peers=MagicMock(),
             integration_requirers=IntegrationRequirers(
                 databases=MagicMock(),
-                redis=MagicMock(),
+                valkey=MagicMock(),
                 rabbitmq=MagicMock(),
                 s3=MagicMock(),
                 saml=saml_mock,

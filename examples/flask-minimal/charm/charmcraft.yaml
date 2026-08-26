@@ -117,8 +117,6 @@ charm-libs:
     version: "0"
   - lib: prometheus-k8s.prometheus_scrape
     version: "0"
-  - lib: redis-k8s.redis
-    version: "0"
   - lib: data-platform-libs.s3
     version: "0"
   - lib: saml-integrator.saml

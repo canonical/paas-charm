@@ -31,7 +31,6 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
-    from paas_charm.redis import PaaSRedisRelationData, PaaSRedisRequires
     from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
     from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
     from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
@@ -158,11 +157,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 rabbitmq=(
                     integration_requirers.rabbitmq.get_relation_data()
                     if integration_requirers.rabbitmq
-                    else None
-                ),
-                redis=(
-                    integration_requirers.redis.to_relation_data()
-                    if integration_requirers.redis
                     else None
                 ),
                 valkey=(
@@ -305,7 +299,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     Attrs:
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
-        redis: Redis requirer object.
         valkey: Valkey requirer object.
         s3: S3 requirer object.
         saml: Saml requirer object.
@@ -319,7 +312,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     databases: dict[str, "PaaSDatabaseRequires"]
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
-    redis: "PaaSRedisRequires | None" = None
     valkey: "ValkeyClientRequirer | None" = None
     s3: "PaaSS3Requirer | None" = None
     saml: "PaaSSAMLRequirer | None" = None
@@ -333,13 +325,12 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
 class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     """State of the integrations.
 
-    This state is related to all the relations that can be optional, like databases, redis...
+    This state is related to all the relations that can be optional, like databases...
 
     Attrs:
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        redis: The Redis connection info from redis lib.
         valkey: The Valkey connection info from valkey relation data.
         s3: S3 connection information from relation data.
         saml: SAML parameters.
@@ -352,7 +343,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    redis: "PaaSRedisRelationData | None" = None
     valkey: "ValkeyResponseModel | None" = None
     s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
