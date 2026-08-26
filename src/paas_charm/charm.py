@@ -137,7 +137,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
 
         self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
-        self.framework.observe(self.on.leader_elected, self._on_leader_elected)
+        self.framework.observe(self.on.leader_elected, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
             self.on.peers_relation_created,
@@ -492,16 +492,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         event.set_results({"status": "success"})
         self._reconcile()
 
-    def _on_leader_elected(self, _: ops.HookEvent) -> None:
-        """Initialize the application secret key or reconcile an established workload."""
-        secret_key_exists = self._secret_key.is_ready
-        services = self._container.get_services() if self._container.can_connect() else {}
-        workload_service = services.get(self._workload_config.service_name)
-        workload_is_running = workload_service is not None and workload_service.is_running()
-        self._secret_key.initialize()
-        if secret_key_exists and workload_is_running:
-            self._reconcile()
-
     def update_app_and_unit_status(self, status: ops.StatusBase) -> None:
         """Update the application and unit status.
 
@@ -751,6 +741,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle an event that requires re-running migrations."""
         self._reconcile(rerun_migrations=True)
 
-    def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle an event that doesn't require re-running migrations."""
+    def _reconcile_without_migrations(self, _: ops.EventBase) -> None:
+        """Handle a lifecycle or relation event without explicitly re-running migrations."""
         self._reconcile()

@@ -3,84 +3,42 @@
 
 """Unit tests for application secret-key and peer coordination helpers."""
 
-import unittest.mock
+import dataclasses
 
 import pytest
-from ops import testing
-
-from paas_charm.charm import PaasCharm
+from ops import pebble, testing
 
 
 def test_secret_key_created_on_leader_elected(flask_context, base_state):
     """
     arrange: A leader Flask charm without an application secret key.
     act: Emit the leader-elected event.
-    assert: An application-owned secret key is created and readable.
+    assert: Normal reconciliation creates the key and starts the ready workload.
     """
     state = testing.State(**{**base_state, "leader": True, "secrets": []})
 
-    with flask_context(flask_context.on.leader_elected(), state) as manager:
-        manager.run()
+    state_out = flask_context.run(flask_context.on.leader_elected(), state)
 
-        assert manager.charm._secret_key.is_ready
-        assert manager.charm._secret_key.get_secret_key()
+    assert state_out.get_secret(label="app-secret-key").tracked_content["value"]
+    assert state_out.unit_status == testing.ActiveStatus()
+    assert state_out.get_container("app").service_statuses["flask"] == pebble.ServiceStatus.ACTIVE
 
 
-def test_initial_leader_elected_does_not_reconcile(flask_context, base_state):
+def test_leader_elected_respects_workload_readiness(flask_context, base_state):
     """
-    arrange: A leader Flask charm without an application secret key.
+    arrange: A leader Flask charm whose workload container is not ready.
     act: Emit the leader-elected event.
-    assert: The key is initialized without prematurely reconciling the workload.
+    assert: Reconciliation creates the key but waits for Pebble before starting the workload.
     """
-    state = testing.State(**{**base_state, "leader": True, "secrets": []})
+    container = dataclasses.replace(next(iter(base_state["containers"])), can_connect=False)
+    state = testing.State(
+        **{**base_state, "leader": True, "secrets": [], "containers": {container}}
+    )
 
-    with (
-        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
-        flask_context(flask_context.on.leader_elected(), state) as manager,
-    ):
-        manager.run()
+    state_out = flask_context.run(flask_context.on.leader_elected(), state)
 
-        assert manager.charm._secret_key.is_ready
-
-    reconcile.assert_not_called()
-
-
-def test_established_leader_elected_reconciles(flask_context, base_state):
-    """
-    arrange: A leader Flask charm with an established application secret key.
-    act: Emit the leader-elected event.
-    assert: The workload is reconciled so it restarts under the new leader.
-    """
-    state = testing.State(**{**base_state, "leader": True})
-    established_state = flask_context.run(flask_context.on.config_changed(), state)
-
-    with (
-        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
-        flask_context(flask_context.on.leader_elected(), established_state) as manager,
-    ):
-        existing_key = manager.charm._secret_key.get_secret_key()
-        manager.run()
-
-        assert manager.charm._secret_key.get_secret_key() == existing_key
-
-    reconcile.assert_called_once_with()
-
-
-def test_pre_start_leader_elected_does_not_reconcile(flask_context, base_state):
-    """
-    arrange: A leader Flask charm with a secret but a workload that has not started.
-    act: Emit the leader-elected event.
-    assert: Reconciliation waits for a later lifecycle event with complete relation data.
-    """
-    state = testing.State(**{**base_state, "leader": True})
-
-    with (
-        unittest.mock.patch.object(PaasCharm, "_reconcile") as reconcile,
-        flask_context(flask_context.on.leader_elected(), state) as manager,
-    ):
-        manager.run()
-
-    reconcile.assert_not_called()
+    assert state_out.get_secret(label="app-secret-key").tracked_content["value"]
+    assert state_out.unit_status == testing.WaitingStatus("Waiting for pebble ready")
 
 
 def test_secret_key_not_created_by_non_leader(flask_context, base_state):
