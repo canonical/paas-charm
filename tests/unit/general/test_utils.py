@@ -19,17 +19,6 @@ from paas_charm.utils import (
     validate_cos_custom_dir,
 )
 
-CACHE_RELATION = RelationMeta(
-    role=RelationRole.requires,
-    relation_name="cache",
-    raw={"interface": "redis", "limit": 1},
-)
-SECOND_CACHE_RELATION = RelationMeta(
-    role=RelationRole.requires,
-    relation_name="second_cache",
-    raw={"interface": "redis", "limit": 1},
-)
-
 
 def _test_build_validation_error_message_parameters():
     return [
@@ -303,8 +292,8 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
             },
             "valkey_client",
             [
-                ("cache", CACHE_RELATION),
-                ("second_cache", SECOND_CACHE_RELATION),
+                ("cache", cache_relation),
+                ("second_cache", second_cache_relation),
             ],
             id="2 relation",
         ),

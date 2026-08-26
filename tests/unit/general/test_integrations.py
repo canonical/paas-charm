@@ -20,7 +20,7 @@ from charms.smtp_integrator.v0.smtp import (
     TransportSecurity,
 )
 from dpcharmlibs.interfaces import ValkeyResponseModel
-from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
+from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole, testing
 
 import paas_charm
 from examples.django.charm.src.charm import DjangoCharm
