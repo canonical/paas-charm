@@ -8,8 +8,6 @@ import dataclasses
 import pytest
 from ops import testing
 
-from examples.django.charm.src.charm import DjangoCharm
-
 from .constants import DEFAULT_LAYER
 
 
@@ -21,15 +19,23 @@ def _status(name: str, message: str):
 
 
 @pytest.mark.parametrize(
-    "django_layer, worker_class, expected_status, expected_message, exec_res",
+    "django_layer,worker_class,gevent_result,expected_status,expected_message",
     [
         pytest.param(
             DEFAULT_LAYER,
             "eventlet",
+            1,
             "blocked",
             "Only 'gevent' and 'sync' are allowed. https://bit.ly/django-async-doc",
+            id="unsupported-eventlet",
+        ),
+        pytest.param(
+            DEFAULT_LAYER,
+            "gevent",
             1,
-            id="fail-eventlet",
+            "blocked",
+            "gunicorn[gevent] must be installed in the rock. https://bit.ly/django-async-doc",
+            id="missing-gevent",
         ),
         pytest.param(
             {
@@ -41,36 +47,37 @@ def _status(name: str, message: str):
                 },
             },
             "gevent",
+            0,
             "blocked",
             "Worker class is set through `juju config` but the `-k` worker class argument is not in the service command.",
-            0,
-            id="fail-no-k",
+            id="missing-worker-selector",
         ),
         pytest.param(
             DEFAULT_LAYER,
             "gevent",
+            0,
             "active",
             "",
-            0,
-            id="success-gevent",
+            id="gevent",
         ),
         pytest.param(
             DEFAULT_LAYER,
             "sync",
+            0,
             "active",
             "",
-            0,
-            id="success-sync",
+            id="sync",
         ),
     ],
 )
 def test_async_workers_config(
+    django_context,
     base_state: dict,
     django_layer,
     worker_class,
+    gevent_result,
     expected_status,
     expected_message,
-    exec_res,
 ):
     """
     arrange: Prepare a unit and run initial hooks.
@@ -83,61 +90,7 @@ def test_async_workers_config(
         container,
         _base_plan=django_layer,
         execs={
-            testing.Exec(["python3", "-c", "import gevent"], return_code=exec_res),
-            testing.Exec(["/bin/python3", "-m", "gunicorn"], return_code=exec_res),
-        },
-    )
-    state = testing.State(
-        **{
-            **base_state,
-            "config": {"webserver-worker-class": worker_class},
-            "containers": {container},
-        }
-    )
-    context = testing.Context(DjangoCharm)
-
-    out = context.run(context.on.config_changed(), state)
-
-    assert out.unit_status == _status(expected_status, expected_message)
-
-
-@pytest.mark.parametrize(
-    "worker_class, expected_status, expected_message, exec_res",
-    [
-        (
-            "eventlet",
-            "blocked",
-            "Only 'gevent' and 'sync' are allowed. https://bit.ly/django-async-doc",
-            1,
-        ),
-        (
-            "gevent",
-            "blocked",
-            "gunicorn[gevent] must be installed in the rock. https://bit.ly/django-async-doc",
-            1,
-        ),
-        ("sync", "active", "", 0),
-    ],
-)
-def test_async_workers_config_fail(
-    base_state: dict,
-    worker_class,
-    expected_status,
-    expected_message,
-    exec_res,
-):
-    """
-    arrange: Prepare a unit and run initial hooks.
-    act: Set the `webserver-worker-class` config.
-    assert: The charm should be blocked if the `webserver-worker-class` config is anything other
-    then `sync`.
-    """
-    container = next(iter(base_state["containers"]))
-    container = dataclasses.replace(
-        container,
-        _base_plan=DEFAULT_LAYER,
-        execs={
-            testing.Exec(["python3", "-c", "import gevent"], return_code=exec_res),
+            testing.Exec(["python3", "-c", "import gevent"], return_code=gevent_result),
             testing.Exec(["/bin/python3"], return_code=0),
         },
     )
@@ -148,8 +101,10 @@ def test_async_workers_config_fail(
             "containers": {container},
         }
     )
-    context = testing.Context(DjangoCharm)
 
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     assert out.unit_status == _status(expected_status, expected_message)
+    if expected_status == "active":
+        service = out.get_container("app").plan.services["django"]
+        assert f"-k [ {worker_class} ]" in service.command

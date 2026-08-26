@@ -7,77 +7,52 @@
 # pylint: disable=protected-access
 
 import dataclasses
-import pathlib
 
 import pytest
-import yaml
 from ops import testing
 
-from examples.django.charm.src.charm import DjangoCharm
-
-CHARMCRAFT_CONFIG = yaml.safe_load(
-    (
-        pathlib.Path(__file__).parents[3] / "examples" / "django" / "charm" / "charmcraft.yaml"
-    ).read_text(encoding="utf-8")
-)["config"]
-NO_DATABASE_META = {
-    "name": "django-k8s",
-    "containers": {"app": {"resource": "app-image"}},
-    "peers": {"secret-storage": {"interface": "secret-storage"}},
-    "provides": {
-        "grafana-dashboard": {"interface": "grafana_dashboard"},
-        "metrics-endpoint": {"interface": "prometheus_scrape"},
-    },
-    "requires": {
-        "ingress": {"interface": "ingress", "limit": 1},
-        "logging": {"interface": "loki_push_api"},
-    },
-}
-DJANGO_ACTIONS = {
-    "rotate-secret-key": {},
-    "create-superuser": {
-        "params": {
-            "username": {"type": "string"},
-            "email": {"type": "string"},
-        },
-        "required": ["username", "email"],
-    },
+BASE_DJANGO_ENV = {
+    "DJANGO_OIDC_REDIRECT_PATH": "/callback",
+    "DJANGO_OIDC_SCOPES": "openid profile email",
+    "DJANGO_SECRET_KEY": "test",
+    "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
+    "DJANGO_METRICS_PORT": "9102",
+    "DJANGO_METRICS_PATH": "/metrics",
+    "DJANGO_BASE_URL": "http://django-k8s.test-model:8000",
+    "POSTGRESQL_DB_CONNECT_STRING": (
+        "postgresql://test-username:test-password@test-postgresql:5432/django-k8s"
+    ),
+    "POSTGRESQL_DB_SCHEME": "postgresql",
+    "POSTGRESQL_DB_NETLOC": "test-username:test-password@test-postgresql:5432",
+    "POSTGRESQL_DB_PATH": "/django-k8s",
+    "POSTGRESQL_DB_PARAMS": "",
+    "POSTGRESQL_DB_QUERY": "",
+    "POSTGRESQL_DB_FRAGMENT": "",
+    "POSTGRESQL_DB_USERNAME": "test-username",
+    "POSTGRESQL_DB_PASSWORD": "test-password",
+    "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
+    "POSTGRESQL_DB_PORT": "5432",
+    "POSTGRESQL_DB_NAME": "django-k8s",
 }
 
 TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {},
-        {
-            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
-            "DJANGO_OIDC_SCOPES": "openid profile email",
-            "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
-            "DJANGO_METRICS_PORT": "9102",
-            "DJANGO_METRICS_PATH": "/metrics",
-        },
+        BASE_DJANGO_ENV,
         id="default",
     ),
     pytest.param(
         {"django-allowed-hosts": "test.local"},
         {
-            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
-            "DJANGO_OIDC_SCOPES": "openid profile email",
-            "DJANGO_SECRET_KEY": "test",
+            **BASE_DJANGO_ENV,
             "DJANGO_ALLOWED_HOSTS": '["test.local", "django-k8s.test-model"]',
-            "DJANGO_METRICS_PORT": "9102",
-            "DJANGO_METRICS_PATH": "/metrics",
         },
         id="allowed-hosts",
     ),
     pytest.param(
         {"django-debug": True},
         {
-            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
-            "DJANGO_OIDC_SCOPES": "openid profile email",
-            "DJANGO_SECRET_KEY": "test",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
-            "DJANGO_METRICS_PORT": "9102",
-            "DJANGO_METRICS_PATH": "/metrics",
+            **BASE_DJANGO_ENV,
             "DJANGO_DEBUG": "true",
         },
         id="debug",
@@ -85,51 +60,62 @@ TEST_DJANGO_CONFIG_PARAMS = [
     pytest.param(
         {"app-secret-key": "foobar"},
         {
-            "DJANGO_OIDC_REDIRECT_PATH": "/callback",
-            "DJANGO_OIDC_SCOPES": "openid profile email",
+            **BASE_DJANGO_ENV,
             "DJANGO_SECRET_KEY": "foobar",
-            "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
-            "DJANGO_METRICS_PORT": "9102",
-            "DJANGO_METRICS_PATH": "/metrics",
         },
         id="secret-key",
     ),
 ]
 
 
+def _assert_django_service(service, expected_env: dict, worker_class: str) -> None:
+    """Assert the complete Django service plan."""
+    assert service.to_dict() == {
+        "environment": expected_env,
+        "override": "replace",
+        "startup": "enabled",
+        "command": (
+            "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
+            f"django_app.wsgi:application -k [ {worker_class} ]"
+        ),
+        "after": ["statsd-exporter"],
+        "user": "_daemon_",
+    }
+
+
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
-def test_django_config(base_state: dict, container_name: str, config: dict, env: dict) -> None:
+def test_django_config(
+    django_context,
+    base_state: dict,
+    container_name: str,
+    config: dict,
+    env: dict,
+) -> None:
     """
     arrange: none
     act: start the django charm and set app container to be ready.
     assert: django charm should submit the correct pebble layer to pebble.
     """
     state = testing.State(**{**base_state, "config": config})
-    context = testing.Context(DjangoCharm)
 
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
     service = out.get_container(container_name).plan.services["django"]
-    for key, value in env.items():
-        assert service.environment[key] == value
-    assert (
-        service.command == "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
-        "django_app.wsgi:application -k [ sync ]"
-    )
+    _assert_django_service(service, env, "sync")
+    assert len(out.get_relations("postgresql")) == 1
 
 
-def test_django_create_super_user(base_state: dict, container_name: str) -> None:
+def test_django_create_super_user(django_context, base_state: dict, container_name: str) -> None:
     """
     arrange: Start the Django charm. Mock the Django command (pebble exec) to create a superuser.
     act: Run action create superuser.
     assert: The action is called with the right arguments, returning a password for the user.
     """
     state = testing.State(**base_state)
-    context = testing.Context(DjangoCharm)
 
-    context.run(
-        context.on.action(
+    django_context.run(
+        django_context.on.action(
             "create-superuser",
             params={"username": "admin", "email": "admin@example.com"},
         ),
@@ -138,31 +124,57 @@ def test_django_create_super_user(base_state: dict, container_name: str) -> None
 
     exec_args = next(
         args
-        for args in context.exec_history[container_name]
+        for args in django_context.exec_history[container_name]
         if args.command == ["python3", "manage.py", "createsuperuser", "--noinput"]
     )
     assert exec_args.environment["DJANGO_SUPERUSER_USERNAME"] == "admin"
     assert exec_args.environment["DJANGO_SUPERUSER_EMAIL"] == "admin@example.com"
     assert "DJANGO_SECRET_KEY" in exec_args.environment
-    assert context.action_results is not None
-    assert context.action_results["password"] == exec_args.environment["DJANGO_SUPERUSER_PASSWORD"]
+    assert exec_args.working_dir == "/django/app"
+    assert django_context.action_results == {
+        "password": exec_args.environment["DJANGO_SUPERUSER_PASSWORD"]
+    }
 
 
-def test_required_database_integration(base_state_no_database: dict):
+def test_django_create_super_user_exec_failure(django_context, base_state: dict) -> None:
+    """
+    arrange: configure the create-superuser command to fail.
+    act: run the create-superuser action.
+    assert: the action fails with the command output.
+    """
+    container = dataclasses.replace(
+        next(iter(base_state["containers"])),
+        execs={
+            testing.Exec(["/bin/python3"], return_code=0),
+            testing.Exec(
+                ["python3", "manage.py", "createsuperuser", "--noinput"],
+                return_code=1,
+                stdout="username already exists",
+            ),
+        },
+    )
+    state = testing.State(**{**base_state, "containers": {container}})
+
+    with pytest.raises(testing.ActionFailed, match="username already exists"):
+        django_context.run(
+            django_context.on.action(
+                "create-superuser",
+                params={"username": "admin", "email": "admin@example.com"},
+            ),
+            state,
+        )
+
+
+@pytest.mark.parametrize("django_context", ["no-database-metadata"], indirect=True)
+def test_required_database_integration(django_context, base_state_no_database: dict):
     """
     arrange: Start the Django charm with no integrations specified in the charm.
     act: Start the django charm and set app container to be ready.
     assert: The charm should be blocked, as Django requires a database to work.
     """
     state = testing.State(**base_state_no_database)
-    context = testing.Context(
-        DjangoCharm,
-        meta=NO_DATABASE_META,
-        actions=DJANGO_ACTIONS,
-        config=CHARMCRAFT_CONFIG,
-    )
 
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     assert out.unit_status == testing.BlockedStatus(
         "Django requires a database integration to work"
@@ -171,7 +183,11 @@ def test_required_database_integration(base_state_no_database: dict):
 
 @pytest.mark.parametrize("config, env", TEST_DJANGO_CONFIG_PARAMS)
 def test_django_async_config(
-    base_state: dict, container_name: str, config: dict, env: dict
+    django_context,
+    base_state: dict,
+    container_name: str,
+    config: dict,
+    env: dict,
 ) -> None:
     """
     arrange: None
@@ -181,21 +197,16 @@ def test_django_async_config(
     state = testing.State(
         **{**base_state, "config": {**config, "webserver-worker-class": "gevent"}}
     )
-    context = testing.Context(DjangoCharm)
 
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     assert out.unit_status == testing.ActiveStatus()
     service = out.get_container(container_name).plan.services["django"]
-    for key, value in env.items():
-        assert service.environment[key] == value
-    assert (
-        service.command == "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
-        "django_app.wsgi:application -k [ gevent ]"
-    )
+    _assert_django_service(service, env, "gevent")
 
 
 def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
+    django_context,
     base_state: dict,
     container_name: str,
 ):
@@ -207,8 +218,7 @@ def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
     state = testing.State(
         **{**base_state, "config": {"django-allowed-hosts": "django-k8s.test-model"}}
     )
-    context = testing.Context(DjangoCharm)
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
@@ -219,13 +229,17 @@ def test_allowed_hosts_deduplicates_when_configured_host_matches_ingress(
         remote_app_data={"ingress": '{"url": "https://django-k8s.test-model/"}'},
     )
     state = dataclasses.replace(out, relations={*out.relations, ingress})
-    out = context.run(context.on.relation_changed(ingress), state)
+    out = django_context.run(django_context.on.relation_changed(ingress), state)
 
     env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["django-k8s.test-model"]'
 
 
-def test_allowed_hosts_base_hostname_updates_correctly(base_state: dict, container_name: str):
+def test_allowed_hosts_base_hostname_updates_correctly(
+    django_context,
+    base_state: dict,
+    container_name: str,
+):
     """
     arrange: Deploy a Django charm without an ingress integration
     act: Add a new ingress integration
@@ -235,8 +249,7 @@ def test_allowed_hosts_base_hostname_updates_correctly(base_state: dict, contain
     """
     base_state["model"] = testing.Model(name="flask-model")
     state = testing.State(**base_state)
-    context = testing.Context(DjangoCharm)
-    out = context.run(context.on.config_changed(), state)
+    out = django_context.run(django_context.on.config_changed(), state)
 
     # The initial allowed hosts matches the k8s service name.
     env = out.get_container(container_name).plan.services["django"].environment
@@ -249,7 +262,7 @@ def test_allowed_hosts_base_hostname_updates_correctly(base_state: dict, contain
         remote_app_data={"ingress": '{"url": "http://oldjuju.test/"}'},
     )
     state = dataclasses.replace(out, relations={*out.relations, ingress})
-    out = context.run(context.on.relation_changed(ingress), state)
+    out = django_context.run(django_context.on.relation_changed(ingress), state)
 
     env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["oldjuju.test"]'
@@ -261,7 +274,30 @@ def test_allowed_hosts_base_hostname_updates_correctly(base_state: dict, contain
     )
     relations = {relation for relation in out.relations if relation.id != ingress.id}
     state = dataclasses.replace(out, relations={*relations, updated_ingress})
-    out = context.run(context.on.relation_changed(updated_ingress), state)
+    out = django_context.run(django_context.on.relation_changed(updated_ingress), state)
 
     env = out.get_container(container_name).plan.services["django"].environment
     assert env["DJANGO_ALLOWED_HOSTS"] == '["newjuju.test"]'
+
+
+def test_real_paas_config_enables_structured_logging(
+    django_context,
+    base_state: dict,
+    container_name: str,
+) -> None:
+    """
+    arrange: use the real Django paas-config with JSON framework logging.
+    act: reconcile the charm.
+    assert: the generated Gunicorn config installs the structured logger and middleware.
+    """
+    out = django_context.run(
+        django_context.on.config_changed(),
+        testing.State(**base_state),
+    )
+
+    filesystem = out.get_container(container_name).get_filesystem(django_context)
+    config = (filesystem / "django" / "gunicorn.conf.py").read_text(encoding="utf-8")
+    assert "class GunicornJsonFormatter(logging.Formatter):" in config
+    assert "class GunicornJsonLogger(glogging.Logger):" in config
+    assert "logger_class = GunicornJsonLogger" in config
+    assert "worker.app.wsgi = _patched_wsgi" in config
