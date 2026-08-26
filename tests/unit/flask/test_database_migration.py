@@ -17,7 +17,7 @@ MIGRATION_STATUS_PATH = pathlib.Path("tmp/flask/state/database-migration-status"
 
 
 def _container_mount(base_state: dict) -> pathlib.Path:
-    """Return the host path mounted at /flask in the workload container."""
+    """Return the host path mounted at /app in the workload container."""
     container = next(iter(base_state["containers"]))
     return pathlib.Path(container.mounts["flask"].source)
 
@@ -47,7 +47,7 @@ def _container_with_exec(
 
 def _write_migration_file(base_state: dict, filename: str) -> pathlib.Path:
     """Create a migration file in the mounted Flask application directory."""
-    app_dir = _container_mount(base_state) / "app"
+    app_dir = _container_mount(base_state)
     app_dir.mkdir(parents=True, exist_ok=True)
     migration_file = app_dir / filename
     migration_file.touch()
@@ -102,7 +102,7 @@ def test_database_migration_retry_and_single_success(
         args for args in flask_context.exec_history["app"] if args.command == command
     ]
     assert len(migration_history) == 2
-    assert migration_history[-1].working_dir == "/flask/app"
+    assert migration_history[-1].working_dir == "/app"
     assert migration_history[-1].user == migration_history[-1].group == "_daemon_"
     assert migration_history[-1].environment["FLASK_SECRET_KEY"] == "test"
 
@@ -112,7 +112,7 @@ def test_database_migration_retry_and_single_success(
     )
 
     migration_file.unlink()
-    (_container_mount(base_state) / "app" / "migrate.py").touch()
+    (_container_mount(base_state) / "migrate.py").touch()
     flask_context.run(flask_context.on.config_changed(), out)
     assert (
         len([args for args in flask_context.exec_history["app"] if args.command == command]) == 2
@@ -122,7 +122,7 @@ def test_database_migration_retry_and_single_success(
 @pytest.mark.parametrize(
     "filename,command",
     [
-        pytest.param("migrate", ["/flask/app/migrate"], id="executable"),
+        pytest.param("migrate", ["/app/migrate"], id="executable"),
         pytest.param("migrate.sh", ["bash", "-eo", "pipefail", "migrate.sh"], id="shell"),
         pytest.param("migrate.py", ["python3", "migrate.py"], id="python"),
         pytest.param("manage.py", ["python3", "manage.py", "migrate"], id="django"),
@@ -151,7 +151,7 @@ def test_database_migrate_command(
     ]
     assert len(migration_history) == 1
     exec_args = migration_history[0]
-    assert exec_args.working_dir == "/flask/app"
+    assert exec_args.working_dir == "/app"
     assert exec_args.user == exec_args.group == "_daemon_"
     assert exec_args.environment["FLASK_SECRET_KEY"] == "test"
     assert exec_args.environment["FLASK_BASE_URL"] == "http://flask-k8s.test-model:8000"

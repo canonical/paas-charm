@@ -18,10 +18,10 @@ services:
     command: celery -A app:celery_app worker -c 2 --loglevel DEBUG
     startup: enabled
     user: _daemon_
-    working-dir: /flask/app
+    working-dir: /app
   celery-beat-scheduler:
     override: replace
     command: celery -A app:celery_app beat --loglevel DEBUG -s /tmp/celerybeat-schedule
     startup: enabled
     user: _daemon_
-    working-dir: /flask/app
+    working-dir: /app

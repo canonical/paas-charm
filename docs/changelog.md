@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* breaking: Unify the Flask and Django application root directory and access/error logs under
+  `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
+  keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
+  Requires a rock built with the corresponding gunicorn v2 extension.
 * breaking: Replace Redis integration examples and tests with Valkey, including Spring Data
   Valkey support in the Spring Boot example.
 * fix: Activate the Spring Boot Valkey example only when a Valkey relation is available.
