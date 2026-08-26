@@ -232,24 +232,6 @@ def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
     return App(minio_app_name)
 
 
-@pytest.fixture(scope="module", name="redis_app_name")
-def redis_app_name_fixture() -> str:
-    return "redis-k8s"
-
-
-@pytest.fixture(scope="module", name="redis_app")
-def redis_app_fixture(juju: jubilant.Juju, redis_app_name):
-    """Deploy and set up Redis."""
-    juju.deploy(
-        redis_app_name,
-        channel="latest/edge",
-        trust=True,
-    )
-    juju.wait(lambda status: status.apps[redis_app_name].is_active, timeout=60 * 30)
-
-    return App(redis_app_name)
-
-
 @pytest.fixture(scope="module", name="valkey_app_name")
 def valkey_app_name_fixture() -> str:
     return "valkey"
@@ -275,7 +257,7 @@ def mongodb_app_name_fixture() -> str:
 
 @pytest.fixture(scope="module", name="mongodb_app")
 def mongodb_app_fixture(juju: jubilant.Juju, mongodb_app_name):
-    """Deploy and set up Redis."""
+    """Deploy and set up MongoDB."""
     juju.deploy(
         mongodb_app_name,
         channel="6/beta",
@@ -293,7 +275,7 @@ def mysql_app_name_fixture() -> str:
 
 @pytest.fixture(scope="module", name="mysql_app")
 def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
-    """Deploy and set up Redis."""
+    """Deploy and set up MySQL."""
     if not juju.status().apps.get(mysql_app_name):
         juju.deploy(
             mysql_app_name,

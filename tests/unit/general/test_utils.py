@@ -246,7 +246,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
     [
         pytest.param(
             {},
-            "redis",
+            "valkey_client",
             [],
             id="0 relation",
         ),
@@ -257,15 +257,21 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     relation_name="db",
                     raw={"interface": "postgresql", "limit": 1},
                 ),
-                "cache": CACHE_RELATION,
+                "cache": (
+                    cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="cache",
+                        raw={"interface": "valkey_client", "limit": 1},
+                    )
+                ),
                 "oauth": RelationMeta(
                     role=RelationRole.requires,
                     relation_name="oauth",
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
-            [("cache", CACHE_RELATION)],
+            "valkey_client",
+            [("cache", cache_relation)],
             id="1 relation",
         ),
         pytest.param(
@@ -275,15 +281,27 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     relation_name="db",
                     raw={"interface": "postgresql", "limit": 1},
                 ),
-                "cache": CACHE_RELATION,
-                "second_cache": SECOND_CACHE_RELATION,
+                "cache": (
+                    cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="cache",
+                        raw={"interface": "valkey_client", "limit": 1},
+                    )
+                ),
+                "second_cache": (
+                    second_cache_relation := RelationMeta(
+                        role=RelationRole.requires,
+                        relation_name="second_cache",
+                        raw={"interface": "valkey_client", "limit": 1},
+                    )
+                ),
                 "oauth": RelationMeta(
                     role=RelationRole.requires,
                     relation_name="oauth",
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
+            "valkey_client",
             [
                 ("cache", CACHE_RELATION),
                 ("second_cache", SECOND_CACHE_RELATION),

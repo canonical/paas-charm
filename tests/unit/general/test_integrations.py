@@ -19,7 +19,8 @@ from charms.smtp_integrator.v0.smtp import (
     SmtpRequires,
     TransportSecurity,
 )
-from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole, testing
+from dpcharmlibs.interfaces import ValkeyResponseModel
+from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole
 
 import paas_charm
 from examples.django.charm.src.charm import DjangoCharm
@@ -36,7 +37,6 @@ from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.redis import PaaSRedisRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
@@ -68,7 +68,7 @@ def _generate_map_integrations_to_env_parameters(prefix: str = ""):
 
 def _test_integrations_state_build_parameters():
     relation_dict: dict[str, str] = {
-        "redis": None,
+        "valkey": None,
         "database": {},
         "s3": None,
         "saml_relation_data": None,
@@ -103,7 +103,7 @@ def _test_integrations_state_build_parameters():
             id="RabbitMQ correct parameters",
         ),
         pytest.param(
-            {**relation_dict, "rabbitmq_uri": "http://redisuri"},
+            {**relation_dict, "rabbitmq_uri": "http://valkeyuri"},
             False,
             id="RabbitMQ empty parameters",
         ),
@@ -265,24 +265,30 @@ def _test_integrations_env_parameters():
         ),
         pytest.param(
             IntegrationsState(
-                redis=PaaSRedisRelationData(
-                    url="redis://testingusername:testingpassword@localhost:6379?db=0&timeout=5"
+                valkey=ValkeyResponseModel(
+                    endpoints="valkey://localhost:6379?db=0&timeout=5",
+                    username="testingusername",
+                    password="testingpassword",
                 ),
             ),
             {
-                "REDIS_DB_CONNECT_STRING": "redis://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
-                "REDIS_DB_FRAGMENT": "",
-                "REDIS_DB_HOSTNAME": "localhost",
-                "REDIS_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
-                "REDIS_DB_PARAMS": "",
-                "REDIS_DB_PASSWORD": "testingpassword",
-                "REDIS_DB_PATH": "",
-                "REDIS_DB_PORT": "6379",
-                "REDIS_DB_QUERY": "db=0&timeout=5",
-                "REDIS_DB_SCHEME": "redis",
-                "REDIS_DB_USERNAME": "testingusername",
+                "VALKEY_DB_CONNECT_STRING": "valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
+                "VALKEY_DB_FRAGMENT": "",
+                "VALKEY_DB_HOSTNAME": "localhost",
+                "VALKEY_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
+                "VALKEY_DB_PARAMS": "",
+                "VALKEY_DB_PASSWORD": "testingpassword",
+                "VALKEY_DB_PATH": "",
+                "VALKEY_DB_PORT": "6379",
+                "VALKEY_DB_QUERY": "db=0&timeout=5",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
+                "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
+                "VALKEY_DB_USERNAME": "testingusername",
+                "VALKEY_MODE": "",
+                "VALKEY_VERSION": "",
             },
-            id="Redis",
+            id="Valkey",
         ),
         pytest.param(
             IntegrationsState(
