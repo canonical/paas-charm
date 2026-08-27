@@ -148,6 +148,12 @@ requires:
     interface: postgresql_client
     optional: True
     limit: 1
+  # Custom relation declared by the author. It is optional --
+  # a missing relation does not block the workload with BlockedStatus.
+  example-db:
+    interface: example_db
+    optional: True
+    limit: 1
   mysql:
     interface: mysql_client
     optional: True
