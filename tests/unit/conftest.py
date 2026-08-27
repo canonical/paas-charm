@@ -33,11 +33,23 @@ from tests.unit.flask.constants import DEFAULT_LAYER as FLASK_DEFAULT_LAYER
 from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 from tests.unit.test_charm.src.charm import TestCharm
+from tests.unit.test_custom_relations.src.charm import (
+    ContextCharm,
+    EnvVarCharm,
+    InvalidDataCharm,
+    OverwritingCharm,
+    SideEffectCharm,
+)
 
 CONTAINER_NAME = "app"
 PROJECT_ROOT = Path(__file__).parents[2]
 CHARM_ROOTS = {
     TestCharm: PROJECT_ROOT / "tests/unit/test_charm",
+    EnvVarCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
+    ContextCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
+    InvalidDataCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
+    OverwritingCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
+    SideEffectCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     FlaskCharm: PROJECT_ROOT / "examples/flask/charm",
     DjangoCharm: PROJECT_ROOT / "examples/django/charm",
     FastAPICharm: PROJECT_ROOT / "examples/fastapi/charm",
