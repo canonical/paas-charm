@@ -13,7 +13,7 @@ async def metrics_lifespan(_: object) -> AsyncIterator[None]:
     """Run the Prometheus HTTP server only while the FastAPI application is running."""
     from prometheus_client import start_http_server
 
-    server, thread = start_http_server(  # nosec
+    server, thread = start_http_server(
         port=int(os.getenv("METRICS_PORT", "9464")),
         addr="0.0.0.0",
     )

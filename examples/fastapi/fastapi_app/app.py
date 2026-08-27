@@ -14,7 +14,8 @@ from metrics import metrics_lifespan
 from openfga_sdk import ClientConfiguration
 from openfga_sdk.credentials import CredentialConfiguration, Credentials
 from openfga_sdk.sync import OpenFgaClient
-from opentelemetry import metrics, trace
+from opentelemetry import metrics as otel_metrics
+from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -56,7 +57,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
-metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
+otel_metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
 
 FastAPIInstrumentor.instrument_app(app)
 tracer = trace.get_tracer(__name__)
