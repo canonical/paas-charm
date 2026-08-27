@@ -88,7 +88,7 @@ config:
         This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual Flask secret key.
         To create the secret, run the following command:
-        `juju add-secret my-flask-secret-key value=<secret-string> && juju grant-secret my-flask-secret-key flask-k8s`,
+        `juju add-secret my-app-secret-key value=<secret-string> && juju grant-secret my-app-secret-key flask-k8s`,
         and use the outputted secret ID to configure this option.
       type: secret
     flask-session-cookie-secure:
@@ -131,8 +131,8 @@ containers:
   app:
     resource: app-image
 peers:
-  secret-storage:
-    interface: secret-storage
+  peers:
+    interface: peers
 provides:
   grafana-dashboard:
     interface: grafana_dashboard

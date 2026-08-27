@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
+  and store the auto-generated application secret key in a Juju application-owned
+  secret instead of the peer relation databag. The peer relation is now used only
+  for peer coordination (such as `PEER_FQDNS`). This is a breaking change: on
+  upgrade a fresh application secret key is generated. Applications that use this
+  key for session signing (including Flask, Django, FastAPI, ExpressJS, and Spring
+  Boot) may invalidate existing sessions. Use a `type: secret` config option for
+  user-provided secrets.
 * breaking: Replace Redis integration examples and tests with Valkey, including Spring Data
   Valkey support in the Spring Boot example.
 * fix: Activate the Spring Boot Valkey example only when a Valkey relation is available.

@@ -445,7 +445,7 @@ def test_integrations_env(
     charm_state = CharmState(
         framework=framework,
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         integrations=integrations,
     )
     workload_config = create_workload_config(
@@ -937,24 +937,23 @@ def test_openfga_not_activated(
     "charm_type",
     [FlaskCharm, DjangoCharm, FastAPICharm, GoCharm, ExpressJSCharm],
 )
-def test_secret_storage_relation_departed_hook(
+def test_peers_relation_departed_hook(
     charm_type: type,
     context_factory,
     framework_state_factory,
 ):
     """
-    arrange: Run initial hooks. Add a unit to the secret-storage relation.
-    act: Remove one unit from the secret-storage relation.
+    arrange: Run initial hooks. Add a unit to the peers relation.
+    act: Remove one unit from the peers relation.
     assert: The _reconcile function should be called once.
     """
     state_dict = framework_state_factory(charm_type)
     peer_relation = next(
-        relation for relation in state_dict["relations"] if relation.endpoint == "secret-storage"
+        relation for relation in state_dict["relations"] if relation.endpoint == "peers"
     )
     state_dict["relations"].remove(peer_relation)
     peer_relation = testing.PeerRelation(
-        "secret-storage",
-        local_app_data=peer_relation.local_app_data,
+        "peers",
         peers_data={1: {}},
     )
     state_dict["relations"].append(peer_relation)

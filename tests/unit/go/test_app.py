@@ -121,7 +121,7 @@ def test_go_environment_vars(
     charm_state = CharmState(
         framework="go",
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         framework_config=framework_config.dict(exclude_none=True),
         base_url="https://paas.example.com",
         user_defined_config=user_defined_config,
