@@ -53,6 +53,8 @@ The following table contains links to pages for the individual extensions.
 The following pages provide more information about the software operator built with Charmcraft.
 
 * :ref:`paas-config.yaml <ref_paas_config>`: Configuration file for customizing charm runtime behavior.
+* :ref:`Custom relations <ref_custom_relations>`: The public ``CustomRelation`` extension API for
+  adding custom Juju relations to a 12-factor charm.
 * :ref:`Observability and relations <ref_observability_relations>`: A list of pages with technical descriptions
   about the enabled observability and relations supported in the 12-factor app support in Charmcraft.
 * :ref:`Charm architecture <ref_charm_architecture>`: An overview of the architecture,
@@ -81,6 +83,7 @@ The following pages provide more information about the 12-factor project.
     Rockcraft extensions <https://documentation.ubuntu.com/rockcraft/en/latest/reference/extensions/>
     Charmcraft extensions <https://documentation.ubuntu.com/charmcraft/latest/reference/extensions/>
     paas-config
+    custom-relations
     observability-relations
     charm-architecture
     juju-events

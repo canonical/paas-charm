@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Add the public `paas_charm.relations.CustomRelation` extension API so charm
+  authors can add their own Juju relations to a 12-factor charm (env vars,
+  readiness/blocking, reconcile) without importing or subclassing paas-charm
+  internals. Register a relation via the charm `custom_relations` class
+  attribute; required-vs-optional is read from the metadata `optional` flag.
+* feat: Add the stable `Context`, `OnChange`, and `CustomRelation` public
+  types and re-export `InvalidRelationDataError`/`RelationDataError` from
+  `paas_charm.relations`.
+* docs: Add a how-to and reference for custom relations. The example Flask
+  implementation was updated to showcase `CustomRelation` usage.
 * breaking: Unify the Flask and Django application root directory and access/error logs under
   `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
   keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
