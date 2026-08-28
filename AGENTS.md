@@ -137,3 +137,8 @@ New integrations go in `src/paas_charm/` as a dedicated module (e.g. `rabbitmq.p
 ### Commits
 
 All commits must be signed (GPG) and include a CLA sign-off line at the end. PRs are squash-merged onto `main`. Update `docs/changelog.md` for any feature, fix, or significant change.
+
+### Pull requests
+
+Always open pull requests as drafts and ask the user to review them. Never convert a draft to
+a regular pull request; ask the user to convert it.
