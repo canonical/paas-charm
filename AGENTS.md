@@ -140,5 +140,5 @@ All commits must be signed (GPG) and include a CLA sign-off line at the end. PRs
 
 ### Pull requests
 
-Always open pull requests as drafts and ask the user to review them. Convert a draft to a
-regular pull request only after the user has reviewed it.
+Always open pull requests as drafts and ask the user to review them. Never convert a draft to
+a regular pull request; ask the user to convert it.
