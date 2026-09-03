@@ -473,7 +473,7 @@ def test_app_config_class_factory(
         pytest.param(GoCharm, "go", "APP", id="go"),
     ],
 )
-def test_secret_storage_config(
+def test_peer_fqdns_config(
     charm_type: type,
     framework: str,
     app_prefix: str,
@@ -482,26 +482,21 @@ def test_secret_storage_config(
 ):
     """
     arrange: Run initial hooks.
-    act: Add two units to the secret-storage relation.
+    act: Add two units to the peers relation.
     assert: The app service must have the right peer configuration.
     """
     state_dict = framework_state_factory(charm_type)
     peer_relation = next(
-        relation for relation in state_dict["relations"] if relation.endpoint == "secret-storage"
+        relation for relation in state_dict["relations"] if relation.endpoint == "peers"
     )
     state_dict["relations"].remove(peer_relation)
     peer_relation = testing.PeerRelation(
-        "secret-storage",
-        local_app_data=peer_relation.local_app_data,
+        "peers",
         peers_data={1: {}, 2: {}},
     )
     state_dict["relations"].append(peer_relation)
     context = context_factory(charm_type)
-    with context(context.on.config_changed(), testing.State(**state_dict)) as manager:
-        manager.charm._secret_storage.get_secret_key = unittest.mock.MagicMock(
-            return_value="foobar"
-        )
-        out = manager.run()
+    out = context.run(context.on.config_changed(), testing.State(**state_dict))
     service_env = out.get_container("app").plan.services[framework].environment
     expected_output = f"{framework}-k8s-1.{framework}-k8s-endpoints.test-model.svc.cluster.local,{framework}-k8s-2.{framework}-k8s-endpoints.test-model.svc.cluster.local"
     assert service_env[f"{app_prefix}_PEER_FQDNS"] == expected_output

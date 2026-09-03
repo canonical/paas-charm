@@ -16,7 +16,8 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
-from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.peers import Peers
+from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
 # This is just for type checking, no need to cover this code.
@@ -46,7 +47,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config: the value of the framework specific charm configuration.
         user_defined_config: user-defined configurations for the application.
         secret_key: the charm managed application secret key.
-        is_secret_storage_ready: whether the secret storage system is ready.
+        is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
     """
 
@@ -54,7 +55,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self,
         *,
         framework: str,
-        is_secret_storage_ready: bool,
+        is_secret_key_ready: bool,
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
         framework_config: dict[str, int | str] | None = None,
         secret_key: str | None = None,
@@ -66,10 +67,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
 
         Args:
             framework: the framework name.
-            is_secret_storage_ready: whether the secret storage system is ready.
+            is_secret_key_ready: whether the application secret key is ready.
             user_defined_config: User-defined configuration values for the application.
             framework_config: The value of the framework application specific charm configuration.
-            secret_key: The secret storage manager associated with the charm.
+            secret_key: The application secret key value.
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
@@ -77,7 +78,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
         self._user_defined_config = user_defined_config if user_defined_config is not None else {}
-        self._is_secret_storage_ready = is_secret_storage_ready
+        self._is_secret_key_ready = is_secret_key_ready
         self._secret_key = secret_key
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
@@ -91,7 +92,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         config: dict[str, bool | int | float | str | dict[str, str]],
         framework: str,
         framework_config: BaseModel,
-        secret_storage: KeySecretStorage,
+        secret_key: SecretKeyStorage,
+        peers: Peers,
         integration_requirers: "IntegrationRequirers",
         base_url: str | None = None,
     ) -> "CharmState":
@@ -102,7 +104,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             config: The charm configuration.
             framework: The framework name.
             framework_config: The framework specific configurations.
-            secret_storage: The secret storage manager associated with the charm.
+            secret_key: The application secret key manager.
+            peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
             base_url: Base URL for the service.
 
@@ -208,9 +211,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 relation=exc.relation,
             ) from exc
         peer_fqdns = None
-        if secret_storage.is_initialized and (
-            peer_unit_fqdns := secret_storage.get_peer_unit_fdqns()
-        ):
+        if peers.is_related and (peer_unit_fqdns := peers.get_peer_unit_fqdns()):
             peer_fqdns = ",".join(peer_unit_fqdns)
 
         return cls(
@@ -219,10 +220,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             user_defined_config=typing.cast(
                 dict[str, str | int | bool | dict[str, str]], user_defined_config
             ),
-            secret_key=(
-                secret_storage.get_secret_key() if secret_storage.is_initialized else None
-            ),
-            is_secret_storage_ready=secret_storage.is_initialized,
+            secret_key=(secret_key.get_secret_key() if secret_key.is_ready else None),
+            is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
@@ -284,13 +283,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         return self._secret_key
 
     @property
-    def is_secret_storage_ready(self) -> bool:
-        """Return whether the secret storage system is ready.
+    def is_secret_key_ready(self) -> bool:
+        """Return whether the application secret key is ready.
 
         Returns:
-            Whether the secret storage system is ready.
+            Whether the application secret key is ready.
         """
-        return self._is_secret_storage_ready
+        return self._is_secret_key_ready
 
 
 @dataclass

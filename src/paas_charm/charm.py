@@ -31,10 +31,11 @@ from paas_charm.paas_config import (
     LoggingFormat,
     read_paas_config,
 )
+from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.s3 import PaaSS3Requirer
 from paas_charm.saml import PaaSSAMLRequirer
-from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
@@ -89,7 +90,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._framework_name = framework_name
         self._paas_config = read_paas_config()
 
-        self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
+        self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
+        self._peers = Peers(charm=self)
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
@@ -135,13 +137,18 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
 
         self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
+        self.framework.observe(self.on.leader_elected, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
-            self.on.secret_storage_relation_changed,
+            self.on.peers_relation_created,
             self._reconcile_without_migrations,
         )
         self.framework.observe(
-            self.on.secret_storage_relation_departed,
+            self.on.peers_relation_changed,
+            self._reconcile_without_migrations,
+        )
+        self.framework.observe(
+            self.on.peers_relation_departed,
             self._reconcile_without_migrations,
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
@@ -478,10 +485,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if not self.unit.is_leader():
             event.fail("only leader unit can rotate secret key")
             return
-        if not self._secret_storage.is_initialized:
+        if not self._secret_key.is_ready:
             event.fail("charm is still initializing")
             return
-        self._secret_storage.reset_secret_key()
+        self._secret_key.rotate()
         event.set_results({"status": "success"})
         self._reconcile()
 
@@ -502,6 +509,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             True if the charm is ready to start the workload application.
         """
+        self._secret_key.initialize()
         charm_state = self._create_charm_state()
         if not self._container.can_connect():
             logger.info(
@@ -510,9 +518,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False
-        if not charm_state.is_secret_storage_ready:
-            logger.info("secret storage is not initialized")
-            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for peer integration"))
+        if not charm_state.is_secret_key_ready:
+            logger.info("application secret key is not initialized")
+            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
             return False
 
         missing_integrations = list(self._missing_required_integrations(charm_state))
@@ -690,7 +698,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
-            secret_storage=self._secret_storage,
+            secret_key=self._secret_key,
+            peers=self._peers,
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 valkey=self._valkey,
@@ -732,6 +741,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle an event that requires re-running migrations."""
         self._reconcile(rerun_migrations=True)
 
-    def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle an event that doesn't require re-running migrations."""
+    def _reconcile_without_migrations(self, _: ops.EventBase) -> None:
+        """Handle a lifecycle or relation event without explicitly re-running migrations."""
         self._reconcile()

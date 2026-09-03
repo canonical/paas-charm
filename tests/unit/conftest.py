@@ -436,17 +436,22 @@ def django_container(
     )
 
 
+def application_secret() -> testing.Secret:
+    """Build the application-owned framework secret."""
+    return testing.Secret(
+        tracked_content={"value": "test"},
+        label="app-secret-key",
+        owner="app",
+    )
+
+
 def _django_state(*, mount_source: Path, with_database: bool) -> dict:
     """Build a Django state, optionally with PostgreSQL."""
-    relations: list[testing.RelationBase] = [
-        testing.PeerRelation(
-            "secret-storage",
-            local_app_data={"django_secret_key": "test"},
-        )
-    ]
+    relations: list[testing.RelationBase] = [testing.PeerRelation("peers")]
     if with_database:
         relations.append(postgresql_relation("django-k8s"))
     return {
+        "secrets": [application_secret()],
         "relations": relations,
         "containers": {django_container(mount_source=mount_source)},
         "leader": True,
@@ -459,12 +464,8 @@ def flask_framework_state_fixture(tmp_path: Path) -> dict:
     """Return a leader Flask state with its container and peer relation."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"flask_secret_key": "test"},
-            )
-        ],
+        "secrets": [application_secret()],
+        "relations": [testing.PeerRelation("peers")],
         "containers": {flask_container(mount_source=tmp_path / "flask")},
         "model": testing.Model(name="test-model"),
     }
@@ -487,12 +488,8 @@ def fastapi_framework_state_fixture() -> dict:
     """Return the framework-focused FastAPI state."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"fastapi_secret_key": "test"},
-            )
-        ],
+        "secrets": [application_secret()],
+        "relations": [testing.PeerRelation("peers")],
         "containers": {
             testing.Container(
                 name="app",
@@ -510,12 +507,8 @@ def go_framework_state_fixture() -> dict:
     """Return the framework-focused Go state."""
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"go_secret_key": "test"},
-            )
-        ],
+        "secrets": [application_secret()],
+        "relations": [testing.PeerRelation("peers")],
         "containers": {
             testing.Container(
                 name="app",
@@ -532,11 +525,9 @@ def expressjs_framework_state_fixture() -> dict:
     """Return the framework-focused ExpressJS state."""
     return {
         "leader": True,
+        "secrets": [application_secret()],
         "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"expressjs_secret_key": "test"},
-            ),
+            testing.PeerRelation("peers"),
             postgresql_relation("test-database"),
         ],
         "containers": {
@@ -558,11 +549,9 @@ def spring_boot_framework_state_fixture(tmp_path: Path) -> dict:
     certificate.touch()
     return {
         "leader": True,
+        "secrets": [application_secret()],
         "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"spring-boot_secret_key": "test"},
-            ),
+            testing.PeerRelation("peers"),
             postgresql_relation("spring-boot-k8s"),
         ],
         "containers": {
@@ -586,12 +575,7 @@ def framework_state_factory_fixture(tmp_path: Path) -> typing.Callable[..., dict
         nonlocal counter
         counter += 1
         framework = FRAMEWORKS[charm_type]
-        relations: list[testing.Relation | testing.PeerRelation] = [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={f"{framework}_secret_key": "test"},
-            )
-        ]
+        relations: list[testing.Relation | testing.PeerRelation] = [testing.PeerRelation("peers")]
         if charm_type in {
             DjangoCharm,
             FastAPICharm,
@@ -630,6 +614,7 @@ def framework_state_factory_fixture(tmp_path: Path) -> typing.Callable[..., dict
             state_config.setdefault("non-optional-string", "non-optional-value")
         return {
             "leader": True,
+            "secrets": [application_secret()],
             "relations": relations,
             "containers": {
                 testing.Container(
@@ -654,12 +639,8 @@ def generic_state_fixture(tmp_path: Path) -> dict:
     app_dir.mkdir()
     return {
         "leader": True,
-        "relations": [
-            testing.PeerRelation(
-                "secret-storage",
-                local_app_data={"test_secret_key": "test"},
-            )
-        ],
+        "secrets": [application_secret()],
+        "relations": [testing.PeerRelation("peers")],
         "containers": {
             testing.Container(
                 name="app",

@@ -117,7 +117,7 @@ def test_http_proxy(
     charm_state = CharmState(
         framework=framework_name,
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         framework_config={},
         base_url="https://paas.example.com",
         user_defined_config={},
