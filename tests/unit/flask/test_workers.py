@@ -70,7 +70,7 @@ def test_worker(flask_context, base_state, container_name: str) -> None:
                 **DEFAULT_LAYER,
                 "services": {
                     "flask": {
-                        "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app"
+                        "command": "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app"
                     }
                 },
             },

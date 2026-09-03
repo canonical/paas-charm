@@ -15,4 +15,4 @@ extensions:
 parts:
   flask-framework/install-app:
     prime:
-      - -flask/app/requirements.txt
+      - -app/requirements.txt

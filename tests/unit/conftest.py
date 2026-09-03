@@ -60,7 +60,7 @@ GENERAL_DEFAULT_LAYERS = {
                 "startup": "enabled",
                 "override": "replace",
                 "command": (
-                    "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]"
+                    "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]"
                 ),
             }
         }
@@ -71,7 +71,7 @@ GENERAL_DEFAULT_LAYERS = {
                 "startup": "enabled",
                 "override": "replace",
                 "command": (
-                    "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
+                    "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py "
                     "django_app.wsgi:application -k [ sync ]"
                 ),
             }
@@ -375,6 +375,8 @@ def flask_container(
     mount_source.mkdir()
     state_source = mount_source.parent / "state"
     state_source.mkdir()
+    gunicorn_config_source = mount_source.parent / "gunicorn"
+    gunicorn_config_source.mkdir()
     return testing.Container(
         name="app",
         can_connect=True,
@@ -384,8 +386,11 @@ def flask_container(
             testing.Exec(["python3", "-c", "import gevent"], return_code=0),
         },
         mounts={
-            "flask": testing.Mount(location="/flask", source=mount_source),
+            "flask": testing.Mount(location="/app", source=mount_source),
             "state": testing.Mount(location="/tmp/flask/state", source=state_source),
+            "gunicorn-config": testing.Mount(
+                location="/var/lib/gunicorn", source=gunicorn_config_source
+            ),
         },
         service_statuses=service_statuses or {"flask": pebble.ServiceStatus.INACTIVE},
         _base_plan=base_plan or FLASK_DEFAULT_LAYER,
@@ -402,12 +407,17 @@ def django_container(
     mount_source.mkdir()
     state_source = mount_source.parent / "state"
     state_source.mkdir()
+    gunicorn_config_source = mount_source.parent / "gunicorn"
+    gunicorn_config_source.mkdir()
     return testing.Container(
         name="app",
         can_connect=True,
         mounts={
-            "django": testing.Mount(location="/django", source=mount_source),
+            "django": testing.Mount(location="/app", source=mount_source),
             "state": testing.Mount(location="/tmp/django/state", source=state_source),
+            "gunicorn-config": testing.Mount(
+                location="/var/lib/gunicorn", source=gunicorn_config_source
+            ),
         },
         execs=(
             execs
@@ -583,7 +593,7 @@ def framework_state_factory_fixture(tmp_path: Path) -> typing.Callable[..., dict
             gunicorn_config = state_dir / "gunicorn.conf.py"
             gunicorn_config.touch()
             mounts["config"] = testing.Mount(
-                location=f"/{framework}/gunicorn.conf.py",
+                location="/var/lib/gunicorn/gunicorn.conf.py",
                 source=gunicorn_config,
             )
             execs.add(testing.Exec(command_prefix=["/bin/python3"], return_code=0))
