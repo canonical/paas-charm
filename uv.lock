@@ -762,16 +762,16 @@ wheels = [
 
 [[package]]
 name = "dpcharmlibs-interfaces"
-version = "1.1.1"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "ops" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/b2/274952a1b620084befdfa2f06e770b23cacbf967614c03eb0f97593b9971/dpcharmlibs_interfaces-1.1.1.tar.gz", hash = "sha256:2f8b6593c7fcf308028dcff6a1bdd383b61f731f11b021304a9bd5a28d83fd6b", size = 206617, upload-time = "2026-09-01T13:11:32.046Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/c3/f5d37a6cb39435e89576cba2207035dcfd6785cc5e2da60e64a4cf9684af/dpcharmlibs_interfaces-1.2.0.tar.gz", hash = "sha256:28e1336f62d2d1239c87f468230e871369478a59c3393176ef54ad8ed045b8f5", size = 208152, upload-time = "2026-09-03T14:11:44.803Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/5e/a21e9e2c56b16795a1e4a975449f57112613339cba1f1bf581893f918ecd/dpcharmlibs_interfaces-1.1.1-py3-none-any.whl", hash = "sha256:12ebc0f999c9dda3a44f0d1dba800a827d596a0b675bd9daf8fbadb6950ad000", size = 39163, upload-time = "2026-09-01T13:11:30.662Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/67/ad89509a1f0e714824aa59a2cdda2f8098396aac5b9bc076d0e84c477324/dpcharmlibs_interfaces-1.2.0-py3-none-any.whl", hash = "sha256:468dd5bbb7a0b0f37123782f16fb58df68ca491d67ed82dfd958fb27e9384d64", size = 39774, upload-time = "2026-09-03T14:11:43.675Z" },
 ]
 
 [[package]]
@@ -1820,7 +1820,7 @@ unit = [
 [package.metadata]
 requires-dist = [
     { name = "cosl", specifier = "==1.10.3" },
-    { name = "dpcharmlibs-interfaces", specifier = "==1.1.1" },
+    { name = "dpcharmlibs-interfaces", specifier = "==1.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "ops", specifier = "==3.8.2" },
