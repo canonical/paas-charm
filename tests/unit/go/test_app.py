@@ -12,17 +12,26 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.go.charm import GoConfig
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.valkey import ValkeyResponseModel
+from paas_charm.valkey import ValkeyRelation, ValkeyResponseModel
+
+
+def valkey_relation():
+    valkey = MagicMock()
+    valkey.gen_environment.return_value = ValkeyRelation._generate_valkey_env(
+        ValkeyResponseModel(endpoints="valkey://10.1.88.132:6379")
+    )
+    return valkey
 
 
 @pytest.mark.parametrize(
-    "set_env, user_defined_config, framework_config, integrations, expected",
+    "set_env, user_defined_config, framework_config, integrations, custom_relations, expected",
     [
         pytest.param(
             {},
             {"otherconfig": "othervalue"},
             {},
             None,
+            None,  # custom_relations
             {
                 "PORT": "8080",
                 "METRICS_PORT": "8080",
@@ -37,7 +46,6 @@ from paas_charm.valkey import ValkeyResponseModel
             {"extra-config": "extravalue"},
             {"app-secret-key": "notfoobar"},
             IntegrationsState(
-                valkey=ValkeyResponseModel(endpoints="valkey://10.1.88.132:6379"),
                 rabbitmq=PaaSRabbitMQRelationData(
                     vhost="/",
                     port=5672,
@@ -47,6 +55,7 @@ from paas_charm.valkey import ValkeyResponseModel
                     amqp_uri="amqp://go-app:test-password@rabbitmq.example.com/%2f",
                 ),
             ),
+            [valkey_relation()],  # custom_relations
             {
                 "PORT": "8080",
                 "METRICS_PORT": "8080",
@@ -91,6 +100,7 @@ def test_go_environment_vars(
     user_defined_config,
     framework_config,
     integrations,
+    custom_relations,
     expected,
     container_name,
 ):
@@ -125,6 +135,7 @@ def test_go_environment_vars(
         base_url="https://paas.example.com",
         user_defined_config=user_defined_config,
         integrations=integrations,
+        custom_relations=custom_relations,
     )
 
     app = App(

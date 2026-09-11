@@ -52,7 +52,6 @@ def test_charm_state_integration_state_build_error(error):
             peers=MagicMock(),
             integration_requirers=IntegrationRequirers(
                 databases=MagicMock(),
-                valkey=MagicMock(),
                 rabbitmq=MagicMock(),
                 s3=MagicMock(),
                 saml=saml_mock,

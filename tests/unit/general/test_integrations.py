@@ -40,6 +40,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
+from paas_charm.valkey import ValkeyRelation
 from tests.unit.flask.constants import (
     INTEGRATIONS_RELATION_DATA,
     OPENFGA_RELATION_DATA_EXAMPLE,
@@ -265,33 +266,6 @@ def _test_integrations_env_parameters():
         ),
         pytest.param(
             IntegrationsState(
-                valkey=ValkeyResponseModel(
-                    endpoints="valkey://localhost:6379?db=0&timeout=5",
-                    username="testingusername",
-                    password="testingpassword",
-                ),
-            ),
-            {
-                "VALKEY_DB_CONNECT_STRING": "valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
-                "VALKEY_DB_FRAGMENT": "",
-                "VALKEY_DB_HOSTNAME": "localhost",
-                "VALKEY_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
-                "VALKEY_DB_PARAMS": "",
-                "VALKEY_DB_PASSWORD": "testingpassword",
-                "VALKEY_DB_PATH": "",
-                "VALKEY_DB_PORT": "6379",
-                "VALKEY_DB_QUERY": "db=0&timeout=5",
-                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
-                "VALKEY_DB_SCHEME": "valkey",
-                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
-                "VALKEY_DB_USERNAME": "testingusername",
-                "VALKEY_MODE": "",
-                "VALKEY_VERSION": "",
-            },
-            id="Valkey",
-        ),
-        pytest.param(
-            IntegrationsState(
                 s3=PaaSS3RelationData.model_construct(
                     access_key="TESTINGACCESSKEY",
                     secret_key="TESTINGSECRETKEY",
@@ -406,6 +380,47 @@ def test_generate_integration_environments(
     """
     charm_state = MagicMock()
     charm_state.integrations = integrations
+    app = App(
+        container=MagicMock(),
+        charm_state=charm_state,
+        workload_config=MagicMock(),
+        database_migration=MagicMock(),
+    )
+    assert app._generate_integration_environments() == expected_env
+
+
+# TODO: parametrise
+def test_custom_relation_environments():
+    """Test ValkeyRelation environment generation."""
+    expected_env = {
+        "VALKEY_DB_CONNECT_STRING": "valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
+        "VALKEY_DB_FRAGMENT": "",
+        "VALKEY_DB_HOSTNAME": "localhost",
+        "VALKEY_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
+        "VALKEY_DB_PARAMS": "",
+        "VALKEY_DB_PASSWORD": "testingpassword",
+        "VALKEY_DB_PATH": "",
+        "VALKEY_DB_PORT": "6379",
+        "VALKEY_DB_QUERY": "db=0&timeout=5",
+        "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
+        "VALKEY_DB_SCHEME": "valkey",
+        "VALKEY_DB_SENTINEL_ENDPOINTS": "",
+        "VALKEY_DB_USERNAME": "testingusername",
+        "VALKEY_MODE": "",
+        "VALKEY_VERSION": "",
+    }
+    valkey = MagicMock()
+    valkey.is_ready.return_value = True
+    valkey.gen_environment.return_value = ValkeyRelation._generate_valkey_env(
+        ValkeyResponseModel(
+            endpoints="valkey://localhost:6379?db=0&timeout=5",
+            username="testingusername",
+            password="testingpassword",
+        )
+    )
+    charm_state = MagicMock()
+    charm_state.integrations = IntegrationsState()
+    charm_state.custom_relations = [valkey]
     app = App(
         container=MagicMock(),
         charm_state=charm_state,

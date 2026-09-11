@@ -7,12 +7,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from paas_charm.app import generate_valkey_env
 from paas_charm.valkey import (
     ValkeyClientRequirer,
     ValkeyMultipleRelationsNotSupportedError,
     ValkeyTLSNotSupportedError,
 )
+
+
+# map the new relation interface to legacy one
+# Note: similar, but not the same as in tests/unit/springboot/test_integrations.py
+def generate_valkey_env(relation_data=None) -> dict[str, str]:
+    from paas_charm.valkey import ValkeyRelation
+
+    return ValkeyRelation._generate_valkey_env(relation_data)
 
 
 @pytest.mark.parametrize(
