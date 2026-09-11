@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ops
-from dpcharmlibs.interfaces import ValkeyResponseModel
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
@@ -147,43 +146,6 @@ def generate_rabbitmq_env(
     if relation_data.amqp_uris:
         envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
     return envvars
-
-
-def generate_valkey_env(
-    relation_data: ValkeyResponseModel | None = None,
-) -> dict[str, str]:
-    """Generate environment variables from Valkey relation data.
-
-    Args:
-        relation_data: The ValkeyResponseModel from dpcharmlibs with resolved secrets.
-
-    Returns:
-        Valkey environment mappings if Valkey relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    endpoint = str(relation_data.endpoints)
-    user_info = (
-        f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
-    )
-    prefix = "VALKEY"
-    # Ensure the scheme in the url so that urllib can properly parse it into components.
-    # Valkey sends the url without the scheme ( valkey_primary:6123 )
-    # This normalizes that URL to become valkey://valkey_primary:6123
-    if "://" not in endpoint:
-        endpoint = f"{prefix.lower()}://{user_info}{endpoint}"
-    else:
-        scheme, netloc = endpoint.split("://", 1)
-        endpoint = f"{scheme}://{user_info}{netloc}"
-
-    return {
-        **_db_url_to_env_variables(prefix, endpoint),
-        f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
-        f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
-        f"{prefix}_MODE": relation_data.mode or "",
-        f"{prefix}_VERSION": relation_data.version or "",
-    }
 
 
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
@@ -374,7 +336,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
@@ -386,7 +347,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
@@ -514,7 +474,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
-        env.update(self.generate_valkey_env(relation_data=self._charm_state.integrations.valkey))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
