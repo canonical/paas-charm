@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
     "cosl==1.10.3",
-    "dpcharmlibs-interfaces==1.1.1",
+    "dpcharmlibs-interfaces==1.2.0",
     "Jinja2==3.1.6",
     "jsonschema==4.26.0",
     "ops==3.8.2",
