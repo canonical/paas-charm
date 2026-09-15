@@ -11,7 +11,7 @@ DEFAULT_LAYER = {
         "flask": {
             "override": "replace",
             "startup": "enabled",
-            "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
+            "command": "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             "after": ["statsd-exporter"],
             "user": "_daemon_",
         },
@@ -34,7 +34,7 @@ LAYER_WITH_WORKER = {
         "flask": {
             "override": "replace",
             "startup": "enabled",
-            "command": "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
+            "command": "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             "after": ["statsd-exporter"],
             "user": "_daemon_",
         },
