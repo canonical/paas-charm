@@ -5,7 +5,7 @@ name: expressjs-app
 # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
 # for more information about bases and using 'bare' bases for chiselled rocks
 base: bare
-build-base: ubuntu@24.04
+build-base: ubuntu@26.04
 version: "0.1" # just for humans. Semantic versioning is recommended
 summary: A summary of your ExpresssJS application # 79 char long summary
 description: |
@@ -45,6 +45,6 @@ parts:
     plugin: nil
     stage-packages:
       - base-files
-  expressjs-framework/runtime:
+  expressjs-framework.runtime:
     stage:
     - -etc/ssl/certs/ca-certificates.crt

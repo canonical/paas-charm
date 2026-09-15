@@ -5,7 +5,7 @@ name: django-app
 summary: Example Django application image.
 description: Example Django application image.
 version: "0.1"
-base: ubuntu@22.04
+base: ubuntu@26.04
 license: Apache-2.0
 platforms:
   amd64:
