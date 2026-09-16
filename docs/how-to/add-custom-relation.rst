@@ -51,44 +51,60 @@ that you register on the charm via the ``custom_relations`` class attribute:
 .. code-block:: python
 
     import ops
+    from charms.temporal_k8s.v0.temporal_host_info import TemporalHostInfoRequirer
+
     import paas_charm.flask
-    from paas_charm.relations import CustomRelation
-    from paas_charm.exceptions import InvalidRelationDataError
+    from paas_charm.relations import CustomRelation, InvalidRelationDataError, OnChange
 
 
-    class ExampleDbRelation(CustomRelation):
-        relation_name = "example-db"
+    class TemporalRelation(CustomRelation):
+        relation_name = "temporal-host-info"
 
-        def setup(self, on_change) -> None:
+        def setup(self, on_change: OnChange) -> None:
+            self._requirer = TemporalHostInfoRequirer(self.charm)
             self._framework_observe(
-                self.charm.on["example-db"].relation_changed,
+                self._requirer.on.temporal_host_info_changed,
                 on_change,
-                rerun_migrations=True,
             )
             self._framework_observe(
-                self.charm.on["example-db"].relation_broken,
+                self._requirer.on.temporal_host_info_unavailable,
                 on_change,
             )
 
         def is_ready(self) -> bool:
-            relation = self.charm.model.get_relation("example-db")
-            if not relation or not relation.app:
-                return False
-            return bool(relation.data[relation.app].get("uri"))
+            return self._connection_info() is not None
 
         def gen_environment(self) -> dict[str, str]:
-            relation = self.charm.model.get_relation("example-db")
-            if not relation or not relation.app:
+            connection_info = self._connection_info()
+            if connection_info is None:
                 return {}
-            bag = relation.data[relation.app]
-            uri = bag.get("uri")
-            if not uri:
-                raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
-            return {"EXAMPLE_DB_URI": uri}
+            host, port = connection_info
+            return {"TEMPORAL_HOST": host, "TEMPORAL_PORT": str(port)}
+
+        def _connection_info(self) -> tuple[str, int] | None:
+            if self._requirer is None or self._requirer.relation is None:
+                return None
+            try:
+                host = self._requirer.host
+                port = self._requirer.port
+            except (TypeError, ValueError) as exc:
+                raise InvalidRelationDataError(
+                    "invalid Temporal port", relation=self.relation_name
+                ) from exc
+            if not host or port is None:
+                raise InvalidRelationDataError(
+                    "missing Temporal host or port", relation=self.relation_name
+                )
+            if not 1 <= port <= 65535:
+                raise InvalidRelationDataError(
+                    "Temporal port must be between 1 and 65535",
+                    relation=self.relation_name,
+                )
+            return host, port
 
 
     class FlaskCharm(paas_charm.flask.Charm):
-        custom_relations = [ExampleDbRelation]
+        custom_relations = [TemporalRelation]
 
 
     if __name__ == "__main__":
@@ -100,19 +116,34 @@ single source of truth for whether the relation is required:
 .. code-block:: yaml
 
     requires:
-      example-db:
-        interface: example_db
-        optional: false
+      temporal-host-info:
+        interface: temporal-host-info
+        optional: true
+        limit: 1
 
 Behaviour:
 
-* No relation and ``optional: false`` → ``BlockedStatus("missing integrations:
-  example-db")``.
-* Related app provides ``uri`` → ``EXAMPLE_DB_URI`` appears in the workload
-  environment, the service is (re)started, and migrations are re-run on
-  ``relation_changed``.
-* Related app provides data without ``uri`` → ``BlockedStatus`` with the
-  error message (e.g. ``"missing 'uri'"``).
+* No relation and ``optional: true`` → the workload runs without Temporal
+  configuration.
+* A related Temporal server provides valid connection data →
+  ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` appear in the workload environment
+  and the service is (re)started.
+* A related app provides incomplete or invalid connection data →
+  ``BlockedStatus`` with the validation error.
+* Removing the relation removes both environment variables and restarts the
+  workload.
+
+Add the Temporal charm library to the charm's ``charm-libs`` before building:
+
+.. code-block:: yaml
+
+    charm-libs:
+      - lib: temporal-k8s.temporal_host_info
+        version: "0"
+
+Set ``optional: false`` instead when the application cannot operate without
+Temporal. A missing relation will then produce
+``BlockedStatus("missing integrations: temporal-host-info")``.
 
 The four methods
 ----------------
@@ -184,6 +215,6 @@ rather than into the charm subclass constructor.
 A runnable example
 ------------------
 
-A complete, runnable Flask charm that wires a custom ``example-db`` relation
+A complete, runnable Flask charm that wires a custom ``temporal-host-info`` relation
 ships under ``examples/flask/`` (declared with ``optional: true`` in
 ``charmcraft.yaml``).

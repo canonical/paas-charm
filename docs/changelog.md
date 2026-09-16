@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   types and re-export `InvalidRelationDataError`/`RelationDataError` from
   `paas_charm.relations`.
 * docs: Add a how-to and reference for custom relations. The example Flask
-  implementation was updated to showcase `CustomRelation` usage.
+  implementation uses `CustomRelation` to integrate with a Temporal server.
 * breaking: Unify the Flask and Django application root directory and access/error logs under
   `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
   keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
