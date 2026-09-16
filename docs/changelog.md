@@ -233,7 +233,7 @@ throws an error.
 ## v1.5.3 - 2025-05-08
 
 * feat: Added support for
-[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027#rootless-charms-on-k8s-3).
+[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027).
 
 ## v1.5.2 - 2025-04-29
 
