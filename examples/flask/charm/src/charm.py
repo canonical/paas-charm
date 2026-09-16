@@ -8,67 +8,76 @@ import logging
 import typing
 
 import ops
+from charms.temporal_k8s.v0.temporal_host_info import TemporalHostInfoRequirer
 
 import paas_charm.flask
-from paas_charm.relations import CustomRelation
+from paas_charm.relations import CustomRelation, InvalidRelationDataError, OnChange
 
 logger = logging.getLogger(__name__)
 
 
-class ExampleDbRelation(CustomRelation):
-    """Custom env-var relation exposing an ``EXAMPLE_DB_URI`` environment variable.
+class TemporalRelation(CustomRelation):
+    """Expose Temporal server connection information to the workload."""
 
-    The relation reads a ``uri`` field from the remote application databag and
-    contributes it to the workload environment as ``EXAMPLE_DB_URI``. It is
-    declared as ``optional: True`` in ``charmcraft.yaml``, so a missing
-    relation does not block the workload.
-    """
+    relation_name = "temporal-host-info"
 
-    relation_name = "example-db"
-
-    def setup(self, on_change) -> None:
-        """Observe relation events and forward them to the framework reconcile.
-
-        A new/changed endpoint re-runs migrations against the new database;
-        a broken endpoint just reconciles.
-        """
+    def setup(self, on_change: OnChange) -> None:
+        """Create the Temporal requirer and reconcile when its data changes."""
+        self._requirer = TemporalHostInfoRequirer(self.charm)
         self._framework_observe(
-            self.charm.on["example-db"].relation_changed,
+            self._requirer.on.temporal_host_info_changed,
             on_change,
-            True,
         )
         self._framework_observe(
-            self.charm.on["example-db"].relation_broken,
+            self._requirer.on.temporal_host_info_unavailable,
             on_change,
         )
 
     def is_ready(self) -> bool:
-        """Return True when a related app publishes a ``uri``."""
-        relation = self.charm.model.get_relation("example-db")
-        if not relation or not relation.app:
-            return False
-        return bool(relation.data[relation.app].get("uri"))
+        """Return whether the Temporal relation has valid connection information."""
+        return self._connection_info() is not None
 
     def gen_environment(self) -> dict[str, str]:
-        """Return the ``EXAMPLE_DB_URI`` environment variable.
+        """Return Temporal connection information as environment variables."""
+        connection_info = self._connection_info()
+        if connection_info is None:
+            return {}
+        host, port = connection_info
+        return {"TEMPORAL_HOST": host, "TEMPORAL_PORT": str(port)}
+
+    def _connection_info(self) -> tuple[str, int] | None:
+        """Return validated Temporal connection information.
+
+        Returns:
+            The Temporal host and port, or None when there is no relation.
 
         Raises:
-            InvalidRelationDataError: when the relation bag is present but has no ``uri``.
+            InvalidRelationDataError: If related Temporal data is incomplete or invalid.
         """
-        relation = self.charm.model.get_relation("example-db")
-        if not relation or not relation.app:
-            return {}
-        bag = relation.data[relation.app]
-        uri = bag.get("uri")
-        if not uri:
-            raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
-        return {"EXAMPLE_DB_URI": uri}
+        if self._requirer is None or self._requirer.relation is None:
+            return None
+        try:
+            host = self._requirer.host
+            port = self._requirer.port
+        except (TypeError, ValueError) as exc:
+            raise InvalidRelationDataError(
+                "invalid Temporal port", relation=self.relation_name
+            ) from exc
+        if not host or port is None:
+            raise InvalidRelationDataError(
+                "missing Temporal host or port", relation=self.relation_name
+            )
+        if not 1 <= port <= 65535:
+            raise InvalidRelationDataError(
+                "Temporal port must be between 1 and 65535", relation=self.relation_name
+            )
+        return host, port
 
 
 class FlaskCharm(paas_charm.flask.Charm):
     """Flask Charm service."""
 
-    custom_relations = [ExampleDbRelation]
+    custom_relations = [TemporalRelation]
 
     def __init__(self, *args: typing.Any) -> None:
         """Initialize the instance.
