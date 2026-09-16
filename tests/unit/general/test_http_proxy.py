@@ -43,6 +43,8 @@ from paas_charm.charm_state import CharmState, IntegrationsState
             {
                 "APP_SECRET_KEY": "foobar",
                 "APP_BASE_URL": "https://paas.example.com",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "HTTP_PROXY": "http://proxy.test",
                 "HTTPS_PROXY": "http://proxy.test",
                 "NO_PROXY": "127.0.0.1,localhost,::1",
@@ -67,6 +69,8 @@ from paas_charm.charm_state import CharmState, IntegrationsState
             {
                 "APP_SECRET_KEY": "foobar",
                 "APP_BASE_URL": "https://paas.example.com",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "HTTP_PROXY": "http://squid.internal:3128",
                 "HTTPS_PROXY": "http://squid.internal:3128",
                 "NO_PROXY": "127.0.0.1,localhost,::1",
@@ -113,7 +117,7 @@ def test_http_proxy(
     charm_state = CharmState(
         framework=framework_name,
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         framework_config={},
         base_url="https://paas.example.com",
         user_defined_config={},
@@ -150,7 +154,7 @@ def test_http_proxy(
     ],
 )
 def test_blocked_status_when_proxy_unavailable(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the base state and add an empty http proxy relation.
@@ -169,9 +173,7 @@ def test_blocked_status_when_proxy_unavailable(
     base_state["relations"].append(http_proxy_relation)
 
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.config_changed(), state)
 
     assert out.unit_status == testing.BlockedStatus(

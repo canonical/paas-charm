@@ -58,18 +58,14 @@ from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3RelationData, PaaSS3
                 path="/path/subpath/",
                 s3_api_version="s3v4",
                 s3_uri_style="host",
-                tls_ca_chain=(
-                    ca_chain := [
-                        "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                        "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
-                    ]
-                ),
-                attributes=(
-                    attributes := [
-                        "header1:value1",
-                        "header2:value2",
-                    ]
-                ),
+                tls_ca_chain=[
+                    "-----BEGIN CERTIFICATE-----\nTHE FIRST LONG CERTIFICATE\n-----END CERTIFICATE-----",
+                    "-----BEGIN CERTIFICATE-----\nTHE SECOND LONG CERTIFICATE\n-----END CERTIFICATE-----",
+                ],
+                attributes=[
+                    "header1:value1",
+                    "header2:value2",
+                ],
             ),
             id="Maximum data",
         ),

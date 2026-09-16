@@ -13,7 +13,6 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.exceptions import CharmConfigInvalidError
-from paas_charm.paas_config import read_paas_config
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +23,12 @@ class GunicornBase(PaasCharm):
     @property
     def _workload_config(self) -> WorkloadConfig:
         """Return a WorkloadConfig instance."""
-        paas_config = read_paas_config()
         return create_workload_config(
             framework_name=self._framework_name,
             unit_name=self.unit.name,
             state_dir=self._state_dir,
             tracing_enabled=bool(self._tracing and self._tracing.is_ready()),
-            logging_format=paas_config.framework_logging_format,
+            paas_config=self._paas_config,
         )
 
     def create_webserver_config(self) -> WebserverConfig:

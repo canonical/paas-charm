@@ -29,7 +29,7 @@ class DjangoConfig(FrameworkConfig):
     """
 
     debug: bool | None = Field(alias="django-debug", default=None)
-    secret_key: str | None = Field(alias="django-secret-key", default=None, min_length=1)
+    secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
     allowed_hosts: str | list[str] | None = Field(alias="django-allowed-hosts", default=[])
 
     model_config = ConfigDict(extra="ignore")

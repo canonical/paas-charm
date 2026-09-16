@@ -4,14 +4,12 @@
 """Charm unit tests for Oauth relation."""
 
 # Very similar cases to other frameworks. Disable duplicated checks.
-# pylint: disable=R0801
+# pylint: disable=duplicate-code,too-many-lines
 
 
 from secrets import token_hex
-from unittest.mock import patch
 
 import pytest
-from conftest import OAUTH_RELATION_DATA_EXAMPLE
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
@@ -20,7 +18,7 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
-from paas_charm.utils import config_metadata
+from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
@@ -39,6 +37,8 @@ from paas_charm.utils import config_metadata
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "FLASK_OIDC_SCOPES": "openid profile email phone",
                 "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
+                "FLASK_METRICS_PORT": "9102",
+                "FLASK_METRICS_PATH": "/metrics",
                 "FLASK_BASE_URL": "http://juju.test/",
                 "FLASK_SECRET_KEY": "test",
                 "FLASK_OIDC_CLIENT_ID": "test-client-id",
@@ -67,6 +67,8 @@ from paas_charm.utils import config_metadata
                 "DJANGO_BASE_URL": "http://juju.test/",
                 "DJANGO_SECRET_KEY": "test",
                 "DJANGO_ALLOWED_HOSTS": '["juju.test"]',
+                "DJANGO_METRICS_PORT": "9102",
+                "DJANGO_METRICS_PATH": "/metrics",
                 "DJANGO_OIDC_CLIENT_ID": "test-client-id",
                 "DJANGO_OIDC_CLIENT_SECRET": "abc",
                 "DJANGO_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
@@ -114,11 +116,11 @@ from paas_charm.utils import config_metadata
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-                "METRICS_PATH": "/metrics",
-                "METRICS_PORT": "8080",
                 "UVICORN_HOST": "0.0.0.0",
                 "UVICORN_LOG_LEVEL": "info",
-                "UVICORN_PORT": "8080",
+                "UVICORN_PORT": "8000",
+                "METRICS_PORT": "9464",
+                "METRICS_PATH": "/metrics",
                 "WEB_CONCURRENCY": "1",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/fastapi-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -149,13 +151,10 @@ from paas_charm.utils import config_metadata
             'bash -c "java -jar *.jar"',
             {
                 "APP_BASE_URL": "http://juju.test/",
-                "APP_METRICS_PORT": "8080",
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "email",
                 "APP_SECRET_KEY": "test",
-                "MANAGEMENT_SERVER_PORT": "8080",
-                "METRICS_PATH": "/actuator/prometheus",
                 "OTEL_LOGS_EXPORTER": "none",
                 "OTEL_METRICS_EXPORTER": "none",
                 "OTEL_TRACES_EXPORTER": "none",
@@ -172,8 +171,9 @@ from paas_charm.utils import config_metadata
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
                 "SERVER_PORT": "8080",
-                "management.endpoints.web.base-path": "/actuator",
                 "management.endpoints.web.exposure.include": "prometheus",
+                "management.server.port": "8080",
+                "management.endpoints.web.base-path": "/actuator",
                 "management.endpoints.web.path-mapping.prometheus": "prometheus",
                 "server.forward-headers-strategy": "framework",
                 "spring.datasource.password": "test-password",
@@ -217,9 +217,9 @@ from paas_charm.utils import config_metadata
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-                "APP_METRICS_PATH": "/metrics",
-                "APP_METRICS_PORT": "8080",
-                "APP_PORT": "8080",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/go-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
@@ -253,15 +253,14 @@ from paas_charm.utils import config_metadata
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
                 "APP_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
-                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
                 "APP_OIDC_CLIENT_ID": "test-client-id",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_CLIENT_SECRET": "abc",
-                "METRICS_PATH": "/metrics",
-                "METRICS_PORT": "8080",
                 "NODE_ENV": "production",
                 "APP_SECRET_KEY": "test",
                 "PORT": "8080",
+                "METRICS_PORT": "9464",
+                "METRICS_PATH": "/metrics",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/expressjs-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
@@ -280,7 +279,14 @@ from paas_charm.utils import config_metadata
     ],
 )
 def test_oauth_config_wrong_relation_order(
-    base_state: dict, charm, framework: str, config: dict, command: str, env: dict, request
+    base_state: dict,
+    charm,
+    framework: str,
+    config: dict,
+    command: str,
+    env: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -296,12 +302,10 @@ def test_oauth_config_wrong_relation_order(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(oauth_relation), state)
 
     assert out.unit_status == testing.BlockedStatus(
@@ -342,6 +346,8 @@ def test_oauth_config_wrong_relation_order(
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "FLASK_OIDC_SCOPES": "openid profile email phone",
                 "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
+                "FLASK_METRICS_PORT": "9102",
+                "FLASK_METRICS_PATH": "/metrics",
                 "FLASK_BASE_URL": "http://juju.test/",
                 "FLASK_SECRET_KEY": "test",
                 "FLASK_OIDC_CLIENT_ID": "test-client-id",
@@ -367,13 +373,10 @@ def test_oauth_config_wrong_relation_order(
             'bash -c "java -jar *.jar"',
             {
                 "APP_BASE_URL": "http://juju.test/",
-                "APP_METRICS_PORT": "8080",
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "email",
                 "APP_SECRET_KEY": "test",
-                "MANAGEMENT_SERVER_PORT": "8080",
-                "METRICS_PATH": "/actuator/prometheus",
                 "OTEL_LOGS_EXPORTER": "none",
                 "OTEL_METRICS_EXPORTER": "none",
                 "OTEL_TRACES_EXPORTER": "none",
@@ -390,8 +393,9 @@ def test_oauth_config_wrong_relation_order(
                 "POSTGRESQL_DB_SCHEME": "postgresql",
                 "POSTGRESQL_DB_USERNAME": "test-username",
                 "SERVER_PORT": "8080",
-                "management.endpoints.web.base-path": "/actuator",
                 "management.endpoints.web.exposure.include": "prometheus",
+                "management.server.port": "8080",
+                "management.endpoints.web.base-path": "/actuator",
                 "management.endpoints.web.path-mapping.prometheus": "prometheus",
                 "server.forward-headers-strategy": "framework",
                 "spring.datasource.password": "test-password",
@@ -428,6 +432,8 @@ def test_oauth_config_wrong_relation_order(
                 "DJANGO_BASE_URL": "http://juju.test/",
                 "DJANGO_SECRET_KEY": "test",
                 "DJANGO_ALLOWED_HOSTS": '["juju.test"]',
+                "DJANGO_METRICS_PORT": "9102",
+                "DJANGO_METRICS_PATH": "/metrics",
                 "DJANGO_OIDC_CLIENT_ID": "test-client-id",
                 "DJANGO_OIDC_CLIENT_SECRET": "abc",
                 "DJANGO_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
@@ -475,11 +481,11 @@ def test_oauth_config_wrong_relation_order(
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-                "METRICS_PATH": "/metrics",
-                "METRICS_PORT": "8080",
                 "UVICORN_HOST": "0.0.0.0",
                 "UVICORN_LOG_LEVEL": "info",
-                "UVICORN_PORT": "8080",
+                "UVICORN_PORT": "8000",
+                "METRICS_PORT": "9464",
+                "METRICS_PATH": "/metrics",
                 "WEB_CONCURRENCY": "1",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/fastapi-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
@@ -520,9 +526,9 @@ def test_oauth_config_wrong_relation_order(
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
-                "APP_METRICS_PATH": "/metrics",
-                "APP_METRICS_PORT": "8080",
-                "APP_PORT": "8080",
+                "PORT": "8080",
+                "METRICS_PORT": "8080",
+                "METRICS_PATH": "/metrics",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/go-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
@@ -556,15 +562,14 @@ def test_oauth_config_wrong_relation_order(
                 "APP_OIDC_USER_URL": "https://traefik_ip/model_name-hydra/userinfo",
                 "APP_OIDC_JWKS_URL": "https://traefik_ip/model_name-hydra/.well-known/jwks.json",
                 "APP_OIDC_API_BASE_URL": "https://traefik_ip/model_name-hydra",
-                "APP_OIDC_AUTHORIZE_URL": "https://traefik_ip/model_name-hydra/oauth2/auth",
                 "APP_OIDC_CLIENT_ID": "test-client-id",
                 "APP_OIDC_CLIENT_KWARGS": '{"scope": "openid profile email phone"}',
                 "APP_OIDC_CLIENT_SECRET": "abc",
-                "METRICS_PATH": "/metrics",
-                "METRICS_PORT": "8080",
                 "NODE_ENV": "production",
                 "APP_SECRET_KEY": "test",
                 "PORT": "8080",
+                "METRICS_PORT": "9464",
+                "METRICS_PATH": "/metrics",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/expressjs-k8s",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
@@ -583,7 +588,14 @@ def test_oauth_config_wrong_relation_order(
     ],
 )
 def test_oauth_config_correct_relation_order(
-    base_state: dict, charm, framework: str, config: dict, command: str, env: dict, request
+    base_state: dict,
+    charm,
+    framework: str,
+    config: dict,
+    command: str,
+    env: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -600,9 +612,7 @@ def test_oauth_config_correct_relation_order(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.ActiveStatus()
 
@@ -612,7 +622,7 @@ def test_oauth_config_correct_relation_order(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -687,7 +697,7 @@ def test_oauth_config_correct_relation_order(
     ],
 )
 def test_oauth_config_remove_ingress_integration_should_block(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -704,9 +714,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -715,7 +723,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -791,7 +799,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
     ],
 )
 def test_oauth_config_remove_oauth_integration_should_not_block(
-    base_state: dict, charm, config: dict, request
+    base_state: dict, charm, config: dict, request, context_factory
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -808,9 +816,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -819,7 +825,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
     out = context.run(context.on.relation_changed(oauth_relation), state)
@@ -892,7 +898,9 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         ),
     ],
 )
-def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request) -> None:
+def test_oauth_config_wrong_scope(
+    base_state: dict, charm, config: dict, request, context_factory
+) -> None:
     """
     arrange: set the workload charm config.
     act: start the workload charm and integrate with oauth and ingress using wrong scope.
@@ -907,7 +915,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",
@@ -915,9 +923,7 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus(
         "The 'openid' scope is required for OAuth integration, please add it to the scopes."
@@ -985,7 +991,9 @@ def test_oauth_config_wrong_scope(base_state: dict, charm, config: dict, request
         ),
     ],
 )
-def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict, request) -> None:
+def test_blocked_when_relation_data_empty(
+    base_state: dict, charm, config: dict, request, context_factory
+) -> None:
     """
     arrange: set the workload charm config.
     act: start the workload charm and integrate with oauth and ingress using wrong scope.
@@ -998,7 +1006,7 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
         endpoint="oidc", interface="oauth", remote_app_data={}, remote_app_name="OIDC_CHARM"
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",
@@ -1006,15 +1014,13 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
+    context = context_factory(charm)
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus("Please check OIDC_CHARM charm!")
 
 
 @pytest.mark.parametrize(
-    "base_state, charm, config, multiple_oauth_integrations",
+    "base_state, charm, config, additional_oauth",
     [
         pytest.param(
             "flask_base_state",
@@ -1092,10 +1098,14 @@ def test_blocked_when_relation_data_empty(base_state: dict, charm, config: dict,
             id="expressjs",
         ),
     ],
-    indirect=["multiple_oauth_integrations"],
 )
 def test_oauth_multiple_oauth_integrations(
-    base_state: dict, multiple_oauth_integrations, charm, config: dict, request
+    base_state: dict,
+    additional_oauth: dict,
+    charm,
+    config: dict,
+    request,
+    context_factory,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -1111,7 +1121,7 @@ def test_oauth_multiple_oauth_integrations(
         remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
     )
     base_state["relations"].append(oauth_relation)
-    base_state["secrets"] = [testing.Secret(id=secret_id, tracked_content={"secret": "abc"})]
+    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
     ingress_relation = testing.Relation(
         endpoint="ingress",
         interface="ingress",
@@ -1119,13 +1129,8 @@ def test_oauth_multiple_oauth_integrations(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = testing.Context(
-        charm_type=charm,
-    )
-    # `config_metadata` function is cached and we modify the metadata
-    # in the `multiple_oauth_integrations` fixture
-    with patch("paas_charm.utils.config_metadata", new=config_metadata.__wrapped__):
-        out = context.run(context.on.relation_changed(ingress_relation), state)
+    context = context_factory(charm, additional_oauth=bool(additional_oauth))
+    out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus(
         "Multiple OAuth relations are not supported at the moment"
     )

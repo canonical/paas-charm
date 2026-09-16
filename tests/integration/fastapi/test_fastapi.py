@@ -12,7 +12,7 @@ from tests.integration.helpers import fetch_container_json_logs, logs_for_logger
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
-WORKLOAD_PORT = 8080
+WORKLOAD_PORT = 8000
 
 
 def test_fastapi_is_up(fastapi_app: App, juju: jubilant.Juju):

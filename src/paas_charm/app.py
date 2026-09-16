@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.redis import PaaSRedisRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
     from paas_charm.tracing import PaaSTracingRelationData
@@ -54,8 +53,8 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         state_dir: the directory in the application container to store states information.
         service_name: the WSGI application pebble service name.
         log_files: list of files to monitor.
-        metrics_target: target to scrape for metrics.
         metrics_path: path to scrape for metrics.
+        metrics_port: port on which the application exposes metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
         tracing_enabled: True if tracing should be enabled.
         logging_format: Structured logging format to use; ``LoggingFormat.NONE`` for default.
@@ -71,8 +70,8 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     state_dir: pathlib.Path
     service_name: str
     log_files: List[pathlib.Path]
-    metrics_target: str | None = None
     metrics_path: str | None = "/metrics"
+    metrics_port: int = 8080
     unit_name: str
     tracing_enabled: bool = False
     logging_format: LoggingFormat = LoggingFormat.NONE
@@ -150,21 +149,6 @@ def generate_rabbitmq_env(
     if relation_data.amqp_uris:
         envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
     return envvars
-
-
-def generate_redis_env(relation_data: "PaaSRedisRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from Redis relation data.
-
-    Args:
-        relation_data: The charm Redis integration relation data.
-
-    Returns:
-        Redis environment mappings if Redis relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return _db_url_to_env_variables("REDIS", str(relation_data.url))
 
 
 def generate_valkey_env(
@@ -392,7 +376,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_redis_env: Maps Redis connection information to environment variables.
         generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
@@ -405,7 +388,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_redis_env = staticmethod(generate_redis_env)
     generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
@@ -421,7 +403,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         charm_state: CharmState,
         workload_config: WorkloadConfig,
         database_migration: DatabaseMigration,
-        framework_config_prefix: str = "APP_",
+        framework_config_prefix: str = "",
         configuration_prefix: str = "APP_",
         integrations_prefix: str = "",
     ):
@@ -499,6 +481,10 @@ class App:  # pylint: disable=too-many-instance-attributes
                 for k, v in framework_config.items()
             }
         )
+        env[f"{framework_config_prefix}METRICS_PORT"] = str(self._workload_config.metrics_port)
+        env[f"{framework_config_prefix}METRICS_PATH"] = (
+            self._workload_config.metrics_path or "/metrics"
+        )
 
         if self._charm_state.base_url:
             env[f"{prefix}BASE_URL"] = self._charm_state.base_url
@@ -528,7 +514,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
-        env.update(self.generate_redis_env(relation_data=self._charm_state.integrations.redis))
         env.update(self.generate_valkey_env(relation_data=self._charm_state.integrations.valkey))
         env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (

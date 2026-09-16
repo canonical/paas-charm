@@ -1,93 +1,126 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Unit tests for Flask charm database integration."""
+"""Scenario tests for Flask database migrations."""
 
+import dataclasses
 import pathlib
-import unittest.mock
 
-import ops
 import pytest
-from ops.testing import Harness
+from ops import pebble, testing
 
-from paas_charm._gunicorn.webserver import GunicornWebserver, WebserverConfig
-from paas_charm._gunicorn.workload_config import create_workload_config
-from paas_charm._gunicorn.wsgi_app import WsgiApp
-from paas_charm.charm_state import CharmState
-from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
-from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.database_migration import DatabaseMigrationStatus
 
-from .constants import DEFAULT_LAYER
+from .constants import INTEGRATIONS_RELATION_DATA
+
+MIGRATION_STATUS_PATH = pathlib.Path("tmp/flask/state/database-migration-status")
 
 
-def test_database_migration(harness: Harness, container_name: str):
+def _container_mount(base_state: dict) -> pathlib.Path:
+    """Return the host path mounted at /flask in the workload container."""
+    container = next(iter(base_state["containers"]))
+    return pathlib.Path(container.mounts["flask"].source)
+
+
+def _migration_exec(command: list[str], return_code: int = 0) -> testing.Exec:
+    """Build a migration exec mock."""
+    return testing.Exec(command, return_code=return_code)
+
+
+def _container_with_exec(
+    base_state: dict,
+    migration_exec: testing.Exec,
+    *,
+    service_statuses: dict[str, pebble.ServiceStatus] | None = None,
+) -> testing.Container:
+    """Return the base container with focused migration and config-check exec mocks."""
+    return dataclasses.replace(
+        next(iter(base_state["containers"])),
+        execs={
+            testing.Exec(["/bin/python3"], return_code=0),
+            testing.Exec(["python3", "-c", "import gevent"], return_code=0),
+            migration_exec,
+        },
+        service_statuses=service_statuses or {"flask": pebble.ServiceStatus.INACTIVE},
+    )
+
+
+def _write_migration_file(base_state: dict, filename: str) -> pathlib.Path:
+    """Create a migration file in the mounted Flask application directory."""
+    app_dir = _container_mount(base_state) / "app"
+    app_dir.mkdir(parents=True, exist_ok=True)
+    migration_file = app_dir / filename
+    migration_file.touch()
+    return migration_file
+
+
+def _status(out: testing.State, flask_context) -> str:
+    """Read the persisted migration status from the Scenario container filesystem."""
+    filesystem = out.get_container("app").get_filesystem(flask_context)
+    return (filesystem / MIGRATION_STATUS_PATH).read_text()
+
+
+def test_database_migration_retry_and_single_success(
+    flask_context,
+    base_state,
+) -> None:
     """
-    arrange: none
-    act: set the database migration script to be different value.
-    assert: the restart_flask method will not invoke the database migration script after the
-        first successful run.
+    arrange: add migrate.sh and initially fail its exec.
+    act: reconcile, retry on update-status, then reconcile twice more.
+    assert: status transitions failed to completed and the successful script is not rerun.
     """
-    harness.begin()
-    container: ops.Container = harness.model.unit.get_container(container_name)
-    container.add_layer("default", DEFAULT_LAYER)
-    root = harness.get_filesystem_root(container)
-    harness.set_can_connect(container, True)
-    charm_state = CharmState(
-        framework="flask",
-        is_secret_storage_ready=True,
-        secret_key="",
+    command = ["bash", "-eo", "pipefail", "migrate.sh"]
+    migration_file = _write_migration_file(base_state, "migrate.sh")
+    failing_container = _container_with_exec(
+        base_state,
+        _migration_exec(command, return_code=1),
     )
-    workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
+    state = testing.State(**{**base_state, "containers": {failing_container}})
+
+    out = flask_context.run(flask_context.on.config_changed(), state)
+
+    assert out.unit_status == testing.BlockedStatus(
+        f"database migration command {command} failed, will retry in next update-status"
     )
-    webserver_config = WebserverConfig()
-    webserver = GunicornWebserver(
-        webserver_config=webserver_config,
-        workload_config=workload_config,
-        container=container,
+    assert _status(out, flask_context) == DatabaseMigrationStatus.FAILED
+
+    successful_container = dataclasses.replace(
+        out.get_container("app"),
+        execs={
+            testing.Exec(["/bin/python3"], return_code=0),
+            _migration_exec(command),
+        },
     )
-    database_migration = DatabaseMigration(
-        container=container, state_dir=pathlib.Path("/flask/state")
+    out = flask_context.run(
+        flask_context.on.update_status(),
+        dataclasses.replace(out, containers={successful_container}),
     )
-    flask_app = WsgiApp(
-        container=container,
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=webserver,
-        database_migration=database_migration,
+
+    assert out.unit_status == testing.ActiveStatus()
+    assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
+    migration_history = [
+        args for args in flask_context.exec_history["app"] if args.command == command
+    ]
+    assert len(migration_history) == 2
+    assert migration_history[-1].working_dir == "/flask/app"
+    assert migration_history[-1].user == migration_history[-1].group == "_daemon_"
+    assert migration_history[-1].environment["FLASK_SECRET_KEY"] == "test"
+
+    out = flask_context.run(flask_context.on.config_changed(), out)
+    assert (
+        len([args for args in flask_context.exec_history["app"] if args.command == command]) == 2
     )
-    database_migration_history = []
-    migration_return_code = 0
 
-    def handle_database_migration(args: ops.testing.ExecArgs):
-        """Handle the database migration command."""
-        database_migration_history.append(args.command)
-        return ops.testing.ExecResult(migration_return_code)
-
-    harness.handle_exec(container, [], handler=handle_database_migration)
-    (root / "flask/app/migrate.sh").touch()
-
-    migration_return_code = 1
-    with pytest.raises(CharmConfigInvalidError):
-        flask_app.restart()
-    assert database_migration_history == [["bash", "-eo", "pipefail", "migrate.sh"]]
-
-    migration_return_code = 0
-    flask_app.restart()
-    assert database_migration_history == [["bash", "-eo", "pipefail", "migrate.sh"]] * 2
-
-    flask_app.restart()
-    assert database_migration_history == [["bash", "-eo", "pipefail", "migrate.sh"]] * 2
-
-    (root / "flask/app/migrate.py").touch()
-    (root / "flask/app/migrate.sh").unlink()
-
-    flask_app.restart()
-    assert database_migration_history == [["bash", "-eo", "pipefail", "migrate.sh"]] * 2
+    migration_file.unlink()
+    (_container_mount(base_state) / "app" / "migrate.py").touch()
+    flask_context.run(flask_context.on.config_changed(), out)
+    assert (
+        len([args for args in flask_context.exec_history["app"] if args.command == command]) == 2
+    )
 
 
 @pytest.mark.parametrize(
-    "file,command",
+    "filename,command",
     [
         pytest.param("migrate", ["/flask/app/migrate"], id="executable"),
         pytest.param("migrate.sh", ["bash", "-eo", "pipefail", "migrate.sh"], id="shell"),
@@ -96,114 +129,112 @@ def test_database_migration(harness: Harness, container_name: str):
     ],
 )
 def test_database_migrate_command(
-    harness: Harness, container_name: str, file: str, command: list[str]
-):
+    flask_context,
+    base_state,
+    filename: str,
+    command: list[str],
+) -> None:
     """
-    arrange: set up the test harness
-    act: run the database migration with different database migration scripts
-    assert: database migration should run different command accordingly
+    arrange: add one supported migration file and its exec mock.
+    act: reconcile the charm.
+    assert: the exact command, environment, identity, directory, and status are recorded.
     """
-    harness.begin()
-    container: ops.Container = harness.model.unit.get_container(container_name)
-    container.add_layer("default", DEFAULT_LAYER)
-    root = harness.get_filesystem_root(container)
-    (root / "flask/app" / file).touch()
-    harness.set_can_connect(container, True)
-    charm_state = CharmState(
-        framework="flask",
-        is_secret_storage_ready=True,
-        secret_key="",
-    )
-    webserver_config = WebserverConfig()
-    workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", state_dir=harness.charm._state_dir
-    )
-    webserver = GunicornWebserver(
-        webserver_config=webserver_config,
-        workload_config=workload_config,
-        container=container,
-    )
-    database_migration = DatabaseMigration(
-        container=container, state_dir=pathlib.Path("/flask/state")
-    )
-    flask_app = WsgiApp(
-        container=container,
-        charm_state=charm_state,
-        workload_config=workload_config,
-        webserver=webserver,
-        database_migration=database_migration,
-    )
-    history = []
-    harness.handle_exec(container, [], handler=lambda args: history.append(args.command))
+    _write_migration_file(base_state, filename)
+    container = _container_with_exec(base_state, _migration_exec(command))
+    state = testing.State(**{**base_state, "containers": {container}})
 
-    flask_app.restart()
+    out = flask_context.run(flask_context.on.config_changed(), state)
 
-    assert len(history) == 1
-    assert history[0] == command
-
-
-def test_database_migration_status(harness: Harness, container_name: str):
-    """
-    arrange: set up the test harness
-    act: run the database migration with migration run sets to fail or succeed
-    assert: database migration instance should report correct status.
-    """
-    harness.begin()
-    container = harness.charm.unit.get_container(container_name)
-    container.add_layer("default", DEFAULT_LAYER)
-
-    harness.handle_exec(container, [], result=1)
-    database_migration = DatabaseMigration(
-        container=container, state_dir=pathlib.Path("/flask/state")
-    )
-    assert database_migration.get_status() == DatabaseMigrationStatus.PENDING
-    with pytest.raises(CharmConfigInvalidError):
-        database_migration.run(
-            command=["migrate"], environment={}, working_dir=pathlib.Path("/flask/app")
-        )
-    assert database_migration.get_status() == DatabaseMigrationStatus.FAILED
-    harness.handle_exec(container, [], result=0)
-    database_migration.run(
-        command=["migrate"], environment={}, working_dir=pathlib.Path("/flask/app")
-    )
-    assert database_migration.get_status() == DatabaseMigrationStatus.COMPLETED
+    assert out.unit_status == testing.ActiveStatus()
+    migration_history = [
+        args for args in flask_context.exec_history["app"] if args.command == command
+    ]
+    assert len(migration_history) == 1
+    exec_args = migration_history[0]
+    assert exec_args.working_dir == "/flask/app"
+    assert exec_args.user == exec_args.group == "_daemon_"
+    assert exec_args.environment["FLASK_SECRET_KEY"] == "test"
+    assert exec_args.environment["FLASK_BASE_URL"] == "http://flask-k8s.test-model:8000"
+    assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
 
 
 def test_migrations_run_second_time_optional_integration_integrated(
-    harness: Harness, container_name: str
-):
+    flask_context,
+    base_state,
+) -> None:
     """
-    arrange: set up a active charm that has run the migration successfully.
-    act: integrate with a new optional integration.
-    assert: the migration command should be called again.
+    arrange: run migrate.sh successfully without optional integrations.
+    act: add a PostgreSQL relation and emit its relation-changed event.
+    assert: migration reruns with the new database environment.
     """
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
-    root = harness.get_filesystem_root(container)
-    (root / "flask/app/migrate.sh").touch()
-    first_exec_handler = unittest.mock.MagicMock()
-    first_exec_handler.return_value = None
-    harness.handle_exec(
-        container, ["bash", "-eo", "pipefail", "migrate.sh"], handler=first_exec_handler
-    )
-    harness.begin_with_initial_hooks()
-    # First migration was called.
-    first_exec_handler.assert_called_once()
-    assert harness.model.unit.status == ops.ActiveStatus()
+    command = ["bash", "-eo", "pipefail", "migrate.sh"]
+    _write_migration_file(base_state, "migrate.sh")
+    container = _container_with_exec(base_state, _migration_exec(command))
+    state = testing.State(**{**base_state, "containers": {container}})
+    out = flask_context.run(flask_context.on.config_changed(), state)
+    assert out.unit_status == testing.ActiveStatus()
 
-    second_exec_handler = unittest.mock.MagicMock()
-    second_exec_handler.return_value = None
-    harness.handle_exec(
-        container, ["bash", "-eo", "pipefail", "migrate.sh"], handler=second_exec_handler
+    relation_data = INTEGRATIONS_RELATION_DATA["postgresql"]["app_data"]
+    relation = testing.Relation(
+        endpoint="postgresql",
+        interface="postgresql_client",
+        remote_app_data=relation_data,
+        remote_units_data={0: {}},
     )
-    postgresql_relation_data = {
-        "database": "test-database",
-        "endpoints": "test-postgresql:5432,test-postgresql-2:5432",
-        "password": "test-password",
-        "username": "test-username",
-    }
-    harness.add_relation("postgresql", "postgresql-k8s", app_data=postgresql_relation_data)
+    out = flask_context.run(
+        flask_context.on.relation_changed(relation, remote_unit=0),
+        dataclasses.replace(out, relations={*out.relations, relation}),
+    )
 
-    # The second migration was called.
-    second_exec_handler.assert_called_once()
-    assert harness.model.unit.status == ops.ActiveStatus()
+    assert out.unit_status == testing.ActiveStatus()
+    migration_history = [
+        args for args in flask_context.exec_history["app"] if args.command == command
+    ]
+    assert len(migration_history) == 2
+    assert migration_history[0].environment.get("POSTGRESQL_DB_CONNECT_STRING") is None
+    assert migration_history[1].environment["POSTGRESQL_DB_CONNECT_STRING"] == (
+        "postgresql://test-username:test-password@test-postgresql:5432/test-database"
+    )
+    assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
+
+
+def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
+    flask_context,
+    base_state,
+) -> None:
+    """
+    arrange: require S3, relate it, and complete migrate.sh with all services active.
+    act: reconcile the state after removing S3.
+    assert: every service stops and migration status returns to pending.
+    """
+    flask_context.charm_spec.meta["requires"]["s3"]["optional"] = False
+    command = ["bash", "-eo", "pipefail", "migrate.sh"]
+    _write_migration_file(base_state, "migrate.sh")
+    relation = testing.Relation(
+        endpoint="s3",
+        interface="s3",
+        remote_app_data=INTEGRATIONS_RELATION_DATA["s3"]["app_data"],
+    )
+    base_state["relations"].append(relation)
+    container = _container_with_exec(base_state, _migration_exec(command))
+    state = testing.State(**{**base_state, "containers": {container}})
+    out = flask_context.run(flask_context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
+    assert all(
+        status == pebble.ServiceStatus.ACTIVE
+        for status in out.get_container("app").service_statuses.values()
+    )
+
+    out = flask_context.run(
+        flask_context.on.relation_broken(relation),
+        out,
+    )
+
+    assert out.unit_status == testing.BlockedStatus("missing integrations: s3")
+    assert all(
+        status == pebble.ServiceStatus.INACTIVE
+        for status in out.get_container("app").service_statuses.values()
+    )
+    assert _status(out, flask_context) == DatabaseMigrationStatus.PENDING

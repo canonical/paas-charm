@@ -25,7 +25,7 @@ def test_proxy(
     app_name = "flask-k8s"
     http_proxy = "http://proxy.test"
     https_proxy = "http://https.proxy.test"
-    no_proxy = "127.0.0.1,10.0.0.1"
+    no_proxy = "127.0.0.1,10.0.0.0/8"
 
     # Set model config for proxy
     juju.model_config(

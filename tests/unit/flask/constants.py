@@ -133,10 +133,9 @@ INTEGRATIONS_RELATION_DATA = {
             "bucket": "flask-bucket",
         }
     },
-    "redis": {
-        "unit_data": {
-            "hostname": "10.1.88.132",
-            "port": "6379",
+    "valkey": {
+        "app_data": {
+            "requests": '[{"resource": "*", "request-id": "a2b7f513afa07883", "endpoints": "valkey://10.1.88.132:6379", "salt": "Uh39g15ZlrWSwJtk"}]',
         }
     },
     "saml": {"app_data": SAML_APP_RELATION_DATA_EXAMPLE},

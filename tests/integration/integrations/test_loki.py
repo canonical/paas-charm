@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
         ("spring_boot_app", 8080),
         ("expressjs_app", 8080),
         ("go_app", 8080),
-        ("fastapi_app", 8080),
+        ("fastapi_app", 8000),
     ],
 )
 def test_loki_integration(

@@ -10,16 +10,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi_mail.errors import ConnectionErrors
+from metrics import metrics_lifespan
 from openfga_sdk import ClientConfiguration
 from openfga_sdk.credentials import CredentialConfiguration, Credentials
 from openfga_sdk.sync import OpenFgaClient
+from opentelemetry import metrics as otel_metrics
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
-from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -47,19 +50,17 @@ conf = ConnectionConfig(
 templates = Jinja2Templates(directory="templates")
 parsed_url = urlparse(os.getenv("APP_BASE_URL", ""))
 root_path = f"/{parsed_url.path.strip('/')}" if parsed_url.path else ""
-app = FastAPI(root_path=root_path)
+app = FastAPI(root_path=root_path, lifespan=metrics_lifespan)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("APP_SECRET_KEY"))
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 set_tracer_provider(TracerProvider())
 get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+
+otel_metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
+
 FastAPIInstrumentor.instrument_app(app)
 tracer = trace.get_tracer(__name__)
-
-# Collect metrics and exposes the /metrics endpoint
-# This may be not appropriate for a production environment, as the metrics
-# may be publicly accessible
-Instrumentator().instrument(app).expose(app)
 
 engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
 

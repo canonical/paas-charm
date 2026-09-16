@@ -11,7 +11,6 @@ import typing
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
 from charms.openfga_k8s.v1.openfga import OpenFGARequires
-from charms.redis_k8s.v0.redis import RedisRelationCharmEvents
 from charms.smtp_integrator.v0.smtp import SmtpRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
@@ -32,11 +31,11 @@ from paas_charm.paas_config import (
     LoggingFormat,
     read_paas_config,
 )
+from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
-from paas_charm.redis import PaaSRedisRequires
 from paas_charm.s3 import PaaSS3Requirer
 from paas_charm.saml import PaaSSAMLRequirer
-from paas_charm.secret_storage import KeySecretStorage
+from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
@@ -53,11 +52,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     """PaasCharm base charm service mixin.
 
     Attrs:
-        on: charm events replaced by Redis ones for the Redis charm library.
         framework_config_class: base class for the framework config.
+        paas_config_framework_fields: Mapping from framework fields to paas-config fields.
     """
 
     framework_config_class: type[BaseModel]
+    paas_config_framework_fields: dict[str, str] = {}
 
     @property
     @abc.abstractmethod
@@ -75,8 +75,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         # of the application. State only supposed to live within the lifecycle of the container.
         return pathlib.Path(f"/tmp/{self._framework_name}/state")  # nosec: B108
 
-    on = RedisRelationCharmEvents()
-
     def __init__(self, framework: ops.Framework, framework_name: str) -> None:
         """Initialize the instance.
 
@@ -90,12 +88,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         super().__init__(framework)
         self._framework_name = framework_name
+        self._paas_config = read_paas_config()
 
-        self._secret_storage = KeySecretStorage(charm=self, key=f"{framework_name}_secret_key")
+        self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
+        self._peers = Peers(charm=self)
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
-        self._redis = self._init_redis(requires)
         self._valkey = self._init_valkey(requires)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
@@ -117,14 +116,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._oauth = self._init_oauth(requires)
 
-        paas_config = read_paas_config()
-        if paas_config.framework_logging_format != LoggingFormat.NONE:
+        if self._paas_config.framework_logging_format != LoggingFormat.NONE:
             supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
-                paas_config.framework_logging_format, set()
+                self._paas_config.framework_logging_format, set()
             )
             if self._framework_name not in supported:
                 raise CharmConfigInvalidError(
-                    f"framework_logging_format '{paas_config.framework_logging_format}' "
+                    f"framework_logging_format '{self._paas_config.framework_logging_format}' "
                     f"is not supported for the '{self._framework_name}' framework. "
                     f"Supported frameworks: {sorted(supported) or 'none'}."
                 )
@@ -133,19 +131,24 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
-            metrics_target=self._workload_config.metrics_target,
-            metrics_path=self._workload_config.metrics_path,
-            prometheus_config=paas_config.prometheus,
+            metrics_port=self._workload_config.metrics_port,
+            metrics_path=self._workload_config.metrics_path or "/metrics",
+            prometheus_config=self._paas_config.prometheus,
         )
 
         self.framework.observe(self.on.config_changed, self._reconcile_without_migrations)
+        self.framework.observe(self.on.leader_elected, self._reconcile_without_migrations)
         self.framework.observe(self.on.rotate_secret_key_action, self._on_rotate_secret_key_action)
         self.framework.observe(
-            self.on.secret_storage_relation_changed,
+            self.on.peers_relation_created,
             self._reconcile_without_migrations,
         )
         self.framework.observe(
-            self.on.secret_storage_relation_departed,
+            self.on.peers_relation_changed,
+            self._reconcile_without_migrations,
+        )
+        self.framework.observe(
+            self.on.peers_relation_departed,
             self._reconcile_without_migrations,
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
@@ -169,30 +172,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on[self._workload_config.container_name].pebble_ready,
             self._reconcile_without_migrations,
         )
-
-    def _init_redis(self, requires: dict[str, RelationMeta]) -> "PaaSRedisRequires | None":
-        """Initialize the Redis relation if its required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the Redis relation or None
-        """
-        _redis = None
-        if "redis" in requires and requires["redis"].interface_name == "redis":
-            try:
-                _redis = PaaSRedisRequires(charm=self, relation_name="redis")
-                self.framework.observe(
-                    self.on.redis_relation_updated, self._reconcile_with_migrations
-                )
-            except NameError:
-                logger.exception(
-                    "Missing charm library,                               "
-                    "please run `charmcraft fetch-lib charms.redis_k8s.v0.redis`"
-                )
-
-        return _redis
 
     def _init_valkey(self, requires: dict[str, RelationMeta]) -> "ValkeyClientRequirer | None":
         """Initialize the Valkey relation if it is required.
@@ -436,6 +415,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 for k, v in charm_config.items()
             },
         )
+        for framework_field, paas_config_field in self.paas_config_framework_fields.items():
+            if paas_config_field not in self._paas_config.model_fields_set:
+                continue
+            model_field = framework_config_class.model_fields[framework_field]
+            config[model_field.alias or framework_field] = getattr(
+                self._paas_config, paas_config_field
+            )
 
         try:
             return framework_config_class.model_validate(config)
@@ -499,10 +485,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if not self.unit.is_leader():
             event.fail("only leader unit can rotate secret key")
             return
-        if not self._secret_storage.is_initialized:
+        if not self._secret_key.is_ready:
             event.fail("charm is still initializing")
             return
-        self._secret_storage.reset_secret_key()
+        self._secret_key.rotate()
         event.set_results({"status": "success"})
         self._reconcile()
 
@@ -523,6 +509,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             True if the charm is ready to start the workload application.
         """
+        self._secret_key.initialize()
         charm_state = self._create_charm_state()
         if not self._container.can_connect():
             logger.info(
@@ -531,9 +518,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for pebble ready"))
             return False
-        if not charm_state.is_secret_storage_ready:
-            logger.info("secret storage is not initialized")
-            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for peer integration"))
+        if not charm_state.is_secret_key_ready:
+            logger.info("application secret key is not initialized")
+            self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
             return False
 
         missing_integrations = list(self._missing_required_integrations(charm_state))
@@ -592,10 +579,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._redis and not charm_state.integrations.redis:
-            if not requires["redis"].optional:
-                yield "redis"
-
         if self._s3 and not charm_state.integrations.s3:
             if not requires["s3"].optional:
                 yield "s3"
@@ -613,22 +596,30 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._saml and not charm_state.integrations.saml:
-            if not requires["saml"].optional:
-                yield "saml"
+        if self._saml and not charm_state.integrations.saml and not requires["saml"].optional:
+            yield "saml"
 
-        if self._tracing and not charm_state.integrations.tracing:
-            if not requires["tracing"].optional:
-                yield "tracing"
+        if (
+            self._tracing
+            and not charm_state.integrations.tracing
+            and not requires["tracing"].optional
+        ):
+            yield "tracing"
 
-        if self._smtp and not charm_state.integrations.smtp:
-            if not requires["smtp"].optional:
-                yield "smtp"
+        if self._smtp and not charm_state.integrations.smtp and not requires["smtp"].optional:
+            yield "smtp"
 
         if self._oauth and not charm_state.integrations.oauth:
             oauth_endpoint_name = get_endpoints_by_interface_name(requires, "oauth")[0][0]
             if not requires[oauth_endpoint_name].optional:
                 yield "oauth"
+
+        if (
+            self._valkey
+            and not charm_state.integrations.valkey
+            and not requires["valkey"].optional
+        ):
+            yield "valkey"
 
     def _missing_required_integrations(
         self, charm_state: CharmState
@@ -707,10 +698,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
-            secret_storage=self._secret_storage,
+            secret_key=self._secret_key,
+            peers=self._peers,
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
-                redis=self._redis,
                 valkey=self._valkey,
                 rabbitmq=self._rabbitmq,
                 s3=self._s3,
@@ -750,6 +741,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Handle an event that requires re-running migrations."""
         self._reconcile(rerun_migrations=True)
 
-    def _reconcile_without_migrations(self, _: ops.RelationBrokenEvent) -> None:
-        """Handle an event that doesn't require re-running migrations."""
+    def _reconcile_without_migrations(self, _: ops.EventBase) -> None:
+        """Handle a lifecycle or relation event without explicitly re-running migrations."""
         self._reconcile()

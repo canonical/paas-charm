@@ -78,15 +78,15 @@ func NewConfig() (Config, error) {
 
 	provider := "openid-connect" // Default provider name for goth
 
-	port, found := os.LookupEnv("APP_PORT")
+	port, found := os.LookupEnv("PORT")
 	if !found {
 		port = "8080"
 	}
-	metricsPort, found := os.LookupEnv("APP_METRICS_PORT")
+	metricsPort, found := os.LookupEnv("METRICS_PORT")
 	if !found {
-		metricsPort = "8081"
+		metricsPort = "8080"
 	}
-	metricsPath, found := os.LookupEnv("APP_METRICS_PATH")
+	metricsPath, found := os.LookupEnv("METRICS_PATH")
 	if !found {
 		metricsPath = "/metrics"
 	}

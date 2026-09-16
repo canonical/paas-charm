@@ -6,6 +6,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from ops import testing
 
 from paas_charm.charm import PaasCharm
 from paas_charm.tracing import (
@@ -30,30 +31,33 @@ from paas_charm.tracing import (
         ),
     ],
 )
-def test_requirer_to_relation_data(monkeypatch, generic_harness, is_ready, endpoint, expected):
+def test_requirer_to_relation_data(
+    monkeypatch, generic_context, generic_state, is_ready, endpoint, expected
+):
     """
     arrange: given s3 relation data.
     act: when to_relation_data is called.
     assert: expected relation data is returned.
     """
-    charm: PaasCharm = generic_harness.charm
-    monkeypatch.setattr(charm._tracing, "is_ready", MagicMock(return_value=is_ready))
-    monkeypatch.setattr(charm._tracing, "get_endpoint", MagicMock(return_value=endpoint))
+    with generic_context(generic_context.on.start(), testing.State(**generic_state)) as manager:
+        charm: PaasCharm = manager.charm
+        monkeypatch.setattr(charm._tracing, "is_ready", MagicMock(return_value=is_ready))
+        monkeypatch.setattr(charm._tracing, "get_endpoint", MagicMock(return_value=endpoint))
+        assert charm._tracing.to_relation_data() == expected
 
-    assert charm._tracing.to_relation_data() == expected
 
-
-def test_requirer_to_relation_data_protocol_not_request_error(generic_harness):
+def test_requirer_to_relation_data_protocol_not_request_error(generic_context, generic_state):
     """
     arrange: given a monkeypatched get_endpoint method that raises ProtocolNotRequestedError.
     act: when to_relation_data is called.
     assert: InvalidTracingRelationDataError is raised.
     """
-    charm: PaasCharm = generic_harness.charm
-    charm._tracing.is_ready = MagicMock(return_value=True)
-    charm._tracing.get_endpoint = MagicMock(side_effect=ProtocolNotRequestedError)
-    with pytest.raises(InvalidTracingRelationDataError) as exc:
-        charm._tracing.to_relation_data()
+    with generic_context(generic_context.on.start(), testing.State(**generic_state)) as manager:
+        charm: PaasCharm = manager.charm
+        charm._tracing.is_ready = MagicMock(return_value=True)
+        charm._tracing.get_endpoint = MagicMock(side_effect=ProtocolNotRequestedError)
+        with pytest.raises(InvalidTracingRelationDataError) as exc:
+            charm._tracing.to_relation_data()
 
     assert "Invalid PaaSTracingRelationData" in str(exc)
 
@@ -65,17 +69,17 @@ def test_requirer_to_relation_data_protocol_not_request_error(generic_harness):
         pytest.param("http://invalid:port", id="invalid port"),
     ],
 )
-def test_requirer_to_validation_error(monkeypatch, generic_harness, endpoint):
+def test_requirer_to_validation_error(monkeypatch, generic_context, generic_state, endpoint):
     """
     arrange: given incomplete/invalid relation data.
     act: when to_relation_data is called.
     assert: InvalidTempoRelationDataError is raised.
     """
-    charm: PaasCharm = generic_harness.charm
-    monkeypatch.setattr(charm._tracing, "is_ready", MagicMock(return_value=True))
-    monkeypatch.setattr(charm._tracing, "get_endpoint", MagicMock(return_value=endpoint))
-
-    with pytest.raises(InvalidTracingRelationDataError) as exc:
-        charm._tracing.to_relation_data()
+    with generic_context(generic_context.on.start(), testing.State(**generic_state)) as manager:
+        charm: PaasCharm = manager.charm
+        monkeypatch.setattr(charm._tracing, "is_ready", MagicMock(return_value=True))
+        monkeypatch.setattr(charm._tracing, "get_endpoint", MagicMock(return_value=endpoint))
+        with pytest.raises(InvalidTracingRelationDataError) as exc:
+            charm._tracing.to_relation_data()
 
     assert "invalid options" in str(exc.value)

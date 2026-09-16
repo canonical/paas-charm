@@ -5,6 +5,6 @@
 
 package com.canonical.sampleapp.domain;
 
-// Used for storing redis mapping
-public record RedisUser(String id, String name) {
+// Used for storing Valkey mappings.
+public record ValkeyUser(String id, String name) {
 }

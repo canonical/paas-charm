@@ -1,54 +1,55 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Flask charm tracing relation unit tests."""
+"""Flask charm tracing relation Scenario tests."""
 
-import ops
-from ops.testing import Harness
-
-from .constants import DEFAULT_LAYER
+from ops import testing
 
 
-def test_tracing_relation(harness: Harness, container_name: str):
+def test_tracing_relation(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: Integrate the charm with the Tempo charm.
-    act: Run all initial hooks.
-    assert: The flask service should have the environment variable OTEL_EXPORTER_OTLP_ENDPOINT from
-        the tracing relation. It should also have the environment variable OTEL_SERVICE_NAME set to "flask-k8s".
+    arrange: relate the Flask charm to a Tempo OTLP HTTP receiver.
+    act: reconcile the tracing relation.
+    assert: the workload receives the exact tracing endpoint and service name.
     """
-    harness.set_model_name("flask-model")
-    harness.add_relation(
-        "tracing",
-        "tempo-coordinator",
-        app_data={
-            "receivers": '[{"protocol": {"name": "otlp_http", "type": "http"}, "url": "http://test-ip:4318"}]'
+    relation = testing.Relation(
+        endpoint="tracing",
+        interface="tracing",
+        remote_app_data={
+            "receivers": (
+                '[{"protocol": {"name": "otlp_http", "type": "http"}, '
+                '"url": "http://test-ip:4318"}]'
+            )
         },
     )
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    base_state["model"] = testing.Model(name="flask-model")
+    base_state["relations"].append(relation)
 
-    harness.begin_with_initial_hooks()
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
+    )
 
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    assert service_env["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://test-ip:4318/"
-    assert service_env["OTEL_SERVICE_NAME"] == "flask-k8s"
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert environment["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://test-ip:4318/"
+    assert environment["OTEL_SERVICE_NAME"] == "flask-k8s"
 
 
-def test_tracing_not_activated(harness: Harness, container_name: str):
+def test_tracing_not_activated(flask_context, base_state, container_name: str) -> None:
     """
-    arrange: Deploy the flask charm without a relation to the Tempo charm.
-    act: Run all initial hooks.
-    assert: The flask service should not have the environment variables OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME.
+    arrange: prepare a Flask unit without a tracing relation.
+    act: reconcile the charm.
+    assert: the workload receives no tracing environment values.
     """
-    harness.set_model_name("flask-model")
+    base_state["model"] = testing.Model(name="flask-model")
 
-    container = harness.model.unit.get_container(container_name)
-    container.add_layer("a_layer", DEFAULT_LAYER)
+    out = flask_context.run(
+        flask_context.on.config_changed(),
+        testing.State(**base_state),
+    )
 
-    harness.begin_with_initial_hooks()
-
-    assert harness.model.unit.status == ops.ActiveStatus()
-    service_env = container.get_plan().services["flask"].environment
-    assert service_env.get("OTEL_EXPORTER_OTLP_ENDPOINT", None) is None
-    assert service_env.get("OTEL_SERVICE_NAME", None) is None
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["flask"].environment
+    assert "OTEL_EXPORTER_OTLP_ENDPOINT" not in environment
+    assert "OTEL_SERVICE_NAME" not in environment

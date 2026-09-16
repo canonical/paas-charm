@@ -8,7 +8,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from paas_charm.app import generate_valkey_env
-from paas_charm.valkey import ValkeyClientRequirer
+from paas_charm.valkey import (
+    ValkeyClientRequirer,
+    ValkeyMultipleRelationsNotSupportedError,
+    ValkeyTLSNotSupportedError,
+)
 
 
 @pytest.mark.parametrize(
@@ -164,8 +168,6 @@ def test_valkey_to_relation_data_tls_not_supported(mock_handler_cls):
     act: when to_relation_data is called.
     assert: ValkeyTLSNotSupportedError is raised.
     """
-    from paas_charm.valkey import ValkeyTLSNotSupportedError
-
     mock_relation = MagicMock()
     mock_relation.id = 1
     mock_relation.app = "valkey"
@@ -198,8 +200,6 @@ def test_valkey_to_relation_data_multiple_relations_not_supported(mock_handler_c
     act: when to_relation_data is called.
     assert: ValkeyMultipleRelationsNotSupportedError is raised.
     """
-    from paas_charm.valkey import ValkeyMultipleRelationsNotSupportedError
-
     mock_relation_1 = MagicMock()
     mock_relation_1.id = 1
     mock_relation_1.app = "valkey-1"

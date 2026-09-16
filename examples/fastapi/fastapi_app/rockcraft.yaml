@@ -14,6 +14,13 @@ extensions:
   - fastapi-framework
 
 parts:
+  metrics:
+    plugin: dump
+    source: .
+    organize:
+      metrics.py: app/metrics.py
+    stage:
+    - app/metrics.py
   alembic:
     plugin: dump
     source: .

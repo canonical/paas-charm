@@ -46,7 +46,7 @@ def test_flask_env(
     charm_state = CharmState(
         framework="flask",
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
         framework_config=flask_config,
         user_defined_config=user_defined_config,
     )
@@ -63,7 +63,10 @@ def test_flask_env(
     env = flask_app.gen_environment()
     assert env["FLASK_SECRET_KEY"] == "foobar"
     del env["FLASK_SECRET_KEY"]
-    expected_env = {}
+    expected_env = {
+        "FLASK_METRICS_PORT": "9102",
+        "FLASK_METRICS_PATH": "/metrics",
+    }
     for config_key, config_value in user_defined_config.items():
         if isinstance(config_value, dict):
             for secret_key, secret_value in config_value.items():
@@ -129,7 +132,7 @@ def test_http_proxy(
     charm_state = CharmState(
         framework="flask",
         secret_key="foobar",
-        is_secret_storage_ready=True,
+        is_secret_key_ready=True,
     )
     workload_config = create_workload_config(
         framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")

@@ -235,7 +235,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
     [
         pytest.param(
             {},
-            "redis",
+            "valkey_client",
             [],
             id="0 relation",
         ),
@@ -250,7 +250,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey_client", "limit": 1},
                     )
                 ),
                 "oauth": RelationMeta(
@@ -259,7 +259,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
+            "valkey_client",
             [("cache", cache_relation)],
             id="1 relation",
         ),
@@ -274,14 +274,14 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey_client", "limit": 1},
                     )
                 ),
                 "second_cache": (
                     second_cache_relation := RelationMeta(
                         role=RelationRole.requires,
                         relation_name="second_cache",
-                        raw={"interface": "redis", "limit": 1},
+                        raw={"interface": "valkey_client", "limit": 1},
                     )
                 ),
                 "oauth": RelationMeta(
@@ -290,7 +290,7 @@ def test_is_user_defined_config(framework, option_name, expected_result) -> None
                     raw={"interface": "oauth", "limit": 1},
                 ),
             },
-            "redis",
+            "valkey_client",
             [
                 ("cache", cache_relation),
                 ("second_cache", second_cache_relation),
@@ -448,7 +448,7 @@ def test_merge_cos_directories_uses_default_only_when_custom_missing(
     merge_cos_directories(default_dir=default_dir, custom_dir=custom_dir, merged_dir=merged_dir)
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
-    assert list((merged_dir / "grafana_dashboards").glob("custom_*")) == []
+    assert not list((merged_dir / "grafana_dashboards").glob("custom_*"))
 
 
 def test_merge_cos_directories_uses_default_only_when_custom_invalid(

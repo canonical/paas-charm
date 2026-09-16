@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     [
         ("flask_app", 8000),
         ("django_app", 8000),
-        ("fastapi_app", 8080),
+        ("fastapi_app", 8000),
         ("go_app", 8080),
         ("spring_boot_app", 8080),
     ],
