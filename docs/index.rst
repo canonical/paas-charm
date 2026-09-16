@@ -31,34 +31,52 @@ features that they need for full-scale production.
 In this documentation
 ---------------------
 
-.. grid:: 1 1 2 2
+.. list-table::
+   :header-rows: 1
 
-    .. grid-item-card:: Tutorial
-        :link: tutorial/index
-        :link-type: doc
+   * -
+     -
+   * - Get started
+     - :doc:`Framework tutorials <tutorial/index>`
+   * - Build and deploy
+     - :ref:`Manage app rocks <rockcraft:how-to-manage-a-12-factor-app-rock>` |
+       :ref:`Manage app charms <charmcraft:manage-12-factor-app-charms>` |
+       :ref:`Publish a charm <how_to_publish_charm>`
+   * - Application configuration
+     - :ref:`Customizable features <ref_supported_customization>` |
+       :ref:`paas-config.yaml <ref_paas_config>` |
+       :ref:`Tooling conventions <explanation_opinionated_nature>`
+   * - Integrations and observability
+     - :ref:`Observability and relations <ref_observability_relations>` |
+       :ref:`Add custom dashboards and alert rules <how_to_add_custom_cos_assets>` |
+       :ref:`Prometheus configuration <ref_paas_config_prometheus>` |
+       :ref:`Structured logging <ref_paas_config_structured_logging>`
+   * - Concepts and architecture
+     - :ref:`12-factor principles <explanation_12_factor_principles_applied>` |
+       :ref:`Juju, charms, and rocks <explanation_foundations>` |
+       :ref:`Supported web app frameworks <explanation_web_app_frameworks>` |
+       :ref:`Charm architecture <ref_charm_architecture>`
+   * - Maintenance and extension
+     - :ref:`Upgrade an application <how_to_upgrade>` |
+       :ref:`Add a framework <how_to_add_new_framework>` |
+       :doc:`Release notes <release-notes/index>`
 
-        **Get started** with a hands-on introduction to the tooling
+How this documentation is organized
+------------------------------------
 
-    .. grid-item-card:: How-to guides
-        :link: how-to/index
-        :link-type: doc
+This documentation uses the
+`Diátaxis documentation structure <https://diataxis.fr/>`_.
 
-        **Step-by-step guides** covering key operations and common tasks
-
-.. grid:: 1 1 2 2
-    :reverse:
-
-    .. grid-item-card:: Reference
-        :link: reference/index
-        :link-type: doc
-
-        **Technical information** about the tooling
-
-    .. grid-item-card:: Explanation
-        :link: explanation/index
-        :link-type: doc
-
-        **Discussion and clarification** of key topics
+* :doc:`Tutorials <tutorial/index>` provide hands-on introductions to building
+  and deploying apps with supported frameworks.
+* :doc:`How-to guides <how-to/index>` provide steps for common development,
+  deployment, customization, and maintenance tasks.
+* :doc:`Reference <reference/index>` provides technical details about
+  configuration, integrations, architecture, and supported features.
+* :doc:`Explanation <explanation/index>` provides context about the 12-factor
+  methodology, tooling conventions, and product ecosystem.
+* :doc:`Release notes <release-notes/index>` describe notable changes and
+  upgrade considerations.
 
 Since the tooling is natively part of the Rockcraft and Charmcraft products,
 additional documentation is available in their respective documentation sites
