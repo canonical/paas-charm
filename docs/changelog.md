@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* breaking: Unify the Flask and Django application root directory and access/error logs under
+  `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
+  keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
+  Requires a rock built with the corresponding gunicorn v2 extension.
 * feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
   and store the auto-generated application secret key in a Juju application-owned
   secret instead of the peer relation databag. The peer relation is now used only
@@ -229,7 +233,7 @@ throws an error.
 ## v1.5.3 - 2025-05-08
 
 * feat: Added support for
-[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027#rootless-charms-on-k8s-3).
+[rootless charms](https://discourse.charmhub.io/t/juju-3-6-0-released/16027).
 
 ## v1.5.2 - 2025-04-29
 

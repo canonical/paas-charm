@@ -4,7 +4,7 @@ name: test-db-flask
 summary: Default Flask application image.
 description: Default Flask application image.
 version: "0.1"
-base: ubuntu@22.04
+base: ubuntu@26.04
 license: Apache-2.0
 platforms:
   amd64:
@@ -13,6 +13,6 @@ extensions:
   - flask-framework
 
 parts:
-  flask-framework/install-app:
+  flask-framework.install-app:
     prime:
-      - -flask/app/requirements.txt
+      - -app/requirements.txt

@@ -75,7 +75,7 @@ def _assert_django_service(service, expected_env: dict, worker_class: str) -> No
         "override": "replace",
         "startup": "enabled",
         "command": (
-            "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py "
+            "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py "
             f"django_app.wsgi:application -k [ {worker_class} ]"
         ),
         "after": ["statsd-exporter"],
@@ -130,7 +130,7 @@ def test_django_create_super_user(django_context, base_state: dict, container_na
     assert exec_args.environment["DJANGO_SUPERUSER_USERNAME"] == "admin"
     assert exec_args.environment["DJANGO_SUPERUSER_EMAIL"] == "admin@example.com"
     assert "DJANGO_SECRET_KEY" in exec_args.environment
-    assert exec_args.working_dir == "/django/app"
+    assert exec_args.working_dir == "/app"
     assert django_context.action_results == {
         "password": exec_args.environment["DJANGO_SUPERUSER_PASSWORD"]
     }
@@ -296,7 +296,9 @@ def test_real_paas_config_enables_structured_logging(
     )
 
     filesystem = out.get_container(container_name).get_filesystem(django_context)
-    config = (filesystem / "django" / "gunicorn.conf.py").read_text(encoding="utf-8")
+    config = (filesystem / "var" / "lib" / "gunicorn" / "gunicorn.conf.py").read_text(
+        encoding="utf-8"
+    )
     assert "class GunicornJsonFormatter(logging.Formatter):" in config
     assert "class GunicornJsonLogger(glogging.Logger):" in config
     assert "logger_class = GunicornJsonLogger" in config

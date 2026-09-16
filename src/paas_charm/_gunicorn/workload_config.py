@@ -9,8 +9,9 @@ from paas_charm.app import WorkloadConfig
 from paas_charm.paas_config import PaasConfig
 
 STATSD_HOST = "localhost:9125"
-APPLICATION_LOG_FILE_FMT = "/var/log/{framework}/access.log"
-APPLICATION_ERROR_LOG_FILE_FMT = "/var/log/{framework}/error.log"
+APPLICATION_LOG_FILE = "/var/log/app/access.log"
+APPLICATION_ERROR_LOG_FILE = "/var/log/app/error.log"
+GUNICORN_CONFIG_DIR = "/var/lib/gunicorn"
 
 
 def create_workload_config(
@@ -37,18 +38,21 @@ def create_workload_config(
     metrics_port, metrics_path = paas_config.metrics_endpoint(
         default_port=9102, default_path="/metrics"
     )
-    base_dir = pathlib.Path(f"/{framework_name}")
+    # For Gunicorn, base_dir holds the (mutable) gunicorn.conf.py, kept separate from app_dir
+    # (the application source directory) so the two can have different lifecycles/ownership.
+    base_dir = pathlib.Path(GUNICORN_CONFIG_DIR)
+    app_dir = pathlib.Path("/app")
     return WorkloadConfig(
         framework=framework_name,
         container_name="app",
         port=application_port,
         base_dir=base_dir,
-        app_dir=base_dir / "app",
+        app_dir=app_dir,
         state_dir=state_dir,
         service_name=framework_name,
         log_files=[
-            pathlib.Path(str.format(APPLICATION_LOG_FILE_FMT, framework=framework_name)),
-            pathlib.Path(str.format(APPLICATION_ERROR_LOG_FILE_FMT, framework=framework_name)),
+            pathlib.Path(APPLICATION_LOG_FILE),
+            pathlib.Path(APPLICATION_ERROR_LOG_FILE),
         ],
         metrics_path=metrics_path,
         metrics_port=metrics_port,

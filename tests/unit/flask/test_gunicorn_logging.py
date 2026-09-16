@@ -41,7 +41,7 @@ def _render_template(enable_tracing: bool = False, enable_json_logging: bool = T
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=False)
     rendered = env.get_template("gunicorn.conf.py.j2").render(
         workload_port=8000,
-        workload_app_dir="/flask/app",
+        workload_app_dir="/app",
         access_log="-",
         error_log="-",
         statsd_host="localhost:9125",

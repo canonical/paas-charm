@@ -32,7 +32,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
+            "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             {
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "FLASK_OIDC_SCOPES": "openid profile email phone",
@@ -60,7 +60,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
+            "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
                 "DJANGO_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "DJANGO_OIDC_SCOPES": "openid profile email phone",
@@ -341,7 +341,7 @@ def test_oauth_config_wrong_relation_order(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            "/bin/python3 -m gunicorn -c /flask/gunicorn.conf.py app:app -k [ sync ]",
+            "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             {
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "FLASK_OIDC_SCOPES": "openid profile email phone",
@@ -425,7 +425,7 @@ def test_oauth_config_wrong_relation_order(
                 "oidc-redirect-path": "/oauth/callback",
                 "oidc-scopes": "openid profile email phone",
             },
-            "/bin/python3 -m gunicorn -c /django/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
+            "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
                 "DJANGO_OIDC_REDIRECT_PATH": "/oauth/callback",
                 "DJANGO_OIDC_SCOPES": "openid profile email phone",

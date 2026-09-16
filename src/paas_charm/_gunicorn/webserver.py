@@ -17,8 +17,8 @@ import ops
 from ops.pebble import ExecError, PathError
 
 from paas_charm._gunicorn.workload_config import (
-    APPLICATION_ERROR_LOG_FILE_FMT,
-    APPLICATION_LOG_FILE_FMT,
+    APPLICATION_ERROR_LOG_FILE,
+    APPLICATION_LOG_FILE,
     STATSD_HOST,
 )
 from paas_charm.app import WorkloadConfig
@@ -157,12 +157,8 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
             access_log = "-"
             error_log = "-"
         else:
-            access_log = str(
-                APPLICATION_LOG_FILE_FMT.format(framework=self._workload_config.framework)
-            )
-            error_log = str(
-                APPLICATION_ERROR_LOG_FILE_FMT.format(framework=self._workload_config.framework)
-            )
+            access_log = str(APPLICATION_LOG_FILE)
+            error_log = str(APPLICATION_ERROR_LOG_FILE)
 
         jinja_environment = jinja2.Environment(
             loader=jinja2.PackageLoader("paas_charm", "templates"), autoescape=True

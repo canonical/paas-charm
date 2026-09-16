@@ -21,9 +21,9 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         False,
         textwrap.dedent("""\
                 bind = ['0.0.0.0:8000']
-                chdir = '/flask/app'
-                accesslog = '/var/log/flask/access.log'
-                errorlog = '/var/log/flask/error.log'
+                chdir = '/app'
+                accesslog = '/var/log/app/access.log'
+                errorlog = '/var/log/app/error.log'
                 statsd_host = 'localhost:9125'
                 workers = 10"""),
         id="workers=10",
@@ -37,9 +37,9 @@ GUNICORN_CONFIG_TEST_PARAMS = [
         False,
         textwrap.dedent("""\
                 bind = ['0.0.0.0:8000']
-                chdir = '/flask/app'
-                accesslog = '/var/log/flask/access.log'
-                errorlog = '/var/log/flask/error.log'
+                chdir = '/app'
+                accesslog = '/var/log/app/access.log'
+                errorlog = '/var/log/app/error.log'
                 statsd_host = 'localhost:9125'
                 threads = 2
                 keepalive = 4
@@ -56,9 +56,9 @@ GUNICORN_CONFIG_TEST_PARAMS = [
                 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
                 bind = ['0.0.0.0:8000']
-                chdir = '/flask/app'
-                accesslog = '/var/log/flask/access.log'
-                errorlog = '/var/log/flask/error.log'
+                chdir = '/app'
+                accesslog = '/var/log/app/access.log'
+                errorlog = '/var/log/app/error.log'
                 statsd_host = 'localhost:9125'
                 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %({x-request-id}o)s'
 
@@ -118,7 +118,9 @@ def test_gunicorn_config(
     out = flask_context.run(flask_context.on.config_changed(), state)
 
     filesystem = out.get_container(container_name).get_filesystem(flask_context)
-    assert (filesystem / "flask" / "gunicorn.conf.py").read_text() == expected_config
+    assert (
+        filesystem / "var" / "lib" / "gunicorn" / "gunicorn.conf.py"
+    ).read_text() == expected_config
     check_exec = next(
         args
         for args in flask_context.exec_history[container_name]
@@ -129,13 +131,13 @@ def test_gunicorn_config(
         "-m",
         "gunicorn",
         "-c",
-        "/flask/gunicorn.conf.py",
+        "/var/lib/gunicorn/gunicorn.conf.py",
         "app:app",
         "-k",
         "sync",
         "--check-config",
     ]
-    assert check_exec.working_dir == "/flask/app"
+    assert check_exec.working_dir == "/app"
     assert check_exec.user == check_exec.group == "_daemon_"
     assert check_exec.environment["FLASK_SECRET_KEY"] == "test"
 
@@ -156,7 +158,7 @@ def test_real_paas_config_enables_structured_logging(
     )
 
     filesystem = out.get_container(container_name).get_filesystem(flask_context)
-    config = (filesystem / "flask" / "gunicorn.conf.py").read_text()
+    config = (filesystem / "var" / "lib" / "gunicorn" / "gunicorn.conf.py").read_text()
     assert "class GunicornJsonFormatter(logging.Formatter):" in config
     assert "class GunicornJsonLogger(glogging.Logger):" in config
     assert "logger_class = GunicornJsonLogger" in config
@@ -229,6 +231,6 @@ def test_gunicorn_config_with_pebble_log_forwarding(
     )
 
     filesystem = out.get_container(container_name).get_filesystem(flask_context)
-    config = (filesystem / "flask" / "gunicorn.conf.py").read_text()
+    config = (filesystem / "var" / "lib" / "gunicorn" / "gunicorn.conf.py").read_text()
     assert "accesslog = '-'" in config
     assert "errorlog = '-'" in config
