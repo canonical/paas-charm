@@ -11,11 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* feat: Add the public `paas_charm.relations.CustomRelation` extension API so charm
-  authors can add their own Juju relations to a 12-factor charm (env vars,
-  readiness/blocking, reconcile) without importing or subclassing paas-charm
-  internals. Register a relation via the charm `custom_relations` class
-  attribute; required-vs-optional is read from the metadata `optional` flag.
+* feat: Add the public `paas_charm.relations.CustomRelation` extension API so
+  charm authors can add their own Juju relations to a 12-factor charm
+  (environment variables, readiness/blocking, reconcile) without importing or
+  extending paas-charm internals. Register a relation via the charm
+  `custom_relations` class attribute; required-vs-optional is read from the
+  metadata `optional` flag.
 * feat: Add the stable `Context`, `OnChange`, and `CustomRelation` public
   types and re-export `InvalidRelationDataError`/`RelationDataError` from
   `paas_charm.relations`.

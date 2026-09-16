@@ -46,8 +46,8 @@ subclasses (the class, not an instance):
 The framework instantiates each class as ``cls(charm)``, injects
 :class:`~paas_charm.relations.Context` and the required flag (read from the
 metadata ``optional`` field), calls ``setup(on_change=self._reconcile)``, and
-stores the instances in the charm state consulted at readiness, env generation, and
-reconcile time.
+stores the instances in the charm state consulted at readiness, environment
+generation, and reconcile time.
 
 Required vs. optional
 ~~~~~~~~~~~~~~~~~~~~~
@@ -57,8 +57,8 @@ Whether a custom relation is required is read **solely** from the
 
 * ``optional: false`` (or omitted) — a missing relation contributes to
   ``BlockedStatus("missing integrations: <name>")``.
-* ``optional: true`` — a missing relation contributes no env vars and never
-  blocks.
+* ``optional: true`` — a missing relation contributes no environment variables
+  and never blocks.
 
 Error semantics
 ~~~~~~~~~~~~~~~
@@ -81,11 +81,11 @@ if you want it surfaced in the unit status.
      - ``BlockedStatus(message)``
    * - No relation, or data not usable
      - ``False``
-     - optional → no env, no block; required → ``BlockedStatus("missing
+     - optional → no environment, no block; required → ``BlockedStatus("missing
        integrations: <name>")``
    * - Data valid and usable
      - ``True``
-     - ``gen_environment()`` contributes env vars
+     - ``gen_environment()`` contributes environment variables
 
 Event observation helper
 ~~~~~~~~~~~~~~~~~~~~~~~~

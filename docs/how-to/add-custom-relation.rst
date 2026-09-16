@@ -196,11 +196,11 @@ should use ``self.context`` exclusively.
 Environment-variable collisions
 -------------------------------
 
-Custom env vars are merged after the built-in and framework env vars. If a
-custom variable's name collides with an existing environment variable (whether
-built-in, framework-provided, or from another custom relation), the custom
-variable overwrites it and the charm logs a warning naming the relation and the
-colliding variable.
+Custom environment variables are merged after the built-in and framework
+environment variables. If a custom variable's name collides with an existing
+environment variable (whether built-in, framework-provided, or from another
+custom relation), the custom variable overwrites it and the charm logs a
+warning naming the relation and the colliding variable.
 
 Caveat: ordering during ``__init__``
 ------------------------------------
