@@ -410,17 +410,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             A :class:`Context` populated with the current charm configuration.
         """
-        charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
-        config = {
-            k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
-            for k, v in charm_config.items()
-        }
         return Context(
             app_name=self.app.name,
             framework_name=self._framework_name,
             port=self._workload_config.port,
             container_name=self._workload_config.container_name,
-            config=config,
+            config=self._resolve_charm_config(),
         )
 
     def _init_custom_relations(self) -> list[CustomRelation]:
@@ -449,10 +444,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
                 continue
             relation_name = relation_class.relation_name
+            if relation_name not in requires:
+                continue
             instance = relation_class(self)
             # Framework-injected private state; pylint: disable=protected-access
             instance._context = context
-            instance._required = relation_name in requires and not requires[relation_name].optional
+            instance._required = not requires[relation_name].optional
             instance.setup(on_change=self._reconcile)
             relations.append(instance)
         return relations
@@ -677,9 +674,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             yield "valkey"
 
     def _missing_custom_relations(self) -> typing.Generator:
-        """Return required custom relations."""
+        """Return required custom relations that are not established or not ready."""
         for relation in self._custom_relations:
-            if relation.required:
+            if not relation.required:
+                continue
+            related = any(
+                model_relation.active
+                for model_relation in self.model.relations.get(relation.relation_name, [])
+            )
+            if not related or not relation.is_ready():
                 yield relation.relation_name
 
     def _missing_required_integrations(
@@ -744,7 +747,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     def _resolve_charm_config(self) -> dict[str, typing.Any]:
         """Resolve any secrets in the config."""
-        charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
+        charm_config = {k: config_get_with_secret(self, k) for k in self.config}
         return {
             k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
             for k, v in charm_config.items()
@@ -777,8 +780,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 openfga=self._openfga,
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,
-                custom_relations=tuple(self._custom_relations),
             ),
+            custom_relations=self._custom_relations,
             base_url=self._base_url,
         )
 
