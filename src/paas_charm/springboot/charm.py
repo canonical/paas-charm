@@ -306,6 +306,39 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
     }
 
 
+class SpringValkeyRelation(ValkeyRelation):
+    """Modified `ValkeyRelation` to produce environment vars for Spring framework."""
+
+    @staticmethod
+    def _generate_valkey_env(
+        relation_data: ValkeyResponseModel | None = None,
+    ) -> dict[str, str]:
+        """Generate Spring Boot environment variables from Valkey relation data.
+
+        Args:
+            relation_data: The charm Valkey integration relation data.
+
+        Returns:
+            Spring Boot Valkey environment mappings if relation data is available, empty
+            dictionary otherwise.
+        """
+        base_env = ValkeyRelation._generate_valkey_env(relation_data)
+
+        if 0 == len(base_env):
+            return base_env
+
+        env = {
+            "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
+            "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
+            "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
+        }
+        if username := base_env.get("VALKEY_DB_USERNAME"):
+            env["spring.data.valkey.username"] = username
+        if password := base_env.get("VALKEY_DB_PASSWORD"):
+            env["spring.data.valkey.password"] = password
+        return env
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -348,39 +381,6 @@ class SpringBootApp(App):
             env["spring.profiles.active"] = str(self._charm_state.framework_config[profiles_field])
         # Required because of the strip prefix in the ingress configuration.
         env["server.forward-headers-strategy"] = "framework"
-        return env
-
-
-class SpringValkeyRelation(ValkeyRelation):
-    """Modified `ValkeyRelation` to produce environment vars for Spring framework."""
-
-    @staticmethod
-    def _generate_valkey_env(
-        relation_data: ValkeyResponseModel | None = None,
-    ) -> dict[str, str]:
-        """Generate Spring Boot environment variables from Valkey relation data.
-
-        Args:
-            relation_data: The charm Valkey integration relation data.
-
-        Returns:
-            Spring Boot Valkey environment mappings if relation data is available, empty
-            dictionary otherwise.
-        """
-        base_env = ValkeyRelation._generate_valkey_env(relation_data)
-
-        if 0 == len(base_env):
-            return base_env
-
-        env = {
-            "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
-            "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
-            "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
-        }
-        if username := base_env.get("VALKEY_DB_USERNAME"):
-            env["spring.data.valkey.username"] = username
-        if password := base_env.get("VALKEY_DB_PASSWORD"):
-            env["spring.data.valkey.password"] = password
         return env
 
 
