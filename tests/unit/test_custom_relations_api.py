@@ -154,6 +154,25 @@ def test_custom_relation_missing_required_blocks(envvar_context, tmp_path) -> No
 
 
 # pylint: disable=redefined-outer-name
+def test_custom_relation_required_but_not_ready_blocks(envvar_context, tmp_path) -> None:
+    """
+    arrange: a required custom relation is established but has not published usable data.
+    act: reconcile on config-changed.
+    assert: the unit is blocked naming the unready custom relation.
+    """
+    envvar_context.charm_spec.meta["requires"]["example-db"]["optional"] = False
+    base_state = _base_state(tmp_path)
+    base_state["relations"].append(_example_db_relation(None))
+
+    out = envvar_context.run(
+        envvar_context.on.config_changed(),
+        testing.State(**base_state),
+    )
+
+    assert out.unit_status == testing.BlockedStatus("missing integrations: example-db")
+
+
+# pylint: disable=redefined-outer-name
 def test_custom_relation_optional_absent_does_not_block(envvar_context, tmp_path) -> None:
     """
     arrange: a charm with an optional env-var custom relation that is not related.
