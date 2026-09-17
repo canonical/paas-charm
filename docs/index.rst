@@ -17,8 +17,8 @@ Kubernetes environment for your web application. These commands create
 production-ready container images for your web application compliant with
 the Open Container Initiative (OCI), along with software operators wrapped around
 the container images. From there, you can deploy your web application using Juju,
-connect it to a database, add ingress and observability and much more. 
-Using the built-in support means you don't need prior knowledge 
+connect it to a database, add ingress and observability and much more.
+Using the built-in support means you don't need prior knowledge
 of Canonical products to get your application up and running --
 the support simplifies your source to deployment journey.
 
@@ -32,31 +32,32 @@ In this documentation
 ---------------------
 
 .. list-table::
+   :widths: 15 30
    :header-rows: 1
 
    * -
      -
-   * - Get started
+   * - **Get started**
      - :doc:`Framework tutorials <tutorial/index>`
-   * - Build and deploy
+   * - **Build and deploy**
      - :ref:`Manage app rocks <rockcraft:how-to-manage-a-12-factor-app-rock>` |
        :ref:`Manage app charms <charmcraft:manage-12-factor-app-charms>` |
        :ref:`Publish a charm <how_to_publish_charm>`
-   * - Application configuration
-     - :ref:`Customizable features <ref_supported_customization>` |
-       :ref:`paas-config.yaml <ref_paas_config>` |
-       :ref:`Tooling conventions <explanation_opinionated_nature>`
-   * - Integrations and observability
+   * - **Configure**
+     - :ref:`paas-config.yaml <ref_paas_config>` |
+       :ref:`Customizable features <ref_supported_customization>` |
+   * - **Integrations and observability**
      - :ref:`Observability and relations <ref_observability_relations>` |
        :ref:`Add custom dashboards and alert rules <how_to_add_custom_cos_assets>` |
        :ref:`Prometheus configuration <ref_paas_config_prometheus>` |
        :ref:`Structured logging <ref_paas_config_structured_logging>`
-   * - Concepts and architecture
+   * - **Concepts and architecture**
      - :ref:`12-factor principles <explanation_12_factor_principles_applied>` |
        :ref:`Juju, charms, and rocks <explanation_foundations>` |
        :ref:`Supported web app frameworks <explanation_web_app_frameworks>` |
+       :ref:`Tooling conventions <explanation_opinionated_nature>`
        :ref:`Charm architecture <ref_charm_architecture>`
-   * - Maintenance and extension
+   * - **Maintenance and extension**
      - :ref:`Upgrade an application <how_to_upgrade>` |
        :ref:`Add a framework <how_to_add_new_framework>` |
        :doc:`Release notes <release-notes/index>`
