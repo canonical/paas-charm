@@ -22,7 +22,10 @@ from paas_charm.charm_state import CharmState, IntegrationRequirers
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
-from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
+from paas_charm.exceptions import (
+    CharmConfigInvalidError,
+    RelationDataError,
+)
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
@@ -33,6 +36,7 @@ from paas_charm.paas_config import (
 )
 from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
+from paas_charm.relations import Context, CustomRelation
 from paas_charm.s3 import PaaSS3Requirer
 from paas_charm.saml import PaaSSAMLRequirer
 from paas_charm.secret_key import SecretKeyStorage
@@ -54,10 +58,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     Attrs:
         framework_config_class: base class for the framework config.
         paas_config_framework_fields: Mapping from framework fields to paas-config fields.
+        custom_relations: Classes describing charm relations.
     """
 
     framework_config_class: type[BaseModel]
     paas_config_framework_fields: dict[str, str] = {}
+    custom_relations: list[type[CustomRelation]] = []
 
     @property
     @abc.abstractmethod
@@ -172,6 +178,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.on[self._workload_config.container_name].pebble_ready,
             self._reconcile_without_migrations,
         )
+
+        self._custom_relations: list[CustomRelation] = self._init_custom_relations()
 
     def _init_valkey(self, requires: dict[str, RelationMeta]) -> "ValkeyClientRequirer | None":
         """Initialize the Valkey relation if it is required.
@@ -396,6 +404,56 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             return None
         return _oauth
 
+    def _build_custom_relation_context(self) -> Context:
+        """Build the read-only :class:`Context` injected into custom relations.
+
+        Returns:
+            A :class:`Context` populated with the current charm configuration.
+        """
+        return Context(
+            app_name=self.app.name,
+            framework_name=self._framework_name,
+            port=self._workload_config.port,
+            container_name=self._workload_config.container_name,
+            config=self._resolve_charm_config(),
+        )
+
+    def _init_custom_relations(self) -> list[CustomRelation]:
+        """Instantiate and wire author-supplied custom relations.
+
+        Each class in :attr:`custom_relations` is validated against the charm
+        metadata, instantiated as an ``ops.Object`` child, injected with
+        :class:`Context` and the required flag (read from the metadata
+        ``optional`` field), and finally set up with the reconcile callback.
+
+        Returns:
+            The list of instantiated custom relations.
+        """
+        if not self.custom_relations:
+            return []
+        context = self._build_custom_relation_context()
+        requires: dict[str, RelationMeta] = self.framework.meta.requires
+        relations: list[CustomRelation] = []
+        for relation_class in self.custom_relations:
+            if not isinstance(relation_class, type) or not issubclass(
+                relation_class, CustomRelation
+            ):
+                logger.warning(
+                    "Skipping non-CustomRelation entry in custom_relations: %r",
+                    relation_class,
+                )
+                continue
+            relation_name = relation_class.relation_name
+            if relation_name not in requires:
+                continue
+            instance = relation_class(self)
+            # Framework-injected private state; pylint: disable=protected-access
+            instance._context = context
+            instance._required = not requires[relation_name].optional
+            instance.setup(on_change=self._reconcile)
+            relations.append(instance)
+        return relations
+
     def get_framework_config(self) -> BaseModel:
         """Return the framework related configurations.
 
@@ -407,14 +465,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         # Will raise an AttributeError if it the attribute framework_config_class does not exist.
         framework_config_class = self.framework_config_class
-        charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
-        config = typing.cast(
-            dict,
-            {
-                k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
-                for k, v in charm_config.items()
-            },
-        )
+        config = self._resolve_charm_config()
         for framework_field, paas_config_field in self.paas_config_framework_fields.items():
             if paas_config_field not in self._paas_config.model_fields_set:
                 continue
@@ -523,6 +574,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
             return False
 
+        # Note: _missing_required_integrations checks custom relations, too
         missing_integrations = list(self._missing_required_integrations(charm_state))
         if missing_integrations:
             self._create_app().stop_all_services()
@@ -621,6 +673,18 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         ):
             yield "valkey"
 
+    def _missing_custom_relations(self) -> typing.Generator:
+        """Return required custom relations that are not established or not ready."""
+        for relation in self._custom_relations:
+            if not relation.required:
+                continue
+            related = any(
+                model_relation.active
+                for model_relation in self.model.relations.get(relation.relation_name, [])
+            )
+            if not related or not relation.is_ready():
+                yield relation.relation_name
+
     def _missing_required_integrations(
         self, charm_state: CharmState
     ) -> typing.Generator:  # noqa: C901
@@ -633,6 +697,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         yield from self._missing_required_database_integrations(requires, charm_state)
         yield from self._missing_required_storage_integrations(requires, charm_state)
         yield from self._missing_required_other_integrations(requires, charm_state)
+        yield from self._missing_custom_relations()
 
     def _reconcile(self, rerun_migrations: bool = False) -> None:
         """Restart or start the service if not started with the latest configuration.
@@ -651,6 +716,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 self._oauth.update_client()
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
+            for relation in self._custom_relations:
+                if relation.is_ready():
+                    relation.reconcile()
         except CharmConfigInvalidError as exc:
             logger.exception("Wrong Charm Configuration")
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))
@@ -677,6 +745,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         return self._create_app().gen_environment()
 
+    def _resolve_charm_config(self) -> dict[str, typing.Any]:
+        """Resolve any secrets in the config."""
+        charm_config = {k: config_get_with_secret(self, k) for k in self.config}
+        return {
+            k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
+            for k, v in charm_config.items()
+        }
+
     def _create_charm_state(self) -> CharmState:
         """Create charm state.
 
@@ -685,14 +761,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         Returns:
             New CharmState
         """
-        charm_config = {k: config_get_with_secret(self, k) for k in self.config.keys()}
-        config = typing.cast(
-            dict,
-            {
-                k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
-                for k, v in charm_config.items()
-            },
-        )
+        config = self._resolve_charm_config()
         return CharmState.from_charm(
             charm_dir=self.charm_dir,
             config=config,
@@ -712,6 +781,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,
             ),
+            custom_relations=self._custom_relations,
             base_url=self._base_url,
         )
 

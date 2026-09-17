@@ -17,6 +17,7 @@ from paas_charm.exceptions import (
     RelationDataError,
 )
 from paas_charm.peers import Peers
+from paas_charm.relations import CustomRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -62,6 +63,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
+        custom_relations: list[CustomRelation] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -74,6 +76,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
+            custom_relations: Custom relations.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -83,6 +86,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.custom_relations = custom_relations or []
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -95,6 +99,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: SecretKeyStorage,
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
+        custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -107,6 +112,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_key: The application secret key manager.
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
+            custom_relations: Custom relations.
             base_url: Base URL for the service.
 
         Return:
@@ -210,6 +216,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 f"{exc.relation} relation data is either unavailable, invalid or not usable.",
                 relation=exc.relation,
             ) from exc
+
         peer_fqdns = None
         if peers.is_related and (peer_unit_fqdns := peers.get_peer_unit_fqdns()):
             peer_fqdns = ",".join(peer_unit_fqdns)
@@ -225,6 +232,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
+            custom_relations=custom_relations,
         )
 
     @property
