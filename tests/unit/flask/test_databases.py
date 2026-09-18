@@ -136,18 +136,120 @@ DATABASE_GET_URI_TEST_PARAMS = [
             id="Relation data with non-uri fields with multiple endpoints",
         ),
         pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://" "test-user:test-password" "@test-endpoint/test-database"
+                    ),
+                    "tls": "False",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=disable"
+                )
+            ),
+            id="PostgreSQL URI with TLS disabled",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://"
+                        "test-user:test-password"
+                        "@test-endpoint/test-database?connect_timeout=10"
+                    ),
+                    "tls": "True",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?connect_timeout=10&sslmode=require"
+                )
+            ),
+            id="PostgreSQL URI with TLS enabled and existing query",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://"
+                        "test-user:test-password"
+                        "@test-endpoint/test-database?sslmode=verify-full"
+                    ),
+                    "tls": "True",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=verify-full"
+                )
+            ),
+            id="PostgreSQL URI with explicit SSL mode",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                    "tls": "false",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=disable"
+                )
+            ),
+            id="PostgreSQL non-URI fields with TLS disabled",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                    "tls": "true",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=require"
+                )
+            ),
+            id="PostgreSQL non-URI fields with TLS enabled",
+        ),
+        pytest.param(
             "mysql",
             {
                 "0": {
                     "username": "test-user",
                     "password": "test-password",
                     "endpoints": "test-endpoint-0,test-endpoint-1",
+                    "tls": "False",
                 }
             },
             PaaSDatabaseRelationData(
                 uris="mysql://test-user:test-password@test-endpoint-0/flask-k8s"
             ),
-            id="mysql",
+            id="MySQL ignores TLS field",
         ),
         pytest.param(
             "mongodb",
@@ -156,12 +258,13 @@ DATABASE_GET_URI_TEST_PARAMS = [
                     "username": "test-user",
                     "password": "test-password",
                     "endpoints": "test-endpoint-0,test-endpoint-1",
+                    "tls": "True",
                 }
             },
             PaaSDatabaseRelationData(
                 uris="mongodb://test-user:test-password@test-endpoint-0/flask-k8s"
             ),
-            id="mongodb",
+            id="MongoDB ignores TLS field",
         ),
     ],
 )
@@ -188,4 +291,8 @@ def test_paas_database_requires_to_relation_data(
             MagicMock(return_value=relation_data),
         )
         assert db_requires.to_relation_data() == expected
+        fields = ["uris", "endpoints", "username", "password", "database"]
+        if database == "postgresql":
+            fields.append("tls")
+        db_requires.fetch_relation_data.assert_called_once_with(fields=fields)
         manager.run()
