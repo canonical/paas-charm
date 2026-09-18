@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 1.13.0 - 2026-09-18
+
+* fix: Respect PostgreSQL provider TLS settings when building database connection URIs.
+
 ## 1.12.1 - 2026-07-20
 
 * fix: ExpressJS framework `app-port` config option wiring.
