@@ -127,8 +127,8 @@ Optional charm libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 A custom relation's requirer typically imports an author-supplied charm
-library. Providing that library is the author's responsibility (for example
-via ``charmcraft fetch-lib``). The framework does **not** wrap ``setup()``,
-``is_ready()``, or ``gen_environment()`` in ``try/except ImportError``: a
-missing author-supplied library surfaces as an ordinary charm error. Authors
-who want a softer failure mode guard or defer their own imports.
+library. Providing that library is the author's responsibility. The framework
+does **not** wrap ``setup()``, ``is_ready()``, or ``gen_environment()`` in
+``try/except ImportError``: a missing author-supplied library surfaces as an
+ordinary charm error. Authors who want a softer failure mode guard or defer
+their own imports.
