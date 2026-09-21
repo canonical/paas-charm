@@ -12,6 +12,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("mysql_app")
+
 logger = logging.getLogger(__name__)
 
 

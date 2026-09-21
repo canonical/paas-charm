@@ -11,6 +11,8 @@ import requests
 
 from tests.integration.helpers import fetch_container_json_logs, get_traces_patiently
 
+pytestmark = pytest.mark.early_dependencies("tempo_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,11 +20,15 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
-        ("django_app", 8000),
-        ("spring_boot_app", 8080),
-        ("expressjs_app", 8080),
-        ("fastapi_app", 8000),
-        ("go_app", 8080),
+        pytest.param("django_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param(
+            "spring_boot_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "expressjs_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param("fastapi_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param("go_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")),
     ],
 )
 def test_workload_tracing(
@@ -64,7 +70,7 @@ def test_workload_tracing(
 
 def test_flask_access_logs_have_trace_correlation(
     juju: jubilant.Juju,
-    flask_app,
+    request: pytest.FixtureRequest,
     tempo_app,
     session_with_retry: requests.Session,
 ):
@@ -73,6 +79,7 @@ def test_flask_access_logs_have_trace_correlation(
     act: send requests to Flask root endpoint.
     assert: gunicorn access logs include traceId and spanId.
     """
+    flask_app = request.getfixturevalue("flask_app")
     try:
         juju.integrate(f"{flask_app.name}:tracing", f"{tempo_app.name}:tracing")
     except jubilant.CLIError as err:

@@ -11,6 +11,8 @@ import pytest
 from tests.integration.helpers import check_openfga_auth_models_patiently
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("openfga_server_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,10 +20,12 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
-        ("django_app", 8000),
-        ("fastapi_app", 8000),
-        ("go_app", 8080),
-        ("spring_boot_app", 8080),
+        pytest.param("django_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param("fastapi_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param("go_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param(
+            "spring_boot_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
     ],
 )
 def test_openfga_integrations(

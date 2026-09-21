@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* test: Deploy selected external integration-test services while charm/rock artifacts
+  build, deferring artifact fetching and image preparation until application deployment.
 * breaking: Unify the Flask and Django application root directory and access/error logs under
   `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
   keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.

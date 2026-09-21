@@ -13,6 +13,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("loki_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,10 +22,30 @@ logger = logging.getLogger(__name__)
     "non_root_app_fixture, port",
     [
         pytest.param("flask_non_root_app", 8000, id="Flask non-root"),
-        pytest.param("django_non_root_app", 8000, id="Django non-root"),
-        pytest.param("fastapi_non_root_app", 8000, id="FastAPI non-root"),
-        pytest.param("go_non_root_app", 8080, id="Go non-root"),
-        pytest.param("expressjs_non_root_app", 8080, id="ExpressJS non-root"),
+        pytest.param(
+            "django_non_root_app",
+            8000,
+            id="Django non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "fastapi_non_root_app",
+            8000,
+            id="FastAPI non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "go_non_root_app",
+            8080,
+            id="Go non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "expressjs_non_root_app",
+            8080,
+            id="ExpressJS non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
     ],
 )
 def test_non_root_loki_integration(

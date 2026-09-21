@@ -9,6 +9,8 @@ warn-timeout: 1h
 backends:
   integration-test:
     type: integration-test
+    environment:
+      OPCLI_DEFER_ARTIFACTS: '1'
     disk: 50G
     systems:
       - ubuntu-24.04
@@ -43,7 +45,7 @@ backends:
 
 environment:
   CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'
-  OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-b4788978c987440a24360f3fb7cb879961ddb4c5}")'
+  OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-9e2958d9a36b7248c8ba2ef509d526df32f48a7f}")'
 
 exclude:
   - .git

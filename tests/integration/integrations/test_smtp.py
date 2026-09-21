@@ -20,11 +20,15 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
-        ("django_app", 8000),
-        ("spring_boot_app", 8080),
-        ("expressjs_app", 8080),
-        ("fastapi_app", 8000),
-        ("go_app", 8080),
+        pytest.param("django_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param(
+            "spring_boot_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "expressjs_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param("fastapi_app", 8000, marks=pytest.mark.early_dependencies("postgresql_app")),
+        pytest.param("go_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")),
     ],
 )
 def test_smtp_integrations(
@@ -40,7 +44,6 @@ def test_smtp_integrations(
     act: Send an email from the charm.
     assert: The mailcatcher should have received the email.
     """
-    app = request.getfixturevalue(app_fixture)
     smtp_config = {
         "auth_type": "none",
         "domain": "example.com",
@@ -51,6 +54,7 @@ def test_smtp_integrations(
     if not juju.status().apps.get(smtp_integrator_app):
         juju.deploy(smtp_integrator_app, channel="latest/edge", config=smtp_config)
 
+    app = request.getfixturevalue(app_fixture)
     juju.wait(lambda status: jubilant.all_active(status, app.name, smtp_integrator_app))
 
     juju.integrate(app.name, f"{smtp_integrator_app}:smtp")

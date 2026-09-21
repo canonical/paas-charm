@@ -27,9 +27,12 @@ def valkey_app_fixture(juju: jubilant.Juju):
     return App(valkey_app_name)
 
 
-@pytest.fixture
-def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App):
+@pytest.fixture(name="integrate_valkey_flask")
+def integrate_valkey_flask_fixture(
+    juju: jubilant.Juju, request: pytest.FixtureRequest, valkey_app: App
+):
     """Integrate Valkey with Flask apps."""
+    flask_app = request.getfixturevalue("flask_app")
 
     def relation_exists(status: jubilant.Status) -> bool:
         """Check whether Flask is related to Valkey."""
@@ -48,7 +51,7 @@ def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App)
         and jubilant.all_active(status, flask_app.name, valkey_app.name),
         timeout=10 * 60,
     )
-    yield
+    yield flask_app
     if relation_exists(juju.status()):
         juju.remove_relation(flask_app.name, valkey_app.name)
         juju.wait(
@@ -62,10 +65,10 @@ def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App)
     "num_units",
     [1, 3],
 )
-@pytest.mark.usefixtures("integrate_valkey_flask")
+@pytest.mark.early_dependencies("valkey_app")
 def test_workers_and_scheduler_services(
     juju: jubilant.Juju,
-    flask_app: App,
+    integrate_valkey_flask: App,
     session_with_retry: requests.Session,
     num_units: int,
 ):
@@ -78,6 +81,7 @@ def test_workers_and_scheduler_services(
             hostname in Valkey sets. Those sets are checked through the Flask app,
             that queries Valkey.
     """
+    flask_app = integrate_valkey_flask
     current_units = len(juju.status().apps[flask_app.name].units)
     for _ in range(current_units, num_units):
         juju.add_unit(flask_app.name)

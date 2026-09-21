@@ -89,6 +89,65 @@ Alternatively, you can use the environments created by ``tox``:
 Whenever you change dependencies in ``pyproject.toml``, regenerate and commit
 the lock file with ``uv lock``.
 
+Integration test setup
+----------------------
+
+Integration tests use ``opcli`` from ``canonical/charm-ci``. To build artifacts
+and run tests against the current host:
+
+.. code-block::
+
+    opcli artifacts build
+    opcli env provision
+    opcli artifacts push-images --missing-registry deploy
+    opcli pytest run -- -k test_name
+
+Application fixtures resolve their charm and image through ``app_artifacts``
+only when they are ready to deploy the application. First deploy the external
+services needed by the selected test. Express required services as fixture
+dependencies, or explicitly request the application with
+``request.getfixturevalue`` after external setup. Reordering fixture arguments
+is not sufficient: session-scoped artifact fixtures run before module-scoped
+deployment fixtures.
+
+Spread runs whole test modules. Mark external services with
+``pytest.mark.early_dependencies("service_fixture")`` on the relevant test,
+parameter, or module so services needed by later selected cases also start
+before the first application. The module setup reads pytest's public selected
+item list, so deselected cases do not cause extra deployments. Mark only
+deployment fixtures, not application-dependent readiness or mutations such as
+adding RabbitMQ HA units.
+
+Keep application-dependent relations and readiness checks after application
+deployment. For example, Spring Boot's SAML integrator can deploy without
+configuration, but its identity provider needs the application's actual IP.
+Do not deploy optional integrations for tests that do not use them.
+
+In CI, ``OPCLI_DEFER_ARTIFACTS=1`` opts into charm-ci's deferred preparation.
+With ``GITHUB_ACTIONS=true``, the first artifact access waits for the current
+workflow's builds, downloads artifacts and prepares image references. Build
+failures propagate to pytest; a missing charm must not trigger local packing.
+Explicit artifact overrides retain charm-ci's override behavior. Outside CI,
+the flag alone does not change the local prebuild flow or local packing fallback.
+
+.. important::
+
+    Deferred CI preparation requires charm-ci's opt-in support. Keep the reusable
+    workflow ref, ``OPCLI_GIT_REF`` in ``spread.yaml``, and the ``opcli`` dependency
+    in ``pyproject.toml`` aligned when upgrading, then regenerate ``uv.lock`` with
+    ``uv lock``. Overriding ``OPCLI_GIT_REF`` with an older revision can restore
+    eager preparation even though the opt-in is set.
+
+Run the isolated fixture-ordering regressions without a cluster:
+
+.. code-block::
+
+    tox -e fixture-ordering
+
+This environment uses the integration dependencies, not the lightweight unit
+test environment. Its mocked Juju tests hold artifact readiness behind a gate
+and check that external deployments precede application deployment.
+
 Submissions
 -----------
 
@@ -328,4 +387,3 @@ Structure
 - **Normalize symmetries**:
   Treat identical operations consistently, using a uniform approach.
   This also improves consistency and readability.
-

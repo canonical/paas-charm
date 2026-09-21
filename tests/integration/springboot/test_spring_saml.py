@@ -7,6 +7,7 @@
 import logging
 
 import jubilant
+import pytest
 import requests
 
 from tests.integration.types import App
@@ -18,7 +19,7 @@ WORKLOAD_PORT = 8080
 
 def test_springboot_saml_integration(
     juju: jubilant.Juju,
-    spring_boot_app: App,
+    request: pytest.FixtureRequest,
     saml_integrator: App,
     spring_boot_unit_ip: str,
     session_with_retry: requests.Session,
@@ -28,6 +29,7 @@ def test_springboot_saml_integration(
     act: call the samltest endpoint.
     assert: the charm should be redirected to IdP and when logged in should return 200.
     """
+    spring_boot_app = request.getfixturevalue("spring_boot_app")
     juju.integrate(spring_boot_app.name, saml_integrator.name)
     juju.wait(
         lambda status: jubilant.all_active(status, saml_integrator.name, spring_boot_app.name),

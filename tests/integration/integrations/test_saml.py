@@ -39,8 +39,6 @@ def test_saml_integration(
     # variables get injected into the workload.
     # However, for saml-integrator to get the metadata, we need a real SP, so SamlK8sTestHelper is
     # used to not have a dependency to an external SP.
-    app = request.getfixturevalue(app_fixture)
-
     model_name = juju.status().model.name
     saml_helper = SamlK8sTestHelper.deploy_saml_idp(model_name)
 
@@ -52,6 +50,7 @@ def test_saml_integration(
         trust=True,
     )
 
+    app = request.getfixturevalue(app_fixture)
     juju.wait(lambda status: jubilant.all_blocked(status, saml_integrator_app_name), timeout=600)
 
     saml_helper.prepare_pod(model_name, f"{saml_integrator_app_name}-0")

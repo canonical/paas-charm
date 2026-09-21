@@ -12,6 +12,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("s3_integrator_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,9 @@ logger = logging.getLogger(__name__)
     "app_fixture, port",
     [
         ("flask_app", 8000),
-        ("spring_boot_app", 8080),
+        pytest.param(
+            "spring_boot_app", 8080, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
     ],
 )
 def test_s3_integration(

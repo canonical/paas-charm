@@ -15,6 +15,8 @@ from playwright.sync_api import expect, sync_playwright
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("identity_bundle")
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,11 +24,25 @@ logger = logging.getLogger(__name__)
     "app_fixture, endpoint",
     [
         ("flask_app", "login"),
-        ("django_app", "auth_login"),
-        ("expressjs_app", "login"),
-        ("go_app", "login/openid-connect"),
-        ("fastapi_app", "login"),
-        ("spring_boot_app", "oauth2/authorization/oidc"),
+        pytest.param(
+            "django_app", "auth_login", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "expressjs_app", "login", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "go_app",
+            "login/openid-connect",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "fastapi_app", "login", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "spring_boot_app",
+            "oauth2/authorization/oidc",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
     ],
 )
 def test_oauth_integrations(

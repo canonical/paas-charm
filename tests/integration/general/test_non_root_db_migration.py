@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
             "table/users",
             8080,
             id="ExpressJS non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
         pytest.param(
             "flask_non_root_db_app",
@@ -29,14 +30,23 @@ logger = logging.getLogger(__name__)
             "tables/users",
             8000,
             id="Flask non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
-        pytest.param("django_non_root_app", "django-k8s", "len/users", 8000, id="Django non-root"),
+        pytest.param(
+            "django_non_root_app",
+            "django-k8s",
+            "len/users",
+            8000,
+            id="Django non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
         pytest.param(
             "fastapi_non_root_app",
             "fastapi-k8s",
             "table/users",
             8000,
             id="FastAPI non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
         pytest.param(
             "go_non_root_app",
@@ -44,6 +54,7 @@ logger = logging.getLogger(__name__)
             "postgresql/migratestatus",
             8080,
             id="Go non-root",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
     ],
 )

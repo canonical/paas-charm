@@ -37,7 +37,7 @@ where = ["src"]
 
 [tool.uv.sources]
 # opcli is published only from the charm-ci git repository, not PyPI.
-opcli = { git = "https://github.com/canonical/charm-ci.git", tag = "v1.0.1" }
+opcli = { git = "https://github.com/canonical/charm-ci.git", rev = "9e2958d9a36b7248c8ba2ef509d526df32f48a7f" }
 
 [tool.setuptools.package-data]
 paas_charm = ["**/cos/**", "**/cos/**/.**", "**/*.j2", "**/templates/**/*.py", "**/templates/**/*.json"]
@@ -53,6 +53,9 @@ show_missing = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 log_cli_level = "INFO"
+markers = [
+  "early_dependencies(*fixtures): deploy selected external services before the module's first artifact access",
+]
 pythonpath = [
   "examples/flask/charm/lib",
   "examples/django/charm/lib",

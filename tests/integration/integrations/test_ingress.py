@@ -13,16 +13,34 @@ from tests.integration.integrations.conftest import (
 )
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("ingress_provider")
+
 
 @pytest.mark.parametrize(
     "app_fixture, endpoint, expected_text",
     [
-        ("django_app", "/len/users", None),
-        ("expressjs_app", "/", None),
-        ("fastapi_app", "/", None),
+        pytest.param(
+            "django_app",
+            "/len/users",
+            None,
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "expressjs_app", "/", None, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "fastapi_app", "/", None, marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
         ("flask_app", "/", None),
-        ("go_app", "/", "Hello, World!"),
-        ("spring_boot_app", "/hello-world", None),
+        pytest.param(
+            "go_app", "/", "Hello, World!", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "spring_boot_app",
+            "/hello-world",
+            None,
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
     ],
 )
 def test_ingress(

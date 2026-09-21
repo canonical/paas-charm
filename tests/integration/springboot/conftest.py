@@ -16,8 +16,10 @@ WORKLOAD_PORT = 8080
 
 
 @pytest.fixture(scope="module", name="spring_boot_unit_ip")
-def spring_boot_unit_ip_fixture(juju: jubilant.Juju, spring_boot_app: App):
+def spring_boot_unit_ip_fixture(juju: jubilant.Juju, request: pytest.FixtureRequest):
     """Spring boot unit IP."""
+    request.getfixturevalue("saml_integrator_app")
+    spring_boot_app = request.getfixturevalue("spring_boot_app")
     status = juju.status()
     spring_boot_unit: jubilant.statustypes.UnitStatus = status.apps[spring_boot_app.name].units[
         f"{spring_boot_app.name}/0"
@@ -106,12 +108,19 @@ def simplesamlphp_ip_fixture(
     return pod_ip
 
 
+@pytest.fixture(scope="module", name="saml_integrator_app")
+def saml_integrator_app_fixture(juju: jubilant.Juju):
+    """Start SAML before the app, without address-dependent configuration."""
+    juju.deploy("saml-integrator", channel="latest/stable", trust=True)
+    return App("saml-integrator")
+
+
 @pytest.fixture(scope="module", name="saml_integrator")
-def saml_integrator_fixture(juju: jubilant.Juju, simplesamlphp_ip: str):
-    """SAML integrator charm."""
+def saml_integrator_fixture(juju: jubilant.Juju, saml_integrator_app: App, simplesamlphp_ip: str):
+    """Configure SAML only after the IDP knows the application's actual IP."""
     saml_config = {
         "entity_id": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
         "metadata_url": f"http://{simplesamlphp_ip}:8080/simplesaml/saml2/idp/metadata.php",
     }
-    juju.deploy("saml-integrator", channel="latest/stable", config=saml_config, trust=True)
-    yield App("saml-integrator")
+    juju.config(saml_integrator_app.name, saml_config)
+    yield saml_integrator_app

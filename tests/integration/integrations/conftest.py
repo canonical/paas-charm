@@ -111,17 +111,16 @@ def gateway_lb_ip(juju: jubilant.Juju, ingress_provider: tuple[str, str]) -> str
 @pytest.fixture(scope="module", name="flask_minimal_app")
 def flask_minimal_app_fixture(
     juju: jubilant.Juju,
-    charm_paths: dict[str, pathlib.Path],
-    flask_minimal_app_image: str,
+    app_artifacts,
     tmp_path_factory,
 ):
+    charm_paths, flask_minimal_app_image = app_artifacts("flask_minimal_app_image")
     framework = "flask-minimal"
     yield from generate_app_fixture(
         juju=juju,
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
-        use_postgres=False,
         resources={
             "app-image": flask_minimal_app_image,
         },
@@ -131,13 +130,15 @@ def flask_minimal_app_fixture(
 @pytest.fixture(scope="module", name="fastapi_app")
 def fastapi_app_fixture(
     juju: jubilant.Juju,
-    charm_paths: dict[str, pathlib.Path],
-    fastapi_app_image: str,
+    app_artifacts,
+    postgresql_app: App,
     tmp_path_factory,
 ):
+    charm_paths, fastapi_app_image = app_artifacts("fastapi_app_image")
     framework = "fastapi"
     yield from generate_app_fixture(
         juju=juju,
+        postgresql_app=postgresql_app,
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
@@ -151,13 +152,15 @@ def fastapi_app_fixture(
 @pytest.fixture(scope="module", name="go_app")
 def go_app_fixture(
     juju: jubilant.Juju,
-    charm_paths: dict[str, pathlib.Path],
-    go_app_image: str,
+    app_artifacts,
+    postgresql_app: App,
     tmp_path_factory,
 ):
+    charm_paths, go_app_image = app_artifacts("go_app_image")
     framework = "go"
     yield from generate_app_fixture(
         juju=juju,
+        postgresql_app=postgresql_app,
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
@@ -170,13 +173,15 @@ def go_app_fixture(
 @pytest.fixture(scope="module", name="expressjs_app")
 def expressjs_app_fixture(
     juju: jubilant.Juju,
-    charm_paths: dict[str, pathlib.Path],
-    expressjs_app_image: str,
+    app_artifacts,
+    postgresql_app: App,
     tmp_path_factory,
 ):
+    charm_paths, expressjs_app_image = app_artifacts("expressjs_app_image")
     framework = "expressjs"
     yield from generate_app_fixture(
         juju=juju,
+        postgresql_app=postgresql_app,
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
@@ -328,10 +333,14 @@ def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3
 @pytest.fixture(scope="module", name="tempo_app")
 def tempo_app_fixture(
     juju: jubilant.Juju,
-    s3_integrator_app,
+    request: pytest.FixtureRequest,
 ):
     """Deploys tempo in its HA version together with minio and s3-integrator."""
     tempo_app = "tempo"
+    if juju.status().apps.get(tempo_app):
+        logger.info("tempo already deployed")
+        return App(tempo_app)
+    s3_integrator_app = request.getfixturevalue("s3_integrator_app")
     worker_app = "tempo-worker"
     tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "2/edge"
     tempo_coordinator_charm_url, coordinator_channel = "tempo-coordinator-k8s", "2/edge"

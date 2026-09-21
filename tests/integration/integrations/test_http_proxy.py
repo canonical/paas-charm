@@ -11,6 +11,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("http_proxy_app")
+
 logger = logging.getLogger(__name__)
 
 

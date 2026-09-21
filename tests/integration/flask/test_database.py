@@ -11,8 +11,6 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.types import App
-
 # caused by pytest fixtures
 # pylint: disable=too-many-arguments
 
@@ -27,7 +25,7 @@ logger = logging.getLogger(__name__)
 )
 def test_with_database(
     juju: jubilant.Juju,
-    flask_app: App,
+    request: pytest.FixtureRequest,
     session_with_retry: requests.Session,
     endpoint: str,
     db_name: str,
@@ -44,6 +42,7 @@ def test_with_database(
     if not juju.status().apps.get(db_name):
         juju.deploy(db_name, channel=db_channel, revision=revision, trust=trust)
 
+    flask_app = request.getfixturevalue("flask_app")
     juju.wait(lambda status: status.apps.get(db_name, False) and status.apps[db_name].is_active)
 
     # Integrate with database

@@ -12,6 +12,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("mongodb_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,12 @@ logger = logging.getLogger(__name__)
     "app_fixture, port, endpoint",
     [
         ("flask_app", 8000, "mongodb/status"),
-        ("spring_boot_app", 8080, "mongodb/status"),
+        pytest.param(
+            "spring_boot_app",
+            8080,
+            "mongodb/status",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
     ],
 )
 def test_with_mongodb(

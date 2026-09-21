@@ -7,6 +7,7 @@
 import logging
 
 import jubilant
+import pytest
 import requests
 
 from tests.integration.conftest import INGRESS_HOSTNAME, gateway_lb_ip, pin_dns
@@ -64,9 +65,10 @@ def test_migration(go_app: App, session_with_retry: requests.Session, juju: jubi
         assert "SUCCESS" in response.text
 
 
+@pytest.mark.early_dependencies("ingress_provider")
 def test_open_ports(
     juju: jubilant.Juju,
-    go_app: App,
+    request: pytest.FixtureRequest,
     ingress_provider: tuple[str, str],
     session_with_retry: requests.Session,
 ):
@@ -75,6 +77,7 @@ def test_open_ports(
     act: integrate with the gateway charm through the ingress integration.
     assert: the configured workload port is open and ingress routes to the application.
     """
+    go_app = request.getfixturevalue("go_app")
     gateway_app, configurator_app = ingress_provider
     # Mount the retry adapter for https:// as well (session only mounts it for http://).
     session_with_retry.mount("https://", session_with_retry.get_adapter("http://"))

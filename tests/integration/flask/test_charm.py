@@ -218,9 +218,10 @@ def test_port_without_ingress(
     assert env_vars["FLASK_BASE_URL"] == f"http://{service_hostname}:{WORKLOAD_PORT}"
 
 
+@pytest.mark.early_dependencies("ingress_provider")
 def test_with_ingress(
     juju: jubilant.Juju,
-    flask_app: App,
+    request: pytest.FixtureRequest,
     ingress_provider: tuple[str, str],
     session_with_retry: requests.Session,
 ):
@@ -230,6 +231,7 @@ def test_with_ingress(
     assert: requesting the charm through the gateway should return a correct response,
          and the BASE_URL config should be correctly set (FLASK_BASE_URL env variable).
     """
+    flask_app = request.getfixturevalue("flask_app")
     gateway_app, configurator_app = ingress_provider
     try:
         juju.integrate(flask_app.name, configurator_app)

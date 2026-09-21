@@ -16,6 +16,8 @@ from tests.integration.helpers import (
 )
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("cos_apps")
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,11 +25,27 @@ logger = logging.getLogger(__name__)
     "app_fixture, dashboard_name",
     [
         ("flask_app", "Flask Operator"),
-        ("django_app", "Django Operator"),
-        ("spring_boot_app", "Spring Boot Operator"),
-        ("expressjs_app", "ExpressJS Operator"),
-        ("go_app", "Go Operator"),
-        ("fastapi_app", "FastAPI Operator"),
+        pytest.param(
+            "django_app", "Django Operator", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "spring_boot_app",
+            "Spring Boot Operator",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "expressjs_app",
+            "ExpressJS Operator",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "go_app", "Go Operator", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "fastapi_app",
+            "FastAPI Operator",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
     ],
 )
 def test_grafana_integration(

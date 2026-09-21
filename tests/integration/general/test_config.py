@@ -27,6 +27,7 @@ from tests.integration.types import App
             ["non-optional-int"],
             {"non-optional-int": "1"},
             id="django",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
         pytest.param(
             "fastapi_blocked_app",
@@ -35,6 +36,7 @@ from tests.integration.types import App
             ["non-optional-int"],
             {"non-optional-int": "1", "non-optional-string": "non-optional-value"},
             id="fastapi",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
         pytest.param(
             "go_blocked_app",
@@ -43,6 +45,7 @@ from tests.integration.types import App
             ["non-optional-int"],
             {"non-optional-int": "1"},
             id="go",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
         pytest.param(
             "expressjs_blocked_app",
@@ -51,6 +54,7 @@ from tests.integration.types import App
             ["non-optional-int"],
             {"non-optional-int": "1"},
             id="expressjs",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
         ),
     ],
 )

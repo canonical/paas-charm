@@ -11,6 +11,8 @@ import requests
 
 from tests.integration.types import App
 
+pytestmark = pytest.mark.early_dependencies("prometheus_app")
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,11 +20,27 @@ logger = logging.getLogger(__name__)
     "app_fixture,metrics_port,metrics_path",
     [
         ("flask_app", 9102, "/metrics"),
-        ("django_app", 9102, "/metrics"),
-        ("spring_boot_app", 8080, "/actuator/prometheus"),
-        ("expressjs_app", 9464, "/metrics"),
-        ("go_app", 8080, "/metrics"),
-        ("fastapi_app", 9464, "/metrics"),
+        pytest.param(
+            "django_app", 9102, "/metrics", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "spring_boot_app",
+            8080,
+            "/actuator/prometheus",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "expressjs_app",
+            9464,
+            "/metrics",
+            marks=pytest.mark.early_dependencies("postgresql_app"),
+        ),
+        pytest.param(
+            "go_app", 8080, "/metrics", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
+        pytest.param(
+            "fastapi_app", 9464, "/metrics", marks=pytest.mark.early_dependencies("postgresql_app")
+        ),
     ],
 )
 def test_prometheus_integration(
@@ -76,7 +94,7 @@ def test_prometheus_integration(
 
 
 def test_prometheus_custom_scrape_configs(
-    flask_app: App,
+    request: pytest.FixtureRequest,
     prometheus_app: App,
     juju: jubilant.Juju,
     session_with_retry: requests.Session,
@@ -88,6 +106,7 @@ def test_prometheus_custom_scrape_configs(
         (port 8081 on 2 units using wildcard), and scheduler-only job (port 8082 on unit 0 only
         using @scheduler placeholder). Verify custom labels and @scheduler resolution.
     """
+    flask_app = request.getfixturevalue("flask_app")
     try:
         juju.add_unit(flask_app.name)
         juju.wait(lambda status: status.apps[flask_app.name].is_active)

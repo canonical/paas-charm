@@ -17,11 +17,36 @@ logger = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "app_fixture, port, rabbitmq_app_fixture",
     [
-        ("flask_app", 8000, "rabbitmq_k8s_app"),
-        ("spring_boot_app", 8080, "rabbitmq_k8s_app"),
-        ("go_app", 8080, "rabbitmq_k8s_app"),
-        ("go_app", 8080, "rabbitmq_server_app"),
-        ("flask_app", 8000, "rabbitmq_server_app"),
+        pytest.param(
+            "flask_app",
+            8000,
+            "rabbitmq_k8s_app",
+            marks=pytest.mark.early_dependencies("rabbitmq_k8s_app"),
+        ),
+        pytest.param(
+            "spring_boot_app",
+            8080,
+            "rabbitmq_k8s_app",
+            marks=pytest.mark.early_dependencies("rabbitmq_k8s_app", "postgresql_app"),
+        ),
+        pytest.param(
+            "go_app",
+            8080,
+            "rabbitmq_k8s_app",
+            marks=pytest.mark.early_dependencies("rabbitmq_k8s_app", "postgresql_app"),
+        ),
+        pytest.param(
+            "go_app",
+            8080,
+            "rabbitmq_server_app",
+            marks=pytest.mark.early_dependencies("rabbitmq_server_app", "postgresql_app"),
+        ),
+        pytest.param(
+            "flask_app",
+            8000,
+            "rabbitmq_server_app",
+            marks=pytest.mark.early_dependencies("rabbitmq_server_app"),
+        ),
     ],
 )
 def test_rabbitmq_server_integration(
@@ -36,8 +61,8 @@ def test_rabbitmq_server_integration(
     act: Integrate the app with rabbitmq
     assert: Assert that RabbitMQ works correctly
     """
-    app = request.getfixturevalue(app_fixture)
     rabbitmq_app = request.getfixturevalue(rabbitmq_app_fixture)
+    app = request.getfixturevalue(app_fixture)
 
     try:
         juju.integrate(app.name, rabbitmq_app.name)
@@ -60,9 +85,10 @@ def test_rabbitmq_server_integration(
         juju.remove_relation(app.name, rabbitmq_app.name)
 
 
+@pytest.mark.early_dependencies("rabbitmq_server_app", "postgresql_app")
 def test_rabbitmq_ha_integration(
     juju: jubilant.Juju,
-    go_app: App,
+    request: pytest.FixtureRequest,
     rabbitmq_server_ha_app: App,
 ):
     """
@@ -70,6 +96,7 @@ def test_rabbitmq_ha_integration(
     act: Integrate the app with rabbitmq
     assert: Assert that RabbitMQ works correctly
     """
+    go_app = request.getfixturevalue("go_app")
     juju.integrate(go_app.name, rabbitmq_server_ha_app.name)
     juju.wait(
         lambda status: jubilant.all_active(status, go_app.name),
