@@ -5,6 +5,7 @@
 """Integration tests for the Flask custom Temporal relation."""
 
 import jubilant
+import pytest
 import requests
 
 from tests.integration.types import App
@@ -17,7 +18,8 @@ TEMPORAL_HOST = "temporal.local.test"
 TEMPORAL_PORT = "7233"
 
 
-def _deploy_temporal(juju: jubilant.Juju) -> None:
+@pytest.fixture(scope="module", name="temporal_app")
+def temporal_app_fixture(juju: jubilant.Juju) -> App:
     """Deploy and integrate the applications needed by Temporal."""
     deployed_apps = juju.status().apps
     if TEMPORAL_APP not in deployed_apps:
@@ -68,10 +70,12 @@ def _deploy_temporal(juju: jubilant.Juju) -> None:
         and jubilant.all_agents_idle(status),
         timeout=20 * 60,
     )
+    return App(TEMPORAL_APP)
 
 
 def test_temporal_relation_environment(
     juju: jubilant.Juju,
+    temporal_app: App,
     flask_app: App,
     session_with_retry: requests.Session,
 ) -> None:
@@ -80,14 +84,13 @@ def test_temporal_relation_environment(
     act: relate Flask to Temporal, then remove the relation.
     assert: Temporal environment variables are added and subsequently removed.
     """
-    _deploy_temporal(juju)
     juju.integrate(
         f"{flask_app.name}:temporal-host-info",
-        f"{TEMPORAL_APP}:temporal-host-info",
+        f"{temporal_app.name}:temporal-host-info",
     )
     juju.wait(
-        lambda status: jubilant.all_active(status, flask_app.name, TEMPORAL_APP)
-        and jubilant.all_agents_idle(status, flask_app.name, TEMPORAL_APP),
+        lambda status: jubilant.all_active(status, flask_app.name, temporal_app.name)
+        and jubilant.all_agents_idle(status, flask_app.name, temporal_app.name),
         timeout=10 * 60,
     )
 
@@ -100,7 +103,7 @@ def test_temporal_relation_environment(
 
     juju.remove_relation(
         f"{flask_app.name}:temporal-host-info",
-        f"{TEMPORAL_APP}:temporal-host-info",
+        f"{temporal_app.name}:temporal-host-info",
     )
     juju.wait(
         lambda status: status.apps[flask_app.name].is_active
