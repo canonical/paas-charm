@@ -436,20 +436,26 @@ def prometheus_app_name_fixture() -> str:
     return "prometheus-k8s"
 
 
+def _deploy_prometheus(juju: jubilant.Juju, app_name: str) -> None:
+    """Submit the Prometheus deployment if it is not already present."""
+    if juju.status().apps.get(app_name):
+        return
+    juju.deploy(
+        app_name,
+        channel="1/stable",
+        revision=129,
+        base="ubuntu@20.04",
+        trust=True,
+    )
+
+
 @pytest.fixture(scope="module", name="prometheus_app")
 def deploy_prometheus_fixture(
     juju: jubilant.Juju,
     prometheus_app_name: str,
 ) -> App:
     """Deploy prometheus."""
-    if not juju.status().apps.get(prometheus_app_name):
-        juju.deploy(
-            prometheus_app_name,
-            channel="1/stable",
-            revision=129,
-            base="ubuntu@20.04",
-            trust=True,
-        )
+    _deploy_prometheus(juju, prometheus_app_name)
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
         error=jubilant.any_blocked,
@@ -458,14 +464,20 @@ def deploy_prometheus_fixture(
     return App(prometheus_app_name)
 
 
+def _deploy_loki(juju: jubilant.Juju, app_name: str) -> None:
+    """Submit the Loki deployment if it is not already present."""
+    if juju.status().apps.get(app_name):
+        return
+    juju.deploy(app_name, channel="1/stable", trust=True)
+
+
 @pytest.fixture(scope="module", name="loki_app")
 def deploy_loki_fixture(
     juju: jubilant.Juju,
     loki_app_name: str,
 ) -> App:
     """Deploy loki."""
-    if not juju.status().apps.get(loki_app_name):
-        juju.deploy(loki_app_name, channel="1/stable", trust=True)
+    _deploy_loki(juju, loki_app_name)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
@@ -476,12 +488,15 @@ def deploy_loki_fixture(
 @pytest.fixture(scope="module", name="cos_apps")
 def deploy_cos_fixture(
     juju: jubilant.Juju,
-    loki_app,
-    prometheus_app,
+    loki_app_name: str,
+    prometheus_app_name: str,
     grafana_app_name: str,
-) -> dict[str:App]:
+) -> dict[str, App]:
     """Deploy the cos applications."""
-    if not juju.status().apps.get(grafana_app_name):
+    _deploy_loki(juju, loki_app_name)
+    _deploy_prometheus(juju, prometheus_app_name)
+    grafana_deployed = not juju.status().apps.get(grafana_app_name)
+    if grafana_deployed:
         juju.deploy(
             grafana_app_name,
             channel="1/stable",
@@ -489,22 +504,28 @@ def deploy_cos_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
-        juju.wait(
-            lambda status: jubilant.all_active(
-                status, loki_app.name, prometheus_app.name, grafana_app_name
-            )
-        )
+
+    juju.wait(
+        lambda status: jubilant.all_active(
+            status, loki_app_name, prometheus_app_name, grafana_app_name
+        ),
+        error=jubilant.any_blocked,
+        timeout=10 * 60,
+    )
+
+    if grafana_deployed:
         juju.integrate(
-            f"{prometheus_app.name}:grafana-source",
+            f"{prometheus_app_name}:grafana-source",
             f"{grafana_app_name}:grafana-source",
         )
         juju.integrate(
-            f"{loki_app.name}:grafana-source",
+            f"{loki_app_name}:grafana-source",
             f"{grafana_app_name}:grafana-source",
         )
+
     return {
-        "loki_app": loki_app,
-        "prometheus_app": prometheus_app,
+        "loki_app": App(loki_app_name),
+        "prometheus_app": App(prometheus_app_name),
         "grafana_app": App(grafana_app_name),
     }
 
