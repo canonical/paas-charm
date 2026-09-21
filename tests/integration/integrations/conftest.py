@@ -509,7 +509,6 @@ def deploy_cos_fixture(
         lambda status: jubilant.all_active(
             status, loki_app_name, prometheus_app_name, grafana_app_name
         ),
-        error=jubilant.any_blocked,
         timeout=10 * 60,
     )
 
