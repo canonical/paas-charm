@@ -84,37 +84,36 @@ def _reset_call_recorders():
     yield
 
 
-@pytest.fixture
-def envvar_context(context_factory) -> testing.Context:
+@pytest.fixture(name="envvar_context")
+def envvar_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the env-var custom relation charm."""
     return context_factory(EnvVarCharm)
 
 
-@pytest.fixture
-def context_context(context_factory) -> testing.Context:
+@pytest.fixture(name="context_context")
+def context_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the context inspection charm."""
     return context_factory(ContextCharm)
 
 
-@pytest.fixture
-def invalid_context(context_factory) -> testing.Context:
+@pytest.fixture(name="invalid_context")
+def invalid_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the invalid-data custom relation charm."""
     return context_factory(InvalidDataCharm)
 
 
-@pytest.fixture
-def overwriting_context(context_factory) -> testing.Context:
+@pytest.fixture(name="overwriting_context")
+def overwriting_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the overwriting custom relation charm."""
     return context_factory(OverwritingCharm)
 
 
-@pytest.fixture
-def side_effect_context(context_factory) -> testing.Context:
+@pytest.fixture(name="side_effect_context")
+def side_effect_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the side-effect custom relation charm."""
     return context_factory(SideEffectCharm)
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_env_vars(envvar_context, tmp_path, container_name: str) -> None:
     """
     arrange: a charm with an env-var custom relation related with a valid ``uri``.
@@ -135,7 +134,6 @@ def test_custom_relation_env_vars(envvar_context, tmp_path, container_name: str)
     assert "example-db" in setup_calls
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_missing_required_blocks(envvar_context, tmp_path) -> None:
     """
     arrange: a charm with a required env-var custom relation that is not related.
@@ -153,7 +151,6 @@ def test_custom_relation_missing_required_blocks(envvar_context, tmp_path) -> No
     assert out.unit_status == testing.BlockedStatus("missing integrations: example-db")
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_required_but_not_ready_blocks(envvar_context, tmp_path) -> None:
     """
     arrange: a required custom relation is established but has not published usable data.
@@ -172,7 +169,6 @@ def test_custom_relation_required_but_not_ready_blocks(envvar_context, tmp_path)
     assert out.unit_status == testing.BlockedStatus("missing integrations: example-db")
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_optional_absent_does_not_block(envvar_context, tmp_path) -> None:
     """
     arrange: a charm with an optional env-var custom relation that is not related.
@@ -191,7 +187,6 @@ def test_custom_relation_optional_absent_does_not_block(envvar_context, tmp_path
     assert "EXAMPLE_DB_URI" not in environment
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_invalid_data_blocks(invalid_context, tmp_path) -> None:
     """
     arrange: a charm with a custom relation related with malformed data (no ``uri``).
@@ -209,7 +204,6 @@ def test_custom_relation_invalid_data_blocks(invalid_context, tmp_path) -> None:
     assert out.unit_status == testing.BlockedStatus("missing 'uri'")
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_context_is_injected(
     context_context, tmp_path, container_name: str
 ) -> None:
@@ -234,7 +228,6 @@ def test_custom_relation_context_is_injected(
     assert "example-db" in setup_calls
 
 
-# pylint: disable=redefined-outer-name
 def test_side_effect_relation_reconciles_without_env(
     side_effect_context, tmp_path, container_name: str
 ) -> None:
@@ -256,7 +249,6 @@ def test_side_effect_relation_reconciles_without_env(
     assert "nginx-route" in reconcile_calls
 
 
-# pylint: disable=redefined-outer-name
 def test_custom_relation_relation_changed_triggers_restart(
     envvar_context, tmp_path, container_name: str
 ) -> None:
