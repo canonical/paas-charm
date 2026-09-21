@@ -162,6 +162,123 @@ DATABASE_GET_URI_TEST_PARAMS = [
             ),
             id="mongodb",
         ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://" "test-user:test-password" "@test-endpoint/test-database"
+                    ),
+                    "tls": "False",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=disable"
+                )
+            ),
+            id="PostgreSQL URI with TLS disabled",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://"
+                        "test-user:test-password"
+                        "@test-endpoint/test-database?connect_timeout=10"
+                    ),
+                    "tls": "True",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?connect_timeout=10&sslmode=require"
+                )
+            ),
+            id="PostgreSQL URI with TLS enabled and existing query",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "uris": (
+                        "postgresql://"
+                        "test-user:test-password"
+                        "@test-endpoint/test-database?sslmode=verify-full"
+                    ),
+                    "tls": "True",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=verify-full"
+                )
+            ),
+            id="PostgreSQL URI with explicit SSL mode",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                    "tls": "false",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=disable"
+                )
+            ),
+            id="PostgreSQL non-URI fields with TLS disabled",
+        ),
+        pytest.param(
+            "postgresql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                    "tls": "true",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris=(
+                    "postgresql://"
+                    "test-user:test-password"
+                    "@test-endpoint/test-database?sslmode=require"
+                )
+            ),
+            id="PostgreSQL non-URI fields with TLS enabled",
+        ),
+        pytest.param(
+            "mysql",
+            {
+                "0": {
+                    "username": "test-user",
+                    "password": "test-password",
+                    "database": "test-database",
+                    "endpoints": "test-endpoint",
+                    "tls": "False",
+                }
+            },
+            PaaSDatabaseRelationData(
+                uris="mysql://" "test-user:test-password" "@test-endpoint/test-database"
+            ),
+            id="MySQL ignores TLS field",
+        ),
     ],
 )
 def test_paas_database_requires_to_relation_data(
