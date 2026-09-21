@@ -113,10 +113,10 @@ deployment fixtures.
 Spread runs whole test modules. Mark external services with
 ``pytest.mark.early_dependencies("service_fixture")`` on the relevant test,
 parameter, or module so services needed by later selected cases also start
-before the first application. The module setup reads the test runner's public selected
-item list, so deselected cases do not cause extra deployments. Mark only
-deployment fixtures, not application-dependent readiness or mutations such as
-adding RabbitMQ HA units.
+before the first application. The module setup reads the test runner's public
+selected item list, so deselected cases do not cause extra deployments. Mark
+only deployment fixtures, not application-dependent readiness or mutations
+such as adding RabbitMQ HA units.
 
 Keep application-dependent relations and readiness checks after application
 deployment. For example, Spring Boot's SAML integrator can deploy without
@@ -126,9 +126,10 @@ Do not deploy optional integrations for tests that do not use them.
 In CI, ``OPCLI_DEFER_ARTIFACTS=1`` opts into charm-ci's deferred preparation.
 With ``GITHUB_ACTIONS=true``, the first artifact access waits for the current
 workflow's builds, downloads artifacts and prepares image references. Build
-failures propagate to the test process; a missing charm must not trigger local packing.
-Explicit artifact overrides retain charm-ci's override behavior. Outside CI,
-the flag alone does not change the local artifact build flow or local packing fallback.
+failures propagate to the test process; a missing charm must not trigger local
+packing. Explicit artifact overrides retain charm-ci's override behavior.
+Outside CI, the flag alone does not change the local artifact build flow or
+local packing fallback.
 
 .. important::
 
