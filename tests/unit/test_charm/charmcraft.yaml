@@ -30,16 +30,14 @@ config:
       description: Default port where the application will listen
       default: 8080
     app-secret-key:
-      type: string
-      description: Long secret to use for sessions, CSRF or any other occurrences
-        for random secrets erquired by application. This value is shared across all units.
-    app-secret-key-id:
       type: secret
       description: >-
-        This configuration is similar to `app-secret-key`, but instead accepts a Juju user secret ID.
+        Long secret to use for sessions, CSRF or any other occurrences
+        for random secrets required by application. This value is shared across all units.
+        This configuration accepts a Juju user secret ID.
         The secret should contain a single key, "value", which maps to the actual secret key.
         To create the secret, run the following command:
-        `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key expressjs-k8s`,
+        `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key paas-test-k8s`,
         and use the outputted secret ID to configure this option.
 
 containers:
