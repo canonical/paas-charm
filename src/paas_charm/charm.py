@@ -438,11 +438,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not isinstance(relation_class, type) or not issubclass(
                 relation_class, CustomRelation
             ):
-                logger.warning(
-                    "Skipping non-CustomRelation entry in custom_relations: %r",
-                    relation_class,
-                )
-                continue
+                raise CharmConfigInvalidError(f"non-CustomRelation entry: {relation_class!r}")
             relation_name = relation_class.relation_name
             if relation_name not in requires:
                 continue
