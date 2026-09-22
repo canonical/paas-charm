@@ -712,9 +712,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 self._oauth.update_client()
             self.update_app_and_unit_status(ops.MaintenanceStatus("Preparing service for restart"))
             self._create_app().restart()
-            for relation in self._custom_relations:
-                if relation.is_ready():
-                    relation.reconcile()
         except CharmConfigInvalidError as exc:
             logger.exception("Wrong Charm Configuration")
             self.update_app_and_unit_status(ops.BlockedStatus(exc.msg))

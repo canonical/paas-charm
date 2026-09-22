@@ -117,20 +117,6 @@ class OverwritingRelation(CustomRelation):
         return {"APP_SECRET_KEY": "overwritten-by-custom"}
 
 
-class NginxRouteRelation(CustomRelation):
-    """Side-effect custom relation with no env vars."""
-
-    relation_name = "nginx-route"
-
-    def setup(self, on_change) -> None:
-        """Record setup."""
-        setup_calls.append(self.relation_name)
-
-    def reconcile(self) -> None:
-        """Record that the side-effect reconcile ran."""
-        reconcile_calls.append(self.relation_name)
-
-
 class EnvVarCharm(TestCharm):
     """Test charm wiring the env-var custom relation."""
 
@@ -153,12 +139,6 @@ class OverwritingCharm(TestCharm):
     """Test charm wiring the overwriting custom relation."""
 
     custom_relations = [OverwritingRelation]
-
-
-class SideEffectCharm(TestCharm):
-    """Test charm wiring the side-effect custom relation."""
-
-    custom_relations = [NginxRouteRelation]
 
 
 if __name__ == "__main__":  # pragma: nocover

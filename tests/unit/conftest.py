@@ -38,7 +38,6 @@ from tests.unit.test_custom_relations.src.charm import (
     EnvVarCharm,
     InvalidDataCharm,
     OverwritingCharm,
-    SideEffectCharm,
 )
 
 CONTAINER_NAME = "app"
@@ -49,7 +48,6 @@ CHARM_ROOTS = {
     ContextCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     InvalidDataCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     OverwritingCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
-    SideEffectCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     FlaskCharm: PROJECT_ROOT / "examples/flask/charm",
     DjangoCharm: PROJECT_ROOT / "examples/django/charm",
     FastAPICharm: PROJECT_ROOT / "examples/fastapi/charm",

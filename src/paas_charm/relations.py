@@ -94,7 +94,7 @@ class CustomRelation(ops.Object, abc.ABC):
 
     Attrs:
         relation_name: The Juju endpoint name declared in ``charmcraft.yaml``
-            (under ``requires`` or ``provides``). Must be set by subclasses.
+            (under ``requires``. Must be set by subclasses.
         required: Whether relation is required or optional.
         charm: The parent charm instance. Prefer ``context`` over ``charm``.
         context: Read-only configuration context injected by the framework.
@@ -174,8 +174,8 @@ class CustomRelation(ops.Object, abc.ABC):
         """Wire event handlers and instantiate requirer objects.
 
         Called once during charm initialisation. Store the handle (or its
-        attributes) for later use in :meth:`is_ready`,
-        :meth:`gen_environment`, and :meth:`reconcile`.
+        attributes) for later use in :meth:`is_ready`
+        and :meth:`gen_environment`.
 
         Implementations call ``on_change()`` from each observed event handler;
         the framework routes that to its restart logic. Pass
@@ -216,12 +216,3 @@ class CustomRelation(ops.Object, abc.ABC):
             A mapping of environment variable names to values (default ``{}``).
         """
         return {}
-
-    def reconcile(self) -> None:
-        """Perform side-effect work on every successful restart.
-
-        Called after the main paas-charm reconcile logic is run, only when
-        :meth:`is_ready` returns ``True``. Use to push config files, call
-        external APIs, or publish relation data. Do NOT call ``on_change()``
-        here — that causes an infinite loop. Default is a no-op.
-        """

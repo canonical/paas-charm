@@ -14,7 +14,6 @@ from tests.unit.test_custom_relations.src.charm import (
     EnvVarCharm,
     InvalidDataCharm,
     OverwritingCharm,
-    SideEffectCharm,
     reconcile_calls,
     setup_calls,
 )
@@ -106,12 +105,6 @@ def invalid_context_fixture(context_factory) -> testing.Context:
 def overwriting_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the overwriting custom relation charm."""
     return context_factory(OverwritingCharm)
-
-
-@pytest.fixture(name="side_effect_context")
-def side_effect_context_fixture(context_factory) -> testing.Context:
-    """Return a Context rooted at the side-effect custom relation charm."""
-    return context_factory(SideEffectCharm)
 
 
 def test_custom_relation_env_vars(envvar_context, tmp_path, container_name: str) -> None:
@@ -226,27 +219,6 @@ def test_custom_relation_context_is_injected(
     assert environment["CTX_PORT"] == "8080"
     assert environment["CTX_CONTAINER"] == CONTAINER_NAME
     assert "example-db" in setup_calls
-
-
-def test_side_effect_relation_reconciles_without_env(
-    side_effect_context, tmp_path, container_name: str
-) -> None:
-    """
-    arrange: a charm with a side-effect custom relation (no env vars).
-    act: reconcile on config-changed.
-    assert: the unit is active, no nginx env is emitted, and reconcile ran.
-    """
-    base_state = _base_state(tmp_path)
-
-    out = side_effect_context.run(
-        side_effect_context.on.config_changed(),
-        testing.State(**base_state),
-    )
-
-    assert out.unit_status == testing.ActiveStatus()
-    environment = out.get_container(container_name).plan.services["test"].environment
-    assert not {key for key in environment if key.startswith("NGINX")}
-    assert "nginx-route" in reconcile_calls
 
 
 def test_custom_relation_relation_changed_triggers_restart(
