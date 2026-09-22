@@ -441,7 +441,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 raise CharmConfigInvalidError(f"non-CustomRelation entry: {relation_class!r}")
             relation_name = relation_class.relation_name
             if relation_name not in requires:
-                continue
+                raise CharmConfigInvalidError(f"Unused custom relation: {relation_class!r}")
             instance = relation_class(self)
             # Framework-injected private state; pylint: disable=protected-access
             instance._context = context
