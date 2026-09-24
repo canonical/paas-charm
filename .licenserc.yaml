@@ -37,6 +37,7 @@ header:
     - '**/prometheus_alert_rules/**'
     - '**/uv.lock'
     - 'docs/**'
+    - '.copier-answers.yml'
     - 'examples/springboot/spring-boot_app/pom.xml'
     - 'examples/springboot/spring-boot_app/src/main/resources/**'
     - '.readthedocs.yaml'
