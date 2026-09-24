@@ -1,0 +1,25 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 5875bae
+_src_path: gh:canonical/platform-engineering-documentation-files.git
+author: Canonical Ltd.
+discourse: https://discourse.charmhub.io
+display_contributors: false
+docs_host: canonical.com
+github_url: https://github.com/canonical/paas-charm
+html_favicon: ''
+license_name: ''
+license_url: ''
+linkcheck_timeout: 30
+llms_txt_description: ''
+matrix: https://matrix.to/#/#12-factor-charms:ubuntu.com
+mattermost: ''
+new_domain: canonical.com/juju/docs/12-factor
+ogp_image: https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg
+old_domain: canonical-12-factor.readthedocs-hosted.com
+product_page: documentation.ubuntu.com
+product_tag: ''
+project: 12-Factor app support
+repo_default_branch: main
+repo_folder: /docs/
+rtd_slug: juju/docs/12-factor
+source_edit_link: https://github.com/canonical/paas-charm
