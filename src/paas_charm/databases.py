@@ -5,6 +5,7 @@
 
 import logging
 import typing
+import urllib.parse
 
 import ops
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequires
@@ -39,17 +40,43 @@ class PaaSDatabaseRelationData(BaseModel):
 class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancestors
     """Class to handle database relations."""
 
+    def _add_postgresql_sslmode(self, uri: str, tls: str | None) -> str:
+        """Add the PostgreSQL SSL mode indicated by the relation data.
+
+        Args:
+            uri: The PostgreSQL connection URI.
+            tls: Whether TLS is enabled on the database provider.
+
+        Returns:
+            The connection URI with the appropriate SSL mode.
+        """
+        if self.relation_name != "postgresql" or tls is None:
+            return uri
+
+        sslmode = {"true": "require", "false": "disable"}.get(tls.lower())
+        if sslmode is None:
+            logger.warning("Incorrect TLS value from the database provider: %s", tls)
+            return uri
+
+        parsed_uri = urllib.parse.urlsplit(uri)
+        if "sslmode" in dict(urllib.parse.parse_qsl(parsed_uri.query, keep_blank_values=True)):
+            return uri
+
+        query = (
+            f"{parsed_uri.query}&sslmode={sslmode}" if parsed_uri.query else f"sslmode={sslmode}"
+        )
+        return urllib.parse.urlunsplit(parsed_uri._replace(query=query))
+
     def to_relation_data(self) -> PaaSDatabaseRelationData | None:
         """Convert the current state to relation data.
 
         Returns:
             DatabaseRelationData: The relation data if available, None otherwise.
         """
-        relation_data = list(
-            self.fetch_relation_data(
-                fields=["uris", "endpoints", "username", "password", "database"]
-            ).values()
-        )
+        fields = ["uris", "endpoints", "username", "password", "database"]
+        if self.relation_name == "postgresql":
+            fields.append("tls")
+        relation_data = list(self.fetch_relation_data(fields=fields).values())
 
         if not relation_data:
             return None
@@ -59,7 +86,9 @@ class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancest
         data = relation_data[0]
 
         if "uris" in data:
-            return PaaSDatabaseRelationData(uris=data["uris"])
+            return PaaSDatabaseRelationData(
+                uris=self._add_postgresql_sslmode(data["uris"], data.get("tls"))
+            )
 
         # Check that the relation data is well formed according to the following json_schema:
         # https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/mysql_client/v0/schemas/provider.json
@@ -70,9 +99,12 @@ class PaaSDatabaseRequires(DatabaseRequires):  # pylint: disable=too-many-ancest
         database_name = data.get("database", self.database)
         endpoint = data["endpoints"].split(",")[0]
         return PaaSDatabaseRelationData(
-            uris=f"{self.relation_name}://"
-            f"{data['username']}:{data['password']}"
-            f"@{endpoint}/{database_name}"
+            uris=self._add_postgresql_sslmode(
+                f"{self.relation_name}://"
+                f"{data['username']}:{data['password']}"
+                f"@{endpoint}/{database_name}",
+                data.get("tls"),
+            )
         )
 
 
