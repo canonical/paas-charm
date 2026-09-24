@@ -81,6 +81,11 @@ def test_expressjs_environment_vars(
     for set_env_name, set_env_value in set_env.items():
         monkeypatch.setenv(set_env_name, set_env_value)
 
+    config = dict(config)
+    if "app-secret-key" in config:
+        secret = testing.Secret(tracked_content={"value": config["app-secret-key"]})
+        base_state["secrets"].append(secret)
+        config["app-secret-key"] = secret.id
     state = testing.State(**{**base_state, "config": config})
     out = expressjs_context.run(expressjs_context.on.config_changed(), state)
 

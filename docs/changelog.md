@@ -33,8 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   framework metrics scraping.
 * fix: Use OpenTelemetry auto-instrumentation for metrics in the FastAPI example application.
 * fix: Serve ExpressJS Prometheus metrics on the configured `METRICS_PORT`.
-* breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
-  `app-secret-key-id` while preserving their framework-prefixed workload variables.
+* breaking: Standardize the secret key configuration of all frameworks (including the former
+  `flask-secret-key` and `django-secret-key`) as a single `app-secret-key` option of
+  `type: secret` that accepts a Juju user secret ID, replacing the previous string
+  `app-secret-key` and `app-secret-key-id` options. Framework-prefixed workload variables
+  (`FLASK_SECRET_KEY`, `DJANGO_SECRET_KEY`) are preserved.
 * fix: Use the charm application name for the OpenFGA store name.
 
 ## 1.12.0 - 2026-07-03
