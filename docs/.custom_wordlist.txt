@@ -38,6 +38,7 @@ libs
 js
 md
 natively
+OAuth
 OCI
 OIDC
 OpenFGA

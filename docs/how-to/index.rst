@@ -44,6 +44,9 @@ configuring, integrating, and using a 12-factor app charm.
 * :ref:`Provide custom COS dashboards and alert rules <how_to_add_custom_cos_assets>`:
   Add your own Grafana dashboards and Loki/Prometheus alert rules by shipping a
   ``cos_custom/`` directory with the charm.
+* :ref:`Add a custom relation <how_to_add_custom_relation>`:
+  Add your own Juju relation to a 12-factor charm via the public
+  ``CustomRelation`` extension API.
 
 Manage a deployment
 -------------------
@@ -77,6 +80,7 @@ Below are step-by-step instructions for developing and contributing to the 12-fa
    Publish a charm to Charmhub <publish-charm>
    Get support <get-support>
    Custom COS dashboards and alert rules <custom-cos-assets>
+   Add a custom relation <add-custom-relation>
    Add a new framework <add-new-framework>
    Migrate to the uv plugin <uv-migration>
    Contribute <contribute>
