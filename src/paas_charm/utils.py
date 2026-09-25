@@ -92,16 +92,7 @@ def enable_pebble_log_forwarding() -> bool:
         True if the current environment allows to enable pebble log forwarding feature.
     """
     juju_version = ops.JujuVersion.from_environ()
-    if (juju_version.major, juju_version.minor) < (3, 4):
-        return False
-    try:
-        # disable "imported but unused" and "import outside toplevel" error
-        # pylint: disable=import-outside-toplevel,unused-import
-        import charms.loki_k8s.v1.loki_push_api  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
+    return (juju_version.major, juju_version.minor) >= (3, 4)
 
 
 @functools.lru_cache

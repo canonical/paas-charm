@@ -8,6 +8,7 @@ import os.path
 import typing
 from collections.abc import Iterable
 
+import charms.loki_k8s.v1.loki_push_api
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
@@ -57,43 +58,25 @@ class Observability(ops.Object):
             relation_name="metrics-endpoint",
             refresh_event=[charm.on.config_changed, charm.on[container_name].pebble_ready],
         )
-        # The charm isn't necessarily bundled with charms.loki_k8s.v1
-        # Dynamically switches between two versions here.
+        # When pebble log forwarding is available, use LogForwarder; otherwise
+        # fall back to LogProxyConsumer.
         if enable_pebble_log_forwarding():
-            # ignore "import outside toplevel" linting error
-            import charms.loki_k8s.v1.loki_push_api  # pylint: disable=import-outside-toplevel
-
             self._logging = charms.loki_k8s.v1.loki_push_api.LogForwarder(
                 charm,
                 alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
                 relation_name="logging",
             )
         else:
-            try:
-                # ignore "import outside toplevel" linting error
-                import charms.loki_k8s.v0.loki_push_api  # pylint: disable=import-outside-toplevel
-
-                self._logging = charms.loki_k8s.v0.loki_push_api.LogProxyConsumer(
-                    charm,
-                    alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
-                    container_name=container_name,
-                    log_files=[str(log_file) for log_file in log_files],
-                    relation_name="logging",
-                )
-            except ImportError:
-                # ignore "import outside toplevel" linting error
-                import charms.loki_k8s.v1.loki_push_api  # pylint: disable=import-outside-toplevel
-
-                self._logging = charms.loki_k8s.v1.loki_push_api.LogProxyConsumer(
-                    charm,
-                    alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
-                    logs_scheme={
-                        container_name: {
-                            "log-files": [str(log_file) for log_file in log_files],
-                        },
+            self._logging = charms.loki_k8s.v1.loki_push_api.LogProxyConsumer(
+                charm,
+                alert_rules_path=os.path.join(cos_dir, "loki_alert_rules"),
+                logs_scheme={
+                    container_name: {
+                        "log-files": [str(log_file) for log_file in log_files],
                     },
-                    relation_name="logging",
-                )
+                },
+                relation_name="logging",
+            )
 
         self._grafana_dashboards = GrafanaDashboardProvider(
             charm,
