@@ -21,7 +21,7 @@ from paas_charm.paas_config import LoggingFormat
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
+    from charmlibs.interfaces.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData

@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
+    "charmlibs-interfaces-openfga==1.0.0",
     "cosl==1.10.3",
     "dpcharmlibs-interfaces==1.2.0",
     "Jinja2==3.1.6",
