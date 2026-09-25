@@ -477,6 +477,19 @@ wheels = [
 ]
 
 [[package]]
+name = "charmlibs-interfaces-openfga"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ops" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/fc/213675ddf81ab88b9157c4989ad68f8e840023eac5f0680e7ed228841983/charmlibs_interfaces_openfga-1.0.0.tar.gz", hash = "sha256:e168bd4155c913dd24ecfba8a9e11894301d5b436eff4c4bd6fe368dd5581415", size = 29600, upload-time = "2026-07-16T23:59:09.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/9c/14a36d11d0719fee063e9c80e3c1d942e8593e3256961fe5c261bf109ea1/charmlibs_interfaces_openfga-1.0.0-py3-none-any.whl", hash = "sha256:4e18861a34c4bda6d3f2a11c05d95633a22ee48f858ebc0475bc6ea076b73282", size = 6086, upload-time = "2026-07-16T23:59:07.844Z" },
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1760,6 +1773,7 @@ name = "paas-charm"
 version = "2.0.dev1"
 source = { editable = "." }
 dependencies = [
+    { name = "charmlibs-interfaces-openfga" },
     { name = "cosl" },
     { name = "dpcharmlibs-interfaces" },
     { name = "jinja2" },
@@ -1819,6 +1833,7 @@ unit = [
 
 [package.metadata]
 requires-dist = [
+    { name = "charmlibs-interfaces-openfga", specifier = "==1.0.0" },
     { name = "cosl", specifier = "==1.10.3" },
     { name = "dpcharmlibs-interfaces", specifier = "==1.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },

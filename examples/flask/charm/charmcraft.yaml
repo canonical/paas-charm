@@ -23,8 +23,6 @@ charm-libs:
     version: "0"
   - lib: saml-integrator.saml
     version: "0"
-  - lib: openfga-k8s.openfga
-    version: "1"
   - lib: smtp-integrator.smtp
     version: "0"
   - lib: tempo-coordinator-k8s.tracing

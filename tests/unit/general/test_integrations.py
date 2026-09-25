@@ -11,7 +11,7 @@ from types import NoneType
 from unittest.mock import MagicMock, patch
 
 import pytest
-from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
+from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
 from charms.saml_integrator.v0.saml import SamlEndpoint
 from charms.smtp_integrator.v0.smtp import (
     AuthType,
