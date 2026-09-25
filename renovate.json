@@ -17,6 +17,10 @@
   },
   "packageRules": [
     {
+      "enabled": false,
+      "matchFileNames": ["docs/**"]
+    },
+    {
       "matchFileNames": [
         "examples/**/charm/pyproject.toml"
       ],
@@ -37,8 +41,5 @@
         "*charm-ci*"
       ]
     }
-  ],
-  "ignorePaths": [
-    "docs/**"
   ]
 }

@@ -232,12 +232,11 @@ exclude_patterns = [
 ]
 
 html_css_files = [
-    "css/pdf.css",
-    "cookie-banner.css",
+    "https://assets.ubuntu.com/v1/d86746ef-cookie_banner.css",
 ]
 
 html_js_files = [
-    "js/bundle.js",
+    "https://assets.ubuntu.com/v1/287a5e8f-bundle.js",
     "js/overwrite_links.js",
 ]
 
