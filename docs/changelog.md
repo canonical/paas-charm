@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* chore: Add a unit test that keeps the example charm dependencies in sync with the root
+  `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.
 * fix: Replace the deprecated `hydra.oauth` charm library with
   `charmlibs.interfaces.oauth`.
