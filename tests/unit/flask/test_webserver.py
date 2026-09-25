@@ -13,7 +13,6 @@ import pytest
 from ops import pebble, testing
 
 from paas_charm.paas_config import LoggingFormat, PaasConfig
-from paas_charm.utils import enable_pebble_log_forwarding
 
 GUNICORN_CONFIG_TEST_PARAMS = [
     pytest.param(
@@ -73,75 +72,6 @@ GUNICORN_CONFIG_TEST_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "flask_context",
-    [
-        {
-            "paas_config": PaasConfig(framework_logging_format=LoggingFormat.NONE),
-            "juju_version": "3.3.1",
-        }
-    ],
-    indirect=True,
-)
-@pytest.mark.parametrize(
-    "config,tracing_enabled,expected_config",
-    GUNICORN_CONFIG_TEST_PARAMS,
-)
-def test_gunicorn_config(
-    flask_context,
-    base_state,
-    container_name: str,
-    config: dict,
-    tracing_enabled: bool,
-    expected_config: str,
-) -> None:
-    """
-    arrange: configure Gunicorn and optionally relate tracing.
-    act: reconcile the charm.
-    assert: the exact generated config and config-check exec arguments are preserved.
-    """
-    if tracing_enabled:
-        base_state["relations"].append(
-            testing.Relation(
-                endpoint="tracing",
-                interface="tracing",
-                remote_app_data={
-                    "receivers": (
-                        '[{"protocol": {"name": "otlp_http", "type": "http"}, '
-                        '"url": "http://test-ip:4318"}]'
-                    )
-                },
-            )
-        )
-    state = testing.State(**{**base_state, "config": config})
-
-    out = flask_context.run(flask_context.on.config_changed(), state)
-
-    filesystem = out.get_container(container_name).get_filesystem(flask_context)
-    assert (
-        filesystem / "var" / "lib" / "gunicorn" / "gunicorn.conf.py"
-    ).read_text() == expected_config
-    check_exec = next(
-        args
-        for args in flask_context.exec_history[container_name]
-        if args.command[-1] == "--check-config"
-    )
-    assert check_exec.command == [
-        "/bin/python3",
-        "-m",
-        "gunicorn",
-        "-c",
-        "/var/lib/gunicorn/gunicorn.conf.py",
-        "app:app",
-        "-k",
-        "sync",
-        "--check-config",
-    ]
-    assert check_exec.working_dir == "/app"
-    assert check_exec.user == check_exec.group == "_daemon_"
-    assert check_exec.environment["FLASK_SECRET_KEY"] == "test"
-
-
 def test_real_paas_config_enables_structured_logging(
     flask_context,
     base_state,
@@ -193,24 +123,12 @@ def test_webserver_reload(
         assert send_signal.call_args.args == (signal.SIGHUP, "flask")
 
 
-def test_enable_pebble_log_forwarding(monkeypatch) -> None:
-    """
-    arrange: set Juju versions around the Pebble forwarding support boundary.
-    act: query Pebble log-forwarding support.
-    assert: forwarding is enabled from Juju 3.4.
-    """
-    monkeypatch.setenv("JUJU_VERSION", "3.3.1")
-    assert not enable_pebble_log_forwarding()
-    monkeypatch.setenv("JUJU_VERSION", "3.4.0")
-    assert enable_pebble_log_forwarding()
-
-
 @pytest.mark.parametrize(
     "flask_context",
     [
         {
             "paas_config": PaasConfig(framework_logging_format=LoggingFormat.NONE),
-            "juju_version": "3.4.0",
+            "juju_version": "3.6.0",
         }
     ],
     indirect=True,

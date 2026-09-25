@@ -17,14 +17,11 @@ import ops
 from ops.pebble import ExecError, PathError
 
 from paas_charm._gunicorn.workload_config import (
-    APPLICATION_ERROR_LOG_FILE,
-    APPLICATION_LOG_FILE,
     STATSD_HOST,
 )
 from paas_charm.app import WorkloadConfig
 from paas_charm.exceptions import CharmConfigInvalidError
 from paas_charm.paas_config import LoggingFormat
-from paas_charm.utils import enable_pebble_log_forwarding
 
 logger = logging.getLogger(__name__)
 
@@ -153,21 +150,14 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
                 if isinstance(setting_value, (int, str))
                 else int(setting_value.total_seconds())
             )
-        if enable_pebble_log_forwarding():
-            access_log = "-"
-            error_log = "-"
-        else:
-            access_log = str(APPLICATION_LOG_FILE)
-            error_log = str(APPLICATION_ERROR_LOG_FILE)
-
         jinja_environment = jinja2.Environment(
             loader=jinja2.PackageLoader("paas_charm", "templates"), autoescape=True
         )
         config = jinja_environment.get_template("gunicorn.conf.py.j2").render(
             workload_port=self._workload_config.port,
             workload_app_dir=str(self._workload_config.app_dir),
-            access_log=access_log,
-            error_log=error_log,
+            access_log="-",
+            error_log="-",
             statsd_host=str(STATSD_HOST),
             enable_tracing=self._workload_config.tracing_enabled,
             enable_json_logging=self._workload_config.logging_format == LoggingFormat.JSON,
@@ -197,7 +187,6 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         Raises:
             CharmConfigInvalidError: if the charm configuration is not valid.
         """
-        self._prepare_log_dir()
         webserver_config_path = str(self._config_path)
         try:
             current_webserver_config = self._container.pull(webserver_config_path)
@@ -235,16 +224,3 @@ class GunicornWebserver:  # pylint: disable=too-few-public-methods
         if is_webserver_running:
             logger.info("gunicorn config changed, reloading")
             self._container.send_signal(self._reload_signal, self._workload_config.service_name)
-
-    def _prepare_log_dir(self) -> None:
-        """Prepare access and error log directory for the application."""
-        container = self._container
-        for log in self._workload_config.log_files:
-            log_dir = str(log.parent.absolute())
-            if not container.exists(log_dir):
-                container.make_dir(
-                    log_dir,
-                    make_parents=True,
-                    user=self._workload_config.user,
-                    group=self._workload_config.group,
-                )
