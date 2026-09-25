@@ -10,7 +10,9 @@ html_favicon: ''
 license_name: ''
 license_url: ''
 linkcheck_timeout: 30
-llms_txt_description: ''
+llms_txt_description: This is the documentation for 12-Factor app support, a library
+    and set of extensions that natively support web application frameworks in Charmcraft
+    and Rockcraft.
 matrix: https://matrix.to/#/#12-factor-charms:ubuntu.com
 mattermost: ''
 new_domain: canonical.com/juju/docs/12-factor

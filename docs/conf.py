@@ -155,7 +155,7 @@ rediraffe_dir_only = True
 # product docs.
 llms_txt_description = textwrap.dedent(
     """\
-    
+    This is the documentation for 12-Factor app support, a library and set of extensions that natively support web application frameworks in Charmcraft and Rockcraft.
     """
 )
 
