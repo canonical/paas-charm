@@ -477,6 +477,19 @@ wheels = [
 ]
 
 [[package]]
+name = "charmlibs-interfaces-tracing"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ops" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4e/39/18672ebcf2e84cc25c9a8f023a9a3240949e2a8b865afe31e00b9f9b1e84/charmlibs_interfaces_tracing-1.0.0.tar.gz", hash = "sha256:b82d5b3a600f157f362cf1753b42f5a60cfdc03ef9b3b3ca60186cbfe0a7970a", size = 46463, upload-time = "2026-09-09T03:35:50.233Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/91/a603416f7027dd873107dfd7f8aa280f841da6f19a404c6e418bf3d6f95b/charmlibs_interfaces_tracing-1.0.0-py3-none-any.whl", hash = "sha256:65decc89bf62837e12299d5150c9fd5469b17f1f86f4efa6f785a63ac66f7a54", size = 12744, upload-time = "2026-09-09T03:35:49.007Z" },
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1760,6 +1773,7 @@ name = "paas-charm"
 version = "2.0.dev1"
 source = { editable = "." }
 dependencies = [
+    { name = "charmlibs-interfaces-tracing" },
     { name = "cosl" },
     { name = "dpcharmlibs-interfaces" },
     { name = "jinja2" },
@@ -1819,6 +1833,7 @@ unit = [
 
 [package.metadata]
 requires-dist = [
+    { name = "charmlibs-interfaces-tracing", specifier = "==1.0.0" },
     { name = "cosl", specifier = "==1.10.3" },
     { name = "dpcharmlibs-interfaces", specifier = "==1.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },

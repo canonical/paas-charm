@@ -5,7 +5,7 @@
 
 import logging
 
-from charms.tempo_coordinator_k8s.v0.tracing import (
+from charmlibs.interfaces.tracing import (
     ProtocolNotRequestedError,
     TracingEndpointRequirer,
 )
@@ -61,7 +61,9 @@ class PaaSTracingEndpointRequirer(TracingEndpointRequirer):
         if not endpoint:
             return None
         try:
-            return PaaSTracingRelationData(endpoint=endpoint, service_name=self._charm.app.name)
+            return PaaSTracingRelationData.model_validate(
+                {"endpoint": endpoint, "service_name": self._charm.app.name}
+            )
         except ValidationError as exc:
             error_messages = build_validation_error_message(exc, underscore_to_dash=True)
             logger.error(error_messages.long)
