@@ -802,6 +802,7 @@ def deploy_postgresql(
     juju.deploy(
         "postgresql-k8s",
         channel="14/stable",
+        revision=925,
         base="ubuntu@22.04",
         trust=True,
         config={
