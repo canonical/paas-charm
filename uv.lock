@@ -477,6 +477,19 @@ wheels = [
 ]
 
 [[package]]
+name = "charmlibs-interfaces-oauth"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "ops" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/4f/bcdcf63ad21cc92d8345a156e59f12a7b0d6c7c3ddbd136075928d4a4c1e/charmlibs_interfaces_oauth-1.1.0.tar.gz", hash = "sha256:87438364242d7b663ae5b432d7802ff0b33177ea579b0917b1ba635d191c97fa", size = 49922, upload-time = "2026-09-11T10:48:53.277Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/e4/7f73de270221d2a97459f3d32ec538ed74180ce4bda6650a87666d246191/charmlibs_interfaces_oauth-1.1.0-py3-none-any.whl", hash = "sha256:a350e54f66ec5a58f5b31fb34db0b50e2ac3188729e422c39328b8623ec1261d", size = 10454, upload-time = "2026-09-11T10:48:52.088Z" },
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1760,6 +1773,7 @@ name = "paas-charm"
 version = "2.0.dev1"
 source = { editable = "." }
 dependencies = [
+    { name = "charmlibs-interfaces-oauth" },
     { name = "cosl" },
     { name = "dpcharmlibs-interfaces" },
     { name = "jinja2" },
@@ -1819,6 +1833,7 @@ unit = [
 
 [package.metadata]
 requires-dist = [
+    { name = "charmlibs-interfaces-oauth", specifier = "==1.1.0" },
     { name = "cosl", specifier = "==1.10.3" },
     { name = "dpcharmlibs-interfaces", specifier = "==1.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },
