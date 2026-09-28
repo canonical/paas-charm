@@ -62,9 +62,11 @@ otel_metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricRe
 FastAPIInstrumentor.instrument_app(app)
 tracer = trace.get_tracer(__name__)
 
-engine = create_engine(os.environ["POSTGRESQL_DB_CONNECT_STRING"], echo=True)
+_postgresql_url = os.environ.get("POSTGRESQL_DB_CONNECT_STRING")
 
-Session = scoped_session(sessionmaker(bind=engine))
+engine = create_engine(_postgresql_url, echo=True) if _postgresql_url else None
+
+Session = scoped_session(sessionmaker(bind=engine)) if engine is not None else None
 
 Base = declarative_base()
 config = Config(env_prefix="APP_")
@@ -178,7 +180,7 @@ async def boom():
 
 @app.get("/table/{table}")
 def test_table(table: str):
-    if inspect(engine).has_table(table):
+    if engine is not None and inspect(engine).has_table(table):
         return "SUCCESS"
     else:
         raise HTTPException(status_code=404, detail="Table not found")

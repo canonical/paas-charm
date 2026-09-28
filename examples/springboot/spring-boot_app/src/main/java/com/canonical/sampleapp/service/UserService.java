@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import com.canonical.sampleapp.service.dto.UserDTO;
  */
 @Service
 @Transactional
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);

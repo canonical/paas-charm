@@ -263,6 +263,7 @@ def flask_non_root_db_app_fixture(
         juju=juju,
         charm_paths=charm_paths,
         framework=framework,
+        app_name="flask-non-root-db-k8s",
         tmp_path_factory=tmp_path_factory,
         use_postgres=True,
         resources={
@@ -308,6 +309,30 @@ def django_non_root_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        config={"django-allowed-hosts": "*"},
+        resources={
+            "app-image": django_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
+    )
+
+
+@pytest.fixture(scope="module", name="django_non_root_db_app")
+def django_non_root_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    django_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the non-root Django charm with a database integration."""
+    framework = "django"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="django-non-root-db-k8s",
+        tmp_path_factory=tmp_path_factory,
         use_postgres=True,
         config={"django-allowed-hosts": "*"},
         resources={
@@ -330,6 +355,30 @@ def fastapi_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "app-image": fastapi_app_image,
+        },
+        config={"non-optional-string": "string"},
+    )
+
+
+@pytest.fixture(scope="module", name="fastapi_db_app")
+def fastapi_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the FastAPI charm with a database integration."""
+    framework = "fastapi"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="fastapi-db-k8s",
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         resources={
             "app-image": fastapi_app_image,
         },
@@ -351,6 +400,31 @@ def fastapi_non_root_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "app-image": fastapi_app_image,
+        },
+        config={"non-optional-string": "non-optional-value"},
+        charm_dict={"charm-user": "non-root"},
+    )
+
+
+@pytest.fixture(scope="module", name="fastapi_non_root_db_app")
+def fastapi_non_root_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    fastapi_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the non-root FastAPI charm with a database integration."""
+    framework = "fastapi"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="fastapi-non-root-db-k8s",
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         resources={
             "app-image": fastapi_app_image,
         },
@@ -371,6 +445,28 @@ def go_app_fixture(
         juju=juju,
         charm_paths=charm_paths,
         framework=framework,
+        use_postgres=False,
+        tmp_path_factory=tmp_path_factory,
+        resources={
+            "app-image": go_app_image,
+        },
+    )
+
+
+@pytest.fixture(scope="module", name="go_db_app")
+def go_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    go_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Go charm with a database integration."""
+    framework = "go"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="go-db-k8s",
         use_postgres=True,
         tmp_path_factory=tmp_path_factory,
         resources={
@@ -393,6 +489,30 @@ def go_non_root_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "app-image": go_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
+    )
+
+
+@pytest.fixture(scope="module", name="go_non_root_db_app")
+def go_non_root_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    go_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the non-root Go charm with a database integration."""
+    framework = "go"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="go-non-root-db-k8s",
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         resources={
             "app-image": go_app_image,
         },
@@ -407,30 +527,40 @@ def expressjs_app_fixture(
     expressjs_app_image: str,
     tmp_path_factory,
 ):
-    """ExpressJS charm used for integration testing.
-    Builds the charm and deploys it and the relations it depends on.
-    """
-    app_name = "expressjs-k8s"
-
-    deploy_postgresql(juju)
-
-    resources = {
-        "app-image": expressjs_app_image,
-    }
-    charm_file = build_charm_file(charm_paths, "expressjs", tmp_path_factory)
-    juju.deploy(
-        charm=charm_file,
-        resources=resources,
+    """Build and deploy the ExpressJS charm without a database integration."""
+    framework = "expressjs"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "app-image": expressjs_app_image,
+        },
     )
 
-    # Add required relations
-    juju.integrate(app_name, "postgresql-k8s:database")
-    juju.wait(
-        lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
-        timeout=300,
-    )
 
-    return App(app_name)
+@pytest.fixture(scope="module", name="expressjs_db_app")
+def expressjs_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    expressjs_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the ExpressJS charm with a database integration."""
+    framework = "expressjs"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="expressjs-db-k8s",
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
+        resources={
+            "app-image": expressjs_app_image,
+        },
+    )
 
 
 @pytest.fixture(scope="module", name="expressjs_non_root_app")
@@ -446,6 +576,29 @@ def expressjs_non_root_app_fixture(
         juju=juju,
         charm_paths=charm_paths,
         framework=framework,
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        resources={
+            "app-image": expressjs_app_image,
+        },
+        charm_dict={"charm-user": "non-root"},
+    )
+
+
+@pytest.fixture(scope="module", name="expressjs_non_root_db_app")
+def expressjs_non_root_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    tmp_path_factory,
+    expressjs_app_image: str,
+):
+    """Build and deploy the non-root ExpressJS charm with a database integration."""
+    framework = "expressjs"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="expressjs-non-root-db-k8s",
         tmp_path_factory=tmp_path_factory,
         use_postgres=True,
         resources={
@@ -464,6 +617,45 @@ def spring_boot_app_fixture(
 ):
     """Build and deploy the Spring Boot charm with spring-boot-app image."""
     app_name = "spring-boot-k8s"
+
+    resources = {
+        "app-image": spring_boot_app_image,
+    }
+
+    charm_file = build_charm_file(
+        charm_paths,
+        "spring-boot",
+        tmp_path_factory,
+        charm_location=PROJECT_ROOT / "examples/springboot/charm",
+    )
+    try:
+        juju.deploy(
+            charm=charm_file,
+            app=app_name,
+            resources=resources,
+        )
+    except jubilant.CLIError as err:
+        if "application already exists" in err.stderr:
+            juju.refresh(app_name, path=charm_file, resources=resources)
+        else:
+            raise err
+    juju.wait(
+        lambda status: jubilant.all_active(status, app_name),
+        timeout=600,
+    )
+
+    return App(app_name)
+
+
+@pytest.fixture(scope="module", name="spring_boot_db_app")
+def spring_boot_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    tmp_path_factory,
+    spring_boot_app_image: str,
+):
+    """Build and deploy the Spring Boot charm with a database integration."""
+    app_name = "spring-boot-db-k8s"
 
     resources = {
         "app-image": spring_boot_app_image,
@@ -714,6 +906,30 @@ def django_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
+        config={"django-allowed-hosts": "*"},
+        resources={
+            "app-image": django_app_image,
+        },
+    )
+
+
+@pytest.fixture(scope="module", name="django_db_app")
+def django_db_app_fixture(
+    juju: jubilant.Juju,
+    charm_paths: dict[str, pathlib.Path],
+    django_app_image: str,
+    tmp_path_factory,
+):
+    """Build and deploy the Django charm with a database integration."""
+    framework = "django"
+    yield from generate_app_fixture(
+        juju=juju,
+        charm_paths=charm_paths,
+        framework=framework,
+        app_name="django-db-k8s",
+        tmp_path_factory=tmp_path_factory,
+        use_postgres=True,
         config={"django-allowed-hosts": "*"},
         resources={
             "app-image": django_app_image,
@@ -734,6 +950,7 @@ def django_async_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
         config={"django-allowed-hosts": "*"},
         resources={
             "app-image": django_async_app_image,
@@ -746,14 +963,28 @@ def generate_app_fixture(
     charm_paths: dict[str, pathlib.Path],
     framework: str,
     tmp_path_factory,
+    app_name: str | None = None,
     image_name: str = "",
     use_postgres: bool = True,
     config: dict[str, jubilant.ConfigValue] | None = None,
     resources: dict[str, str] | None = None,
     charm_dict: dict | None = None,
 ):
-    """Generates the charm, configures and deploys it and the relations it depends on."""
-    app_name = f"{framework}-k8s"
+    """Generates the charm, configures and deploys it and the relations it depends on.
+
+    Args:
+        juju: The Jubilant Juju instance.
+        charm_paths: Mapping of charm names to built charm file paths.
+        framework: The framework name, used to derive the app name and charm.
+        tmp_path_factory: Pytest temporary path factory.
+        app_name: Optional explicit application name, defaulting to ``<framework>-k8s``.
+        image_name: Optional image name override.
+        use_postgres: Whether to deploy and integrate PostgreSQL.
+        config: Charm configuration.
+        resources: Charm resources.
+        charm_dict: Charmcraft metadata overrides.
+    """
+    app_name = app_name or f"{framework}-k8s"
     if use_postgres:
         deploy_postgresql(juju)
     if resources is None:
@@ -768,7 +999,7 @@ def generate_app_fixture(
     try:
         juju.deploy(
             charm=charm_file,
-            app=f"{framework}-k8s",
+            app=app_name,
             resources=resources,
             config=config,
         )
@@ -854,6 +1085,7 @@ def flask_db_app_fixture(
         juju=juju,
         charm_paths=charm_paths,
         framework=framework,
+        app_name="flask-db-k8s",
         tmp_path_factory=tmp_path_factory,
         resources={
             "app-image": test_db_flask_image,
@@ -933,15 +1165,6 @@ def django_blocked_app_fixture(
         if "application already exists" not in err.stderr:
             raise err
 
-    # Deploy and integrate postgresql if needed
-    deploy_postgresql(juju)
-    try:
-        juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -967,15 +1190,6 @@ def fastapi_blocked_app_fixture(
         if "application already exists" not in err.stderr:
             raise err
 
-    # Deploy and integrate postgresql if needed
-    deploy_postgresql(juju)
-    try:
-        juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -1001,15 +1215,6 @@ def go_blocked_app_fixture(
         if "application already exists" not in err.stderr:
             raise err
 
-    # Deploy and integrate postgresql if needed
-    deploy_postgresql(juju)
-    try:
-        juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -1035,14 +1240,5 @@ def expressjs_blocked_app_fixture(
         if "application already exists" not in err.stderr:
             raise err
 
-    # Deploy and integrate postgresql if needed
-    deploy_postgresql(juju)
-    try:
-        juju.integrate(app_name, "postgresql-k8s:database")
-    except jubilant.CLIError as err:
-        if "already exists" not in err.stderr:
-            raise err
-
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)

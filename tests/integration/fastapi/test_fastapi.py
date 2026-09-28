@@ -36,7 +36,7 @@ def test_user_defined_config(fastapi_app: App, juju: jubilant.Juju):
     assert: the value of the env variable and the config should match.
     """
     juju.config(fastapi_app.name, {"user-defined-config": "newvalue"})
-    juju.wait(lambda status: jubilant.all_active(status, fastapi_app.name, "postgresql-k8s"))
+    juju.wait(lambda status: jubilant.all_active(status, fastapi_app.name))
 
     status = juju.status()
     for unit in status.apps[fastapi_app.name].units.values():
@@ -48,14 +48,14 @@ def test_user_defined_config(fastapi_app: App, juju: jubilant.Juju):
         assert "newvalue" in response.text
 
 
-def test_migration(fastapi_app: App, juju: jubilant.Juju):
+def test_migration(fastapi_db_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the fastapi charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the micration script.
     assert: the fastapi application should return a correct response.
     """
     status = juju.status()
-    for unit in status.apps[fastapi_app.name].units.values():
+    for unit in status.apps[fastapi_db_app.name].units.values():
         response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" in response.text

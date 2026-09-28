@@ -35,7 +35,7 @@ def test_springboot_is_up(
 
 
 def test_migration(
-    spring_boot_app: App, juju: jubilant.Juju, session_with_retry: requests.Session
+    spring_boot_db_app: App, juju: jubilant.Juju, session_with_retry: requests.Session
 ):
     """
     arrange: build and deploy the Springboot charm with postgresql integration.
@@ -44,7 +44,7 @@ def test_migration(
     assert: the Springboot application should add the user only once.
     """
     status = juju.status()
-    for unit in status.apps[spring_boot_app.name].units.values():
+    for unit in status.apps[spring_boot_db_app.name].units.values():
         response = session_with_retry.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5
         )
