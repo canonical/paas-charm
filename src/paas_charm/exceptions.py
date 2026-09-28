@@ -68,3 +68,12 @@ class InvalidRelationDataError(RelationDataError):
 
 class InvalidCustomCOSDirectoryError(Exception):
     """Raised when the custom COS directory is invalid."""
+
+
+class CustomRelationError(Exception):
+    """Raised when a custom relation class is invalid.
+
+    Raised when an entry in ``custom_relations`` is not a ``CustomRelation``
+    subclass, or when the relation class is not declared in the charm metadata
+    (unused custom relation).
+    """

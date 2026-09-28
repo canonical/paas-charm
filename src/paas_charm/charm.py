@@ -24,6 +24,7 @@ from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationSt
 from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
+    CustomRelationError,
     RelationDataError,
 )
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
@@ -438,10 +439,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             if not isinstance(relation_class, type) or not issubclass(
                 relation_class, CustomRelation
             ):
-                raise CharmConfigInvalidError(f"non-CustomRelation entry: {relation_class!r}")
+                raise CustomRelationError(f"non-CustomRelation entry: {relation_class!r}")
             relation_name = relation_class.relation_name
             if relation_name not in requires:
-                raise CharmConfigInvalidError(f"Unused custom relation: {relation_class!r}")
+                raise CustomRelationError(f"Unused custom relation: {relation_class!r}")
             instance = relation_class(self)
             # Framework-injected private state; pylint: disable=protected-access
             instance._context = context
