@@ -211,9 +211,9 @@ def build_charm_file(
             )
             charms = list(charm_location.glob(f"{charm_key}_*.charm"))
             assert charms, f"{charm_key} .charm file not found"
-            assert (
-                len(charms) == 1
-            ), f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            assert len(charms) == 1, (
+                f"{charm_key} has more than one .charm file, please remove any undesired .charm files"
+            )
             # Copy to temp dir
             tmp_dir = tmp_path_factory.mktemp(f"{framework}-charm")
             charm_file = tmp_dir / charms[0].name
@@ -801,7 +801,7 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="14/stable",
         base="ubuntu@22.04",
         trust=True,
         config={
