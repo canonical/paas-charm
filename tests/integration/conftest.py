@@ -243,6 +243,7 @@ def deploy_loki_fixture(
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
         juju.deploy(loki_app_name, channel="1/stable", trust=True)
+        juju.cli("trust", loki_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
         error=jubilant.any_blocked,
@@ -800,7 +801,8 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="14/edge",
+        channel="14/stable",
+        revision=925,
         base="ubuntu@22.04",
         trust=True,
         config={
