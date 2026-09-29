@@ -44,7 +44,6 @@ from ops import testing
         pytest.param(
             {
                 "node-env": "production",
-                "app-secret-key": "foobar",
             },
             {
                 "NODE_ENV": "production",
@@ -52,7 +51,7 @@ from ops import testing
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://expressjs-k8s.test-model:8080",
-                "APP_SECRET_KEY": "foobar",
+                "APP_SECRET_KEY": "test",
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
                 "POSTGRESQL_DB_FRAGMENT": "",
                 "POSTGRESQL_DB_HOSTNAME": "test-postgresql",
@@ -92,6 +91,24 @@ def test_expressjs_config(expressjs_context, base_state, config: dict, env: dict
         "user": "_daemon_",
         "working-dir": "/app",
     }
+
+
+def test_expressjs_secret_key_config(expressjs_context, base_state) -> None:
+    """
+    arrange: prepare a valid app-secret-key user secret.
+    act: start the expressjs charm with app-secret-key set to the secret ID.
+    assert: the APP_SECRET_KEY environment variable should contain the secret value.
+    """
+    secret = testing.Secret(tracked_content={"value": "foobar"})
+    base_state["secrets"].append(secret)
+    base_state["config"] = {"app-secret-key": secret.id}
+    state = testing.State(**base_state)
+
+    out = expressjs_context.run(expressjs_context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    expressjs_layer = out.get_container("app").plan.services["expressjs"].to_dict()
+    assert expressjs_layer["environment"]["APP_SECRET_KEY"] == "foobar"
 
 
 def test_metrics_config(expressjs_context, base_state) -> None:

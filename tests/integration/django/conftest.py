@@ -39,3 +39,35 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
     restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
     reset_config = [k for k in request_config if orig_config.get(k) is None]
     juju.config(app_name, restore_config, reset=reset_config)
+
+
+@pytest.fixture
+def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_app: App):
+    """Update a secret Django application configuration.
+
+    This fixture must be parameterized with changing charm configurations.
+    """
+    app_name = django_app.name
+    orig_config = juju.config(app_name)
+    request_config = {}
+    secret_ids = []
+
+    for secret_config_option, secret_value in request.param.items():
+        secret_id = juju.add_secret(secret_config_option, secret_value)
+
+        juju.grant_secret(secret_id, app_name)
+        request_config[secret_config_option] = secret_id
+        secret_ids.append(secret_id)
+
+    juju.config(app_name, request_config)
+    juju.wait(lambda status: jubilant.all_active(status, app_name))
+
+    yield request_config
+
+    # Restore original configuration
+    restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
+    reset_config = [k for k in request_config if orig_config.get(k) is None]
+    juju.config(app_name, restore_config, reset=reset_config)
+
+    for secret_id in secret_ids:
+        juju.remove_secret(secret_id)

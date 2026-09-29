@@ -57,14 +57,6 @@ TEST_DJANGO_CONFIG_PARAMS = [
         },
         id="debug",
     ),
-    pytest.param(
-        {"app-secret-key": "foobar"},
-        {
-            **BASE_DJANGO_ENV,
-            "DJANGO_SECRET_KEY": "foobar",
-        },
-        id="secret-key",
-    ),
 ]
 
 
@@ -104,6 +96,28 @@ def test_django_config(
     service = out.get_container(container_name).plan.services["django"]
     _assert_django_service(service, env, "sync")
     assert len(out.get_relations("postgresql")) == 1
+
+
+def test_django_secret_key_config(django_context, base_state: dict, container_name: str) -> None:
+    """
+    arrange: prepare a valid app-secret-key user secret.
+    act: start the django charm with app-secret-key set to the secret ID.
+    assert: the DJANGO_SECRET_KEY environment variable should contain the secret value.
+    """
+    secret = testing.Secret(tracked_content={"value": "foobar"})
+    state = testing.State(
+        **{
+            **base_state,
+            "secrets": [*base_state["secrets"], secret],
+            "config": {"app-secret-key": secret.id},
+        }
+    )
+
+    out = django_context.run(django_context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    service = out.get_container(container_name).plan.services["django"]
+    _assert_django_service(service, {**BASE_DJANGO_ENV, "DJANGO_SECRET_KEY": "foobar"}, "sync")
 
 
 def test_django_create_super_user(django_context, base_state: dict, container_name: str) -> None:

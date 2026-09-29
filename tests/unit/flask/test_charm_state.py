@@ -22,11 +22,6 @@ CHARM_STATE_FLASK_CONFIG_TEST_PARAMS = [
         id="debug",
     ),
     pytest.param(
-        {"app-secret-key": "1234"},
-        {"FLASK_SECRET_KEY": "1234", "FLASK_PREFERRED_URL_SCHEME": "HTTPS"},
-        id="secret-key",
-    ),
-    pytest.param(
         {"flask-preferred-url-scheme": "http"},
         {"FLASK_PREFERRED_URL_SCHEME": "HTTP"},
         id="preferred-url-scheme",
@@ -57,7 +52,6 @@ def test_charm_state_flask_config(
     "charm_config",
     [
         pytest.param({"flask-env": ""}, id="env"),
-        pytest.param({"app-secret-key": ""}, id="secret-key"),
         pytest.param(
             {"flask-preferred-url-scheme": "tls"},
             id="preferred-url-scheme",
@@ -193,9 +187,31 @@ def test_secret_configuration(flask_context, base_state):
     assert env.get("FLASK_SECRET_TEST_FOO_BAR") == "foobar"
 
 
-def test_flask_secret_key_id_no_value(flask_context, base_state):
+def test_flask_secret_key_config(flask_context, base_state):
     """
-    arrange: Prepare an invalid app-secret-key-id secret.
+    arrange: prepare a valid app-secret-key user secret.
+    act: set app-secret-key charm configuration to the secret ID.
+    assert: the FLASK_SECRET_KEY environment variable should contain the secret value.
+    """
+    secret = testing.Secret(tracked_content={"value": "1234"})
+    state = testing.State(
+        **{
+            **base_state,
+            "secrets": [*base_state["secrets"], secret],
+            "config": {"app-secret-key": secret.id},
+        }
+    )
+    out = flask_context.run(flask_context.on.config_changed(), state)
+
+    plan = list(out.containers)[0].plan
+    env = plan.services["flask"].environment
+
+    assert env.get("FLASK_SECRET_KEY") == "1234"
+
+
+def test_flask_secret_key_no_value(flask_context, base_state):
+    """
+    arrange: Prepare an invalid app-secret-key secret.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
@@ -204,8 +220,8 @@ def test_flask_secret_key_id_no_value(flask_context, base_state):
     state = testing.State(
         **{
             **base_state,
-            "secrets": [key_secret],
-            "config": {"app-secret-key-id": key_secret.id},
+            "secrets": [*base_state["secrets"], key_secret],
+            "config": {"app-secret-key": key_secret.id},
         }
     )
     out = flask_context.run(flask_context.on.config_changed(), state)
@@ -214,21 +230,18 @@ def test_flask_secret_key_id_no_value(flask_context, base_state):
     assert "invalid option" in out.unit_status.message
 
 
-def test_flask_secret_key_id_duplication(flask_context, base_state):
+def test_flask_secret_key_multiple_values(flask_context, base_state):
     """
-    arrange: Provide both the app-secret-key-id and app-secret-key configuration.
+    arrange: Prepare an app-secret-key secret with multiple values.
     act: Try to build CharmState.
     assert: It should raise CharmConfigInvalidError.
     """
-    secret = testing.Secret(tracked_content={"value": "foobar"})
+    key_secret = testing.Secret(owner="app", tracked_content={"value": "foobar", "extra": "extra"})
     state = testing.State(
         **{
             **base_state,
-            "secrets": [secret],
-            "config": {
-                "app-secret-key-id": secret.id,
-                "app-secret-key": "test",
-            },
+            "secrets": [*base_state["secrets"], key_secret],
+            "config": {"app-secret-key": key_secret.id},
         }
     )
     out = flask_context.run(flask_context.on.config_changed(), state)

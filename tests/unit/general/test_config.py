@@ -307,15 +307,17 @@ def test_get_framework_config_invalid(
 ) -> None:
     """
     arrange: Get the charm.
-    act: Set a config option to empty string.
+    act: Set a config option to a secret with an empty value.
     assert: Charm should raise a CharmConfigInvalidError.
     """
     context = context_factory(charm_type)
     state_dict = framework_state_factory(charm_type)
+    empty_secret = testing.Secret(id="secret:empty-secret-key", tracked_content={"value": ""})
+    state_dict.setdefault("secrets", []).append(empty_secret)
     with context(context.on.config_changed(), testing.State(**state_dict)) as manager:
         manager.charm.config._lazy_data = {
             **manager.charm.config,
-            secret_key: "",
+            secret_key: empty_secret.id,
         }
         with pytest.raises(CharmConfigInvalidError) as exc:
             manager.charm.get_framework_config()

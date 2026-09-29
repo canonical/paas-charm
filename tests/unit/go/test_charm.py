@@ -23,21 +23,6 @@ from ops import testing
             },
             id="default",
         ),
-        pytest.param(
-            {
-                "app-secret-key": "foobar",
-            },
-            {
-                "PORT": "8080",
-                "APP_BASE_URL": "http://go-k8s.test-model:8080",
-                "METRICS_PORT": "8080",
-                "METRICS_PATH": "/metrics",
-                "APP_SECRET_KEY": "foobar",
-                "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
-                "APP_OIDC_SCOPES": "openid profile email",
-            },
-            id="custom config",
-        ),
     ],
 )
 def test_go_config(go_context, base_state, config: dict, env: dict) -> None:
@@ -54,6 +39,39 @@ def test_go_config(go_context, base_state, config: dict, env: dict) -> None:
     go_layer = out.get_container("app").plan.services["go"].to_dict()
     assert go_layer == {
         "environment": env,
+        "override": "replace",
+        "startup": "enabled",
+        "command": "/usr/local/bin/go-k8s",
+        "user": "_daemon_",
+        "working-dir": "/app",
+    }
+
+
+def test_go_secret_key_config(go_context, base_state) -> None:
+    """
+    arrange: prepare a valid app-secret-key user secret.
+    act: start the go charm with app-secret-key set to the secret ID.
+    assert: the APP_SECRET_KEY environment variable should contain the secret value.
+    """
+    secret = testing.Secret(tracked_content={"value": "foobar"})
+    base_state["secrets"].append(secret)
+    base_state["config"] = {"app-secret-key": secret.id}
+    state = testing.State(**base_state)
+
+    out = go_context.run(go_context.on.config_changed(), state)
+
+    assert out.unit_status == testing.ActiveStatus()
+    go_layer = out.get_container("app").plan.services["go"].to_dict()
+    assert go_layer == {
+        "environment": {
+            "PORT": "8080",
+            "APP_BASE_URL": "http://go-k8s.test-model:8080",
+            "METRICS_PORT": "8080",
+            "METRICS_PATH": "/metrics",
+            "APP_SECRET_KEY": "foobar",
+            "APP_OIDC_REDIRECT_PATH": "/auth/openid-connect/callback",
+            "APP_OIDC_SCOPES": "openid profile email",
+        },
         "override": "replace",
         "startup": "enabled",
         "command": "/usr/local/bin/go-k8s",

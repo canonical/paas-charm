@@ -57,7 +57,6 @@ def test_django_database_migration(django_app: App, juju: jubilant.Juju):
             {"ALLOWED_HOSTS": ["test", "django-k8s.testing"]},
             id="allowed-host",
         ),
-        pytest.param({"app-secret-key": "test"}, {"SECRET_KEY": "test"}, id="secret-key"),
     ],
     indirect=["update_config"],
 )
@@ -67,6 +66,35 @@ def test_django_charm_config(django_app: App, juju: jubilant.Juju, expected_sett
     arrange: build and deploy the django charm, and change the django related configuration.
     act: send request to the django application to retrieve the corresponding settings.
     assert: settings in django application correctly updated according to the charm configuration.
+    """
+    status = juju.status()
+    for unit in status.apps[django_app.name].units.values():
+        for setting, value in expected_settings.items():
+            url = f"http://{unit.address}:8000/settings/{setting}"
+            # it is necessary to specify a host header if the IP or '*' is not in ALLOWED_HOSTS
+            assert (
+                value
+                == requests.get(url, headers={"Host": "django-k8s.testing"}, timeout=5).json()
+            )
+
+
+@pytest.mark.parametrize(
+    "update_secret_config, expected_settings",
+    [
+        pytest.param(
+            {"app-secret-key": {"value": "test"}},
+            {"SECRET_KEY": "test"},
+            id="secret-key",
+        ),
+    ],
+    indirect=["update_secret_config"],
+)
+@pytest.mark.usefixtures("update_secret_config")
+def test_django_secret_config(django_app: App, juju: jubilant.Juju, expected_settings):
+    """
+    arrange: build and deploy the django charm, and change secret configurations.
+    act: send request to the django application to retrieve the corresponding settings.
+    assert: settings in django application correctly updated according to the secret configuration.
     """
     status = juju.status()
     for unit in status.apps[django_app.name].units.values():

@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `paas_charm.relations`.
 * docs: Add a how-to and reference for custom relations. The example Flask
   implementation uses `CustomRelation` to integrate with a Temporal server.
+* chore: Add a unit test that keeps the example charm dependencies in sync with the root
+  `pyproject.toml`.
+* breaking: Remove the `paas_app_charmer` import path.
+* fix: Replace the deprecated `hydra.oauth` charm library with
+  `charmlibs.interfaces.oauth`.
 * breaking: Unify the Flask and Django application root directory and access/error logs under
   `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
   keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
@@ -44,9 +49,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   framework metrics scraping.
 * fix: Use OpenTelemetry auto-instrumentation for metrics in the FastAPI example application.
 * fix: Serve ExpressJS Prometheus metrics on the configured `METRICS_PORT`.
-* breaking: Standardize the Flask and Django secret key options as `app-secret-key` and
-  `app-secret-key-id` while preserving their framework-prefixed workload variables.
+* breaking: Standardize the secret key configuration of all frameworks (including the former
+  `flask-secret-key` and `django-secret-key`) as a single `app-secret-key` option of
+  `type: secret` that accepts a Juju user secret ID, replacing the previous string
+  `app-secret-key` and `app-secret-key-id` options. Framework-prefixed workload variables
+  (`FLASK_SECRET_KEY`, `DJANGO_SECRET_KEY`) are preserved.
 * fix: Use the charm application name for the OpenFGA store name.
+* docs: Onboarded documentation into Copier-based
+  [platform-engineering-documentation-files](https://github.com/canonical/platform-engineering-documentation-files)
+  central management solution.
 
 ## 1.12.0 - 2026-07-03
 

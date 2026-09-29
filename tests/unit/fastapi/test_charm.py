@@ -34,7 +34,6 @@ from ops import testing
         ),
         pytest.param(
             {
-                "app-secret-key": "foobar",
                 "user-defined-config": "userdefined",
             },
             {
@@ -52,7 +51,7 @@ from ops import testing
                 "METRICS_PORT": "9464",
                 "METRICS_PATH": "/metrics",
                 "APP_BASE_URL": "http://fastapi-k8s.test-model:8000",
-                "APP_SECRET_KEY": "foobar",
+                "APP_SECRET_KEY": "test",
                 "APP_USER_DEFINED_CONFIG": "userdefined",
                 # pylint: disable=line-too-long
                 "POSTGRESQL_DB_CONNECT_STRING": "postgresql://test-username:test-password@test-postgresql:5432/test-database",
@@ -111,6 +110,24 @@ def test_fastapi_config(
         "user": "_daemon_",
         "working-dir": "/app",
     }
+
+
+def test_fastapi_secret_key_config(fastapi_context, base_state) -> None:
+    """
+    arrange: prepare a valid app-secret-key user secret.
+    act: start the fastapi charm with app-secret-key set to the secret ID.
+    assert: the APP_SECRET_KEY environment variable should contain the secret value.
+    """
+    secret = testing.Secret(tracked_content={"value": "foobar"})
+    base_state["secrets"].append(secret)
+    base_state["config"]["app-secret-key"] = secret.id
+    state = testing.State(**base_state)
+
+    state_out = fastapi_context.run(fastapi_context.on.config_changed(), state)
+
+    assert state_out.unit_status == testing.ActiveStatus()
+    fastapi_layer = state_out.get_container("app").plan.services["fastapi"].to_dict()
+    assert fastapi_layer["environment"]["APP_SECRET_KEY"] == "foobar"
 
 
 def test_metrics_config(fastapi_context, base_state) -> None:

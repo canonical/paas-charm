@@ -31,7 +31,6 @@ WORKLOAD_PORT = 8000
             id="permanent_session_lifetime",
         ),
         pytest.param({"flask-debug": True}, {"DEBUG": True}, id="debug"),
-        pytest.param({"app-secret-key": "foobar"}, {"SECRET_KEY": "foobar"}, id="secret_key"),
     ],
     indirect=["update_config"],
 )
@@ -67,7 +66,7 @@ def test_flask_config(
             id="user-secret",
         ),
         pytest.param(
-            {"app-secret-key-id": {"value": "secret-foobar"}},
+            {"app-secret-key": {"value": "secret-foobar"}},
             {"SECRET_KEY": "secret-foobar"},
             id="secret_key",
         ),
