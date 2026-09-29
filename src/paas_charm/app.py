@@ -503,17 +503,6 @@ class App:  # pylint: disable=too-many-instance-attributes
 
         env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
 
-        for relation in self._charm_state.custom_relations:
-            if not relation.is_ready():
-                continue
-            for key, value in (relation.gen_environment() or {}).items():
-                if key in env:
-                    logger.warning(
-                        "Custom relation overwrites built-in environment variable %s",
-                        key,
-                    )
-                env[key] = value
-
         return env
 
     def _generate_integration_environments(self, prefix: str = "") -> dict[str, str]:
@@ -546,8 +535,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         )
 
         for relation in self._charm_state.custom_relations:
-            if not relation.is_ready():
-                continue
             for key, value in (relation.gen_environment() or {}).items():
                 if key in env:
                     logger.warning(

@@ -5,7 +5,7 @@
 
 import ops
 
-from paas_charm.exceptions import InvalidRelationDataError
+from paas_charm.exceptions import InvalidRelationDataError, RelationDataError
 from paas_charm.relations import CustomRelation
 from tests.unit.test_charm.src.charm import TestCharm
 
@@ -31,12 +31,13 @@ class ExampleDbRelation(CustomRelation):
             on_change,
         )
 
-    def is_ready(self) -> bool:
-        """Return True when a related app publishes a ``uri``."""
+    def ensure_ready(self) -> None:
+        """Raise unless a related app publishes a ``uri``."""
         relation = self.charm.model.get_relation("example-db")
         if not relation or not relation.app:
-            return False
-        return bool(relation.data[relation.app].get("uri"))
+            raise RelationDataError("Not ready", relation=self.relation_name)
+        if not bool(relation.data[relation.app].get("uri")):
+            raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
 
     def gen_environment(self) -> dict[str, str]:
         """Return the ``EXAMPLE_DB_URI`` environment variable."""
@@ -61,9 +62,8 @@ class ContextRelation(CustomRelation):
         if not callable(on_change):
             raise AssertionError("on_change callback was not injected into setup()")
 
-    def is_ready(self) -> bool:
-        """Always ready for the context inspection test."""
-        return True
+    def ensure_ready(self) -> None:
+        """Always ready (no exception) for the context inspection test."""
 
     def gen_environment(self) -> dict[str, str]:
         """Expose the :class:`Context` fields as environment variables."""
@@ -85,14 +85,13 @@ class InvalidDataRelation(CustomRelation):
         """Record setup."""
         setup_calls.append(self.relation_name)
 
-    def is_ready(self) -> bool:
+    def ensure_ready(self) -> None:
         """Raise ``InvalidRelationDataError`` when data is present but malformed."""
         relation = self.charm.model.get_relation("invalid-db")
         if not relation or not relation.app:
-            return False
+            raise RelationDataError("Not ready", relation=self.relation_name)
         if "uri" not in relation.data[relation.app]:
             raise InvalidRelationDataError("missing 'uri'", relation=self.relation_name)
-        return True
 
     def gen_environment(self) -> dict[str, str]:
         """No environment variables."""
@@ -108,9 +107,8 @@ class OverwritingRelation(CustomRelation):
         """Record setup."""
         setup_calls.append(self.relation_name)
 
-    def is_ready(self) -> bool:
-        """Always ready."""
-        return True
+    def ensure_ready(self) -> None:
+        """Always ready (no exception)."""
 
     def gen_environment(self) -> dict[str, str]:
         """Return a mapping that collides with the built-in ``APP_SECRET_KEY``."""

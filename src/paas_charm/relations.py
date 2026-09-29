@@ -185,27 +185,23 @@ class CustomRelation(ops.Object, abc.ABC):
             on_change: callback requesting a reconcile/``restart``.
         """
 
-    def is_ready(self) -> bool:
-        """Return whether this relation is ready.
+    def ensure_ready(self) -> None:
+        """Check if this relation is ready.
 
-        Default: ``True`` — the relation never blocks the workload. Env-var
-        relations must override this to return ``False`` when the relation is
-        absent or data is not yet usable. May raise
-        :class:`InvalidRelationDataError`; the framework's
-        invalid-data-catching context converts that to ``BlockedStatus``.
+        Returns nothing when relation is ready, raises an exception if not.
 
-        Returns:
-            ``True`` when the relation is ready (default).
+        Raises :class:`RelationDataError` or :class:`InvalidRelationDataError`
+        when relation is not ready.
         """
-        return True
+        return
 
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
 
-        Called only when :meth:`is_ready` returns ``True``. Read the relation
-        bag directly using the handle stored in :meth:`setup` (e.g.
-        ``self.charm.model.get_relation(self.relation_name)`` or a requirer
-        library property).
+        Called only when :meth:`ensure_ready` did not raise an exception.
+        Read the relation bag directly using the handle stored in :meth:`setup`
+        (e.g. ``self.charm.model.get_relation(self.relation_name)`` or a
+        requirer library property).
 
         Default returns ``{}`` (no-op for side-effect relations). Raise
         :class:`InvalidRelationDataError` when the bag is present but

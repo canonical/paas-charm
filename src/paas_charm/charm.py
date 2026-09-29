@@ -671,16 +671,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             yield "valkey"
 
     def _missing_custom_relations(self) -> typing.Generator:
-        """Return required custom relations that are not established or not ready."""
+        """Return custom relations that are not established or not ready."""
         for relation in self._custom_relations:
-            if not relation.required:
-                continue
+            name = relation.relation_name
             related = any(
-                model_relation.active
-                for model_relation in self.model.relations.get(relation.relation_name, [])
+                model_relation.active for model_relation in self.model.relations.get(name, [])
             )
-            if not related or not relation.is_ready():
-                yield relation.relation_name
+            if related:
+                try:
+                    relation.ensure_ready()
+                except RelationDataError as e:
+                    logger.error("Relation %s is not ready: %r", name, e)
+                    yield name
+            elif relation.required:
+                yield name
 
     def _missing_required_integrations(
         self, charm_state: CharmState

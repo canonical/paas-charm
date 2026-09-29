@@ -194,7 +194,7 @@ def test_custom_relation_invalid_data_blocks(invalid_context, tmp_path) -> None:
         testing.State(**base_state),
     )
 
-    assert out.unit_status == testing.BlockedStatus("missing 'uri'")
+    assert out.unit_status == testing.BlockedStatus("missing integrations: invalid-db")
 
 
 def test_custom_relation_context_is_injected(
