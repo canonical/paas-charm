@@ -15,8 +15,9 @@ without importing or subclassing ``paas-charm`` internals.
 A custom relation can:
 
 * contribute environment variables to the workload,
-* declare the workload not-ready (a missing or invalid required relation blocks
-  the workload with a ``BlockedStatus``),
+* declare the workload not-ready (a missing required relation, or a related
+  relation with missing or invalid data, blocks the workload with a
+  ``BlockedStatus``),
 * trigger the reconcile/``restart`` path on relation events, optionally
   re-running database migrations,
 
@@ -51,7 +52,12 @@ that you register on the charm via the ``custom_relations`` class attribute:
     from charms.temporal_k8s.v0.temporal_host_info import TemporalHostInfoRequirer
 
     import paas_charm.flask
-    from paas_charm.relations import CustomRelation, InvalidRelationDataError, OnChange
+    from paas_charm.relations import (
+        CustomRelation,
+        InvalidRelationDataError,
+        OnChange,
+        RelationDataError,
+    )
 
 
     class TemporalRelation(CustomRelation):
@@ -68,19 +74,18 @@ that you register on the charm via the ``custom_relations`` class attribute:
                 on_change,
             )
 
-        def is_ready(self) -> bool:
-            return self._connection_info() is not None
+        def ensure_ready(self) -> None:
+            if self._requirer is None or self._requirer.relation is None:
+                raise RelationDataError(
+                    "Temporal relation not ready", relation=self.relation_name
+                )
+            self._connection_info()
 
         def gen_environment(self) -> dict[str, str]:
-            connection_info = self._connection_info()
-            if connection_info is None:
-                return {}
-            host, port = connection_info
+            host, port = self._connection_info()
             return {"TEMPORAL_HOST": host, "TEMPORAL_PORT": str(port)}
 
-        def _connection_info(self) -> tuple[str, int] | None:
-            if self._requirer is None or self._requirer.relation is None:
-                return None
+        def _connection_info(self) -> tuple[str, int]:
             try:
                 host = self._requirer.host
                 port = self._requirer.port
@@ -126,7 +131,8 @@ Behaviour:
   ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` appear in the workload environment
   and the service is (re)started.
 * A related app provides incomplete or invalid connection data →
-  ``BlockedStatus`` with the validation error.
+  ``BlockedStatus("missing integrations: temporal-host-info")``. This applies
+  once the relation is established, whether it is optional or required.
 * Removing the relation removes both environment variables and restarts the
   workload.
 
@@ -155,9 +161,10 @@ The three methods
      - Wire requirer events → ``on_change()``.
      - Wire relation events; instantiate a requirer or call a ``require_*``
        helper.
-   * - ``is_ready()``
-     - Override → return ``False`` when the relation is absent.
-     - Leave at default (``True``) — never blocks the workload.
+   * - ``ensure_ready()``
+     - Override → raise ``RelationDataError`` (or
+       ``InvalidRelationDataError`` for malformed data) when not ready.
+     - Leave at default (no-op) — never blocks the workload.
    * - ``gen_environment()``
      - Override → read the databag, return an env-var mapping.
      - Leave at default (returns ``{}``).

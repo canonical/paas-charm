@@ -63,28 +63,34 @@ Whether a custom relation is required is read **solely** from the
 Error semantics
 ~~~~~~~~~~~~~~~
 
-``is_ready()`` and ``gen_environment()`` may raise
-:class:`paas_charm.exceptions.InvalidRelationDataError` (carrying a
-``relation`` attribute). The framework evaluates them inside its existing
-invalid-data-catching context and converts the raise into a ``BlockedStatus``
-containing the error message. Include the relation name in the error message
-if you want it surfaced in the unit status.
+``ensure_ready()`` may raise :class:`RelationDataError`, or
+:class:`InvalidRelationDataError` (carrying a ``relation`` attribute) when the
+relation data is malformed, and ``gen_environment()`` may raise
+:class:`InvalidRelationDataError`. The framework calls ``ensure_ready()`` for
+every established relation and converts any raise into
+``BlockedStatus("missing integrations: <name>")``; the raised message itself is
+not surfaced in the unit status.
 
 .. list-table::
    :header-rows: 1
 
    * - Situation
-     - ``is_ready()``
+     - ``ensure_ready()``
      - Outcome
    * - Data present but malformed
      - raises ``InvalidRelationDataError(message, relation=...)``
-     - ``BlockedStatus(message)``
-   * - No relation, or data not usable
-     - ``False``
-     - optional → no environment, no block; required → ``BlockedStatus("missing
-       integrations: <name>")``
+     - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
+       optional or required
+   * - No relation
+     - not called
+     - required → ``BlockedStatus("missing integrations: <name>")``; optional →
+       no environment, no block
+   * - Related but data not usable
+     - raises ``RelationDataError``
+     - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
+       optional or required
    * - Data valid and usable
-     - ``True``
+     - returns without raising
      - ``gen_environment()`` contributes environment variables
 
 Event observation helper
@@ -128,7 +134,7 @@ Optional charm libraries
 
 A custom relation's requirer typically imports an author-supplied charm
 library. Providing that library is the author's responsibility. The framework
-does **not** wrap ``setup()``, ``is_ready()``, or ``gen_environment()`` in
+does **not** wrap ``setup()``, ``ensure_ready()``, or ``gen_environment()`` in
 ``try/except ImportError``: a missing author-supplied library surfaces as an
 ordinary charm error. Authors who want a softer failure mode guard or defer
 their own imports.
