@@ -18,7 +18,7 @@ from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
 if typing.TYPE_CHECKING:
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
+    from charmlibs.interfaces.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
     from dpcharmlibs.interfaces import ValkeyResponseModel
 

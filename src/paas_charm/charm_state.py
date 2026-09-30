@@ -22,7 +22,7 @@ from paas_charm.utils import build_validation_error_message, config_metadata
 
 # This is just for type checking, no need to cover this code.
 if typing.TYPE_CHECKING:  # pragma: nocover
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
+    from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
     from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
     from dpcharmlibs.interfaces import ValkeyResponseModel
