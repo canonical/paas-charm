@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * docs: Onboarded documentation into Copier-based
   [platform-engineering-documentation-files](https://github.com/canonical/platform-engineering-documentation-files)
   central management solution.
+* fix: Replace the deprecated tracing Charmhub library with
+  `charmlibs.interfaces.tracing`.
 
 ## 1.12.0 - 2026-07-03
 

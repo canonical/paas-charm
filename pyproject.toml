@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
+    "charmlibs-interfaces-tracing==1.0.0",
     "charmlibs-interfaces-oauth==1.1.0",
     "charmlibs-interfaces-openfga==1.0.0",
     "cosl==1.10.3",
