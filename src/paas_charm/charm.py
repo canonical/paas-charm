@@ -128,7 +128,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
         self._observability = Observability(
             charm=self,
-            log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
             metrics_port=self._workload_config.metrics_port,

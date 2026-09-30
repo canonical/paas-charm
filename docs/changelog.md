@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix: Use the charm application name for the OpenFGA store name.
 * fix: Replace the deprecated OpenFGA Charmhub library with
   `charmlibs.interfaces.openfga`.
+* breaking: Remove support for the v0 version of the `loki_push_api` library;
+  charms must fetch the v1 library (`charmcraft fetch-lib charms.loki_k8s.v1.loki_push_api`).
 * docs: Onboarded documentation into Copier-based
   [platform-engineering-documentation-files](https://github.com/canonical/platform-engineering-documentation-files)
   central management solution.
