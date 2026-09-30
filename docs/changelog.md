@@ -11,7 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* chore: Add a unit test that keeps the example charm dependencies in sync with the root
+  `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.
+* fix: Replace the deprecated `hydra.oauth` charm library with
+  `charmlibs.interfaces.oauth`.
 * breaking: Unify the Flask and Django application root directory and access/error logs under
   `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
   keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
@@ -40,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `app-secret-key` and `app-secret-key-id` options. Framework-prefixed workload variables
   (`FLASK_SECRET_KEY`, `DJANGO_SECRET_KEY`) are preserved.
 * fix: Use the charm application name for the OpenFGA store name.
+* breaking: Remove support for the v0 version of the `loki_push_api` library;
+  charms must fetch the v1 library (`charmcraft fetch-lib charms.loki_k8s.v1.loki_push_api`).
+* docs: Onboarded documentation into Copier-based
+  [platform-engineering-documentation-files](https://github.com/canonical/platform-engineering-documentation-files)
+  central management solution.
 * fix: Replace the deprecated tracing Charmhub library with
   `charmlibs.interfaces.tracing`.
 

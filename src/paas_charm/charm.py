@@ -128,7 +128,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
         self._observability = Observability(
             charm=self,
-            log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
             metrics_port=self._workload_config.metrics_port,
@@ -370,24 +369,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if len(oauth_integrations) != 1:
             return None
         endpoint_name = oauth_integrations[0][0]
-        try:
-            _oauth = PaaSOAuthRequirer(
-                charm=self,
-                base_url=self._base_url,
-                relation_name=endpoint_name,
-                charm_config=self.config,
-            )
-            self.framework.observe(
-                _oauth.on.oauth_info_changed, self._reconcile_without_migrations
-            )
-            self.framework.observe(
-                _oauth.on.oauth_info_removed, self._reconcile_without_migrations
-            )
-        except NameError:
-            logger.exception(
-                "Missing charm library, please run `charmcraft fetch-lib charms.hydra.v0.oauth`"
-            )
-            return None
+        _oauth = PaaSOAuthRequirer(
+            charm=self,
+            base_url=self._base_url,
+            relation_name=endpoint_name,
+            charm_config=self.config,
+        )
+        self.framework.observe(_oauth.on.oauth_info_changed, self._reconcile_without_migrations)
+        self.framework.observe(_oauth.on.oauth_info_removed, self._reconcile_without_migrations)
         return _oauth
 
     def get_framework_config(self) -> BaseModel:
