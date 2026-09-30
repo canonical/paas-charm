@@ -110,7 +110,6 @@ def test_http_proxy(
         app_dir=base_dir,
         state_dir=base_dir / "state",
         service_name=framework_name,
-        log_files=[],
         unit_name=f"{framework_name}/0",
     )
 

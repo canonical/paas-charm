@@ -9,8 +9,6 @@ from paas_charm.app import WorkloadConfig
 from paas_charm.paas_config import PaasConfig
 
 STATSD_HOST = "localhost:9125"
-APPLICATION_LOG_FILE = "/var/log/app/access.log"
-APPLICATION_ERROR_LOG_FILE = "/var/log/app/error.log"
 GUNICORN_CONFIG_DIR = "/var/lib/gunicorn"
 
 
@@ -50,10 +48,6 @@ def create_workload_config(
         app_dir=app_dir,
         state_dir=state_dir,
         service_name=framework_name,
-        log_files=[
-            pathlib.Path(APPLICATION_LOG_FILE),
-            pathlib.Path(APPLICATION_ERROR_LOG_FILE),
-        ],
         metrics_path=metrics_path,
         metrics_port=metrics_port,
         unit_name=unit_name,

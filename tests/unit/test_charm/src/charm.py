@@ -56,7 +56,6 @@ class TestCharm(PaasCharm):
             app_dir=base_dir,
             state_dir=self._state_dir,
             service_name=framework_name,
-            log_files=[],
             unit_name=self.unit.name,
             metrics_path=framework_config.metrics_path,
         )
