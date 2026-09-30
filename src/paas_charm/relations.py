@@ -198,15 +198,14 @@ class CustomRelation(ops.Object, abc.ABC):
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
 
-        Called only when :meth:`ensure_ready` did not raise an exception.
         Read the relation bag directly using the handle stored in :meth:`setup`
         (e.g. ``self.charm.model.get_relation(self.relation_name)`` or a
         requirer library property).
 
-        Default returns ``{}`` (no-op for side-effect relations). Raise
-        :class:`InvalidRelationDataError` when the bag is present but
-        malformed; the framework's error-catching context converts it to
-        ``BlockedStatus``.
+        Note: Called unconditionally, must not raise an exception when data is
+        not ready or invalid.
+
+        Default returns ``{}`` (no-op for side-effect relations) Raise.
 
         Returns:
             A mapping of environment variable names to values (default ``{}``).

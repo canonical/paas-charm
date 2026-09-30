@@ -33,9 +33,12 @@ class TemporalRelation(CustomRelation):
             on_change,
         )
 
-    def is_ready(self) -> bool:
-        """Return whether the Temporal relation has valid connection information."""
-        return self._connection_info() is not None
+    def ensure_ready(self) -> None:
+        """Raise unless the relation has valid connection information."""
+        if self._requirer is None or self._requirer.relation is None:
+            raise RelationDataError("Temporal relation not ready", relation=self.relation_name)
+        # _connection_info raises InvalidRelationDataError, if applicable
+        self._connection_info()
 
     def gen_environment(self) -> dict[str, str]:
         """Return Temporal connection information as environment variables."""

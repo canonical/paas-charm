@@ -65,11 +65,11 @@ Error semantics
 
 ``ensure_ready()`` may raise :class:`RelationDataError`, or
 :class:`InvalidRelationDataError` (carrying a ``relation`` attribute) when the
-relation data is malformed, and ``gen_environment()`` may raise
-:class:`InvalidRelationDataError`. The framework calls ``ensure_ready()`` for
-every established relation and converts any raise into
+relation is not ready or relation data is missing or malformed.  The framework
+calls ``ensure_ready()`` for every established relation and converts any raise into
 ``BlockedStatus("missing integrations: <name>")``; the raised message itself is
-not surfaced in the unit status.
+not surfaced in the unit status. Relations should avoid raising exceptions, doing
+so will block the charm.
 
 .. list-table::
    :header-rows: 1
@@ -89,9 +89,10 @@ not surfaced in the unit status.
      - raises ``RelationDataError``
      - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
        optional or required
-   * - Data valid and usable
-     - returns without raising
-     - ``gen_environment()`` contributes environment variables
+   * - Data valid and usable → ``gen_environment()`` contributes environment variables
+       and usable
+     - called always, even when relation is not ready
+     - must return without raising
 
 Event observation helper
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,7 +135,9 @@ Optional charm libraries
 
 A custom relation's requirer typically imports an author-supplied charm
 library. Providing that library is the author's responsibility. The framework
-does **not** wrap ``setup()``, ``ensure_ready()``, or ``gen_environment()`` in
+does **not** wrap ``setup()`` and ``gen_environment()`` in
 ``try/except ImportError``: a missing author-supplied library surfaces as an
 ordinary charm error. Authors who want a softer failure mode guard or defer
-their own imports.
+their own imports. Since ``gen_environment()`` call is not wrapped in
+``try/except``, relations should not intentionally raise an exception when
+creating environment variables.

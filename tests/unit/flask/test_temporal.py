@@ -49,7 +49,7 @@ def test_temporal_relation_invalid_data_blocks(flask_context, base_state) -> Non
         testing.State(**base_state),
     )
 
-    assert out.unit_status == testing.BlockedStatus("invalid Temporal port")
+    assert out.unit_status == testing.BlockedStatus("missing integrations: temporal-host-info")
 
 
 def test_temporal_relation_is_optional(flask_context, base_state, container_name: str) -> None:
