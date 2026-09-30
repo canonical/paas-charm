@@ -4,7 +4,7 @@
 """App unit tests."""
 
 import pytest
-from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
+from charmlibs.interfaces.openfga import OpenfgaProviderAppData
 from charms.saml_integrator.v0.saml import SamlEndpoint
 
 from paas_charm.app import (
