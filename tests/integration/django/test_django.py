@@ -38,14 +38,14 @@ def test_django_webserver_timeout(django_app: App, juju: jubilant.Juju, timeout)
         )
 
 
-def test_django_database_migration(django_app: App, juju: jubilant.Juju):
+def test_django_database_migration(django_db_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the django charm with database migration enabled.
     act: access an endpoint requiring database.
     assert: request succeed.
     """
     status = juju.status()
-    for unit in status.apps[django_app.name].units.values():
+    for unit in status.apps[django_db_app.name].units.values():
         assert requests.get(f"http://{unit.address}:8000/len/users", timeout=1).ok
 
 
@@ -107,21 +107,21 @@ def test_django_secret_config(django_app: App, juju: jubilant.Juju, expected_set
             )
 
 
-def test_django_create_superuser(django_app: App, juju: jubilant.Juju):
+def test_django_create_superuser(django_db_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the django charm.
     act: create a superuser using the create-superuser action.
     assert: a superuser is created by the charm.
     """
     status = juju.status()
-    unit_name = list(status.apps[django_app.name].units.keys())[0]
+    unit_name = list(status.apps[django_db_app.name].units.keys())[0]
 
     task = juju.run(
         unit_name, "create-superuser", {"email": "test@example.com", "username": "test"}
     )
     password = task.results["password"]
 
-    for unit in status.apps[django_app.name].units.values():
+    for unit in status.apps[django_db_app.name].units.values():
         assert requests.get(
             f"http://{unit.address}:8000/login",
             params={"username": "test", "password": password},

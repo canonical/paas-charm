@@ -179,16 +179,15 @@ def test_django_create_super_user_exec_failure(django_context, base_state: dict)
         )
 
 
-@pytest.mark.parametrize("django_context", ["no-database-metadata"], indirect=True)
-def test_required_database_integration(django_context, base_state_no_database: dict):
+def test_required_database_integration(django_library_context, base_state_no_database: dict):
     """
-    arrange: Start the Django charm with no integrations specified in the charm.
+    arrange: Start the library Django charm with no database integration.
     act: Start the django charm and set app container to be ready.
-    assert: The charm should be blocked, as Django requires a database to work.
+    assert: The charm should be blocked, as the library Django charm requires a database.
     """
     state = testing.State(**base_state_no_database)
 
-    out = django_context.run(django_context.on.config_changed(), state)
+    out = django_library_context.run(django_library_context.on.config_changed(), state)
 
     assert out.unit_status == testing.BlockedStatus(
         "Django requires a database integration to work"

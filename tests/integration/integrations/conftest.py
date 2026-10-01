@@ -141,6 +141,7 @@ def fastapi_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
         resources={
             "app-image": fastapi_app_image,
         },
@@ -161,6 +162,7 @@ def go_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
         resources={
             "app-image": go_app_image,
         },
@@ -180,6 +182,7 @@ def expressjs_app_fixture(
         charm_paths=charm_paths,
         framework=framework,
         tmp_path_factory=tmp_path_factory,
+        use_postgres=False,
         resources={
             "app-image": expressjs_app_image,
         },

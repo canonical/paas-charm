@@ -2,4 +2,6 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-alembic upgrade head
+if [ -n "${POSTGRESQL_DB_CONNECT_STRING}" ]; then
+    alembic upgrade head
+fi

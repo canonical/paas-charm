@@ -25,6 +25,7 @@ from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.charm import PaasCharm
 from paas_charm.database_migration import DatabaseMigrationStatus
+from paas_charm.django import Charm as LibraryDjangoCharm
 from paas_charm.paas_config import PaasConfig, read_paas_config
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
@@ -40,6 +41,7 @@ CHARM_ROOTS = {
     TestCharm: PROJECT_ROOT / "tests/unit/test_charm",
     FlaskCharm: PROJECT_ROOT / "examples/flask/charm",
     DjangoCharm: PROJECT_ROOT / "examples/django/charm",
+    LibraryDjangoCharm: PROJECT_ROOT / "examples/django/charm",
     FastAPICharm: PROJECT_ROOT / "examples/fastapi/charm",
     GoCharm: PROJECT_ROOT / "examples/go/charm",
     ExpressJSCharm: PROJECT_ROOT / "examples/expressjs/charm",
@@ -325,6 +327,17 @@ def django_context_fixture(
     return context_factory(
         DjangoCharm,
         no_database_metadata=getattr(request, "param", None) == "no-database-metadata",
+    )
+
+
+@pytest.fixture(name="django_library_context")
+def django_library_context_fixture(
+    context_factory,
+) -> testing.Context[LibraryDjangoCharm]:
+    """Provide a Context for the library DjangoCharm, which requires a database."""
+    return context_factory(
+        LibraryDjangoCharm,
+        no_database_metadata=True,
     )
 
 
