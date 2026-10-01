@@ -152,7 +152,7 @@ Temporal. A missing relation will then produce
 ``BlockedStatus("missing integrations: temporal-host-info")``.
 
 The three methods
-----------------
+-----------------
 
 .. list-table::
    :header-rows: 1
@@ -160,14 +160,17 @@ The three methods
    * - Method
      - Env-var relation
      - Side-effect relation
+     - Comments
    * - ``setup(on_change)``
      - Wire requirer events → ``on_change()``.
      - Wire relation events; instantiate a requirer or call a ``require_*``
        helper.
+     -
    * - ``ensure_ready()``
      - Override → raise ``RelationDataError`` (or
        ``InvalidRelationDataError`` for malformed data) when not ready.
      - Leave at default (no-op) — never blocks the workload.
+     -
    * - ``gen_environment()``
      - Override → read the databag, return an env-var mapping.
      - Leave at default (returns ``{}``).

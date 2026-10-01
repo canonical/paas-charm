@@ -561,13 +561,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.WaitingStatus("Waiting for secret key creation"))
             return False
 
-        # Note: _missing_required_integrations checks custom relations, too
-        missing_integrations = list(self._missing_required_integrations(charm_state))
-        if missing_integrations:
-            self._create_app().stop_all_services()
-            self._database_migration.set_status_to_pending()
-            logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
-            self.update_app_and_unit_status(ops.BlockedStatus(message))
+        if self._has_missing_relations(charm_state):
             return False
 
         if self._oauth and self._oauth.is_related():
@@ -587,6 +581,33 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.update_app_and_unit_status(ops.BlockedStatus(msg))
             return False
         return True
+
+    def _stop_all_and_set_blocked(self, message: str) -> None:
+        """Stop services, mark database migrations as pending and set ``BlockedStatus``."""
+        self._create_app().stop_all_services()
+        self._database_migration.set_status_to_pending()
+        self.update_app_and_unit_status(ops.BlockedStatus(message))
+
+    def _has_missing_relations(self, charm_state: CharmState) -> bool:
+        """Check if any relations are missing or not ready."""
+        missing_integrations = list(self._missing_required_integrations(charm_state))
+        if missing_integrations:
+            logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
+            self._stop_all_and_set_blocked(message)
+            return True
+
+        try:
+            missing_integrations = list(self._missing_custom_relations())
+            if missing_integrations:
+                logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
+                self._stop_all_and_set_blocked(message)
+                return True
+        except RelationDataError as e:
+            logger.error(message := f"RelationDataError: {e}")
+            self._stop_all_and_set_blocked(message)
+            return True
+
+        return False
 
     def _missing_required_database_integrations(
         self, requires: dict[str, RelationMeta], charm_state: CharmState
@@ -661,18 +682,25 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             yield "valkey"
 
     def _missing_custom_relations(self) -> typing.Generator:
-        """Return custom relations that are not established or not ready."""
+        """Return custom relations that are not established and required.
+
+        For not established but required relations this method returns a list
+        of the relation names. If a relation is not ready due to some problems
+        with missing / invalid data and raises an exception, the exception
+        is propagated to the caller.
+
+        Raises:
+            RelationDataError: if relation is not ready due to missing or
+            invalid data.
+        """  # noqa: DCO051
         for relation in self._custom_relations:
             name = relation.relation_name
             related = any(
                 model_relation.active for model_relation in self.model.relations.get(name, [])
             )
             if related:
-                try:
-                    relation.ensure_ready()
-                except RelationDataError as e:
-                    logger.error("Relation %s is not ready: %r", name, e)
-                    yield name
+                # may raise RelationDataError or InvalidRelationDataError
+                relation.ensure_ready()
             elif relation.required:
                 yield name
 
@@ -688,7 +716,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         yield from self._missing_required_database_integrations(requires, charm_state)
         yield from self._missing_required_storage_integrations(requires, charm_state)
         yield from self._missing_required_other_integrations(requires, charm_state)
-        yield from self._missing_custom_relations()
 
     def _reconcile(self, rerun_migrations: bool = False) -> None:
         """Restart or start the service if not started with the latest configuration.

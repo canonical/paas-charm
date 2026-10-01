@@ -13,23 +13,30 @@ charm authors never need to import or subclass ``paas-charm`` internals.
 ``paas_charm.relations.Context``
 ---------------------------------
 
-.. autoclass:: paas_charm.relations.Context
-   :members:
-   :noindex:
+Read-only snapshot of the charm's configuration context. Provides access to the
+Juju application name, 12-factor framework name, workload port, Pebble container
+name and merged framework configuration dictionary.
 
 ``paas_charm.relations.OnChange``
 ----------------------------------
 
-.. autoclass:: paas_charm.relations.OnChange
-   :members:
-   :noindex:
+Callback provided by the framework for relation to request reconcile/restart
+optionally asking to re-run migrations.
 
 ``paas_charm.relations.CustomRelation``
 ----------------------------------------
 
-.. autoclass:: paas_charm.relations.CustomRelation
-   :members:
-   :noindex:
+Author-implemented extension point for a custom Juju relation. Provides a few
+helper methods. The main API consists of the following methods:
+
+- ``setup`` — Called once during charm initialisation with appropriate
+  ``OnChange`` handler.
+- ``ensure_ready`` — The framework uses it to determine whether or not the
+  relation is ready. May raise ``RelationDataError`` or
+  ``InvalidRelationDataError`` if the relation is not ready because of missing
+  or invalid data.
+- ``gen_environment`` — called unconditionally. Provides a way for the relation
+  to add workload environment variables. Must not raise an exception.
 
 Registration
 ------------
@@ -49,27 +56,36 @@ metadata ``optional`` field), calls ``setup(on_change=self._reconcile)``, and
 stores the instances in the charm state consulted at readiness, environment
 generation, and reconcile time.
 
+During initialization the framework validates if custom relation is actually
+referenced in the ``requires`` mapping of the ``charmcraft.yaml`` and aborts
+execution if relation is not listed.
+
 Required vs. optional
 ~~~~~~~~~~~~~~~~~~~~~
 
-Whether a custom relation is required is read **solely** from the
-``optional`` flag of the matching endpoint in ``charmcraft.yaml``:
+Whether a custom relation is required depends on its definition within the
+``requires`` mapping or the ``optional`` flag status of the matching endpoint
+in ``charmcraft.yaml``.
 
-* ``optional: false`` (or omitted) — a missing relation contributes to
-  ``BlockedStatus("missing integrations: <name>")``.
-* ``optional: true`` — a missing relation contributes no environment variables
-  and never blocks.
+If custom relation is explicitly listed in the ``requires`` mapping and its
+``optional`` flag is set to ``false`` — it is considered to be required and
+a missing relation results in ``BlockedStatus("missing integrations: <name>")``.
+
+Note: by default ``optional`` is set to ``false``, making each custom relation
+required. Make sure to explicitly set ``optional: true`` when necessary.
 
 Error semantics
 ~~~~~~~~~~~~~~~
 
 ``ensure_ready()`` may raise :class:`RelationDataError`, or
 :class:`InvalidRelationDataError` (carrying a ``relation`` attribute) when the
-relation is not ready or relation data is missing or malformed.  The framework
-calls ``ensure_ready()`` for every established relation and converts any raise into
-``BlockedStatus("missing integrations: <name>")``; the raised message itself is
-not surfaced in the unit status. Relations should avoid raising exceptions, doing
-so will block the charm.
+relation is not ready or relation data is missing or malformed. The framework
+calls ``ensure_ready()`` for every established relation and converts any raised
+exception into ``BlockedStatus("RelationDataError: <exception message>")``.
+The same information is logged with the ``ERROR`` priority.
+
+Relations must not be raising exceptions from ``get_environment()``, doing so
+will block the charm.
 
 .. list-table::
    :header-rows: 1

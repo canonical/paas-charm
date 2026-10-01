@@ -159,7 +159,7 @@ def test_custom_relation_required_but_not_ready_blocks(envvar_context, tmp_path)
         testing.State(**base_state),
     )
 
-    assert out.unit_status == testing.BlockedStatus("missing integrations: example-db")
+    assert out.unit_status == testing.BlockedStatus("RelationDataError: missing 'uri'")
 
 
 def test_custom_relation_optional_absent_does_not_block(envvar_context, tmp_path) -> None:
@@ -194,7 +194,7 @@ def test_custom_relation_invalid_data_blocks(invalid_context, tmp_path) -> None:
         testing.State(**base_state),
     )
 
-    assert out.unit_status == testing.BlockedStatus("missing integrations: invalid-db")
+    assert out.unit_status == testing.BlockedStatus("RelationDataError: missing 'uri'")
 
 
 def test_custom_relation_context_is_injected(
