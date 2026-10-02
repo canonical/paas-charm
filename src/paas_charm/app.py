@@ -9,7 +9,7 @@ import logging
 import pathlib
 import urllib.parse
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import ops
 from dpcharmlibs.interfaces import ValkeyResponseModel
@@ -21,7 +21,7 @@ from paas_charm.paas_config import LoggingFormat
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
+    from charmlibs.interfaces.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
@@ -52,7 +52,6 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
         app_dir: the application directory in the application container.
         state_dir: the directory in the application container to store states information.
         service_name: the WSGI application pebble service name.
-        log_files: list of files to monitor.
         metrics_path: path to scrape for metrics.
         metrics_port: port on which the application exposes metrics.
         unit_name: Name of the unit. Needed to know if schedulers should run here.
@@ -69,7 +68,6 @@ class WorkloadConfig:  # pylint: disable=too-many-instance-attributes
     app_dir: pathlib.Path
     state_dir: pathlib.Path
     service_name: str
-    log_files: List[pathlib.Path]
     metrics_path: str | None = "/metrics"
     metrics_port: int = 8080
     unit_name: str

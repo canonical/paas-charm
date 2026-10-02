@@ -9,8 +9,8 @@ import pathlib
 import typing
 
 import ops
+from charmlibs.interfaces.openfga import OpenFGARequires
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
-from charms.openfga_k8s.v1.openfga import OpenFGARequires
 from charms.smtp_integrator.v0.smtp import SmtpRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
@@ -135,7 +135,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
         self._observability = Observability(
             charm=self,
-            log_files=self._workload_config.log_files,
             container_name=self._workload_config.container_name,
             cos_dir=self.build_cos_dir(),
             metrics_port=self._workload_config.metrics_port,
@@ -308,21 +307,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         _tracing = None
         if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            try:
-                _tracing = PaaSTracingEndpointRequirer(
-                    self, relation_name="tracing", protocols=["otlp_http"]
-                )
-                self.framework.observe(
-                    _tracing.on.endpoint_changed, self._reconcile_without_migrations
-                )
-                self.framework.observe(
-                    _tracing.on.endpoint_removed, self._reconcile_without_migrations
-                )
-            except NameError:
-                logger.exception(
-                    "Missing charm library, please run "
-                    "`charmcraft fetch-lib charms.tempo_coordinator_k8s.v0.tracing`"
-                )
+            _tracing = PaaSTracingEndpointRequirer(
+                self, relation_name="tracing", protocols=["otlp_http"]
+            )
+            self.framework.observe(
+                _tracing.on.endpoint_changed, self._reconcile_without_migrations
+            )
+            self.framework.observe(
+                _tracing.on.endpoint_removed, self._reconcile_without_migrations
+            )
         return _tracing
 
     def _init_smtp(self, requires: dict[str, RelationMeta]) -> "SmtpRequires | None":
@@ -359,16 +352,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         openfga = None
         if "openfga" in requires and requires["openfga"].interface_name == "openfga":
-            try:
-                openfga = OpenFGARequires(self, self.app.name)
-                self.framework.observe(
-                    openfga.on.openfga_store_created, self._reconcile_without_migrations
-                )
-            except NameError:
-                logger.exception(
-                    "Missing charm library, please run "
-                    "`charmcraft fetch-lib charms.openfga_k8s.v1.openfga`"
-                )
+            openfga = OpenFGARequires(self, self.app.name)
+            self.framework.observe(
+                openfga.on.openfga_store_created, self._reconcile_without_migrations
+            )
         return openfga
 
     def _init_oauth(self, requires: dict[str, RelationMeta]) -> "PaaSOAuthRequirer | None":
