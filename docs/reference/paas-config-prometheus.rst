@@ -46,7 +46,8 @@ Each item in ``scrape_configs`` defines a Prometheus scrape job.
      - Unique name for this scrape job. Required. Must be unique across all jobs.
    * - ``metrics_path``
      - String
-     - HTTP path to scrape for metrics. Optional. Default: ``/metrics``
+     - Slash-prefixed RFC 3986 HTTP path to scrape for metrics. Optional.
+       Default: ``/metrics``.
    * - ``static_configs``
      - List
      - List of static target configurations. Required.

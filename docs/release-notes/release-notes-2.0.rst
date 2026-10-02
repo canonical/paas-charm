@@ -3,7 +3,7 @@
 ``paas-charm`` 2.0 release notes
 ================================
 
-TBD
+Unreleased
 
 These release notes cover new features and changes in ``paas-charm``
 version 2.0 and its extended support into Charmcraft and Rockcraft.
@@ -67,6 +67,7 @@ Application and metrics endpoints are now configured through top-level
 Prometheus sections. The charm always exposes the resolved framework defaults
 to the workload, and the resolved ``metrics-port`` and ``metrics-path`` are
 published as the framework Prometheus scrape job.
+This configuration applies to all supported frameworks, including Go.
 
 * `Pull request #316 <https://github.com/canonical/paas-charm/pull/316>`_
 * `Pull request #342 <https://github.com/canonical/paas-charm/pull/342>`_
@@ -138,7 +139,8 @@ Rockcraft
 * Ubuntu 26.04 LTS framework support includes rocks with a bare base and an
   Ubuntu 26.04 LTS build base.
   (`Pull request #1320 <https://github.com/canonical/rockcraft/pull/1320>`_)
-* Ubuntu 26.04 LTS framework rocks provide a writable application data directory.
+* Ubuntu 26.04 LTS framework rocks provide ``/app-data`` as a writable application
+  data directory owned by the ``_daemon_`` workload user.
   (`Pull request #1332 <https://github.com/canonical/rockcraft/pull/1332>`_)
 * Gunicorn dependencies were updated for Ubuntu 26.04 LTS.
   (`Pull request #1303 <https://github.com/canonical/rockcraft/pull/1303>`_)
@@ -160,6 +162,11 @@ Charmcraft
   (`Pull request #2884 <https://github.com/canonical/charmcraft/pull/2884>`_)
 * Support for Ubuntu 24.04 LTS in supported bases.
   (`Pull request #2766 <https://github.com/canonical/charmcraft/pull/2766>`_)
+
+Until Ubuntu 26.04 LTS framework support is promoted from experimental in the
+current tools, set ``ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1`` when invoking
+Rockcraft and ``CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1`` when invoking
+Charmcraft.
 
 .. _paas_charm_2_breaking_changes:
 

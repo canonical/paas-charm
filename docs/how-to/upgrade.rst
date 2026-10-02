@@ -95,13 +95,36 @@ charm:
    Flask and Django rocks have an additional layout change: the application
    root is now ``/app`` and ``gunicorn.conf.py`` is under
    ``/var/lib/gunicorn``. Access and error logs continue to use stdout and
-   stderr.
+   stderr. All Ubuntu 26.04 LTS framework rocks also provide ``/app-data`` as a
+   writable directory owned by the ``_daemon_`` workload user.
 
-2. **Move every charm to Ubuntu 26.04 LTS.** Set ``base: ubuntu@26.04`` and
-   migrate the charm part from the ``charm`` plugin to the ``uv`` plugin. Replace
-   ``requirements.txt`` with ``pyproject.toml``, declare a compatible
-   ``paas-charm`` dependency such as ``paas-charm>=2.0.dev1,<3``, and generate
-   and commit ``uv.lock``. See the
+2. **Move every charm to Ubuntu 26.04 LTS.** In a new, empty temporary
+   directory, generate the Ubuntu 26.04 LTS profile for your framework:
+
+   .. code-block:: bash
+
+      mkdir ../myapp-ubuntu-26.04
+      cd ../myapp-ubuntu-26.04
+      charmcraft init --profile <framework>-framework --base ubuntu@26.04
+
+   Do not run ``charmcraft init`` over the existing charm project. Use the
+   generated files as a migration reference: merge the generated
+   ``charmcraft.yaml`` and ``pyproject.toml`` changes into the existing project
+   rather than replacing its files wholesale. Preserve application-specific
+   configuration, actions, relations, resources, charm libraries, dependencies,
+   custom parts, and project metadata. Also preserve ``paas-config.yaml`` when
+   present.
+
+   The migrated charm must use ``base: ubuntu@26.04`` and the ``uv`` plugin.
+   Replace ``requirements.txt`` with ``pyproject.toml``, including both the
+   generated ``paas-charm>=2.0.dev1,<3`` dependency and the existing charm's
+   dependencies. Then generate and commit ``uv.lock`` from the migrated project:
+
+   .. code-block:: bash
+
+      uv lock
+
+   See the
    :ref:`Charmcraft Ubuntu 26.04 LTS migration guide <charmcraft:howto-change-to-ubuntu-26-04>`
    and :ref:`Migrate your 12-factor charm to use the uv plugin <uv_migration>`.
 

@@ -51,9 +51,9 @@ For example:
     metrics-port: 8080
     metrics-path: /metrics
 
-Ports must be between 1 and 65535. ``metrics-path`` must start with ``/`` and identify a
-non-root endpoint. These values are packaged with the charm and cannot be changed with
-``juju config``. Omitted values use the framework defaults.
+Ports must be between 1 and 65535. ``metrics-path`` must be a slash-prefixed RFC 3986 HTTP
+path. These values are packaged with the charm and cannot be changed with ``juju config``.
+Omitted values use the framework defaults.
 
 The default application port is ``8000`` for Flask, Django, and FastAPI, and ``8080`` for
 ExpressJS, Go, and Spring Boot. The resolved port is always written to the

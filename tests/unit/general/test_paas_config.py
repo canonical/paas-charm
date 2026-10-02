@@ -137,6 +137,30 @@ class TestPaasConfig:
         with pytest.raises(ValidationError):
             PaasConfig.model_validate({field: value})
 
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "",
+            "metrics",
+            "/metrics?format=json",
+            "/metrics#fragment",
+            "/metrics path",
+            "/metrics%",
+            "/metrics%2G",
+        ],
+    )
+    def test_invalid_metrics_path_rejected(self, path):
+        """Test that the top-level metrics path must be a valid absolute HTTP path."""
+        with pytest.raises(ValidationError, match="valid RFC 3986 path"):
+            PaasConfig.model_validate({"metrics-path": path})
+
+    @pytest.mark.parametrize(
+        "path", ["/", "/metrics", "/custom/metrics", "/metrics%20path", "/~user/@scope"]
+    )
+    def test_valid_metrics_path_accepted(self, path):
+        """Test valid absolute RFC 3986 metrics paths."""
+        assert PaasConfig.model_validate({"metrics-path": path}).metrics_path == path
+
 
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""
@@ -355,25 +379,17 @@ class TestScrapeConfig:
         assert scrape_config.job_name == "custom-job"
         assert scrape_config.metrics_path == "/custom/metrics"
 
-    def test_valid_scrape_config_relative_path(self):
-        """Test scrape config metrics path does not require a leading slash."""
-
-        scrape_config = ScrapeConfig(
-            job_name="relative-job",
-            metrics_path="custom/metrics",
-            static_configs=[StaticConfig(targets=["localhost:9090"])],
-        )
-        assert scrape_config.metrics_path == "custom/metrics"
-
-    def test_valid_scrape_config_empty_path(self):
-        """Test scrape config metrics path allows an empty string."""
-
-        scrape_config = ScrapeConfig(
-            job_name="empty-path-job",
-            metrics_path="",
-            static_configs=[StaticConfig(targets=["localhost:9090"])],
-        )
-        assert scrape_config.metrics_path == ""
+    @pytest.mark.parametrize(
+        "path", ["", "custom/metrics", "/metrics?format=json", "/metrics path", "/metrics%2G"]
+    )
+    def test_invalid_scrape_config_metrics_path(self, path):
+        """Test that scrape job metrics paths use absolute RFC 3986 path syntax."""
+        with pytest.raises(ValidationError, match="valid RFC 3986 path"):
+            ScrapeConfig(
+                job_name="invalid-path-job",
+                metrics_path=path,
+                static_configs=[StaticConfig(targets=["localhost:9090"])],
+            )
 
     def test_valid_scrape_config_multiple_static_configs(self):
         """Test valid scrape config with multiple static configs."""

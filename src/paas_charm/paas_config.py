@@ -6,6 +6,7 @@
 import enum
 import logging
 import pathlib
+import re
 import typing
 from collections import Counter
 
@@ -25,6 +26,24 @@ from paas_charm.utils import build_validation_error_message
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "paas-config.yaml"
+_HTTP_PATH_PATTERN = re.compile(r"^/(?:[A-Za-z0-9\-._~!$&'()*+,;=:@/]|%[0-9A-Fa-f]{2})*$")
+
+
+def _validate_http_path(path: str) -> str:
+    """Validate an RFC 3986 HTTP path.
+
+    Args:
+        path: HTTP path to validate.
+
+    Returns:
+        The validated path.
+
+    Raises:
+        ValueError: If the path is not slash-prefixed or contains invalid characters.
+    """
+    if not _HTTP_PATH_PATTERN.fullmatch(path):
+        raise ValueError("must be a valid RFC 3986 path starting with '/'")
+    return path
 
 
 class LoggingFormat(str, enum.Enum):
@@ -111,6 +130,8 @@ class ScrapeConfig(BaseModel):
         description="List of labeled statically configured targets for this job"
     )
 
+    _validate_metrics_path = field_validator("metrics_path")(_validate_http_path)
+
     model_config = ConfigDict(extra="forbid")
 
 
@@ -193,6 +214,8 @@ class PaasConfig(BaseModel):
         alias="metrics-path",
         description="HTTP resource path on which the application serves metrics.",
     )
+
+    _validate_metrics_path = field_validator("metrics_path")(_validate_http_path)
 
     @field_validator("framework_logging_format", mode="before")
     @classmethod
