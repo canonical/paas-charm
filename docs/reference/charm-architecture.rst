@@ -69,8 +69,9 @@ frameworks:
   some frameworks use a framework-prefixed directory such as ``/flask/app`` or
   ``/django/app``. Gunicorn access and error logs use the workload container's
   stdout and stderr streams.
-* ``/var/lib/gunicorn`` holds the mutable ``gunicorn.conf.py`` file used by
-  Flask and Django, kept separate from the read-only application directory.
+* On the Ubuntu 26.04 LTS base, ``/var/lib/gunicorn`` holds the mutable
+  ``gunicorn.conf.py`` file used by Flask and Django, kept separate from the
+  read-only application directory.
 * ``/app-data`` is a writable application data directory available to the
   ``_daemon_`` user on the Ubuntu 26.04 LTS base, where 12-factor charms run as
   a non-root user by default.
@@ -84,7 +85,7 @@ and thus prompts a reaction from the charm to respond to the change, taking
 into account the charm's configuration.
 
 For more information on the events observed by 12-factor app charms, see
-:ref:`ref_juju_events`.
+:doc:`Juju events <juju-events>`.
 
 Charm code overview
 -------------------

@@ -212,14 +212,31 @@ The deprecated ``paas_app_charmer`` import path is removed. Use
 ``paas_charm`` instead.
 (`Pull request #369 <https://github.com/canonical/paas-charm/pull/369>`_)
 
-Flask and Django application layout
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flask and Django application layout and resource names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Flask and Django application root directory is now ``/app`` (matching
 FastAPI and ExpressJS), with the mutable ``gunicorn.conf.py`` moved to
 ``/var/lib/gunicorn``. Access and error logs continue to use stdout and stderr.
 Flask and Django rocks must be rebuilt for Ubuntu 26.04 LTS.
+
+The Flask workload container and image resource change from ``flask-app`` and
+``flask-app-image`` to ``app`` and ``app-image``. The Django names similarly
+change from ``django-app`` and ``django-app-image`` to ``app`` and
+``app-image``. Update deployment commands and automation that supply the image
+resource; existing applications may need ``--resource app-image=<image>`` when
+refreshed.
 (`Pull request #352 <https://github.com/canonical/paas-charm/pull/352>`_)
+
+Rockcraft extension part-name separator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extension-generated Rockcraft part names use ``.`` instead of ``/`` with an
+Ubuntu 26.04 LTS effective build base, including bare rocks whose
+``build-base`` is Ubuntu 26.04 LTS. Update custom part overrides and references
+to use the newly expanded names, such as
+``flask-framework.dependencies`` instead of
+``flask-framework/dependencies``.
 
 Redis replaced with Valkey
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

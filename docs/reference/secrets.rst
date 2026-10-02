@@ -19,9 +19,10 @@ signing, CSRF protection, or any other purpose that requires a random secret
 shared by all units. The charm stores this key in a Juju application-owned
 secret with the ``app-secret-key`` label instead of the peer relation databag.
 
-The key is exposed to the workload through the framework-specific environment
-variable, for example ``FLASK_SECRET_KEY`` for Flask and ``DJANGO_SECRET_KEY``
-for Django. If no user-provided key is configured, a random key is generated.
+The key is exposed to the workload through ``FLASK_SECRET_KEY`` for Flask,
+``DJANGO_SECRET_KEY`` for Django, and ``APP_SECRET_KEY`` for FastAPI,
+ExpressJS, Go, and Spring Boot. If no user-provided key is configured, a random
+key is generated.
 
 Because the key is stored in a Juju secret, it can be rotated without repacking
 the charm. Identify the current leader with ``juju status`` and run the
@@ -92,14 +93,15 @@ environment variable named after the option and the secret key:
    juju grant-secret my-api-token <app name>
    juju config <app name> api-token=secret:<secret id>
 
-For a config option ``api-token`` and a secret key ``value``, the workload
-receives an environment variable named after the framework prefix and the option
-and key names, for example ``FLASK_API_TOKEN_VALUE`` or ``APP_API_TOKEN_VALUE``.
-The option and key names have their hyphens replaced by underscores and are
+For a config option ``api-token`` and a secret key ``value``, Flask receives
+``FLASK_API_TOKEN_VALUE``, Django receives ``DJANGO_API_TOKEN_VALUE``, and
+FastAPI, ExpressJS, Go, and Spring Boot receive ``APP_API_TOKEN_VALUE``. In
+general, the environment variable uses the framework prefix followed by the
+option and key names, with hyphens replaced by underscores and all letters
 upper-cased.
 
 .. seealso::
 
     * :ref:`Manage secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
-    * :ref:`Juju events <ref_juju_events>`
+    * :doc:`Juju events <juju-events>`
     * :external+juju:ref:`Juju | Secret <secret>`

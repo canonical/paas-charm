@@ -92,6 +92,19 @@ charm:
    `Rockcraft extension reference <https://documentation.ubuntu.com/rockcraft/stable/reference/extensions/>`_,
    including any required part-name and package changes.
 
+   Extension-generated Rockcraft part names use ``/`` as their separator on
+   lower bases and ``.`` when the effective build base is Ubuntu 26.04 LTS.
+   For a bare rock, ``build-base`` determines the separator. Preserve the newly
+   generated names and update custom ``parts`` overrides, ``after`` references,
+   selectors, scripts, patches, CI assertions, and other configuration that
+   names generated extension parts. For example,
+   ``flask-framework/dependencies`` becomes
+   ``flask-framework.dependencies``, and
+   ``django-framework/dependencies`` becomes
+   ``django-framework.dependencies``. Not every generated part exists for
+   every framework, so compare overrides with the expanded Ubuntu 26.04 LTS
+   project rather than changing names blindly.
+
    Flask and Django rocks have an additional layout change: the application
    root is now ``/app`` and ``gunicorn.conf.py`` is under
    ``/var/lib/gunicorn``. Access and error logs continue to use stdout and
@@ -141,6 +154,21 @@ charm:
      which replace the corresponding Charmhub-fetched libraries;
    * a Valkey relation instead of the obsolete Redis relation; and
    * the generated ``uv.lock`` file.
+
+   For Flask, the lower-base ``flask-app`` workload container and
+   ``flask-app-image`` resource become ``app`` and ``app-image``. For Django,
+   ``django-app`` and ``django-app-image`` likewise become ``app`` and
+   ``app-image``. The resource-name change is separate from the workload
+   container rename. Keep the generated declarations and update
+   ``juju deploy --resource``, ``juju refresh --resource``, CI/CD, Terraform,
+   scripts, bundles, overlays, and other automation that refers to the old
+   names. When refreshing an existing deployment, supply the image using
+   ``--resource app-image=<image>`` if Juju requires the renamed resource.
+
+   Charmcraft generates the charm part as ``parts.charm`` on both contracts,
+   so the Rockcraft ``/``-to-``.`` extension-part separator change does not
+   apply to that generated charm part. Keep the new profile's ``parts.charm``
+   definition instead of copying a lower-base override unchanged.
 
    Add the existing charm's application-specific Python dependencies to the
    generated ``pyproject.toml``. Retain the generated ``uv.lock`` unchanged
