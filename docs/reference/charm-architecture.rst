@@ -1,5 +1,6 @@
-.. Copyright 2025 Canonical Ltd.
-.. See LICENSE file for licensing details.
+.. meta::
+   :description: Technical details about 12-factor charm architecture.
+
 .. _ref_charm_architecture:
 
 Charm architecture
@@ -68,6 +69,8 @@ into account the charm's configuration.
 
 For more information on the events observed by 12-factor app charms, see
 :ref:`ref_juju_events`.
+
+.. _ref_charm_architecture_code_overview:
 
 Charm code overview
 -------------------
