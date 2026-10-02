@@ -1,33 +1,30 @@
-.. Copyright 2026 Canonical Ltd.
-.. See LICENSE file for licensing details.
+.. meta::
+   :description: Learn about the process to add custom relations to your 12-factor app charm
 
 .. _how_to_add_custom_relation:
 
-Add a custom relation to a 12-factor charm
-==========================================
+How to add a custom relation to a 12-factor charm
+=================================================
 
-The 12-factor tooling ships with a set of built-in Juju relations (databases,
-ingress, observability, S3, SAML, SMTP, RabbitMQ, Valkey, OpenFGA, OAuth,
-tracing, HTTP proxy). When you need a relation that is not built in, use the
-public :class:`paas_charm.relations.CustomRelation` extension API to add one
-without importing or subclassing ``paas-charm`` internals.
+The 12-factor tooling ships with a set of built-in Juju relations (see
+:ref:`ref_observability_relations`). When you need a relation that is not
+built in, use the public :class:`paas_charm.relations.CustomRelation`
+extension API to add one without importing or subclassing ``paas-charm``
+internals.
 
 A custom relation can:
 
-* contribute environment variables to the workload,
-* declare the workload not-ready (a missing required relation, or a related
+* Contribute environment variables to the workload.
+* Declare the workload not-ready (a missing required relation, or a related
   relation with missing or invalid data, blocks the workload with a
-  ``BlockedStatus``),
-* trigger the reconcile/``restart`` path on relation events, optionally
-  re-running database migrations,
-
-When to use it
---------------
+  ``BlockedStatus``).
+* Trigger the reconcile/``restart`` path on relation events, optionally
+  re-running database migrations.
 
 Use a custom relation when you need integration data that does not belong in
 the framework, or when you want to drive a relation that the framework does
-not support yet. The most relevant relations will keep being added to the
-framework; others never will — this extension point gives you a stable,
+not support yet. The most relevant relations will be added to the
+framework, while others never will — this extension point gives you a stable,
 supported path for the latter.
 
 Prerequisites
@@ -47,6 +44,7 @@ A custom relation is a subclass of :class:`~paas_charm.relations.CustomRelation`
 that you register on the charm via the ``custom_relations`` class attribute:
 
 .. code-block:: python
+    :caption: src/charm.py
 
     import ops
     from charms.temporal_k8s.v0.temporal_host_info import TemporalHostInfoRequirer
@@ -119,6 +117,7 @@ Declare the endpoint in ``charmcraft.yaml``. The ``optional`` flag is the
 single source of truth for whether the relation is required:
 
 .. code-block:: yaml
+    :caption: charmcraft.yaml
 
     requires:
       temporal-host-info:
@@ -126,7 +125,7 @@ single source of truth for whether the relation is required:
         optional: true
         limit: 1
 
-Behaviour:
+Behavior:
 
 * No relation and ``optional: true`` → the workload runs without Temporal
   configuration.
@@ -142,6 +141,7 @@ Behaviour:
 Add the Temporal charm library to the charm's ``charm-libs`` before building:
 
 .. code-block:: yaml
+    :caption: charmcraft.yaml
 
     charm-libs:
       - lib: temporal-k8s.temporal_host_info
@@ -151,8 +151,8 @@ Set ``optional: false`` instead when the application cannot operate without
 Temporal. A missing relation will then produce
 ``BlockedStatus("missing integrations: temporal-host-info")``.
 
-The three methods
------------------
+Implement custom relation API
+-----------------------------
 
 .. list-table::
    :header-rows: 1
@@ -183,43 +183,11 @@ protocol). Use the helper method
 observe relation events: pass ``rerun_migrations=True`` when a relation event
 should also re-run database migrations.
 
-Read configuration from ``self.context``
-----------------------------------------
+Read more
+---------
 
-``self.context`` is a read-only
-:class:`~paas_charm.relations.Context` injected by the framework before
-``setup()`` runs. It exposes ``app_name``, ``framework_name``, ``port``,
-``container_name``, and a merged ``config`` dict (Juju-secret values resolved).
-It is the stable, versioned contract — paas-charm can refactor its internals
-without breaking relations that use ``self.context`` exclusively.
-
-``self.charm`` is an escape hatch for upstream requirer charm libraries that
-require a :class:`ops.CharmBase` in their constructor, and for live model
-state (``self.charm.model.get_relation(...)``, ``self.charm.unit.is_leader()``,
-``self.charm.unit.get_container(...)``). Authors who do not need a charm lib
-should use ``self.context`` exclusively.
-
-Environment-variable collisions
--------------------------------
-
-Custom environment variables are merged after the built-in and framework
-environment variables. If a custom variable's name collides with an existing
-environment variable (whether built-in, framework-provided, or from another
-custom relation), the custom variable overwrites it and the charm logs a
-warning naming the relation and the colliding variable.
-
-Caveat: ordering during ``__init__``
-------------------------------------
-
-``custom_relations`` is processed during ``PaasCharm.__init__``, which runs
-**before** a subclass' ``__init__`` body. Each relation must therefore be
-self-contained: it uses ``self.context`` and ``self.charm`` (both injected
-before ``setup()``), not attributes the charm subclass sets after
-``super().__init__()``. Push author-specific state into the relation itself
-rather than into the charm subclass constructor.
-
-A runnable example
-------------------
+See :ref:`ref_custom_relations` to learn more about Custom Relations API.
+:ref:`ref_observability_relations` for the information about built-in relations.
 
 A complete, runnable Flask charm that wires a custom ``temporal-host-info`` relation
 ships under ``examples/flask/`` (declared with ``optional: true`` in

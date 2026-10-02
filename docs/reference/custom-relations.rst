@@ -1,5 +1,5 @@
-.. Copyright 2026 Canonical Ltd.
-.. See LICENSE file for licensing details.
+.. meta::
+   :description: Technical details about the custom relations API in the paas-charm library
 
 .. _ref_custom_relations:
 
@@ -13,9 +13,11 @@ charm authors never need to import or subclass ``paas-charm`` internals.
 ``paas_charm.relations.Context``
 ---------------------------------
 
-Read-only snapshot of the charm's configuration context. Provides access to the
-Juju application name, 12-factor framework name, workload port, Pebble container
-name and merged framework configuration dictionary.
+:class:`~paas_charm.relations.Context` injected by the framework before
+``setup()`` runs. It exposes ``app_name``, ``framework_name``, ``port``,
+``container_name``, and a merged ``config`` dict (Juju-secret values resolved).
+It is the stable, versioned contract — paas-charm can refactor its internals
+without breaking relations that use ``self.context`` exclusively.
 
 ``paas_charm.relations.OnChange``
 ----------------------------------
@@ -35,17 +37,29 @@ helper methods. The main API consists of the following methods:
   relation is ready. May raise ``RelationDataError`` or
   ``InvalidRelationDataError`` if the relation is not ready because of missing
   or invalid data.
-- ``gen_environment`` — called unconditionally. Provides a way for the relation
+- ``gen_environment`` — Called unconditionally. Provides a way for the relation
   to add workload environment variables. Must not raise an exception.
+
+API methods can use ``self.context`` (a read-only
+:class:`~paas_charm.relations.Context` injected by the framework) to access
+charm's configuration context.
+
+``self.charm`` is also available as an escape hatch for upstream requirer
+charm libraries that require a :class:`ops.CharmBase` in their constructor,
+and for live model state (``self.charm.model.get_relation(...)``,
+``self.charm.unit.is_leader()``, ``self.charm.unit.get_container(...)``).
+Authors who do not need a charm lib should use ``self.context`` exclusively.
+
 
 Registration
 ------------
 
-Register a custom relation by setting the ``custom_relations`` class attribute
-on your charm to a list of :class:`~paas_charm.relations.CustomRelation`
+A custom relation is registered by setting the ``custom_relations`` class attribute
+on the charm to a list of :class:`~paas_charm.relations.CustomRelation`
 subclasses (the class, not an instance):
 
 .. code-block:: python
+    :caption: src/charm.py
 
     class MyCharm(paas_charm.flask.Charm):
         custom_relations = [MyRelation]
@@ -71,8 +85,20 @@ If custom relation is explicitly listed in the ``requires`` mapping and its
 ``optional`` flag is set to ``false`` — it is considered to be required and
 a missing relation results in ``BlockedStatus("missing integrations: <name>")``.
 
-Note: by default ``optional`` is set to ``false``, making each custom relation
-required. Make sure to explicitly set ``optional: true`` when necessary.
+.. note::
+
+  By default ``optional`` is set to ``false``, making each custom relation
+  required. Make sure to explicitly set ``optional: true`` when necessary.
+
+Caveat: ordering during ``__init__``
+------------------------------------
+
+``custom_relations`` is processed during ``PaasCharm.__init__``, which runs
+**before** a subclass' ``__init__`` body. Each relation must therefore be
+self-contained: it uses ``self.context`` and ``self.charm`` (both injected
+before ``setup()``), not attributes the charm subclass sets after
+``super().__init__()``. Push author-specific state into the relation itself
+rather than into the charm subclass constructor.
 
 Error semantics
 ~~~~~~~~~~~~~~~
@@ -117,6 +143,7 @@ Event observation helper
 Juju events to the framework's ``on_change`` callback:
 
 .. code-block:: python
+    :caption: src/charm.py
 
     self._framework_observe(
         self.charm.on[self.relation_name].relation_changed,
@@ -137,14 +164,23 @@ relations and are re-exported from ``paas_charm.relations``:
 * :class:`paas_charm.exceptions.InvalidRelationDataError`
 * :class:`paas_charm.exceptions.RelationDataError`
 
-Single canonical env-var mapping
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Single definitive env-var mapping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Custom relations produce a single canonical env-var mapping, authored directly
+Custom relations produce a single definitive env-var mapping, authored directly
 in ``gen_environment``, used as-is across the framework. A 12-factor charm
 targets exactly one framework, so the author always knows which environment
 variable names that framework's workload expects and can emit them directly.
 Per-framework remapping for custom relations is out of scope.
+
+Environment-variable collisions
+-------------------------------
+
+Custom environment variables are merged after the built-in and framework
+environment variables. If a custom variable's name collides with an existing
+environment variable (whether built-in, framework-provided, or from another
+custom relation), the custom variable overwrites it and the charm logs a
+warning naming the relation and the colliding variable.
 
 Optional charm libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~
