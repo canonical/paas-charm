@@ -98,45 +98,66 @@ charm:
    stderr. All Ubuntu 26.04 LTS framework rocks also provide ``/app-data`` as a
    writable directory owned by the ``_daemon_`` workload user.
 
-2. **Move every charm to Ubuntu 26.04 LTS.** In a new, empty temporary
-   directory, generate the Ubuntu 26.04 LTS profile for your framework:
+2. **Generate the migrated Ubuntu 26.04 LTS charm project.** Choose the
+   framework profile that matches the existing charm. In the commands below,
+   replace ``<FRAMEWORK>`` with ``django``, ``expressjs``, ``fastapi``,
+   ``flask``, ``go``, or ``spring-boot``.
+
+   From the directory that contains the existing charm project, create a new
+   ``charm-26-04`` directory and initialize the Ubuntu 26.04 LTS profile there:
 
    .. code-block:: bash
 
-      mkdir ../myapp-ubuntu-26.04
-      cd ../myapp-ubuntu-26.04
-      charmcraft init --profile <framework>-framework --base ubuntu@26.04
+      mkdir charm-26-04
+      cd charm-26-04
+      CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 \
+        charmcraft init --profile <FRAMEWORK>-framework --base ubuntu@26.04
 
-   Do not run ``charmcraft init`` over the existing charm project. Use the
-   generated files as a migration reference: merge the generated
-   ``charmcraft.yaml`` and ``pyproject.toml`` changes into the existing project
-   rather than replacing its files wholesale. Preserve application-specific
-   configuration, actions, relations, resources, charm libraries, dependencies,
-   custom parts, and project metadata. Also preserve ``paas-config.yaml`` when
-   present.
+   Do not run this command in the existing charm directory. ``charmcraft init``
+   does not overwrite existing files, so it cannot safely update an initialized
+   project in place.
 
-   The migrated charm must use ``base: ubuntu@26.04`` and the ``uv`` plugin.
-   Replace ``requirements.txt`` with ``pyproject.toml``, including both the
-   generated ``paas-charm>=2.0.dev1,<3`` dependency and the existing charm's
-   dependencies. Then generate and commit ``uv.lock`` from the migrated project:
+3. **Move application-specific work into the generated project.** Use
+   ``charm-26-04`` as the migration destination. Copy the existing charm's
+   application and charm source code and tests into the corresponding generated
+   locations. Carry only the manual customizations from old generated or
+   initialized files into their new counterparts; do not replace generated
+   files wholesale with the old versions.
+
+   Preserve relevant application-specific metadata, configuration, actions,
+   relations, resources, charm libraries, dependencies, and custom parts.
+   Preserve the charm-owned ``paas-config.yaml`` when present.
+
+   Keep the generated Ubuntu 26.04 LTS contract, including:
+
+   * ``base: ubuntu@26.04`` and the generated platform definitions;
+   * the ``uv`` charm part and generated ``pyproject.toml`` project structure;
+   * the ``app`` workload container and ``app-image`` OCI resource;
+   * the ``peers`` peer relation with the ``peers`` interface;
+   * one ``app-secret-key`` option of type ``secret``, with no
+     ``app-secret-key-id`` option;
+   * the generated ``paas-charm>=2.0.dev1,<3`` dependency and generated
+     ``charmlibs`` interface dependencies for OAuth, OpenFGA, and tracing,
+     which replace the corresponding Charmhub-fetched libraries;
+   * a Valkey relation instead of the obsolete Redis relation; and
+   * the generated ``uv.lock`` file.
+
+   Add the existing charm's application-specific Python dependencies to the
+   generated ``pyproject.toml``. Retain the generated ``uv.lock`` unchanged
+   when dependencies are unchanged. After any dependency change, regenerate
+   and commit the lock file from ``charm-26-04``:
 
    .. code-block:: bash
 
       uv lock
 
-   See the
-   :ref:`Charmcraft Ubuntu 26.04 LTS migration guide <charmcraft:howto-change-to-ubuntu-26-04>`
+   When carrying over custom relation handling or application code, replace
+   obsolete Redis integration with the generated ``valkey`` relation and
+   ``/valkey/*`` endpoints.
+
+   For more details about the generated contract and dependency migration, see
+   the :ref:`Charmcraft framework extension reference <charmcraft:extensions>`
    and :ref:`Migrate your 12-factor charm to use the uv plugin <uv_migration>`.
-
-3. **Apply the Ubuntu 26.04 LTS charm contract.** Compare the project with the
-   :ref:`Charmcraft framework extension reference <charmcraft:extensions>`.
-   In particular, the project must have:
-
-   * an ``app`` container backed by an ``app-image`` OCI resource;
-   * a ``peers`` relation using the ``peers`` interface;
-   * one ``app-secret-key`` option of type ``secret`` (and no
-     ``app-secret-key-id`` option); and
-   * if used, a charm-owned ``paas-config.yaml`` staged into the packed charm.
 
 4. **Reconfigure the application secret key.** The application secret key is now
    stored in a Juju application-owned secret. On upgrade a fresh key is
@@ -157,11 +178,7 @@ charm:
    to ``peers``. Update any tooling that references the old endpoint or
    interface name.
 
-6. **Migrate Redis to Valkey.** Redis support was removed; examples and tests now
-   use the ``valkey`` relation and ``/valkey/*`` endpoints. Update your charm
-   metadata and application code accordingly.
-
-7. **Build and refresh all artifacts.** Ubuntu 26.04 LTS framework support
+6. **Build and refresh all artifacts.** Ubuntu 26.04 LTS framework support
    currently requires the tooling enablement variables when packing:
 
    .. code-block:: bash
