@@ -12,6 +12,8 @@ in a 12-factor app rock and charm:
 * :ref:`Adding extra files or changing the project structure <rockcraft:set-up-web-app-rock-include-extra-files-oci>`
 * :ref:`Database migrations <charmcraft:use-12-factor-charms-migrate-workload-database>`
 * :ref:`Enabling supported relations <charmcraft:integrate-12-factor-charms>`
+* :ref:`Adding custom relations <how_to_add_custom_relation>` (via the public
+  ``CustomRelation`` extension API)
 * :ref:`Handling secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
 * :ref:`Overriding commands <rockcraft:set-up-web-app-rock-override-commands>`
 * Application and metrics ports and the metrics path via ``paas-config.yaml``
