@@ -35,9 +35,10 @@ charm-libs:
 
 actions:
   rotate-secret-key:
-    description:
-      Rotate the django secret key. Users will be forced to log in again.
-      This might be useful if a security breach occurs.
+    description: >-
+      Rotate the charm-managed fallback secret key. This does not rotate a user-managed
+      secret configured with app-secret-key; users are signed out only when the active
+      fallback key changes.
   create-superuser:
     description: Create a new Django superuser account.
     params:

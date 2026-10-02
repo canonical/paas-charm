@@ -13,8 +13,11 @@ in a 12-factor app rock and charm:
 * :ref:`Database migrations <charmcraft:use-12-factor-charms-migrate-workload-database>`
 * :ref:`Enabling supported relations <charmcraft:integrate-12-factor-charms>`
 * :ref:`Handling secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
+* :ref:`Application secret key storage and rotation <ref_secrets>`
 * :ref:`Overriding commands <rockcraft:set-up-web-app-rock-override-commands>`
 * Application and metrics ports and the metrics path via ``paas-config.yaml``
+* Additional Prometheus scrape jobs via ``prometheus.scrape_configs`` in ``paas-config.yaml``
+* Valkey integration through the ``valkey_client`` interface
 * Structured framework logging in JSON via ``framework_logging_format: json`` in ``paas-config.yaml``
 * Task manager and scheduler
     .. tabs::

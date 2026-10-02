@@ -58,6 +58,24 @@ We use :doc:`Rockcraft <rockcraft:index>` to build OCI Images for the web app ch
    
    :ref:`Build a 12-factor app rock <rockcraft:how-to-manage-a-12-factor-app-rock>`
 
+Workload layout
+---------------
+
+The workload container uses a consistent filesystem layout across all supported
+frameworks:
+
+* ``/app`` holds the application source code. On the Ubuntu 26.04 LTS base,
+  the Rockcraft extensions place the application in ``/app``; on lower bases
+  some frameworks use a framework-prefixed directory such as ``/flask/app`` or
+  ``/django/app``. Gunicorn access and error logs use the workload container's
+  stdout and stderr streams.
+* On the Ubuntu 26.04 LTS base, ``/var/lib/gunicorn`` holds the mutable
+  ``gunicorn.conf.py`` file used by Flask and Django, kept separate from the
+  read-only application directory.
+* ``/app-data`` is a writable application data directory available to the
+  ``_daemon_`` user on the Ubuntu 26.04 LTS base, where 12-factor charms run as
+  a non-root user by default.
+
 Juju events
 -----------
 
@@ -67,7 +85,7 @@ and thus prompts a reaction from the charm to respond to the change, taking
 into account the charm's configuration.
 
 For more information on the events observed by 12-factor app charms, see
-:ref:`ref_juju_events`.
+:doc:`Juju events <juju-events>`.
 
 Charm code overview
 -------------------
