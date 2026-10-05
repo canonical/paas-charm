@@ -125,18 +125,24 @@ single source of truth for whether the relation is required:
         optional: true
         limit: 1
 
-Behavior:
+Workload integration behavior:
 
-* No relation and ``optional: true`` → the workload runs without Temporal
-  configuration.
-* A related Temporal server provides valid connection data →
-  ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` appear in the workload environment
-  and the service is (re)started.
-* A related app provides incomplete or invalid connection data →
-  ``BlockedStatus("missing integrations: temporal-host-info")``. This applies
-  once the relation is established, whether it is optional or required.
-* Removing the relation removes both environment variables and restarts the
-  workload.
+.. list-table::
+   :header-rows: 1
+
+   * - Relation Status
+     - Workload Impact
+   * - No relation and ``optional: true``
+     - the workload runs without Temporal configuration
+   * - A related Temporal server provides valid connection data
+     - ``TEMPORAL_HOST`` and ``TEMPORAL_PORT`` appear in the workload environment
+       and the service is (re)started
+   * - A related app provides incomplete or invalid connection data
+     - ``BlockedStatus("RelationDataError: <exception message>")``. This
+       applies once the relation is established, whether it is optional or
+       required.
+   * - Relation removed
+     - removes environment variables and restarts the workload.
 
 Add the Temporal charm library to the charm's ``charm-libs`` before building:
 
@@ -153,6 +159,9 @@ Temporal. A missing relation will then produce
 
 Implement custom relation API
 -----------------------------
+
+For lightweight implementations, custom relation logic may be placed 
+directly in ``src/charm.py``.
 
 .. list-table::
    :header-rows: 1
@@ -186,7 +195,7 @@ should also re-run database migrations.
 Read more
 ---------
 
-See :ref:`ref_custom_relations` to learn more about Custom Relations API.
+See :ref:`ref_custom_relations` to learn more about Custom Relations API, and
 :ref:`ref_observability_relations` for the information about built-in relations.
 
 A complete, runnable Flask charm that wires a custom ``temporal-host-info`` relation

@@ -3,8 +3,8 @@
 
 .. _ref_custom_relations:
 
-Custom relations API reference
-==============================
+Custom relations API
+====================
 
 The ``paas_charm.relations`` module is the public, stable extension API for
 adding custom Juju relations to a 12-factor charm. It is designed so that
@@ -127,7 +127,7 @@ will block the charm.
      - not called
      - required → ``BlockedStatus("missing integrations: <name>")``; optional →
        no environment, no block
-   * - Related but data not usable
+   * - Integrated but data not usable
      - raises ``RelationDataError``
      - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
        optional or required
