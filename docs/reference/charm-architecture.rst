@@ -91,6 +91,8 @@ into account the charm's configuration.
 For more information on the events observed by 12-factor app charms, see
 :ref:`ref_juju_events`.
 
+.. _ref_charm_architecture_code_overview:
+
 Charm code overview
 -------------------
 
