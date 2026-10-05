@@ -1,3 +1,6 @@
+.. meta::
+   :description: Release notes for paas-charm 2.0, including new features, backwards-incompatible changes, and the Ubuntu 26.04 LTS migration.
+
 .. _release_notes_2_0:
 
 ``paas-charm`` 2.0 release notes
@@ -67,7 +70,9 @@ Application and metrics endpoints are now configured through top-level
 Prometheus sections. The charm always exposes the resolved framework defaults
 to the workload, and the resolved ``metrics-port`` and ``metrics-path`` are
 published as the framework Prometheus scrape job.
-This configuration applies to all supported frameworks, including Go.
+This configuration applies to all supported frameworks, including Go. See
+:ref:`paas-config.yaml <ref_paas_config>` and
+:ref:`Prometheus configuration <ref_paas_config_prometheus>` for details.
 
 * `Pull request #316 <https://github.com/canonical/paas-charm/pull/316>`_
 * `Pull request #342 <https://github.com/canonical/paas-charm/pull/342>`_
@@ -77,7 +82,8 @@ Custom Prometheus scrape jobs
 
 Additional Prometheus jobs can be declared under ``prometheus.scrape_configs``
 without replacing the framework scrape job. Custom targets do not configure the
-workload listener; you must ensure each target is actually served.
+workload listener; you must ensure each target is actually served. See
+:ref:`Prometheus configuration <ref_paas_config_prometheus>` for details.
 
 * `Pull request #316 <https://github.com/canonical/paas-charm/pull/316>`_
 
@@ -88,7 +94,8 @@ The generated application secret key is now stored in a Juju application-owned
 secret instead of the peer relation databag. The ``secret-storage`` peer
 relation (and its interface) is renamed to ``peers``, and the peer relation is
 now used only for peer coordination such as ``PEER_FQDNS``. The key can be
-rotated with the ``rotate-secret-key`` action.
+rotated with the ``rotate-secret-key`` action. See :ref:`Secrets <ref_secrets>`
+for details.
 
 * `Pull request #345 <https://github.com/canonical/paas-charm/pull/345>`_
 
@@ -101,6 +108,7 @@ ID. This replaces the previous string ``app-secret-key`` and
 ``app-secret-key-id`` options and the framework-specific
 ``flask-secret-key``/``django-secret-key`` options. Framework-prefixed workload
 variables such as ``FLASK_SECRET_KEY`` and ``DJANGO_SECRET_KEY`` are preserved.
+See :ref:`Secrets <ref_secrets>` for details.
 
 * `Pull request #367 <https://github.com/canonical/paas-charm/pull/367>`_
 
@@ -109,7 +117,9 @@ OAuth integration migrated to ``charmlibs``
 
 The deprecated ``charms.hydra.v0.oauth`` charm library is replaced with the
 maintained ``charmlibs.interfaces.oauth`` package. This is API-compatible with
-the previous library.
+the previous library. See the
+`OAuth interface documentation <https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/oauth/>`_
+for details.
 
 * `Pull request #371 <https://github.com/canonical/paas-charm/pull/371>`_
 
@@ -117,7 +127,11 @@ OpenFGA and tracing integrations migrated to ``charmlibs``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The OpenFGA and tracing integrations now use their maintained ``charmlibs``
-interfaces.
+interfaces. See the
+`OpenFGA interface documentation <https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/openfga/>`_
+and
+`tracing interface documentation <https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/tracing/>`_
+for details.
 
 * `Pull request #372 <https://github.com/canonical/paas-charm/pull/372>`_
 * `Pull request #373 <https://github.com/canonical/paas-charm/pull/373>`_
@@ -132,6 +146,10 @@ a fixed value.
 
 Rockcraft
 ~~~~~~~~~
+
+See :ref:`Charm architecture <ref_charm_architecture>` for the workload layout,
+and the :ref:`Rockcraft extension reference <rockcraft:reference-extensions>`
+for framework-specific configuration.
 
 * Flask and Django application files are placed in ``/app`` with the Gunicorn
   configuration in ``/var/lib/gunicorn`` on the Ubuntu 26.04 LTS base.
@@ -149,6 +167,11 @@ Rockcraft
 
 Charmcraft
 ~~~~~~~~~~
+
+See the :ref:`Charmcraft framework extension reference <charmcraft:extensions>`
+for the generated charm contract, and
+:ref:`Migrate your 12-factor charm to use the uv plugin <uv_migration>` for
+dependency management.
 
 * Extension dispatch for 12-factor extensions.
   (`Pull request #2722 <https://github.com/canonical/charmcraft/pull/2722>`_)

@@ -8,7 +8,7 @@ Secrets
 
 12-factor app charms use Juju secrets for application secret material. The
 secret key used to sign sessions is generated and stored automatically, while
-user-provided secrets can be passed as environment variables through config
+user-provided secrets can be passed as environment variables through configuration
 options of type ``secret``.
 
 Application secret key
@@ -62,6 +62,9 @@ to a Juju user secret ID:
          type: secret
          description: Secret key used for session signing.
 
+Then create the Juju secret, grant it to the application, and set the
+configuration option to the secret ID:
+
 .. code-block:: bash
 
    juju add-secret my-app-secret-key value=<secret-string>
@@ -87,6 +90,9 @@ environment variable named after the option and the secret key:
          type: secret
          description: Secret needed to access an API.
 
+Then create the Juju secret, grant it to the application, and set the
+configuration option to the secret ID:
+
 .. code-block:: bash
 
    juju add-secret my-api-token value=1234 othervalue=5678
@@ -103,5 +109,5 @@ in uppercase.
 .. seealso::
 
     * :ref:`Manage secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
-    * :doc:`Juju events <juju-events>`
+    * :ref:`Juju events <ref_juju_events>`
     * :external+juju:ref:`Juju | Secret <secret>`

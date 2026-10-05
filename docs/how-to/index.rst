@@ -1,6 +1,9 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
+.. meta::
+   :description: Browse how-to guides for managing 12-factor app rocks and charms, including upgrading to paas-charm 2.0.
+
 How-to guides
 =============
 

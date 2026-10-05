@@ -1,3 +1,6 @@
+.. meta::
+   :description: Technical details about the optional paas-config.yaml configuration file used by 12-factor app charms.
+
 .. _ref_paas_config:
 
 paas-config.yaml

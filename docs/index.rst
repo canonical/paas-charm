@@ -1,6 +1,9 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
+.. meta::
+   :description: Build, deploy, configure, and operate 12-factor web applications with Charmcraft, Rockcraft, and paas-charm.
+
 12-Factor app support in Charmcraft and Rockcraft
 =================================================
 
@@ -46,6 +49,7 @@ In this documentation
    * - **Configure**
      - :ref:`paas-config.yaml <ref_paas_config>` |
        :ref:`Customizable features <ref_supported_customization>` |
+       :ref:`Secrets <ref_secrets>`
    * - **Integrations and observability**
      - :ref:`Observability and relations <ref_observability_relations>` |
        :ref:`Add custom dashboards and alert rules <how_to_add_custom_cos_assets>` |

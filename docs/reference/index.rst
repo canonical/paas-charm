@@ -1,3 +1,6 @@
+.. meta::
+   :description: Browse technical reference documentation for the individual components of 12-factor app support.
+
 Reference
 =========
 

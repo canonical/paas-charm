@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Notable changes to paas-charm, including new features, bug fixes, and backwards-incompatible changes."
+---
+
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
 
 (changelog)=

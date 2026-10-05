@@ -1,3 +1,6 @@
+.. meta::
+   :description: Browse release notes for paas-charm and its support in Charmcraft and Rockcraft.
+
 Release notes
 =============
 

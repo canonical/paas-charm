@@ -1,3 +1,6 @@
+.. meta::
+   :description: Technical reference for the features and capabilities you can customize in a 12-factor app charm.
+
 .. _ref_supported_customization:
 
 Supported customizable features and capabilities

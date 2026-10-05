@@ -1,3 +1,6 @@
+.. meta::
+   :description: Learn how to migrate a 12-factor app charm from the charm plugin to the uv plugin.
+
 .. _uv_migration:
 
 Migrate your 12-factor charm to use the uv plugin

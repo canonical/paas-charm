@@ -1,5 +1,9 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
+
+.. meta::
+   :description: Technical details about the architecture of a 12-factor app charm, including its workload layout and event handling.
+
 .. _ref_charm_architecture:
 
 Charm architecture
@@ -85,7 +89,7 @@ and thus prompts a reaction from the charm to respond to the change, taking
 into account the charm's configuration.
 
 For more information on the events observed by 12-factor app charms, see
-:doc:`Juju events <juju-events>`.
+:ref:`ref_juju_events`.
 
 Charm code overview
 -------------------
