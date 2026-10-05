@@ -17,7 +17,7 @@ from tests.integration.types import App
 @pytest.mark.parametrize(
     "app_fixture, endpoint, expected_text",
     [
-        ("django_app", "/len/users", None),
+        ("django_app", "/", None),
         ("expressjs_app", "/", None),
         ("fastapi_app", "/", None),
         ("flask_app", "/", None),

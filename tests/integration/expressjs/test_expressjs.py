@@ -40,7 +40,7 @@ def test_user_defined_config(
     assert: the value of the env variable and the config should match.
     """
     juju.config(expressjs_app.name, {"user-defined-config": "newvalue"})
-    juju.wait(lambda status: jubilant.all_active(status, expressjs_app.name, "postgresql-k8s"))
+    juju.wait(lambda status: jubilant.all_active(status, expressjs_app.name))
 
     status = juju.status()
     for unit in status.apps[expressjs_app.name].units.values():
@@ -52,7 +52,7 @@ def test_user_defined_config(
         assert "newvalue" in response.text
 
 
-def test_migration(expressjs_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
+def test_migration(expressjs_db_app: App, request: pytest.FixtureRequest, juju: jubilant.Juju):
     """
     arrange: build and deploy the ExpressJS charm with postgresql integration.
     act: send a request to an endpoint that checks the table created by the migration script.
@@ -60,7 +60,7 @@ def test_migration(expressjs_app: App, request: pytest.FixtureRequest, juju: jub
     assert: the ExpressJS application should add the user only once.
     """
     status = juju.status()
-    for unit in status.apps[expressjs_app.name].units.values():
+    for unit in status.apps[expressjs_db_app.name].units.values():
         response = requests.get(f"http://{unit.address}:{WORKLOAD_PORT}/table/users", timeout=5)
         assert response.status_code == 200
         assert "SUCCESS" in response.text

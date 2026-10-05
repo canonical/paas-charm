@@ -38,7 +38,7 @@ def test_user_defined_config(
     assert: the value of the env variable and the config should match.
     """
     juju.config(go_app.name, {"user-defined-config": "newvalue"})
-    juju.wait(lambda status: jubilant.all_active(status, go_app.name, "postgresql-k8s"))
+    juju.wait(lambda status: jubilant.all_active(status, go_app.name))
 
     status = juju.status()
     for unit in status.apps[go_app.name].units.values():
@@ -49,14 +49,14 @@ def test_user_defined_config(
         assert "newvalue" in response.text
 
 
-def test_migration(go_app: App, session_with_retry: requests.Session, juju: jubilant.Juju):
+def test_migration(go_db_app: App, session_with_retry: requests.Session, juju: jubilant.Juju):
     """
     arrange: build and deploy the go charm with postgresql integration.
     act: send a request to an endpoint that uses the table created by the migration script.
     assert: the go application should return a correct response.
     """
     status = juju.status()
-    for unit in status.apps[go_app.name].units.values():
+    for unit in status.apps[go_db_app.name].units.values():
         response = session_with_retry.get(
             f"http://{unit.address}:{WORKLOAD_PORT}/postgresql/migratestatus", timeout=5
         )

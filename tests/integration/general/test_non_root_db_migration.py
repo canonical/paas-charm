@@ -17,30 +17,36 @@ logger = logging.getLogger(__name__)
     "non_root_app_fixture, app_name, endpoint, port",
     [
         pytest.param(
-            "expressjs_non_root_app",
-            "expressjs-k8s",
+            "expressjs_non_root_db_app",
+            "expressjs-non-root-db-k8s",
             "table/users",
             8080,
             id="ExpressJS non-root",
         ),
         pytest.param(
             "flask_non_root_db_app",
-            "flask-k8s",
+            "flask-non-root-db-k8s",
             "tables/users",
             8000,
             id="Flask non-root",
         ),
-        pytest.param("django_non_root_app", "django-k8s", "len/users", 8000, id="Django non-root"),
         pytest.param(
-            "fastapi_non_root_app",
-            "fastapi-k8s",
+            "django_non_root_db_app",
+            "django-non-root-db-k8s",
+            "len/users",
+            8000,
+            id="Django non-root",
+        ),
+        pytest.param(
+            "fastapi_non_root_db_app",
+            "fastapi-non-root-db-k8s",
             "table/users",
             8000,
             id="FastAPI non-root",
         ),
         pytest.param(
-            "go_non_root_app",
-            "go-k8s",
+            "go_non_root_db_app",
+            "go-non-root-db-k8s",
             "postgresql/migratestatus",
             8080,
             id="Go non-root",
@@ -62,11 +68,12 @@ def test_non_root_db_migration(
         the database migration script has been executed and only executed once.
     """
     app = request.getfixturevalue(non_root_app_fixture)
+    assert app.name == app_name
     juju.wait(lambda status: jubilant.all_active(status, app.name), delay=5)
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    if app_name == "fastapi-k8s":
+    if "fastapi" in app.name:
         assert requests.get(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
     else:
         assert requests.head(f"http://{unit_ip}:{port}/{endpoint}", timeout=5).status_code == 200
