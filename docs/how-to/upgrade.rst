@@ -84,12 +84,15 @@ supported upgrade path to ``paas-charm`` 2.0.
 Before refreshing a deployment, manually migrate and rebuild **every** rock and
 charm:
 
-1. **Move every rock to the Ubuntu 26.04 LTS build base.** Set
+Move every rock to the Ubuntu 26.04 LTS build base 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set
    ``base: ubuntu@26.04``. For a chiselled rock, set ``base: bare`` and
    ``build-base: ubuntu@26.04`` instead. Follow the
    :ref:`Rockcraft Ubuntu 26.04 LTS migration guide <rockcraft:how-to-migrate-2604>`
    and the
-   `Rockcraft extension reference <https://documentation.ubuntu.com/rockcraft/stable/reference/extensions/>`_,
+   :ref:`Rockcraft extension reference <rockcraft:reference-extensions>`,
    including any required part-name and package changes.
 
    Extension-generated Rockcraft part names use ``/`` as their separator on

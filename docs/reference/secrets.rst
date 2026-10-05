@@ -1,5 +1,5 @@
-.. Copyright 2026 Canonical Ltd.
-.. See LICENSE file for licensing details.
+.. meta::
+   :description: Technical details about how 12-factor app charms handle secrets.
 
 .. _ref_secrets:
 
@@ -75,7 +75,7 @@ User secrets as environment variables
 -------------------------------------
 
 You can expose arbitrary Juju secret keys and values as environment variables by
-adding a config option of type ``secret``. Each key inside the secret becomes an
+adding a configuration option of type ``secret``. Each key inside the secret becomes an
 environment variable named after the option and the secret key:
 
 .. code-block:: yaml
@@ -93,12 +93,12 @@ environment variable named after the option and the secret key:
    juju grant-secret my-api-token <app name>
    juju config <app name> api-token=secret:<secret id>
 
-For a config option ``api-token`` and a secret key ``value``, Flask receives
+For a configuration option ``api-token`` and a secret key ``value``, Flask receives
 ``FLASK_API_TOKEN_VALUE``, Django receives ``DJANGO_API_TOKEN_VALUE``, and
 FastAPI, ExpressJS, Go, and Spring Boot receive ``APP_API_TOKEN_VALUE``. In
 general, the environment variable uses the framework prefix followed by the
 option and key names, with hyphens replaced by underscores and all letters
-upper-cased.
+in uppercase.
 
 .. seealso::
 

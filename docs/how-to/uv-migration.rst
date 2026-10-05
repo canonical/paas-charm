@@ -3,8 +3,8 @@
 Migrate your 12-factor charm to use the uv plugin
 =================================================
 
-In ``paas-charm`` 2.0 and charms using the Ubuntu 26.04 base, the
-`uv <https://documentation.ubuntu.com/charmcraft/stable/reference/plugins/uv_plugin/#craft-parts-uv-plugin>`_
+In ``paas-charm`` 2.0 and charms using the Ubuntu 26.04 LTS base, the
+`uv <https://canonical.com/juju/docs/charmcraft/4/reference/plugins/uv_plugin/#craft-parts-uv-plugin>`_
 plugin is the default. Charms using ``paas-charm`` 1.x use the ``charm`` plugin
 by default, and converting such a charm is considered a breaking change.
 This guide walks you
