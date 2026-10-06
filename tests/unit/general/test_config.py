@@ -10,7 +10,7 @@ import ops
 import pytest
 import yaml
 from ops import testing
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 import paas_charm
 from examples.django.charm.src.charm import DjangoCharm
@@ -459,6 +459,26 @@ def test_app_config_class_factory(
         paas_charm.charm_state.app_config_class_factory(mock_charm, framework).__annotations__
         == expected_output
     )
+
+
+def test_app_config_class_factory_excludes_framework_aliases(tmp_path):
+    """Exclude owned aliases while still requiring ordinary user configuration."""
+    (tmp_path / "config.yaml").write_text(
+        "options:\n"
+        "  public-option:\n"
+        "    type: string\n"
+        "    optional: false\n"
+        "  user-option:\n"
+        "    type: string\n"
+        "    optional: false\n"
+    )
+    model = paas_charm.charm_state.app_config_class_factory(
+        tmp_path, "flask", framework_options={"public_option"}
+    )
+    assert set(model.model_fields) == {"user_option"}
+    assert model(user_option="ordinary").user_option == "ordinary"
+    with pytest.raises(ValidationError, match="user_option"):
+        model()
 
 
 @pytest.mark.parametrize(

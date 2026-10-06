@@ -7,6 +7,7 @@ import pathlib
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import Field
 
 from paas_charm.charm_state import CharmState, IntegrationRequirers, RelationDataError
 from paas_charm.flask.charm import FlaskConfig
@@ -60,3 +61,32 @@ def test_charm_state_integration_state_build_error(error):
             ),
             base_url="http://test-base-url",
         )
+
+
+def test_required_framework_alias_is_not_user_config(tmp_path):
+    """Accept a required framework alias without mappings or duplicate app validation."""
+
+    class ExtendedFlaskConfig(FlaskConfig):
+        internal_name: str = Field(alias="public-option")
+
+    (tmp_path / "config.yaml").write_text(
+        "options:\n"
+        "  public-option:\n"
+        "    type: string\n"
+        "    optional: false\n"
+        "  user-option:\n"
+        "    type: string\n"
+        "    optional: false\n"
+    )
+    state = CharmState.from_charm(
+        charm_dir=tmp_path,
+        config={"public-option": "configured", "user-option": "ordinary"},
+        framework="flask",
+        framework_config=ExtendedFlaskConfig(**{"public-option": "configured"}),
+        secret_key=MagicMock(is_ready=False),
+        peers=MagicMock(is_related=False),
+        integration_requirers=IntegrationRequirers(databases={}),
+    )
+    assert state.framework_config["internal_name"] == "configured"
+    assert state.user_defined_config == {"user_option": "ordinary"}
+    assert state.env_config.config == {}

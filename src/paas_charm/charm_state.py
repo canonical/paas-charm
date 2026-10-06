@@ -131,7 +131,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             and k.replace("-", "_") not in framework_options
         }
 
-        app_config_class = app_config_class_factory(charm_dir, framework)
+        app_config_class = app_config_class_factory(
+            charm_dir, framework, framework_options=framework_options
+        )
         try:
             app_config_class(**user_defined_config)
         except ValidationError as exc:
@@ -412,12 +414,19 @@ def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple
     return (option_name, type_tuple)
 
 
-def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[BaseModel]:
+def app_config_class_factory(
+    charm_dir: pathlib.Path,
+    framework: str,
+    *,
+    framework_options: set[str] | None = None,
+) -> type[BaseModel]:
     """App config class factory.
 
     Args:
         charm_dir: The charm directory.
         framework: The framework name.
+        framework_options: Normalized framework-owned option names to exclude.
+            If omitted, only reserved prefixes are excluded.
 
     Returns:
         Constructed app config class.
@@ -427,6 +436,7 @@ def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[Ba
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
         if is_user_defined_config(option_name, framework)
+        and (framework_options is None or option_name.replace("-", "_") not in framework_options)
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
