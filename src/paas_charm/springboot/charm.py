@@ -360,15 +360,15 @@ class SpringBootApp(App):
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
 
-    def _generate_environment(self) -> dict[str, str]:
-        """Generate a environment dictionary from the charm configurations.
+    def _framework_environment(self) -> dict[str, str]:
+        """Build the config/framework layer with Spring Boot-specific settings.
 
-        Adds to the base environment variables specific ones for the Spring Boot framework.
+        Relation outputs and explicit mappings are applied afterward.
 
         Returns:
-            A dictionary representing the application environment variables.
+            Config and library-owned variables before relations and explicit mappings.
         """
-        env = super()._generate_environment()
+        env = super()._framework_environment()
         env.pop("METRICS_PORT", None)
         env.pop("METRICS_PATH", None)
         # Name of the profiles field in SpringBootConfig

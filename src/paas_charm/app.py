@@ -447,12 +447,12 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Generate the final workload environment in precedence order.
 
         Explicit config mappings override integrations, which override library-generated
-        variables. Framework-specific generation belongs in ``_generate_environment``.
+        variables. The config/framework layer comes from ``_framework_environment``.
 
         Returns:
             The final environment with string-encoded values.
         """
-        env = self._generate_environment()
+        env = self._framework_environment()
         env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
         for name, (source, value) in self._mapped_config_environment().items():
             if name in env:
@@ -494,8 +494,11 @@ class App:  # pylint: disable=too-many-instance-attributes
                 env[mapping] = (option, encode_env(value))
         return env
 
-    def _generate_environment(self) -> dict[str, str]:  # noqa: too-complex
-        """Generate a environment dictionary from the charm configurations.
+    def _framework_environment(self) -> dict[str, str]:  # noqa: too-complex
+        """Build config and library-owned variables before higher-priority overrides.
+
+        Framework subclasses extend this layer. Relation outputs and explicit config
+        mappings are applied afterward by ``gen_environment``.
 
         The environment generation follows these rules:
              1. User-defined configuration cannot overwrite built-in framework configurations,

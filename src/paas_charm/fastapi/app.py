@@ -78,13 +78,13 @@ class FastAPIApp(App):
             )
             logger.debug("Pushed %s to container", filename)
 
-    def _generate_environment(self) -> dict[str, str]:
-        """Return the application environment, adding logging vars when JSON is configured.
+    def _framework_environment(self) -> dict[str, str]:
+        """Build the config/framework layer, including structured logging variables.
 
         Returns:
-            A dictionary representing the application environment variables.
+            Config and library-owned variables before relations and explicit mappings.
         """
-        env = super()._generate_environment()
+        env = super()._framework_environment()
         if self._workload_config.logging_format == LoggingFormat.JSON:
             existing = env.get("PYTHONPATH", "")
             env["PYTHONPATH"] = (
