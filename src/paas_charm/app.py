@@ -453,7 +453,15 @@ class App:  # pylint: disable=too-many-instance-attributes
             The final environment with string-encoded values.
         """
         env = self._framework_environment()
-        env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
+        for name, value in self._generate_integration_environments(
+            prefix=self.integrations_prefix
+        ).items():
+            if name in env:
+                logger.warning(
+                    "Integration output overwrites config/framework environment variable %r",
+                    name,
+                )
+            env[name] = value
         for name, (source, value) in self._mapped_config_environment().items():
             if name in env:
                 logger.warning(
@@ -497,21 +505,12 @@ class App:  # pylint: disable=too-many-instance-attributes
     def _framework_environment(self) -> dict[str, str]:  # noqa: too-complex
         """Build config and library-owned variables before higher-priority overrides.
 
-        Framework subclasses extend this layer. Relation outputs and explicit config
-        mappings are applied afterward by ``gen_environment``.
-
-        The environment generation follows these rules:
-             1. User-defined configuration cannot overwrite built-in framework configurations,
-                even if the built-in framework application configuration value is None (undefined).
-             2. Boolean and integer-typed configuration values will be JSON encoded before
-                being passed to application.
-             3. String-typed configuration values will be passed to the application as environment
-                variables directly.
-             4. Different prefixes can be set to the environment variable names depending on the
-                framework.
+        Explicitly mapped sources are omitted from their default names. Unmapped config
+        retains its existing prefixes and value encoding. Framework subclasses extend
+        this layer; ``gen_environment`` then applies relations and explicit mappings.
 
         Returns:
-            A dictionary representing the application environment variables.
+            The config/framework environment with string-encoded values.
         """
         prefix = self.configuration_prefix
         env = {}
@@ -525,9 +524,10 @@ class App:  # pylint: disable=too-many-instance-attributes
                 continue
             if isinstance(mapping, dict) and app_config_value is None:
                 continue
+            mapped_keys = mapping if isinstance(mapping, dict) else {}
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
-                    if isinstance(mapping, dict) and k in mapping:
+                    if k in mapped_keys:
                         continue
                     env[f"{prefix}{app_config_key.upper()}_{k.replace('-', '_').upper()}"] = (
                         encode_env(v)

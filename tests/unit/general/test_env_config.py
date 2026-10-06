@@ -8,10 +8,13 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
+import yaml
 from ops import testing
 from pydantic import ValidationError
 
+from examples.expressjs.charm.src.charm import ExpressJSCharm
 from examples.flask.charm.src.charm import FlaskCharm
+from examples.go.charm.src.charm import GoCharm
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState
 from paas_charm.exceptions import PaasConfigError
@@ -108,6 +111,30 @@ def test_mapping_precedence(make_app, caplog):
     assert "configured-value" not in caplog.text
 
 
+@pytest.mark.parametrize(
+    "config, framework, destination",
+    [
+        ({"option": "config-private"}, {}, "APP_OPTION"),
+        ({}, {"option": "framework-private"}, "OPTION"),
+        ({}, {}, "METRICS_PORT"),
+    ],
+)
+def test_integration_collision_warning(make_app, caplog, config, framework, destination):
+    """Warn without values when integration output replaces the config/framework layer."""
+    env = make_app(
+        config,
+        {},
+        framework=framework,
+        relations={destination: "relation-private", "UNIQUE": "unique-private"},
+    ).gen_environment()
+    assert env[destination] == "relation-private"
+    assert env["UNIQUE"] == "unique-private"
+    assert len(caplog.records) == 1
+    assert destination in caplog.text
+    assert "Integration" in caplog.text and "config/framework" in caplog.text
+    assert "private" not in caplog.text
+
+
 def test_simultaneous_renames(make_app):
     """Swapping config destinations does not overwrite either source value."""
     env = make_app(
@@ -202,10 +229,33 @@ def test_valid_sources():
 
 
 @pytest.mark.parametrize(
+    "charm_class, option",
+    [(GoCharm, "port"), (ExpressJSCharm, "port"), (FlaskCharm, "flask-debug")],
+)
+def test_framework_source_rejected_on_initialization(context_factory, charm_class, option):
+    """Reject prefixed and unprefixed framework-owned sources in real charm initialization."""
+    context = context_factory(
+        charm_class, paas_config=PaasConfig(env={"config": {option: "TARGET"}})
+    )
+    config_path = context.charm_root / "charmcraft.yaml"
+    metadata = yaml.safe_load(config_path.read_text())
+    metadata["config"]["options"].setdefault(option, {"type": "int", "default": 8080})
+    config_path.write_text(yaml.safe_dump(metadata))
+    with testing.Context(charm_class, meta=metadata, charm_root=context.charm_root) as declared:
+        with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+            declared.run(declared.on.config_changed(), testing.State())
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert f"cannot map framework-owned option {option!r}" in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
     "content",
     [
         "env:\n  config:\n    option: A\n    option: B\n",
         "env:\n  config:\n    secret:\n      key: A\n      key: B\n",
+        "env:\n  config:\n    <<:\n      option: A\n      option: B\n",
+        "env:\n  config:\n    <<: [{option: A, option: B}, {other: C}]\n",
+        "env:\n  config:\n    <<:\n      <<:\n        option: A\n        option: B\n",
     ],
 )
 def test_duplicate_yaml_keys(tmp_path, content):
@@ -221,6 +271,47 @@ def test_yaml_merge_keys(tmp_path):
         "env: &environment\n" "  config:\n" "    option: TARGET\n" "<<:\n" "  env: *environment\n"
     )
     assert read_paas_config(tmp_path).env.config == {"option": "TARGET"}
+
+
+def test_yaml_merge_alias_with_explicit_override(tmp_path):
+    """Validate original alias keys, not duplicate keys introduced by merge expansion."""
+    (tmp_path / "paas-config.yaml").write_text(
+        "env:\n"
+        "  config:\n"
+        "    secret-one: &one\n"
+        "      <<: {key: OLD}\n"
+        "      key: SECRET_TARGET\n"
+        "    <<: *one\n"
+        "    key: SCALAR_TARGET\n"
+    )
+    assert read_paas_config(tmp_path).env.config == {
+        "secret-one": {"key": "SECRET_TARGET"},
+        "key": "SCALAR_TARGET",
+    }
+
+
+def test_yaml_merge_sequence_precedence(tmp_path):
+    """Preserve standard merge ordering and explicit overrides."""
+    (tmp_path / "paas-config.yaml").write_text(
+        "env:\n"
+        "  config:\n"
+        "    <<: [{option: FIRST, other: OTHER}, {option: SECOND}]\n"
+        "    other: OVERRIDE\n"
+    )
+    assert read_paas_config(tmp_path).env.config == {"option": "FIRST", "other": "OVERRIDE"}
+
+
+def test_yaml_unhashable_key(tmp_path):
+    """Report invalid YAML mapping keys as authoring errors."""
+    (tmp_path / "paas-config.yaml").write_text("env:\n  config:\n    ? [option]\n    : TARGET\n")
+    with pytest.raises(PaasConfigError, match="unhashable mapping key"):
+        read_paas_config(tmp_path)
+
+
+def test_yaml_special_value_key(tmp_path):
+    """Preserve SafeLoader's interpretation of an unquoted equals key."""
+    (tmp_path / "paas-config.yaml").write_text("env:\n  config:\n    secret:\n      =: TARGET\n")
+    assert read_paas_config(tmp_path).env.config == {"secret": {"=": "TARGET"}}
 
 
 def test_yaml_loader_rejects_python_objects(tmp_path):

@@ -304,38 +304,44 @@ class PaasConfig(BaseModel):
 class _UniqueKeyLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
     """Safe YAML loader that rejects duplicate explicit mapping keys."""
 
+    def __init__(self, stream: str | typing.TextIO) -> None:
+        """Initialize the loader.
 
-def _construct_unique_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode) -> dict:
-    """Construct a YAML mapping without silently discarding duplicate keys.
+        Args:
+            stream: YAML text or an open text stream.
+        """
+        super().__init__(stream)
+        self._validated_nodes: set[yaml.MappingNode] = set()
 
-    Args:
-        loader: Safe YAML loader.
-        node: Mapping node being constructed.
+    def flatten_mapping(self, node: yaml.MappingNode) -> None:
+        """Validate explicit keys before expanding YAML merges.
 
-    Returns:
-        The constructed mapping.
+        Args:
+            node: Mapping node being constructed or used as a merge source.
 
-    Raises:
-        ConstructorError: If a key is unhashable or an explicit key occurs more than once.
-    """
-    keys: set = set()
-    for key_node, _ in node.value:
-        if key_node.tag == "tag:yaml.org,2002:merge":
-            continue
-        key = loader.construct_object(key_node)
-        if not isinstance(key, typing.Hashable):
-            raise ConstructorError(None, None, "unhashable mapping key", key_node.start_mark)
-        if key in keys:
-            raise ConstructorError(
-                None, None, f"duplicate mapping key {key!r}", key_node.start_mark
-            )
-        keys.add(key)
-    return loader.construct_mapping(node, deep=True)
-
-
-_UniqueKeyLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
-)
+        Raises:
+            ConstructorError: If a key is unhashable or an explicit key is repeated.
+        """
+        # Flattening mutates shared alias nodes; validate each node's original keys once.
+        if node not in self._validated_nodes:
+            self._validated_nodes.add(node)
+            keys: set = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    continue
+                if key_node.tag == "tag:yaml.org,2002:value":
+                    key_node.tag = "tag:yaml.org,2002:str"
+                key = self.construct_object(key_node)
+                if not isinstance(key, typing.Hashable):
+                    raise ConstructorError(
+                        None, None, "unhashable mapping key", key_node.start_mark
+                    )
+                if key in keys:
+                    raise ConstructorError(
+                        None, None, f"duplicate mapping key {key!r}", key_node.start_mark
+                    )
+                keys.add(key)
+        super().flatten_mapping(node)
 
 
 def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
