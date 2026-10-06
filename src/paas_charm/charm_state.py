@@ -16,6 +16,7 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
+from paas_charm.paas_config import EnvConfig
 from paas_charm.peers import Peers
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
@@ -49,6 +50,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: the charm managed application secret key.
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
+        env_config: Explicit environment variable name mappings.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -62,6 +64,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
+        env_config: EnvConfig | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -74,6 +77,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
+            env_config: Explicit environment variable name mappings.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -83,6 +87,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.env_config = env_config if env_config is not None else EnvConfig()
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -96,6 +101,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
         base_url: str | None = None,
+        env_config: EnvConfig | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
@@ -108,6 +114,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
             base_url: Base URL for the service.
+            env_config: Explicit environment variable name mappings.
 
         Return:
             The CharmState instance created by the provided charm.
@@ -223,6 +230,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_key=(secret_key.get_secret_key() if secret_key.is_ready else None),
             is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
+            env_config=env_config,
             integrations=integrations,
             base_url=base_url,
         )

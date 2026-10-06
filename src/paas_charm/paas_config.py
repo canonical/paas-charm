@@ -18,6 +18,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from yaml.constructor import ConstructorError
 
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
@@ -153,6 +154,68 @@ class PrometheusConfig(BaseModel):
         return self
 
 
+class EnvConfig(BaseModel):
+    """Environment variable name mappings.
+
+    Attributes:
+        config: Config option names mapped to destinations, or secret-key mappings.
+        model_config: Pydantic model configuration.
+    """
+
+    config: dict[str, str | dict[str, str]] = Field(default_factory=dict)
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    @model_validator(mode="after")
+    def validate_destinations(self) -> "EnvConfig":
+        """Validate destination names and reject ambiguous mappings.
+
+        Returns:
+            The validated configuration.
+
+        Raises:
+            ValueError: If a destination is invalid or used by multiple sources.
+        """
+        destinations: dict[str, str] = {}
+        for option, mapping in self.config.items():  # pylint: disable=no-member
+            entries = mapping.items() if isinstance(mapping, dict) else [(None, mapping)]
+            for key, destination in entries:
+                source = option if key is None else f"{option}.{key}"
+                if not destination or "\0" in destination or "=" in destination:
+                    raise ValueError(f"Invalid environment variable name for {source!r}")
+                if destination in destinations:
+                    raise ValueError(
+                        f"Environment variable {destination!r} is mapped from both "
+                        f"{destinations[destination]!r} and {source!r}"
+                    )
+                destinations[destination] = source
+        return self
+
+    def validate_sources(self, options: dict, unsupported: set[str]) -> None:
+        """Validate sources against charm configuration metadata.
+
+        Args:
+            options: Charm configuration option metadata.
+            unsupported: Framework-owned and otherwise unsupported option names.
+
+        Raises:
+            PaasConfigError: If an option is unknown, unsupported, or has the wrong mapping shape.
+        """
+        for option, mapping in self.config.items():  # pylint: disable=no-member
+            if option not in options:
+                raise PaasConfigError(f"env.config references unknown config option {option!r}")
+            if option in unsupported:
+                raise PaasConfigError(f"env.config cannot map framework-owned option {option!r}")
+            normalized = option.replace("-", "_")
+            if any(other != option and other.replace("-", "_") == normalized for other in options):
+                raise PaasConfigError(
+                    f"env.config source {option!r} has an ambiguous normalized config name"
+                )
+            is_secret = options[option]["type"] == "secret"
+            if is_secret != isinstance(mapping, dict):
+                expected = "a secret content-key mapping" if is_secret else "a destination name"
+                raise PaasConfigError(f"env.config.{option} must be {expected}")
+
+
 class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
@@ -165,11 +228,13 @@ class PaasConfig(BaseModel):
         port: Optional override for the port on which the application server listens.
         metrics_port: Optional override for the port on which the application serves metrics.
         metrics_path: Optional override for the path on which the application serves metrics.
+        env: Environment variable name mappings.
     """
 
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
+    env: EnvConfig = Field(default_factory=EnvConfig)
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",
@@ -236,6 +301,43 @@ class PaasConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
+    """Safe YAML loader that rejects duplicate explicit mapping keys."""
+
+
+def _construct_unique_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode) -> dict:
+    """Construct a YAML mapping without silently discarding duplicate keys.
+
+    Args:
+        loader: Safe YAML loader.
+        node: Mapping node being constructed.
+
+    Returns:
+        The constructed mapping.
+
+    Raises:
+        ConstructorError: If a key is unhashable or an explicit key occurs more than once.
+    """
+    keys: set = set()
+    for key_node, _ in node.value:
+        if key_node.tag == "tag:yaml.org,2002:merge":
+            continue
+        key = loader.construct_object(key_node)
+        if not isinstance(key, typing.Hashable):
+            raise ConstructorError(None, None, "unhashable mapping key", key_node.start_mark)
+        if key in keys:
+            raise ConstructorError(
+                None, None, f"duplicate mapping key {key!r}", key_node.start_mark
+            )
+        keys.add(key)
+    return loader.construct_mapping(node, deep=True)
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+)
+
+
 def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     """Read and validate the paas-config.yaml file.
 
@@ -260,7 +362,8 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
 
     try:
         with config_path.open("r", encoding="utf-8") as config_file:
-            config_data = yaml.safe_load(config_file) or {}
+            # The SafeLoader subclass only adds duplicate-key validation.
+            config_data = yaml.load(config_file, Loader=_UniqueKeyLoader) or {}  # nosec B506
     except yaml.YAMLError as exc:
         error_msg = f"Invalid YAML in {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)

@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Support environment variable renaming through `env.config` in `paas-config.yaml`,
+  including individual Juju secret entries. Explicit mappings override generated values
+  with collision warnings and omit unset sources.
+* fix: Assemble framework-specific environment settings before relation outputs, giving
+  author-defined environment mappings a consistent final precedence across frameworks.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.
