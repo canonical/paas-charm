@@ -17,7 +17,7 @@ File structure
 
 The ``paas-config.yaml`` file uses YAML format and follows a structured schema.
 It supports generic application settings in addition to the
-``prometheus``, ``framework_logging_format``, and ``env`` top-level keys.
+``prometheus``, ``framework_logging_format``, and ``config`` top-level keys.
 
 Application settings
 --------------------
@@ -81,21 +81,31 @@ See :ref:`ref_paas_config_structured_logging` for detailed structured logging op
 Environment variable name mappings
 ----------------------------------
 
-Charm authors can use ``env.config`` to rename environment variables generated from
-user-defined charm configuration options.
+Charm authors can use ``config.options`` to rename environment variables generated from
+user-defined charm configuration options. These entries refer to existing options;
+they do not declare new charm configuration options or set their values.
 
 The following example assumes that ``log-level`` and ``api-token`` are declared as
 string charm configuration options, and ``credentials`` is declared with ``type: secret``.
 
 .. code-block:: yaml
 
-    env:
-      config:
-        log-level: LOG_LEVEL
-        api-token: API_TOKEN
+    config:
+      options:
+        log-level:
+          env-var: LOG_LEVEL
+        api-token:
+          env-var: API_TOKEN
         credentials:
-          username: SERVICE_USERNAME
-          password: SERVICE_PASSWORD
+          secret-env-vars:
+            username: SERVICE_USERNAME
+            password: SERVICE_PASSWORD
+
+Each listed option must use exactly one of ``env-var`` or ``secret-env-vars``.
+Use ``env-var`` for a non-secret option and ``secret-env-vars`` for an option
+declared with ``type: secret``. The two fields are mutually exclusive. These
+settings belong in ``paas-config.yaml``, not in the option declarations in
+``charmcraft.yaml`` or ``config.yaml``.
 
 The source names are the exact option names declared in ``charmcraft.yaml`` or
 ``config.yaml``. Destination names are complete names used verbatim: the charm does not
@@ -112,15 +122,16 @@ A destination can nevertheless override an environment variable supplied by the 
 the charm author is responsible for ensuring that the workload still functions.
 
 A mapping renames an output, rather than adding an alias. For example, in Flask,
-``log-level: LOG_LEVEL`` emits ``LOG_LEVEL`` instead of ``FLASK_LOG_LEVEL``.
+setting ``env-var: LOG_LEVEL`` under ``log-level`` emits ``LOG_LEVEL`` instead of
+``FLASK_LOG_LEVEL``.
 Unmapped options retain their existing names and behavior. The old name can still be
 present if another source independently generates it.
 
 Secret options
 ~~~~~~~~~~~~~~
 
-An option declared with ``type: secret`` must use a nested mapping, even if its secret
-contains only one entry. The nested source names are exact secret content keys.
+An option declared with ``type: secret`` must use ``secret-env-vars``, even if its secret
+contains only one entry. The keys under ``secret-env-vars`` are exact secret content keys.
 For example, the ``credentials`` mapping above reads the Juju secret configured through
 that option and renames its ``username`` and ``password`` entries separately. Unmapped
 secret entries retain their default environment variable names.
@@ -168,7 +179,7 @@ The environment is assembled in the following order, from lowest to highest prio
    * - 2
      - Environment variables for built-in relations and Prometheus metrics.
    * - 3
-     - Explicit ``env.config`` mappings.
+     - Explicit ``config.options`` mappings.
 
 Among variables at priority 1, framework settings override user-defined charm configuration
 options; environment variables for metrics, connections, proxies, and peers are added afterward.
@@ -196,7 +207,7 @@ collision error: the mapped value still wins. Renames are resolved together, so 
 two source variables' names is supported.
 
 Two explicit sources cannot target the same destination, even if one is currently unset.
-Unknown source options, incorrect scalar/secret mapping shapes, invalid destination
+Unknown source options, use of the wrong field for an option's declared type, invalid destination
 names, and duplicate explicit YAML mapping keys are also errors. Duplicate explicit
 keys are rejected even within mappings used as YAML merge sources. YAML merges and
 explicit overrides of merged values remain supported.

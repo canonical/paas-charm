@@ -17,7 +17,7 @@ from dpcharmlibs.interfaces import ValkeyResponseModel
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
-from paas_charm.paas_config import LoggingFormat
+from paas_charm.paas_config import EnvVarConfig, LoggingFormat, SecretEnvVarsConfig
 
 logger = logging.getLogger(__name__)
 
@@ -466,7 +466,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         for name, (source, value) in self._mapped_config_environment().items():
             if name in env:
                 logger.warning(
-                    "Explicit env.config mapping from %r overwrites environment variable %r",
+                    "Explicit config.options mapping from %r overwrites environment variable %r",
                     source,
                     name,
                 )
@@ -483,14 +483,16 @@ class App:  # pylint: disable=too-many-instance-attributes
             PaasConfigError: If a secret mapping receives non-secret content.
         """
         env: dict[str, tuple[str, str]] = {}
-        for option, mapping in self._charm_state.env_config.config.items():
+        for option, mapping in self._charm_state.config_options.options.items():
             value = self._charm_state.user_defined_config.get(option.replace("-", "_"))
             if value is None:
                 continue
-            if isinstance(mapping, dict):
+            if isinstance(mapping, SecretEnvVarsConfig):
                 if not isinstance(value, collections.abc.Mapping):
-                    raise PaasConfigError(f"env.config.{option} requires secret content")
-                for key, destination in mapping.items():
+                    raise PaasConfigError(
+                        f"config.options.{option}.secret-env-vars requires secret content"
+                    )
+                for key, destination in mapping.secret_env_vars.items():
                     if key not in value:
                         logger.warning(
                             "Charm configuration option %r has no secret content key %r; "
@@ -502,7 +504,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                         continue
                     env[destination] = (f"{option}.{key}", encode_env(value[key]))
             else:
-                env[mapping] = (option, encode_env(value))
+                env[mapping.env_var] = (option, encode_env(value))
         return env
 
     def _framework_environment(self) -> dict[str, str]:  # noqa: too-complex
@@ -519,15 +521,17 @@ class App:  # pylint: disable=too-many-instance-attributes
         env = {}
         mappings = {
             option.replace("-", "_"): mapping
-            for option, mapping in self._charm_state.env_config.config.items()
+            for option, mapping in self._charm_state.config_options.options.items()
         }
         for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
             mapping = mappings.get(app_config_key)
-            if isinstance(mapping, str):
+            if isinstance(mapping, EnvVarConfig):
                 continue
-            if isinstance(mapping, dict) and app_config_value is None:
+            if isinstance(mapping, SecretEnvVarsConfig) and app_config_value is None:
                 continue
-            mapped_keys = mapping if isinstance(mapping, dict) else {}
+            mapped_keys = (
+                mapping.secret_env_vars if isinstance(mapping, SecretEnvVarsConfig) else {}
+            )
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
                     if k in mapped_keys:

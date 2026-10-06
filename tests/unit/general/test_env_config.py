@@ -19,7 +19,7 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, framework_config_option_names
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
-from paas_charm.paas_config import EnvConfig, LoggingFormat, PaasConfig, read_paas_config
+from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig, read_paas_config
 from paas_charm.springboot.charm import SpringBootApp
 
 
@@ -34,7 +34,16 @@ def make_app_fixture(tmp_path):
             secret_key="generated-key",
             user_defined_config=config,
             framework_config=framework,
-            env_config=EnvConfig(config=mappings),
+            config_options=ConfigOptions(
+                options={
+                    option: (
+                        {"secret-env-vars": mapping}
+                        if isinstance(mapping, dict)
+                        else {"env-var": mapping}
+                    )
+                    for option, mapping in mappings.items()
+                }
+            ),
         )
         workload = WorkloadConfig(
             framework="test",
@@ -183,7 +192,7 @@ def test_relations_after_framework_adjustments(make_app, app_class):
 def test_invalid_destinations(destination):
     """Reject names that cannot represent environment variable destinations."""
     with pytest.raises(ValidationError, match="Invalid environment variable name") as exc_info:
-        EnvConfig(config={"option": destination})
+        ConfigOptions(options={"option": {"env-var": destination}})
     message = str(exc_info.value)
     assert "paas-config.yaml" in message
     assert "non-empty" in message
@@ -195,7 +204,6 @@ def test_invalid_destinations(destination):
 )
 def test_verbatim_destinations(make_app, destination):
     """Allow arbitrary non-empty destination names except NUL and equals."""
-    assert EnvConfig(config={"option": destination}).config["option"] == destination
     assert (
         make_app({"option": "value"}, {"option": destination}).gen_environment()[destination]
         == "value"
@@ -205,18 +213,27 @@ def test_verbatim_destinations(make_app, destination):
 def test_duplicate_destinations():
     """Reject duplicate destinations across scalar and secret sources."""
     with pytest.raises(ValidationError, match="mapped from both"):
-        EnvConfig(config={"one": "TARGET", "secret": {"key": "TARGET"}})
+        ConfigOptions(
+            options={
+                "one": {"env-var": "TARGET"},
+                "secret": {"secret-env-vars": {"key": "TARGET"}},
+            }
+        )
 
 
 @pytest.mark.parametrize(
     "mapping, options, unsupported",
     [
-        ({"unknown": "TARGET"}, {}, set()),
-        ({"owned": "TARGET"}, {"owned": {"type": "string"}}, {"owned"}),
-        ({"secret": "TARGET"}, {"secret": {"type": "secret"}}, set()),
-        ({"scalar": {"key": "TARGET"}}, {"scalar": {"type": "string"}}, set()),
+        ({"unknown": {"env-var": "TARGET"}}, {}, set()),
+        ({"owned": {"env-var": "TARGET"}}, {"owned": {"type": "string"}}, {"owned"}),
+        ({"secret": {"env-var": "TARGET"}}, {"secret": {"type": "secret"}}, set()),
         (
-            {"foo-bar": "TARGET"},
+            {"scalar": {"secret-env-vars": {"key": "TARGET"}}},
+            {"scalar": {"type": "string"}},
+            set(),
+        ),
+        (
+            {"foo-bar": {"env-var": "TARGET"}},
             {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}},
             set(),
         ),
@@ -225,13 +242,13 @@ def test_duplicate_destinations():
 def test_invalid_sources(mapping, options, unsupported):
     """Reject unknown, framework-owned and incorrectly shaped sources."""
     with pytest.raises(PaasConfigError):
-        EnvConfig(config=mapping).validate_sources(options, unsupported)
+        ConfigOptions(options=mapping).validate_sources(options, unsupported)
 
 
 def test_ambiguous_source_diagnostic():
     """Name both conflicting charm configuration options and explain the restriction."""
     with pytest.raises(PaasConfigError) as exc_info:
-        EnvConfig(config={"foo_bar": "TARGET"}).validate_sources(
+        ConfigOptions(options={"foo_bar": {"env-var": "TARGET"}}).validate_sources(
             {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}}, set()
         )
     message = str(exc_info.value)
@@ -244,12 +261,12 @@ def test_ambiguous_source_diagnostic():
     "content, expected_path, incorrect_name",
     [
         (
-            "env:\n  config:\n    foo_bar: 123\n",
-            "env.config.foo_bar",
+            "config:\n  options:\n    foo_bar:\n      env-var: 123\n",
+            "config.options.foo_bar",
             "foo-bar",
         ),
         (
-            "env:\n  config:\n    credentials:\n      api_key: 123\n",
+            "config:\n  options:\n    credentials:\n      secret-env-vars:\n        api_key: 123\n",
             "api_key",
             "api-key",
         ),
@@ -270,9 +287,12 @@ def test_schema_diagnostic_preserves_source_names(
 
 def test_valid_sources():
     """Validate mappings using declared types rather than current option values."""
-    EnvConfig(config={"scalar": "TARGET", "secret": {"name": "NAME"}}).validate_sources(
-        {"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set()
-    )
+    ConfigOptions(
+        options={
+            "scalar": {"env-var": "TARGET"},
+            "secret": {"secret-env-vars": {"name": "NAME"}},
+        }
+    ).validate_sources({"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set())
 
 
 def test_framework_config_option_names():
@@ -292,7 +312,7 @@ def test_framework_config_option_names():
 def test_framework_source_rejected_on_initialization(context_factory, charm_class, option):
     """Reject prefixed and unprefixed framework-owned sources in real charm initialization."""
     context = context_factory(
-        charm_class, paas_config=PaasConfig(env={"config": {option: "TARGET"}})
+        charm_class, paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}})
     )
     config_path = context.charm_root / "charmcraft.yaml"
     metadata = yaml.safe_load(config_path.read_text())
@@ -308,11 +328,12 @@ def test_framework_source_rejected_on_initialization(context_factory, charm_clas
 @pytest.mark.parametrize(
     "content",
     [
-        "env:\n  config:\n    option: A\n    option: B\n",
-        "env:\n  config:\n    secret:\n      key: A\n      key: B\n",
-        "env:\n  config:\n    <<:\n      option: A\n      option: B\n",
-        "env:\n  config:\n    <<: [{option: A, option: B}, {other: C}]\n",
-        "env:\n  config:\n    <<:\n      <<:\n        option: A\n        option: B\n",
+        "config:\n  options:\n    option: {env-var: A}\n    option: {env-var: B}\n",
+        "config:\n  options:\n    option:\n      env-var: A\n      env-var: B\n",
+        "config:\n  options:\n    secret:\n      secret-env-vars:\n        key: A\n        key: B\n",
+        "config:\n  options:\n    <<:\n      option: {env-var: A}\n      option: {env-var: B}\n",
+        "config:\n  options:\n    <<: [{option: {env-var: A}, option: {env-var: B}}]\n",
+        "config:\n  options:\n    <<:\n      <<:\n        option: {env-var: A}\n        option: {env-var: B}\n",
     ],
 )
 def test_duplicate_yaml_keys(tmp_path, content):
@@ -325,72 +346,103 @@ def test_duplicate_yaml_keys(tmp_path, content):
 def test_yaml_merge_keys(tmp_path):
     """Keep standard YAML anchor merging while rejecting explicit duplicate keys."""
     (tmp_path / "paas-config.yaml").write_text(
-        "env: &environment\n" "  config:\n" "    option: TARGET\n" "<<:\n" "  env: *environment\n"
+        "config: &configuration\n"
+        "  options:\n"
+        "    option: {env-var: TARGET}\n"
+        "<<:\n"
+        "  config: *configuration\n"
     )
-    assert read_paas_config(tmp_path).env.config == {"option": "TARGET"}
+    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
+        "options": {"option": {"env-var": "TARGET"}}
+    }
 
 
 def test_yaml_merge_alias_with_explicit_override(tmp_path):
     """Validate original alias keys, not duplicate keys introduced by merge expansion."""
     (tmp_path / "paas-config.yaml").write_text(
-        "env:\n"
-        "  config:\n"
-        "    secret-one: &one\n"
-        "      <<: {key: OLD}\n"
-        "      key: SECRET_TARGET\n"
-        "    <<: *one\n"
-        "    key: SCALAR_TARGET\n"
+        "config:\n"
+        "  options:\n"
+        "    first: &one\n"
+        "      <<: {env-var: OLD}\n"
+        "      env-var: FIRST\n"
+        "    second:\n"
+        "      <<: *one\n"
+        "      env-var: SECOND\n"
     )
-    assert read_paas_config(tmp_path).env.config == {
-        "secret-one": {"key": "SECRET_TARGET"},
-        "key": "SCALAR_TARGET",
+    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
+        "options": {
+            "first": {"env-var": "FIRST"},
+            "second": {"env-var": "SECOND"},
+        }
     }
 
 
 def test_yaml_merge_sequence_precedence(tmp_path):
     """Preserve standard merge ordering and explicit overrides."""
     (tmp_path / "paas-config.yaml").write_text(
-        "env:\n"
-        "  config:\n"
-        "    <<: [{option: FIRST, other: OTHER}, {option: SECOND}]\n"
-        "    other: OVERRIDE\n"
+        "config:\n"
+        "  options:\n"
+        "    <<: [{option: {env-var: FIRST}, other: {env-var: OTHER}}, "
+        "{option: {env-var: SECOND}}]\n"
+        "    other: {env-var: OVERRIDE}\n"
     )
-    assert read_paas_config(tmp_path).env.config == {"option": "FIRST", "other": "OVERRIDE"}
+    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
+        "options": {"option": {"env-var": "FIRST"}, "other": {"env-var": "OVERRIDE"}}
+    }
 
 
 def test_yaml_unhashable_key(tmp_path):
     """Report invalid YAML mapping keys as authoring errors."""
-    (tmp_path / "paas-config.yaml").write_text("env:\n  config:\n    ? [option]\n    : TARGET\n")
+    (tmp_path / "paas-config.yaml").write_text(
+        "config:\n  options:\n    ? [option]\n    : {env-var: TARGET}\n"
+    )
     with pytest.raises(PaasConfigError, match="unhashable mapping key"):
         read_paas_config(tmp_path)
 
 
 def test_yaml_special_value_key(tmp_path):
     """Preserve SafeLoader's interpretation of an unquoted equals key."""
-    (tmp_path / "paas-config.yaml").write_text("env:\n  config:\n    secret:\n      =: TARGET\n")
-    assert read_paas_config(tmp_path).env.config == {"secret": {"=": "TARGET"}}
+    (tmp_path / "paas-config.yaml").write_text(
+        "config:\n  options:\n    secret:\n      secret-env-vars:\n        =: TARGET\n"
+    )
+    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
+        "options": {"secret": {"secret-env-vars": {"=": "TARGET"}}}
+    }
 
 
 def test_yaml_loader_rejects_python_objects(tmp_path):
     """Duplicate-key validation retains SafeLoader's rejection of Python object tags."""
-    (tmp_path / "paas-config.yaml").write_text("env: !!python/object:builtins.object {}\n")
+    (tmp_path / "paas-config.yaml").write_text("config: !!python/object:builtins.object {}\n")
     with pytest.raises(PaasConfigError, match="could not determine a constructor"):
         read_paas_config(tmp_path)
 
 
 @pytest.mark.parametrize(
-    "env",
+    "config",
     [
         {"unknown": {}},
-        {"config": {"option": 123}},
-        {"config": {"secret": {"key": None}}},
-        {"config": {"secret": {"key": {"name": "TARGET"}}}},
+        {"options": {"option": "TARGET"}},
+        {"options": {"option": {}}},
+        {"options": {"option": {"env-var": None}}},
+        {"options": {"option": {"env-var": 123}}},
+        {"options": {"option": {"secret-env-vars": None}}},
+        {"options": {"secret": {"secret-env-vars": {"key": None}}}},
+        {"options": {"secret": {"secret-env-vars": {"key": {"name": "TARGET"}}}}},
+        {"options": {"option": {"env-name": "TARGET"}}},
+        {"options": {"option": {"env-var": "TARGET", "secret-env-vars": {"key": "OTHER"}}}},
+        {"options": {"option": {"env-var": "TARGET", "value-format": "json"}}},
     ],
 )
-def test_invalid_mapping_schema(env):
+def test_invalid_mapping_schema(config):
     """Reject unknown fields, non-string names and unsupported future settings."""
     with pytest.raises(ValidationError):
-        PaasConfig(env=env)
+        PaasConfig(config=config)
+
+
+def test_old_env_config_schema_rejected():
+    """Reject the replaced proposal rather than silently ignoring its mappings."""
+    with pytest.raises(ValidationError):
+        PaasConfig(env={"config": {"option": "TARGET"}})
 
 
 def test_unmapped_unset_behavior(make_app):
@@ -431,7 +483,9 @@ def test_declared_config_default_is_mapped(context_factory, flask_framework_stat
     """Map the declared option default when the operator has not configured a value."""
     context = context_factory(
         FlaskCharm,
-        paas_config=PaasConfig(env={"config": {"oidc-redirect-path": "REDIRECT_PATH"}}),
+        paas_config=PaasConfig(
+            config={"options": {"oidc-redirect-path": {"env-var": "REDIRECT_PATH"}}}
+        ),
     )
     out = context.run(context.on.config_changed(), testing.State(**flask_framework_state))
     env = out.get_container("app").plan.services["flask"].environment
@@ -440,10 +494,12 @@ def test_declared_config_default_is_mapped(context_factory, flask_framework_stat
 
 
 def test_flask_secret_mapping(context_factory, flask_framework_state):
-    """Exercise secret mapping from image config through reconciliation to Pebble."""
+    """Exercise secret mapping from charm configuration through reconciliation to Pebble."""
     context = context_factory(
         FlaskCharm,
-        paas_config=PaasConfig(env={"config": {"secret-test": {"foo": "TOKEN"}}}),
+        paas_config=PaasConfig(
+            config={"options": {"secret-test": {"secret-env-vars": {"foo": "TOKEN"}}}}
+        ),
     )
     secret = testing.Secret(tracked_content={"foo": "configured-token", "bar": "keep"})
     state = testing.State(

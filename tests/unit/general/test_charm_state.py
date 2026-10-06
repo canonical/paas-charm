@@ -89,4 +89,4 @@ def test_required_framework_alias_is_not_user_config(tmp_path):
     )
     assert state.framework_config["internal_name"] == "configured"
     assert state.user_defined_config == {"user_option": "ordinary"}
-    assert state.env_config.config == {}
+    assert state.config_options.options == {}

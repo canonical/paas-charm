@@ -33,7 +33,7 @@ from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
 from paas_charm.paas_config import (
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
-    EnvConfig,
+    ConfigOptions,
     LoggingFormat,
     read_paas_config,
 )
@@ -96,8 +96,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         super().__init__(framework)
         self._framework_name = framework_name
         self._paas_config = read_paas_config()
-        env_config: EnvConfig = self._paas_config.env
-        if env_config.config:  # pylint: disable=no-member
+        config_options: ConfigOptions = self._paas_config.config
+        if config_options.options:  # pylint: disable=no-member
             options = config_metadata(pathlib.Path(self.charm_dir))["options"]
             framework_options = framework_config_option_names(self.framework_config_class)
             unsupported = {
@@ -106,7 +106,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 if not is_user_defined_config(option, framework_name)
                 or option.replace("-", "_") in framework_options
             }
-            env_config.validate_sources(options, unsupported)  # pylint: disable=no-member
+            config_options.validate_sources(options, unsupported)  # pylint: disable=no-member
 
         self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
         self._peers = Peers(charm=self)
@@ -693,7 +693,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
-            env_config=self._paas_config.env,
+            config_options=self._paas_config.config,
             secret_key=self._secret_key,
             peers=self._peers,
             integration_requirers=IntegrationRequirers(
