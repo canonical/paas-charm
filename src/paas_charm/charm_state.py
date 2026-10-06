@@ -123,13 +123,12 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             CharmConfigInvalidError: If some parameter in invalid.
             RelationDataError: When relation data is either unavailable, invalid or not usable.
         """
+        framework_options = framework_config_option_names(type(framework_config))
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
             if is_user_defined_config(k, framework)
-        }
-        user_defined_config = {
-            k: v for k, v in user_defined_config.items() if k not in framework_config.dict().keys()
+            and k.replace("-", "_") not in framework_options
         }
 
         app_config_class = app_config_class_factory(charm_dir, framework)
@@ -431,6 +430,21 @@ def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[Ba
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
+
+
+def framework_config_option_names(framework_config_class: type[BaseModel]) -> set[str]:
+    """Get normalized option names owned by a framework configuration model.
+
+    Args:
+        framework_config_class: Framework configuration model class.
+
+    Returns:
+        Field names and aliases with hyphens replaced by underscores.
+    """
+    fields = framework_config_class.model_fields
+    names = set(fields)
+    names.update(field.alias for field in fields.values() if field.alias is not None)
+    return {name.replace("-", "_") for name in names}
 
 
 def is_user_defined_config(option_name: str, framework: str) -> bool:

@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with collision warnings and omit unset sources.
 * fix: Assemble framework-specific environment settings before relation outputs, giving
   author-defined environment mappings a consistent final precedence across frameworks.
+* fix: Preserve YAML merge overrides and shared aliases while rejecting duplicate explicit
+  keys, including keys inside merge sources.
+* fix: Warn when relation outputs override config/framework environment variables without
+  disclosing their values.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.

@@ -10,13 +10,13 @@ from unittest.mock import MagicMock
 import pytest
 import yaml
 from ops import testing
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from examples.expressjs.charm.src.charm import ExpressJSCharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState
+from paas_charm.charm_state import CharmState, framework_config_option_names
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.paas_config import EnvConfig, LoggingFormat, PaasConfig, read_paas_config
@@ -226,6 +226,16 @@ def test_valid_sources():
     EnvConfig(config={"scalar": "TARGET", "secret": {"name": "NAME"}}).validate_sources(
         {"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set()
     )
+
+
+def test_framework_config_option_names():
+    """Use the same normalized field names and aliases for filtering and validation."""
+
+    class Config(BaseModel):
+        internal_name: str = Field(alias="public-option")
+        port: int
+
+    assert framework_config_option_names(Config) == {"internal_name", "public_option", "port"}
 
 
 @pytest.mark.parametrize(

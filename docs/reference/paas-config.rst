@@ -99,9 +99,14 @@ add a prefix, replace punctuation, or change their case. Names must be non-empty
 without NUL characters or ``=``. Dots, hyphens, spaces, and non-ASCII characters are
 accepted, although the workload and any shell scripts must support the names you choose.
 
+When relation output overwrites an ordinary configuration or framework environment
+variable, a warning names the destination but does not include its value.
+
 Only user-defined configuration options are supported as sources. Framework-owned
 options, including ``app-secret-key``, and options under the reserved ``app-``,
-``webserver-``, and framework-specific prefixes cannot be mapped. Some of these options
+``webserver-``, and framework-specific prefixes cannot be mapped. This also applies
+to option names that match a framework configuration field or its alias, even
+without a reserved prefix. Some of these options
 configure files or command arguments rather than environment variables. A destination
 can nevertheless override a framework-owned environment variable; the charm author is
 responsible for ensuring that the workload still functions.

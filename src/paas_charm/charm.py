@@ -18,7 +18,12 @@ from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, IntegrationRequirers, is_user_defined_config
+from paas_charm.charm_state import (
+    CharmState,
+    IntegrationRequirers,
+    framework_config_option_names,
+    is_user_defined_config,
+)
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
@@ -94,14 +99,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         env_config: EnvConfig = self._paas_config.env
         if env_config.config:  # pylint: disable=no-member
             options = config_metadata(pathlib.Path(self.charm_dir))["options"]
-            fields = self.framework_config_class.model_fields
-            framework_options = {field.alias or name for name, field in fields.items()}
+            framework_options = framework_config_option_names(self.framework_config_class)
             unsupported = {
                 option
                 for option in options
                 if not is_user_defined_config(option, framework_name)
-                or option in framework_options
-                or option.replace("-", "_") in fields
+                or option.replace("-", "_") in framework_options
             }
             env_config.validate_sources(options, unsupported)  # pylint: disable=no-member
 

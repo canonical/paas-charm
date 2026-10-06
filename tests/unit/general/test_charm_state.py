@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from paas_charm.charm_state import CharmState, IntegrationRequirers, RelationDataError
+from paas_charm.flask.charm import FlaskConfig
 from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
 from paas_charm.saml import InvalidSAMLRelationDataError
@@ -47,7 +48,7 @@ def test_charm_state_integration_state_build_error(error):
             charm_dir=f"{PROJECT_ROOT}/examples/flask/charm",
             config=MagicMock(),
             framework="test",
-            framework_config=MagicMock(),
+            framework_config=FlaskConfig(),
             secret_key=MagicMock(),
             peers=MagicMock(),
             integration_requirers=IntegrationRequirers(
