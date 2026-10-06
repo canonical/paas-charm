@@ -18,7 +18,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from yaml.constructor import ConstructorError
 
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
@@ -342,49 +341,6 @@ class PaasConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
-class _UniqueKeyLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
-    """Safe YAML loader that rejects duplicate explicit mapping keys."""
-
-    def __init__(self, stream: str | typing.TextIO) -> None:
-        """Initialize the loader.
-
-        Args:
-            stream: YAML text or an open text stream.
-        """
-        super().__init__(stream)
-        self._validated_nodes: set[yaml.MappingNode] = set()
-
-    def flatten_mapping(self, node: yaml.MappingNode) -> None:
-        """Validate explicit keys before expanding YAML merges.
-
-        Args:
-            node: Mapping node being constructed or used as a merge source.
-
-        Raises:
-            ConstructorError: If a key is unhashable or an explicit key is repeated.
-        """
-        # Flattening mutates shared alias nodes; validate each node's original keys once.
-        if node not in self._validated_nodes:
-            self._validated_nodes.add(node)
-            keys: set = set()
-            for key_node, _ in node.value:
-                if key_node.tag == "tag:yaml.org,2002:merge":
-                    continue
-                if key_node.tag == "tag:yaml.org,2002:value":
-                    key_node.tag = "tag:yaml.org,2002:str"
-                key = self.construct_object(key_node)
-                if not isinstance(key, typing.Hashable):
-                    raise ConstructorError(
-                        None, None, "unhashable mapping key", key_node.start_mark
-                    )
-                if key in keys:
-                    raise ConstructorError(
-                        None, None, f"duplicate mapping key {key!r}", key_node.start_mark
-                    )
-                keys.add(key)
-        super().flatten_mapping(node)
-
-
 def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     """Read and validate the paas-config.yaml file.
 
@@ -409,8 +365,7 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
 
     try:
         with config_path.open("r", encoding="utf-8") as config_file:
-            # The SafeLoader subclass only adds duplicate-key validation.
-            config_data = yaml.load(config_file, Loader=_UniqueKeyLoader) or {}  # nosec B506
+            config_data = yaml.safe_load(config_file) or {}
     except yaml.YAMLError as exc:
         error_msg = f"Invalid YAML in {CONFIG_FILE_NAME}: {exc}"
         logger.error(error_msg)

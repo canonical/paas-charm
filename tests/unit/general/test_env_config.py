@@ -326,25 +326,30 @@ def test_framework_source_rejected_on_initialization(context_factory, charm_clas
 
 
 @pytest.mark.parametrize(
-    "content",
+    "content, expected",
     [
-        "config:\n  options:\n    option: {env-var: A}\n    option: {env-var: B}\n",
-        "config:\n  options:\n    option:\n      env-var: A\n      env-var: B\n",
-        "config:\n  options:\n    secret:\n      secret-env-vars:\n        key: A\n        key: B\n",
-        "config:\n  options:\n    <<:\n      option: {env-var: A}\n      option: {env-var: B}\n",
-        "config:\n  options:\n    <<: [{option: {env-var: A}, option: {env-var: B}}]\n",
-        "config:\n  options:\n    <<:\n      <<:\n        option: {env-var: A}\n        option: {env-var: B}\n",
+        (
+            "config:\n  options:\n    option: {env-var: A}\n    option: {env-var: B}\n",
+            {"option": {"env-var": "B"}},
+        ),
+        (
+            "config:\n  options:\n    option:\n      env-var: A\n      env-var: B\n",
+            {"option": {"env-var": "B"}},
+        ),
+        (
+            "config:\n  options:\n    secret:\n      secret-env-vars:\n        key: A\n        key: B\n",
+            {"secret": {"secret-env-vars": {"key": "B"}}},
+        ),
     ],
 )
-def test_duplicate_yaml_keys(tmp_path, content):
-    """Reject duplicate YAML keys instead of silently keeping the last mapping."""
+def test_duplicate_yaml_keys_keep_last_value(tmp_path, content, expected):
+    """Retain the existing YAML loading behavior for repeated mapping keys."""
     (tmp_path / "paas-config.yaml").write_text(content)
-    with pytest.raises(PaasConfigError, match="duplicate mapping key"):
-        read_paas_config(tmp_path)
+    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {"options": expected}
 
 
 def test_yaml_merge_keys(tmp_path):
-    """Keep standard YAML anchor merging while rejecting explicit duplicate keys."""
+    """Continue supporting standard YAML anchors and merges."""
     (tmp_path / "paas-config.yaml").write_text(
         "config: &configuration\n"
         "  options:\n"
@@ -357,61 +362,8 @@ def test_yaml_merge_keys(tmp_path):
     }
 
 
-def test_yaml_merge_alias_with_explicit_override(tmp_path):
-    """Validate original alias keys, not duplicate keys introduced by merge expansion."""
-    (tmp_path / "paas-config.yaml").write_text(
-        "config:\n"
-        "  options:\n"
-        "    first: &one\n"
-        "      <<: {env-var: OLD}\n"
-        "      env-var: FIRST\n"
-        "    second:\n"
-        "      <<: *one\n"
-        "      env-var: SECOND\n"
-    )
-    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
-        "options": {
-            "first": {"env-var": "FIRST"},
-            "second": {"env-var": "SECOND"},
-        }
-    }
-
-
-def test_yaml_merge_sequence_precedence(tmp_path):
-    """Preserve standard merge ordering and explicit overrides."""
-    (tmp_path / "paas-config.yaml").write_text(
-        "config:\n"
-        "  options:\n"
-        "    <<: [{option: {env-var: FIRST}, other: {env-var: OTHER}}, "
-        "{option: {env-var: SECOND}}]\n"
-        "    other: {env-var: OVERRIDE}\n"
-    )
-    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
-        "options": {"option": {"env-var": "FIRST"}, "other": {"env-var": "OVERRIDE"}}
-    }
-
-
-def test_yaml_unhashable_key(tmp_path):
-    """Report invalid YAML mapping keys as authoring errors."""
-    (tmp_path / "paas-config.yaml").write_text(
-        "config:\n  options:\n    ? [option]\n    : {env-var: TARGET}\n"
-    )
-    with pytest.raises(PaasConfigError, match="unhashable mapping key"):
-        read_paas_config(tmp_path)
-
-
-def test_yaml_special_value_key(tmp_path):
-    """Preserve SafeLoader's interpretation of an unquoted equals key."""
-    (tmp_path / "paas-config.yaml").write_text(
-        "config:\n  options:\n    secret:\n      secret-env-vars:\n        =: TARGET\n"
-    )
-    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
-        "options": {"secret": {"secret-env-vars": {"=": "TARGET"}}}
-    }
-
-
 def test_yaml_loader_rejects_python_objects(tmp_path):
-    """Duplicate-key validation retains SafeLoader's rejection of Python object tags."""
+    """Continue rejecting Python object tags when loading YAML."""
     (tmp_path / "paas-config.yaml").write_text("config: !!python/object:builtins.object {}\n")
     with pytest.raises(PaasConfigError, match="could not determine a constructor"):
         read_paas_config(tmp_path)

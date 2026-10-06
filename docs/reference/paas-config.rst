@@ -207,10 +207,12 @@ collision error: the mapped value still wins. Renames are resolved together, so 
 two source variables' names is supported.
 
 Two explicit sources cannot target the same destination, even if one is currently unset.
-Unknown source options, use of the wrong field for an option's declared type, invalid destination
-names, and duplicate explicit YAML mapping keys are also errors. Duplicate explicit
-keys are rejected even within mappings used as YAML merge sources. YAML merges and
-explicit overrides of merged values remain supported.
+Unknown source options, use of the wrong field for an option's declared type, and invalid
+destination names are also errors.
+
+YAML loading behavior is unchanged: anchors and merges are supported, and repeated
+YAML mapping keys keep the last value. Mapping validation applies to the resulting
+configuration.
 
 These are charm-authoring errors that cause a hook failure, reported by Juju as an error,
 rather than asking the operator to resolve them through charm configuration changes.
