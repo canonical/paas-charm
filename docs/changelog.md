@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Treat a root-level ingress URL as an empty mount prefix in the FastAPI example,
+  preventing double-slash redirect loops.
 * feat: Support environment variable renaming through `config.options` in `paas-config.yaml`,
   using `env-var` for non-secret charm configuration options and `secret-env-vars` for
   individual Juju secret content keys. Explicit mappings override generated values with
