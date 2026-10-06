@@ -82,7 +82,9 @@ def test_secret_mapping(make_app, caplog):
     assert env["APP_CREDENTIALS_OTHER"] == "keep"
     assert "APP_CREDENTIALS_FOO_BAR" not in env
     assert env["MISSING"] == "relation-value"
-    assert "missing" in caplog.text
+    assert "credentials" in caplog.text
+    assert "secret content key 'missing'" in caplog.text
+    assert "environment variable 'MISSING'" in caplog.text
     assert "private-value" not in caplog.text
 
 
@@ -131,7 +133,8 @@ def test_integration_collision_warning(make_app, caplog, config, framework, dest
     assert env["UNIQUE"] == "unique-private"
     assert len(caplog.records) == 1
     assert destination in caplog.text
-    assert "Integration" in caplog.text and "config/framework" in caplog.text
+    assert "for a relation or Prometheus metrics" in caplog.text
+    assert "charm configuration or framework settings" in caplog.text
     assert "private" not in caplog.text
 
 
@@ -179,8 +182,12 @@ def test_relations_after_framework_adjustments(make_app, app_class):
 @pytest.mark.parametrize("destination", ["", "A=B", "A\0B"])
 def test_invalid_destinations(destination):
     """Reject names that cannot represent environment variable destinations."""
-    with pytest.raises(ValidationError, match="Invalid environment variable name"):
+    with pytest.raises(ValidationError, match="Invalid environment variable name") as exc_info:
         EnvConfig(config={"option": destination})
+    message = str(exc_info.value)
+    assert "paas-config.yaml" in message
+    assert "non-empty" in message
+    assert "'='" in message and "NUL" in message
 
 
 @pytest.mark.parametrize(
@@ -219,6 +226,46 @@ def test_invalid_sources(mapping, options, unsupported):
     """Reject unknown, framework-owned and incorrectly shaped sources."""
     with pytest.raises(PaasConfigError):
         EnvConfig(config=mapping).validate_sources(options, unsupported)
+
+
+def test_ambiguous_source_diagnostic():
+    """Name both conflicting charm configuration options and explain the restriction."""
+    with pytest.raises(PaasConfigError) as exc_info:
+        EnvConfig(config={"foo_bar": "TARGET"}).validate_sources(
+            {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}}, set()
+        )
+    message = str(exc_info.value)
+    assert "paas-config.yaml" in message
+    assert "'foo-bar'" in message and "'foo_bar'" in message
+    assert "hyphens and underscores" in message
+
+
+@pytest.mark.parametrize(
+    "content, expected_path, incorrect_name",
+    [
+        (
+            "env:\n  config:\n    foo_bar: 123\n",
+            "env.config.foo_bar",
+            "foo-bar",
+        ),
+        (
+            "env:\n  config:\n    credentials:\n      api_key: 123\n",
+            "api_key",
+            "api-key",
+        ),
+    ],
+)
+def test_schema_diagnostic_preserves_source_names(
+    tmp_path, caplog, content, expected_path, incorrect_name
+):
+    """Preserve exact option names and secret content keys in schema diagnostics."""
+    (tmp_path / "paas-config.yaml").write_text(content)
+    with pytest.raises(PaasConfigError) as exc_info:
+        read_paas_config(tmp_path)
+    assert expected_path in str(exc_info.value)
+    assert expected_path in caplog.text
+    assert incorrect_name not in str(exc_info.value)
+    assert incorrect_name not in caplog.text
 
 
 def test_valid_sources():
@@ -378,6 +425,18 @@ def test_service_and_migration_environments(make_app):
     env = app._database_migration.run.call_args.kwargs["environment"]
     assert env["TARGET"] == "false"
     assert "APP_OPTION" not in env
+
+
+def test_declared_config_default_is_mapped(context_factory, flask_framework_state):
+    """Map the declared option default when the operator has not configured a value."""
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(env={"config": {"oidc-redirect-path": "REDIRECT_PATH"}}),
+    )
+    out = context.run(context.on.config_changed(), testing.State(**flask_framework_state))
+    env = out.get_container("app").plan.services["flask"].environment
+    assert env["REDIRECT_PATH"] == "/callback"
+    assert "FLASK_OIDC_REDIRECT_PATH" not in env
 
 
 def test_flask_secret_mapping(context_factory, flask_framework_state):

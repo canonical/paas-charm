@@ -458,14 +458,15 @@ class App:  # pylint: disable=too-many-instance-attributes
         ).items():
             if name in env:
                 logger.warning(
-                    "Integration output overwrites config/framework environment variable %r",
+                    "Environment variable %r for a relation or Prometheus metrics overwrites an "
+                    "environment variable from charm configuration or framework settings",
                     name,
                 )
             env[name] = value
         for name, (source, value) in self._mapped_config_environment().items():
             if name in env:
                 logger.warning(
-                    "Explicit config mapping from %r overwrites generated environment variable %r",
+                    "Explicit env.config mapping from %r overwrites environment variable %r",
                     source,
                     name,
                 )
@@ -492,9 +493,11 @@ class App:  # pylint: disable=too-many-instance-attributes
                 for key, destination in mapping.items():
                     if key not in value:
                         logger.warning(
-                            "Config option %r has no secret entry %r; skipping its mapping",
+                            "Charm configuration option %r has no secret content key %r; "
+                            "skipping mapped environment variable %r",
                             option,
                             key,
+                            destination,
                         )
                         continue
                     env[destination] = (f"{option}.{key}", encode_env(value[key]))

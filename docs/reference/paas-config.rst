@@ -10,6 +10,7 @@ When used, the ``paas-config.yaml`` file must be placed in the charm root direct
 alongside your ``charmcraft.yaml`` file and included in the packed charm file.
 The file and all of its keys are optional. Omitted settings use the defaults of the
 selected framework.
+This file is distinct from charm configuration options managed through ``juju config``.
 
 File structure
 --------------
@@ -81,7 +82,10 @@ Environment variable name mappings
 ----------------------------------
 
 Charm authors can use ``env.config`` to rename environment variables generated from
-user-defined charm configuration options:
+user-defined charm configuration options.
+
+The following example assumes that ``log-level`` and ``api-token`` are declared as
+string charm configuration options, and ``credentials`` is declared with ``type: secret``.
 
 .. code-block:: yaml
 
@@ -99,17 +103,13 @@ add a prefix, replace punctuation, or change their case. Names must be non-empty
 without NUL characters or ``=``. Dots, hyphens, spaces, and non-ASCII characters are
 accepted, although the workload and any shell scripts must support the names you choose.
 
-When relation output overwrites an ordinary configuration or framework environment
-variable, a warning names the destination but does not include its value.
-
-Only user-defined configuration options are supported as sources. Framework-owned
-options, including ``app-secret-key``, and options under the reserved ``app-``,
+Only user-defined charm configuration options are supported as sources. Options used
+to configure the framework, including ``app-secret-key``, and options under the reserved ``app-``,
 ``webserver-``, and framework-specific prefixes cannot be mapped. This also applies
-to option names that match a framework configuration field or its alias, even
-without a reserved prefix. Some of these options
-configure files or command arguments rather than environment variables. A destination
-can nevertheless override a framework-owned environment variable; the charm author is
-responsible for ensuring that the workload still functions.
+to option names used for framework settings, even without a reserved prefix. Some of
+these options configure files or command arguments rather than environment variables.
+A destination can nevertheless override an environment variable supplied by the framework;
+the charm author is responsible for ensuring that the workload still functions.
 
 A mapping renames an output, rather than adding an alias. For example, in Flask,
 ``log-level: LOG_LEVEL`` emits ``LOG_LEVEL`` instead of ``FLASK_LOG_LEVEL``.
@@ -125,12 +125,22 @@ For example, the ``credentials`` mapping above reads the Juju secret configured 
 that option and renames its ``username`` and ``password`` entries separately. Unmapped
 secret entries retain their default environment variable names.
 
-An unset mapped option or an entirely unset secret contributes no mapped output.
+If a configured Juju secret lacks a mapped secret content key, the charm skips that
+mapping and logs a warning containing the charm configuration option, secret content key,
+and destination environment variable names, never the secret value. This behavior also
+applies when secret content changes on rotation.
+
+Defaults and unset options
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Declared charm configuration defaults are mapped too. For example, if ``log-level``
+has the default ``info``, the mapping emits ``LOG_LEVEL=info`` even when the operator
+has not set the option. Resetting the option to its default does not make it unset.
+
+If a mapped charm configuration option has no value, including no configured Juju
+secret for an option of type ``secret``, it contributes no mapped environment variable.
 An existing lower-priority variable at the destination remains unchanged. Empty strings,
 ``false``, and zero are actual values and do override lower-priority outputs.
-If a configured secret lacks a mapped entry, the charm skips that entry and logs a
-warning containing the option and entry names, never the secret value. This behavior
-also applies when secret content changes on rotation.
 
 Value formatting
 ~~~~~~~~~~~~~~~~
@@ -153,55 +163,60 @@ The environment is assembled in the following order, from lowest to highest prio
    * - Priority
      - Source
    * - 1
-     - Ordinary config and library-generated variables, including framework-specific
-       settings, metrics, proxies, base URL, and peer information.
+     - Environment variables from charm configuration options and framework settings,
+       including metrics, proxies, base URL, and peer information.
    * - 2
-     - Built-in relation variables.
+     - Environment variables for built-in relations and Prometheus metrics.
    * - 3
-     - Custom relation variables, when custom-relation support is available.
-   * - 4
      - Explicit ``env.config`` mappings.
 
-Custom-relation support is being introduced separately. Its intended position is after
-built-in relations, with later entries in the custom relation list taking precedence.
-It is not enabled by ``env.config``.
-
-Within the first layer, framework config overrides ordinary user-defined config;
-workload metrics and generated connection/proxy/peer information are added afterward.
+Among variables at priority 1, framework settings override user-defined charm configuration
+options; environment variables for metrics, connections, proxies, and peers are added afterward.
 The generated application secret key is a fallback, inserted only if its name is absent.
 Framework-specific adjustments are completed before relation variables are merged.
 Explicit application and metrics settings elsewhere in ``paas-config.yaml`` retain
-their existing precedence over corresponding Juju framework config values.
+their existing precedence over corresponding charm configuration options.
 
-Built-in relation generators are merged in this order: OpenFGA, RabbitMQ, Valkey, S3,
+Environment variables for built-in relations and Prometheus metrics are merged in
+this order: OpenFGA, RabbitMQ, Valkey, S3,
 databases, SAML, SMTP, tracing, Prometheus, then OAuth. Later generators win when their
 names collide. Database outputs are merged in their existing iteration order; in
 particular, multiple Spring Boot databases can generate the same ``spring.datasource.*``
 properties.
 
-Explicit mappings are applied last and take precedence over every generated output,
+When an environment variable for a relation or Prometheus metrics replaces an environment
+variable from a charm configuration option or a framework setting, the charm logs a warning
+naming the destination without logging its value.
+
+Explicit mappings are applied last and take precedence over other environment variables,
 including framework-specific logging settings. When a mapped destination replaces an
-existing variable, the charm logs a warning identifying the config source and destination,
-without logging values. A newly connected optional integration does not cause a
+existing variable, the charm logs a warning identifying the charm configuration option
+and destination, without logging values. A newly connected optional relation does not cause a
 collision error: the mapped value still wins. Renames are resolved together, so swapping
 two source variables' names is supported.
 
 Two explicit sources cannot target the same destination, even if one is currently unset.
 Unknown source options, incorrect scalar/secret mapping shapes, invalid destination
-names, and duplicate YAML keys are also errors. These are charm-authoring errors:
-the charm enters error state, rather than asking the operator to resolve them through
-Juju configuration.
+names, and duplicate explicit YAML mapping keys are also errors. Duplicate explicit
+keys are rejected even within mappings used as YAML merge sources. YAML merges and
+explicit overrides of merged values remain supported.
 
-Sources whose names become identical after the library's hyphen-to-underscore
-normalization (such as ``foo-bar`` and ``foo_bar``) cannot be mapped unambiguously
-and are rejected.
+These are charm-authoring errors that cause a hook failure, reported by Juju as an error,
+rather than asking the operator to resolve them through charm configuration changes.
+
+The library treats hyphens and underscores identically in charm configuration option
+names internally. Options such as ``foo-bar`` and ``foo_bar`` therefore cannot be
+distinguished as mapping sources and are rejected.
 
 Validation
 ----------
 
-The ``paas-config.yaml`` file is validated when the charm is deployed.
-If validation fails, the charm will go into error state and will not work. The
-``paas-config.yaml`` file has to be fixed and the charm packed and deployed again.
+The ``paas-config.yaml`` file is validated when the charm initializes to handle a hook.
+If validation fails, the hook fails and Juju reports an error. The charm author must
+correct the file and repack the charm. Existing applications need the corrected charm
+revision; see the `Juju refresh command
+<https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/refresh/>`_
+for updating a deployed application.
 
 Common validation errors include:
 

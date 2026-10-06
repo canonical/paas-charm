@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   disclosing their values.
 * fix: Exclude framework-owned aliases from application config validation so required aliases
   do not incorrectly block custom framework charms, including when mappings are disabled.
+* fix: Preserve exact charm configuration option names and secret content keys in
+  `paas-config.yaml` validation errors. Explain invalid destinations and conflicting option
+  names, and include the affected environment variable in missing secret content key warnings.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.

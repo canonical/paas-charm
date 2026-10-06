@@ -181,7 +181,10 @@ class EnvConfig(BaseModel):
             for key, destination in entries:
                 source = option if key is None else f"{option}.{key}"
                 if not destination or "\0" in destination or "=" in destination:
-                    raise ValueError(f"Invalid environment variable name for {source!r}")
+                    raise ValueError(
+                        f"Invalid environment variable name for {source!r} in {CONFIG_FILE_NAME}: "
+                        "destination names must be non-empty and contain neither '=' nor NUL"
+                    )
                 if destination in destinations:
                     raise ValueError(
                         f"Environment variable {destination!r} is mapped from both "
@@ -202,18 +205,32 @@ class EnvConfig(BaseModel):
         """
         for option, mapping in self.config.items():  # pylint: disable=no-member
             if option not in options:
-                raise PaasConfigError(f"env.config references unknown config option {option!r}")
-            if option in unsupported:
-                raise PaasConfigError(f"env.config cannot map framework-owned option {option!r}")
-            normalized = option.replace("-", "_")
-            if any(other != option and other.replace("-", "_") == normalized for other in options):
                 raise PaasConfigError(
-                    f"env.config source {option!r} has an ambiguous normalized config name"
+                    f"{CONFIG_FILE_NAME}: env.config references unknown "
+                    f"charm configuration option {option!r}"
                 )
+            if option in unsupported:
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: env.config cannot map framework-owned option {option!r}"
+                )
+            normalized = option.replace("-", "_")
+            for other in options:
+                if other != option and other.replace("-", "_") == normalized:
+                    raise PaasConfigError(
+                        f"{CONFIG_FILE_NAME}: env.config cannot distinguish charm configuration "
+                        f"options {option!r} and {other!r}: hyphens and underscores are "
+                        "treated identically internally"
+                    )
             is_secret = options[option]["type"] == "secret"
             if is_secret != isinstance(mapping, dict):
-                expected = "a secret content-key mapping" if is_secret else "a destination name"
-                raise PaasConfigError(f"env.config.{option} must be {expected}")
+                expected = (
+                    "a mapping of secret content keys to environment variable names"
+                    if is_secret
+                    else "an environment variable name"
+                )
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: env.config.{option} must be {expected}"
+                )
 
 
 class PaasConfig(BaseModel):
@@ -382,7 +399,7 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     try:
         return PaasConfig(**config_data)
     except ValidationError as exc:
-        error_details = build_validation_error_message(exc, underscore_to_dash=True)
+        error_details = build_validation_error_message(exc)
         error_msg = f"Invalid {CONFIG_FILE_NAME}: {error_details.short}"
         logger.error("%s: %s", error_msg, error_details.long)
         raise PaasConfigError(error_msg) from exc
