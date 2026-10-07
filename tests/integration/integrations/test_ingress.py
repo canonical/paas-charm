@@ -47,5 +47,7 @@ def test_ingress(
                 timeout=30,
             )
         assert response.status_code == 200
+        if app_fixture == "fastapi_app":
+            assert not response.history
         if expected_text:
             assert response.text.strip() == expected_text
