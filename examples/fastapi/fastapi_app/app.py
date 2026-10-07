@@ -49,8 +49,7 @@ conf = ConnectionConfig(
 
 templates = Jinja2Templates(directory="templates")
 parsed_url = urlparse(os.getenv("APP_BASE_URL", ""))
-path_prefix = parsed_url.path.strip("/")
-root_path = f"/{path_prefix}" if path_prefix else ""
+root_path = f"/{parsed_url.path.strip('/')}" if parsed_url.path else ""
 app = FastAPI(root_path=root_path, lifespan=metrics_lifespan)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("APP_SECRET_KEY"))
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
