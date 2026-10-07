@@ -219,11 +219,17 @@ def test_successful_loki_wait_does_not_collect_diagnostics(monkeypatch, loki_fix
 
 
 @pytest.mark.parametrize("final_status", ["active", "error", "blocked"])
+@pytest.mark.parametrize(
+    "fixture_module",
+    ["tests.integration.conftest", "tests.integration.integrations.conftest"],
+)
 def test_loki_rollout_waits_for_recovery_or_fails_boundedly(
-    monkeypatch, loki_fixture, final_status
+    monkeypatch, loki_fixture, final_status, fixture_module
 ):
-    """Transient blocks recover, hook errors fail immediately, and persistent blocks time out."""
-    jubilant, deploy = loki_fixture
+    """Both Loki fixtures allow recovery but fail on hook errors or persistent blocked states."""
+    jubilant, _ = loki_fixture
+    fixtures = importlib.import_module(fixture_module)
+    deploy = fixtures.deploy_loki_fixture.__wrapped__
     juju = jubilant.Juju(wait_timeout=1)
     states = iter(["blocked", "blocked", "waiting"])
     calls = []
@@ -277,4 +283,7 @@ def test_loki_rollout_waits_for_recovery_or_fails_boundedly(
             deploy(juju, "loki-k8s")
         if final_status == "error":
             assert len(calls) == 4
-        collect.assert_called_once_with("testing", "loki-k8s")
+        if fixture_module == "tests.integration.integrations.conftest":
+            collect.assert_called_once_with("testing", "loki-k8s")
+        else:
+            collect.assert_not_called()

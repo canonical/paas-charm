@@ -246,7 +246,7 @@ def deploy_loki_fixture(
         juju.cli("trust", loki_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
-        error=jubilant.any_blocked,
+        error=jubilant.any_error,
     )
     return App(loki_app_name)
 
