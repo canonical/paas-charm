@@ -11,11 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* fix: Restore the upstream `main` default for the Spread guest's `opcli` revision.
-* fix: Treat a root-level ingress URL as an empty mount prefix in the FastAPI example,
-  preventing double-slash redirect loops.
-* test: Allow COS integrations to recover from transient blocked states during pod replacement,
-  retaining readiness timeouts and failing immediately on errors.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.
