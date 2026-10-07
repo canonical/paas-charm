@@ -24,7 +24,6 @@ from minio import Minio
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from tests.integration.conftest import deploy_postgresql, generate_app_fixture
-from tests.integration.diagnostics import collect_loki_diagnostics
 from tests.integration.helpers import jubilant_temp_controller
 from tests.integration.types import App
 
@@ -454,7 +453,7 @@ def deploy_prometheus_fixture(
         juju.cli("trust", prometheus_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
-        error=jubilant.any_blocked,
+        error=jubilant.any_error,
         timeout=6 * 60,
     )
     return App(prometheus_app_name)
@@ -466,18 +465,13 @@ def deploy_loki_fixture(
     loki_app_name: str,
 ) -> App:
     """Deploy loki."""
-    status = juju.status()
-    if not status.apps.get(loki_app_name):
+    if not juju.status().apps.get(loki_app_name):
         juju.deploy(loki_app_name, channel="1/stable", trust=True)
         juju.cli("trust", loki_app_name, "--scope=cluster", include_model=False)
-    try:
-        juju.wait(
-            lambda status: status.apps[loki_app_name].is_active,
-            error=jubilant.any_error,
-        )
-    except (jubilant.WaitError, TimeoutError):
-        collect_loki_diagnostics(status.model.name, loki_app_name)
-        raise
+    juju.wait(
+        lambda status: status.apps[loki_app_name].is_active,
+        error=jubilant.any_error,
+    )
     return App(loki_app_name)
 
 
