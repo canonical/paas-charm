@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   preventing double-slash redirect loops.
 * test: Collect bounded Kubernetes and service-account authentication diagnostics when
   the Loki fixture fails, without logging workload credentials or bearer tokens.
+* test: Allow Loki to recover from transient blocked states during pod replacement,
+  retaining the readiness timeout and failure diagnostics.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.

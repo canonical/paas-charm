@@ -5,6 +5,7 @@
 
 import base64
 import importlib
+import itertools
 import json
 import logging
 import runpy
@@ -185,14 +186,14 @@ def test_token_probe_reports_metadata_not_credentials(monkeypatch, capsys, tmp_p
     assert opener.call_args.kwargs["timeout"] == 5
 
 
-@pytest.mark.parametrize("failure", ["blocked", "timeout"])
+@pytest.mark.parametrize("failure", ["error", "timeout"])
 def test_loki_failure_collects_diagnostics_and_preserves_error(monkeypatch, loki_fixture, failure):
     """A failed Loki wait collects diagnostics once and re-raises the same error."""
     juju = MagicMock()
     juju.status.return_value.model.name = "testing"
     juju.status.return_value.apps = {}
     jubilant, deploy = loki_fixture
-    error = jubilant.WaitError("blocked") if failure == "blocked" else TimeoutError("timeout")
+    error = jubilant.WaitError("error") if failure == "error" else TimeoutError("timeout")
     juju.wait.side_effect = error
     collect = MagicMock()
     monkeypatch.setattr(
@@ -215,3 +216,65 @@ def test_successful_loki_wait_does_not_collect_diagnostics(monkeypatch, loki_fix
     _, deploy = loki_fixture
     assert deploy(juju, "loki-k8s").name == "loki-k8s"
     collect.assert_not_called()
+
+
+@pytest.mark.parametrize("final_status", ["active", "error", "blocked"])
+def test_loki_rollout_waits_for_recovery_or_fails_boundedly(
+    monkeypatch, loki_fixture, final_status
+):
+    """Transient blocks recover, hook errors fail immediately, and persistent blocks time out."""
+    jubilant, deploy = loki_fixture
+    juju = jubilant.Juju(wait_timeout=1)
+    states = iter(["blocked", "blocked", "waiting"])
+    calls = []
+
+    def cli(*args, **kwargs):
+        calls.append(args)
+        assert args[0] == "status"
+        current = next(states, final_status)
+        return (
+            json.dumps(
+                {
+                    "model": {
+                        "name": "testing",
+                        "type": "caas",
+                        "controller": "controller",
+                        "cloud": "k8s",
+                        "version": "3.6.29",
+                    },
+                    "machines": {},
+                    "applications": {
+                        "loki-k8s": {
+                            "charm": "loki-k8s",
+                            "charm-origin": "charmhub",
+                            "charm-name": "loki-k8s",
+                            "charm-rev": 199,
+                            "exposed": False,
+                            "application-status": {"current": current},
+                        }
+                    },
+                }
+            ),
+            "",
+        )
+
+    clock = itertools.count()
+    monkeypatch.setattr(juju, "_cli", cli)
+    monkeypatch.setattr("jubilant._juju.time.monotonic", lambda: next(clock) / 10)
+    monkeypatch.setattr("jubilant._juju.time.sleep", lambda delay: None)
+    collect = MagicMock()
+    monkeypatch.setattr(
+        "tests.integration.integrations.conftest.collect_loki_diagnostics", collect
+    )
+
+    if final_status == "active":
+        assert deploy(juju, "loki-k8s").name == "loki-k8s"
+        assert len(calls) == 6
+        collect.assert_not_called()
+    else:
+        error = jubilant.WaitError if final_status == "error" else TimeoutError
+        with pytest.raises(error):
+            deploy(juju, "loki-k8s")
+        if final_status == "error":
+            assert len(calls) == 4
+        collect.assert_called_once_with("testing", "loki-k8s")

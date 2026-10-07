@@ -473,7 +473,7 @@ def deploy_loki_fixture(
     try:
         juju.wait(
             lambda status: status.apps[loki_app_name].is_active,
-            error=jubilant.any_blocked,
+            error=jubilant.any_error,
         )
     except (jubilant.WaitError, TimeoutError):
         collect_loki_diagnostics(status.model.name, loki_app_name)
