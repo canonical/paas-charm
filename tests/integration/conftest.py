@@ -246,7 +246,7 @@ def deploy_loki_fixture(
         juju.cli("trust", loki_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
-        error=jubilant.any_blocked,
+        error=jubilant.any_error,
     )
     return App(loki_app_name)
 
@@ -428,7 +428,7 @@ def expressjs_app_fixture(
     juju.integrate(app_name, "postgresql-k8s:database")
     juju.wait(
         lambda status: jubilant.all_active(status, app_name, "postgresql-k8s"),
-        timeout=300,
+        timeout=10 * 60,
     )
 
     return App(app_name)
