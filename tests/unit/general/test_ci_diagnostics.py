@@ -63,10 +63,16 @@ def test_diagnostics_select_safe_pod_fields(monkeypatch, caplog, backend):
     assert query[: len(expected_prefix)] == expected_prefix
     columns = query[-1]
     assert "RESTARTS:.status.containerStatuses[*].restartCount" in columns
+    assert "DELETING:.metadata.deletionTimestamp" in columns
+    assert "REVISION:.metadata.labels.controller-revision-hash" in columns
+    assert "TERMINATED:.status.containerStatuses[*].state.terminated.reason" in columns
     assert "serviceAccountToken.expirationSeconds" in columns
     assert "env" not in columns
     assert "annotations" not in columns
     assert not any(command[-1] == "json" for command in calls)
+    rollout = next(command for command in calls if "statefulsets" in command)
+    assert "CURRENT:.status.currentRevision" in rollout[-1]
+    assert "UPDATE:.status.updateRevision" in rollout[-1]
     probe = next(command for command in calls if "exec" in command)
     assert probe[probe.index("-c") + 1] == "charm"
     assert probe[-2:] == ["testing", "loki-k8s"]

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* fix: Restore the upstream `main` default for the Spread guest's opcli revision.
+* fix: Restore the upstream `main` default for the Spread guest's `opcli` revision.
 * fix: Treat a root-level ingress URL as an empty mount prefix in the FastAPI example,
   preventing double-slash redirect loops.
 * test: Collect bounded Kubernetes and service-account authentication diagnostics when

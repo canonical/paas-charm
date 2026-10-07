@@ -116,13 +116,32 @@ def collect_loki_diagnostics(namespace: str, app_name: str) -> None:
                 f"app.kubernetes.io/name={app_name}",
                 "-o",
                 "custom-columns=NAME:.metadata.name,UID:.metadata.uid,"
+                "DELETING:.metadata.deletionTimestamp,"
+                "GRACE:.metadata.deletionGracePeriodSeconds,"
+                "REVISION:.metadata.labels.controller-revision-hash,"
                 "NODE:.spec.nodeName,SA:.spec.serviceAccountName,"
                 "PHASE:.status.phase,START:.status.startTime,"
                 "READY:.status.containerStatuses[*].ready,"
                 "RESTARTS:.status.containerStatuses[*].restartCount,"
+                "TERMINATED:.status.containerStatuses[*].state.terminated.reason,"
+                "EXIT:.status.containerStatuses[*].state.terminated.exitCode,"
                 "TOKEN_EXPIRY:.spec.volumes[*].projected.sources[*]."
                 "serviceAccountToken.expirationSeconds,"
                 "TOKEN_AUDIENCE:.spec.volumes[*].projected.sources[*].serviceAccountToken.audience",
+            ],
+        ),
+        (
+            "Loki rollout metadata",
+            [
+                *kubectl,
+                "get",
+                "statefulsets",
+                app_name,
+                "-o",
+                "custom-columns=NAME:.metadata.name,GENERATION:.metadata.generation,"
+                "OBSERVED:.status.observedGeneration,STRATEGY:.spec.updateStrategy.type,"
+                "CURRENT:.status.currentRevision,UPDATE:.status.updateRevision,"
+                "READY:.status.readyReplicas,UPDATED:.status.updatedReplicas",
             ],
         ),
     ):
