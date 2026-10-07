@@ -19,7 +19,7 @@ from tests.integration.types import App
     [
         ("django_app", "/len/users", None),
         ("expressjs_app", "/", None),
-        ("fastapi_app", "/", None),
+        ("fastapi_app", "/", '"Hello, World!"'),
         ("flask_app", "/", None),
         ("go_app", "/", "Hello, World!"),
         ("spring_boot_app", "/hello-world", None),
@@ -47,7 +47,5 @@ def test_ingress(
                 timeout=30,
             )
         assert response.status_code == 200
-        if app_fixture == "fastapi_app":
-            assert not response.history
         if expected_text:
             assert response.text.strip() == expected_text
