@@ -106,12 +106,14 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         config_options: ConfigOptions = self._paas_config.config
         if config_options.options:  # pylint: disable=no-member
             options = config_metadata(pathlib.Path(self.charm_dir))["options"]
-            framework_fields = framework_config_option_fields(self.framework_config_class)
+            framework_fields = framework_config_option_fields(
+                self.framework_config_class, options.keys()
+            )
             unsupported = {
                 option
                 for option in options
                 if not is_user_defined_config(option, framework_name)
-                and option.replace("-", "_") not in framework_fields
+                and option not in framework_fields
             }
             config_options.validate_sources(options, unsupported)  # pylint: disable=no-member
 

@@ -128,15 +128,20 @@ Unmapped entries retain their default environment variable names.
 For ``app-secret-key``, use ``secret-env-vars: {value: SESSION_SECRET}`` to rename the
 effective key. This includes the automatically generated key when no secret is configured.
 
-If a configured secret lacks a mapped key, the charm skips that entry and logs a warning
+Configured secrets must still pass their original validation; ``app-secret-key`` requires
+exactly one entry named ``value``. After validation, if a secret lacks a mapped key,
+the charm skips that entry and logs a warning
 naming the configuration option, secret content key, and destination, never the secret value.
+For framework options exposing a secret as a JSON object, mapped entries are removed from
+that object; unmapped entries remain in the original output.
 
 Values and defaults
 ~~~~~~~~~~~~~~~~~~~
 
-Mappings change names only; existing framework validation and secret resolution still apply.
-Strings are unchanged; booleans and numbers are JSON-encoded (for example, ``false``
-becomes the string ``"false"``).
+Mappings preserve resolved framework values and their existing encoding. User-defined
+strings pass through unchanged; booleans and numbers are JSON-encoded (for example,
+``false`` becomes the string ``"false"``). Framework validation and secret resolution
+still apply.
 
 Defaults are mapped too. A ``log-level`` default of ``info`` emits ``LOG_LEVEL=info``
 without the operator setting the option. Resetting an option uses its default rather

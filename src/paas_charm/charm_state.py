@@ -9,7 +9,7 @@ import pathlib
 import typing
 from dataclasses import dataclass, field
 
-from pydantic import BaseModel, Field, ValidationError, create_model
+from pydantic import AliasChoices, BaseModel, Field, ValidationError, create_model
 
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
@@ -52,7 +52,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
         config_options: Settings for existing charm configuration options.
-        framework_config_fields: Normalized framework option names mapped to model fields.
+        framework_config_fields: Accepted framework config input names mapped to model fields.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -61,7 +61,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework: str,
         is_secret_key_ready: bool,
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
-        framework_config: dict[str, int | str] | None = None,
+        framework_config: dict[str, int | str | dict[str, str]] | None = None,
         secret_key: str | None = None,
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
@@ -82,7 +82,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integrations: Information about the integrations.
             base_url: Base URL for the service.
             config_options: Settings for existing charm configuration options.
-            framework_config_fields: Normalized framework option names mapped to model fields.
+            framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
         """
         self.framework = framework
@@ -133,8 +133,13 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             CharmConfigInvalidError: If some parameter in invalid.
             RelationDataError: When relation data is either unavailable, invalid or not usable.
         """
-        framework_fields = framework_config_option_fields(type(framework_config))
-        framework_options = set(framework_fields)
+        framework_fields = framework_config_option_fields(type(framework_config), config.keys())
+        for option, field_name in framework_config_option_fields(
+            type(framework_config), config_metadata(pathlib.Path(charm_dir))["options"]
+        ).items():
+            if field_name not in framework_fields.values():
+                framework_fields[option] = field_name
+        framework_options = {option.replace("-", "_") for option in framework_fields}
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
@@ -271,7 +276,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         )
 
     @property
-    def framework_config(self) -> dict[str, str | int | bool]:
+    def framework_config(self) -> dict[str, str | int | bool | dict[str, str]]:
         """Get the value of the framework application specific configuration.
 
         Returns:
@@ -456,20 +461,35 @@ def app_config_class_factory(
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
 
 
-def framework_config_option_fields(framework_config_class: type[BaseModel]) -> dict[str, str]:
-    """Map normalized framework option names and aliases to model fields.
+def framework_config_option_fields(
+    framework_config_class: type[BaseModel], options: typing.Collection[str]
+) -> dict[str, str]:
+    """Map accepted flat config inputs to their framework model fields.
 
     Args:
         framework_config_class: Framework configuration model class.
+        options: Available charm configuration option names.
 
     Returns:
-        Normalized option names mapped to their framework model field names.
+        Exact input names selected according to the model's alias validation rules.
     """
-    return {
-        name.replace("-", "_"): field_name
-        for field_name, field in framework_config_class.model_fields.items()
-        for name in (field_name, field.alias or field_name)
-    }
+    config = framework_config_class.model_config
+    allow_name = config.get("validate_by_name", config.get("populate_by_name", False))
+    fields: dict[str, str] = {}
+    for field_name, model_field in framework_config_class.model_fields.items():
+        names: list[str] = []
+        alias = model_field.validation_alias
+        if config.get("validate_by_alias") is not False:
+            if isinstance(alias, str):
+                names.append(alias)
+            elif isinstance(alias, AliasChoices):
+                names.extend(name for name in alias.choices if isinstance(name, str))
+        if alias is None or allow_name:
+            names.append(field_name)
+        source = next((name for name in names if name in options), None)
+        if source is not None:
+            fields[source] = field_name
+    return fields
 
 
 def is_user_defined_config(option_name: str, framework: str) -> bool:

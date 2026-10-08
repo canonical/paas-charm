@@ -90,5 +90,4 @@ def test_required_framework_alias_is_not_user_config(tmp_path):
     assert state.framework_config["internal_name"] == "configured"
     assert state.user_defined_config == {"user_option": "ordinary"}
     assert state.config_options.options == {}
-    assert state.framework_config_fields["public_option"] == "internal_name"
-    assert state.framework_config_fields["app_secret_key"] == "secret_key"
+    assert state.framework_config_fields["public-option"] == "internal_name"

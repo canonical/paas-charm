@@ -8,8 +8,9 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
+import yaml
 from ops import testing
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError
 
 from examples.django.charm.src.charm import DjangoCharm
 from examples.expressjs.charm.src.charm import ExpressJSCharm
@@ -21,6 +22,7 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, framework_config_option_fields
 from paas_charm.exceptions import CharmConfigInvalidError, PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
+from paas_charm.fastapi.charm import FastAPIConfig
 from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig, read_paas_config
 from paas_charm.relations import CustomRelation
 from paas_charm.springboot.charm import SpringBootApp
@@ -334,18 +336,112 @@ def test_valid_sources():
     ).validate_sources({"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set())
 
 
-def test_framework_config_option_fields():
-    """Use the same normalized field names and aliases for filtering and validation."""
+@pytest.mark.parametrize(
+    "settings, names, expected",
+    [
+        (
+            {},
+            {"public-option", "internal_name", "port"},
+            {"public-option": "internal_name", "port": "port"},
+        ),
+        ({}, {"internal_name", "port"}, {"port": "port"}),
+        (
+            {"populate_by_name": True},
+            {"internal_name", "port"},
+            {"internal_name": "internal_name", "port": "port"},
+        ),
+        (
+            {"populate_by_name": True},
+            {"public-option", "internal_name", "port"},
+            {"public-option": "internal_name", "port": "port"},
+        ),
+        (
+            {"validate_by_alias": False, "validate_by_name": True},
+            {"public-option", "internal_name", "port"},
+            {"internal_name": "internal_name", "port": "port"},
+        ),
+    ],
+)
+def test_framework_config_option_fields(settings, names, expected):
+    """Assign ownership only to inputs accepted and selected by Pydantic."""
 
     class Config(BaseModel):
+        model_config = ConfigDict(**settings)
         internal_name: str = Field(alias="public-option")
         port: int
 
-    assert framework_config_option_fields(Config) == {
-        "internal_name": "internal_name",
-        "public_option": "internal_name",
-        "port": "port",
-    }
+    assert framework_config_option_fields(Config, names) == expected
+
+
+@pytest.mark.parametrize(
+    "names, expected", [({"first", "second"}, "first"), ({"second"}, "second")]
+)
+def test_framework_alias_choice_priority(names, expected):
+    """Follow the same alias-choice priority as model validation."""
+
+    class Config(BaseModel):
+        value: int = Field(validation_alias=AliasChoices("first", "second"))
+
+    assert framework_config_option_fields(Config, names) == {expected: "value"}
+
+
+@pytest.mark.parametrize(
+    "option, declarations, config, expected",
+    [
+        (
+            "uvicorn-port",
+            {
+                "uvicorn-port": {"type": "int", "default": 9000},
+                "webserver-port": {"type": "int", "default": 8000},
+            },
+            {},
+            "9000",
+        ),
+        ("custom-metrics-port", {"custom-metrics-port": {"type": "int"}}, {}, "relation"),
+        (
+            "custom-metrics-port",
+            {"custom-metrics-port": {"type": "int"}},
+            {"custom-metrics-port": 5000},
+            "5000",
+        ),
+    ],
+)
+def test_framework_source_ownership(
+    context_factory, framework_state_factory, monkeypatch, option, declarations, config, expected
+):
+    """Never map an ignored input or a library-generated variable as a framework source."""
+
+    class Config(FastAPIConfig):
+        metrics_port: int | None = Field(default=None, alias="custom-metrics-port")
+
+    monkeypatch.setattr(FastAPICharm, "framework_config_class", Config)
+    monkeypatch.setattr(
+        FastAPIApp,
+        "_generate_integration_environments",
+        lambda self, prefix="": {"TARGET": "relation"},
+    )
+    context = context_factory(
+        FastAPICharm,
+        paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}}),
+    )
+    path = context.charm_root / "charmcraft.yaml"
+    metadata = yaml.safe_load(path.read_text())
+    metadata["config"]["options"].update(declarations)
+    path.write_text(yaml.safe_dump(metadata))
+    with testing.Context(
+        FastAPICharm,
+        config=metadata.pop("config"),
+        actions=metadata.pop("actions"),
+        meta=metadata,
+        charm_root=context.charm_root,
+    ) as declared:
+        state = framework_state_factory(FastAPICharm, config=config)
+        out = declared.run(declared.on.config_changed(), testing.State(**state))
+    assert out.unit_status == testing.ActiveStatus()
+    env = next(iter(out.get_container("app").plan.services.values())).environment
+    assert env["TARGET"] == expected
+    assert env["METRICS_PORT"] == "8000"
+    assert env["UVICORN_PORT"] == "8000"
 
 
 @pytest.mark.parametrize(
@@ -468,7 +564,7 @@ def test_framework_mapping_swaps_and_precedence(make_app, value, expected):
         {},
         {"public-one": "TWO", "public-two": "ONE"},
         framework={"one": value, "two": False},
-        framework_fields={"public_one": "one", "public_two": "two"},
+        framework_fields={"public-one": "one", "public-two": "two"},
         relations={"ONE": "relation"},
     ).gen_environment()
     assert env["ONE"] == "false"
@@ -527,12 +623,41 @@ def test_framework_secret_missing_key_keeps_default(make_app, caplog):
     env = make_app(
         {},
         {"app-secret-key": {"missing": "TARGET"}},
-        framework_fields={"app_secret_key": "app_secret_key"},
+        framework_fields={"app-secret-key": "app_secret_key"},
     ).gen_environment()
     assert env["APP_SECRET_KEY"] == "generated-key"
     assert "TARGET" not in env
     assert "secret content key 'missing'" in caplog.text
     assert "generated-key" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "mapping, remaining",
+    [
+        ({"username": "DB_USER"}, {"password": "opaque"}),
+        ({"username": "DB_USER", "password": "DB_PASSWORD"}, None),
+        ({"missing": "TARGET"}, {"username": "alice", "password": "opaque"}),
+    ],
+)
+def test_framework_secret_dictionary_mapping(make_app, caplog, mapping, remaining):
+    """Map actual secret entries and preserve unmapped content in the original JSON output."""
+    app = make_app(
+        {},
+        {"credentials": mapping},
+        framework={"credentials": {"username": "alice", "password": "opaque"}},
+        framework_fields={"credentials": "credentials"},
+    )
+    env = app.gen_environment()
+    assert env.get("CREDENTIALS") == (json.dumps(remaining) if remaining else None)
+    assert env.get("DB_USER") == ("alice" if "username" in mapping else None)
+    assert env.get("DB_PASSWORD") == ("opaque" if "password" in mapping else None)
+    assert "TARGET" not in env
+    assert "alice" not in caplog.text
+    assert "opaque" not in caplog.text
+    assert app._charm_state.framework_config["credentials"] == {
+        "username": "alice",
+        "password": "opaque",
+    }
 
 
 @pytest.mark.parametrize(
