@@ -225,7 +225,7 @@ class ConfigOptions(BaseModel):
 
         Args:
             options: Charm configuration option metadata.
-            unsupported: Framework-owned and otherwise unsupported option names.
+            unsupported: Option names without mappable environment outputs.
 
         Raises:
             PaasConfigError: If an option is unknown, unsupported, or has the wrong mapping shape.
@@ -238,7 +238,8 @@ class ConfigOptions(BaseModel):
                 )
             if option in unsupported:
                 raise PaasConfigError(
-                    f"{CONFIG_FILE_NAME}: config.options cannot map framework-owned option {option!r}"
+                    f"{CONFIG_FILE_NAME}: config.options cannot map option {option!r}: "
+                    "it has no configuration-derived environment output"
                 )
             normalized = option.replace("-", "_")
             for other in options:

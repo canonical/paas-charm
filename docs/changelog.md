@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* feat: Rename environment variables for user-defined config options and secret entries using
-  `config.options` in `paas-config.yaml`.
+* feat: Rename environment variables for config options and secret entries using
+  `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
 * fix: Relation outputs now override FastAPI and Spring Boot framework-generated settings
   when names collide, even without explicit environment mappings.
 * fix: Warn when relation outputs override config/framework variables without logging values.

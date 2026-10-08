@@ -360,6 +360,20 @@ class SpringBootApp(App):
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
 
+    def _framework_config_environment_names(self, field: str) -> tuple[str, ...]:
+        """Include the native Spring Boot output for profile configuration.
+
+        Args:
+            field: Framework model field name.
+
+        Returns:
+            Default environment names, including the native profile property.
+        """
+        names = super()._framework_config_environment_names(field)
+        if field == "app_profiles":
+            names += ("spring.profiles.active",)
+        return names
+
     def _framework_environment(self) -> dict[str, str]:
         """Build the config/framework layer with Spring Boot-specific settings.
 

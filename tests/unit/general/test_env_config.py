@@ -8,16 +8,18 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-import yaml
 from ops import testing
 from pydantic import BaseModel, Field, ValidationError
 
+from examples.django.charm.src.charm import DjangoCharm
 from examples.expressjs.charm.src.charm import ExpressJSCharm
+from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
+from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, framework_config_option_names
-from paas_charm.exceptions import PaasConfigError
+from paas_charm.charm_state import CharmState, framework_config_option_fields
+from paas_charm.exceptions import CharmConfigInvalidError, PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig, read_paas_config
 from paas_charm.relations import CustomRelation
@@ -29,7 +31,14 @@ def make_app_fixture(tmp_path):
     """Build an app with controlled config sources and relation outputs."""
 
     def make_app(
-        config, mappings, *, app_class=App, relations=None, framework=None, custom_relations=None
+        config,
+        mappings,
+        *,
+        app_class=App,
+        relations=None,
+        framework=None,
+        custom_relations=None,
+        framework_fields=None,
     ):
         state = CharmState(
             framework="test",
@@ -37,6 +46,7 @@ def make_app_fixture(tmp_path):
             secret_key="generated-key",
             user_defined_config=config,
             framework_config=framework,
+            framework_config_fields=framework_fields,
             custom_relations=custom_relations,
             config_options=ConfigOptions(
                 options={
@@ -269,7 +279,7 @@ def test_duplicate_destinations():
     ],
 )
 def test_invalid_sources(mapping, options, unsupported):
-    """Reject unknown, framework-owned and incorrectly shaped sources."""
+    """Reject unknown, unsupported and incorrectly shaped sources."""
     with pytest.raises(PaasConfigError):
         ConfigOptions(options=mapping).validate_sources(options, unsupported)
 
@@ -324,34 +334,205 @@ def test_valid_sources():
     ).validate_sources({"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set())
 
 
-def test_framework_config_option_names():
+def test_framework_config_option_fields():
     """Use the same normalized field names and aliases for filtering and validation."""
 
     class Config(BaseModel):
         internal_name: str = Field(alias="public-option")
         port: int
 
-    assert framework_config_option_names(Config) == {"internal_name", "public_option", "port"}
+    assert framework_config_option_fields(Config) == {
+        "internal_name": "internal_name",
+        "public_option": "internal_name",
+        "port": "port",
+    }
 
 
 @pytest.mark.parametrize(
     "charm_class, option",
-    [(GoCharm, "port"), (ExpressJSCharm, "port"), (FlaskCharm, "flask-debug")],
+    [(GoCharm, "port"), (FastAPICharm, "webserver-host"), (FlaskCharm, "webserver-workers")],
 )
-def test_framework_source_rejected_on_initialization(context_factory, charm_class, option):
-    """Reject prefixed and unprefixed framework-owned sources in real charm initialization."""
+def test_non_environment_sources_rejected(context_factory, charm_class, option):
+    """Reject settings without declared config options or configuration environment outputs."""
     context = context_factory(
         charm_class, paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}})
     )
-    config_path = context.charm_root / "charmcraft.yaml"
-    metadata = yaml.safe_load(config_path.read_text())
-    metadata["config"]["options"].setdefault(option, {"type": "int", "default": 8080})
-    config_path.write_text(yaml.safe_dump(metadata))
-    with testing.Context(charm_class, meta=metadata, charm_root=context.charm_root) as declared:
-        with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
-            declared.run(declared.on.config_changed(), testing.State())
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State())
     assert isinstance(exc_info.value.__cause__, PaasConfigError)
-    assert f"cannot map framework-owned option {option!r}" in str(exc_info.value.__cause__)
+    assert repr(option) in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "charm_class, option, config, expected, original_names",
+    [
+        (FlaskCharm, "flask-debug", {"flask-debug": False}, "false", ("FLASK_DEBUG",)),
+        (
+            FlaskCharm,
+            "flask-preferred-url-scheme",
+            {"flask-preferred-url-scheme": "https"},
+            "HTTPS",
+            ("FLASK_PREFERRED_URL_SCHEME",),
+        ),
+        (
+            DjangoCharm,
+            "django-allowed-hosts",
+            {"django-allowed-hosts": "a.example,b.example"},
+            json.dumps(["a.example", "b.example", "django-k8s.test-model"]),
+            ("DJANGO_ALLOWED_HOSTS",),
+        ),
+        (FastAPICharm, "webserver-workers", {}, "1", ("WEB_CONCURRENCY",)),
+        (
+            FastAPICharm,
+            "webserver-log-level",
+            {"webserver-log-level": "debug"},
+            "debug",
+            ("UVICORN_LOG_LEVEL",),
+        ),
+        (ExpressJSCharm, "node-env", {}, "production", ("NODE_ENV",)),
+        (
+            SpringBootCharm,
+            "app-profiles",
+            {"app-profiles": "dev,prod"},
+            "dev,prod",
+            ("APP_PROFILES", "spring.profiles.active"),
+        ),
+        (SpringBootCharm, "app-profiles", {}, None, ("APP_PROFILES", "spring.profiles.active")),
+    ],
+)
+def test_framework_option_mapping(
+    context_factory, framework_state_factory, charm_class, option, config, expected, original_names
+):
+    """Rename real framework outputs without changing defaults, validation or encoding."""
+    context = context_factory(
+        charm_class, paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}})
+    )
+    out = context.run(
+        context.on.config_changed(),
+        testing.State(**framework_state_factory(charm_class, config=config)),
+    )
+    assert out.unit_status == testing.ActiveStatus()
+    services = out.get_container("app").plan.services
+    env = next(iter(services.values())).environment
+    if expected is None:
+        assert "TARGET" not in env
+    else:
+        assert env["TARGET"] == expected
+    assert not set(original_names) & env.keys()
+
+
+@pytest.mark.parametrize("configured", [False, True])
+@pytest.mark.parametrize(
+    "charm_class, original_names",
+    [
+        (FlaskCharm, ("FLASK_SECRET_KEY",)),
+        (DjangoCharm, ("DJANGO_SECRET_KEY",)),
+        (FastAPICharm, ("APP_SECRET_KEY",)),
+        (ExpressJSCharm, ("APP_SECRET_KEY",)),
+        (GoCharm, ("APP_SECRET_KEY",)),
+        (SpringBootCharm, ("SECRET_KEY", "APP_SECRET_KEY")),
+    ],
+)
+def test_framework_secret_key_mapping(
+    context_factory, framework_state_factory, charm_class, original_names, configured, caplog
+):
+    """Rename the configured or generated secret key consistently across all frameworks."""
+    context = context_factory(
+        charm_class,
+        paas_config=PaasConfig(
+            config={
+                "options": {"app-secret-key": {"secret-env-vars": {"value": "SESSION_SECRET"}}}
+            }
+        ),
+    )
+    state = framework_state_factory(charm_class)
+    if configured:
+        secret = testing.Secret(tracked_content={"value": "configured-key"})
+        state["secrets"].append(secret)
+        state["config"]["app-secret-key"] = secret.id
+    out = context.run(context.on.config_changed(), testing.State(**state))
+    assert out.unit_status == testing.ActiveStatus()
+    services = out.get_container("app").plan.services
+    for service in services.values():
+        assert service.environment["SESSION_SECRET"] == (
+            "configured-key" if configured else "test"
+        )
+        assert not set(original_names) & service.environment.keys()
+    assert "configured-key" not in caplog.text
+
+
+@pytest.mark.parametrize("value, expected", [(0, "0"), ("", "")])
+def test_framework_mapping_swaps_and_precedence(make_app, value, expected):
+    """Capture both original framework values before applying relation and config overrides."""
+    env = make_app(
+        {},
+        {"public-one": "TWO", "public-two": "ONE"},
+        framework={"one": value, "two": False},
+        framework_fields={"public_one": "one", "public_two": "two"},
+        relations={"ONE": "relation"},
+    ).gen_environment()
+    assert env["ONE"] == "false"
+    assert env["TWO"] == expected
+
+
+@pytest.mark.parametrize(
+    "charm_class, option, value",
+    [(SpringBootCharm, "app-profiles", ""), (FastAPICharm, "webserver-workers", 0)],
+)
+def test_mapping_preserves_framework_validation(
+    context_factory, framework_state_factory, charm_class, option, value
+):
+    """Renaming an output does not make invalid framework setting values acceptable."""
+    context = context_factory(
+        charm_class, paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}})
+    )
+    state = framework_state_factory(charm_class, config={option: value})
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**state))
+    assert isinstance(exc_info.value.__cause__, CharmConfigInvalidError)
+
+
+@pytest.mark.parametrize("configured", [False, True])
+def test_framework_secret_rotation(
+    context_factory, framework_state_factory, monkeypatch, configured
+):
+    """Mapped keys follow both configured-secret updates and generated-key rotation."""
+    context = context_factory(
+        GoCharm,
+        paas_config=PaasConfig(
+            config={
+                "options": {"app-secret-key": {"secret-env-vars": {"value": "SESSION_SECRET"}}}
+            }
+        ),
+    )
+    state = framework_state_factory(GoCharm)
+    if configured:
+        secret = testing.Secret(
+            tracked_content={"value": "old-key"}, latest_content={"value": "rotated-key"}
+        )
+        state["secrets"].append(secret)
+        state["config"]["app-secret-key"] = secret.id
+        out = context.run(context.on.secret_changed(secret), testing.State(**state))
+    else:
+        out = context.run(context.on.config_changed(), testing.State(**state))
+        monkeypatch.setattr("paas_charm.secret_key.secrets.token_urlsafe", lambda _: "rotated-key")
+        out = context.run(context.on.action("rotate-secret-key"), out)
+    env = next(iter(out.get_container("app").plan.services.values())).environment
+    assert env["SESSION_SECRET"] == "rotated-key"
+    assert "APP_SECRET_KEY" not in env
+
+
+def test_framework_secret_missing_key_keeps_default(make_app, caplog):
+    """A missing entry does not remove the unmapped effective secret-key output."""
+    env = make_app(
+        {},
+        {"app-secret-key": {"missing": "TARGET"}},
+        framework_fields={"app_secret_key": "app_secret_key"},
+    ).gen_environment()
+    assert env["APP_SECRET_KEY"] == "generated-key"
+    assert "TARGET" not in env
+    assert "secret content key 'missing'" in caplog.text
+    assert "generated-key" not in caplog.text
 
 
 @pytest.mark.parametrize(

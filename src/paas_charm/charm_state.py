@@ -52,6 +52,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
         config_options: Settings for existing charm configuration options.
+        framework_config_fields: Normalized framework option names mapped to model fields.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -66,6 +67,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
         config_options: ConfigOptions | None = None,
+        framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
@@ -80,6 +82,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integrations: Information about the integrations.
             base_url: Base URL for the service.
             config_options: Settings for existing charm configuration options.
+            framework_config_fields: Normalized framework option names mapped to model fields.
             custom_relations: Custom relations.
         """
         self.framework = framework
@@ -91,6 +94,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
         self.config_options = config_options if config_options is not None else ConfigOptions()
+        self.framework_config_fields = framework_config_fields or {}
         self.custom_relations = custom_relations or []
 
     @classmethod
@@ -129,7 +133,8 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             CharmConfigInvalidError: If some parameter in invalid.
             RelationDataError: When relation data is either unavailable, invalid or not usable.
         """
-        framework_options = framework_config_option_names(type(framework_config))
+        framework_fields = framework_config_option_fields(type(framework_config))
+        framework_options = set(framework_fields)
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
@@ -239,6 +244,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
             config_options=config_options,
+            framework_config_fields=framework_fields,
             integrations=integrations,
             base_url=base_url,
             custom_relations=custom_relations,
@@ -450,19 +456,20 @@ def app_config_class_factory(
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
 
 
-def framework_config_option_names(framework_config_class: type[BaseModel]) -> set[str]:
-    """Get normalized option names owned by a framework configuration model.
+def framework_config_option_fields(framework_config_class: type[BaseModel]) -> dict[str, str]:
+    """Map normalized framework option names and aliases to model fields.
 
     Args:
         framework_config_class: Framework configuration model class.
 
     Returns:
-        Field names and aliases with hyphens replaced by underscores.
+        Normalized option names mapped to their framework model field names.
     """
-    fields = framework_config_class.model_fields
-    names = set(fields)
-    names.update(field.alias for field in fields.values() if field.alias is not None)
-    return {name.replace("-", "_") for name in names}
+    return {
+        name.replace("-", "_"): field_name
+        for field_name, field in framework_config_class.model_fields.items()
+        for name in (field_name, field.alias or field_name)
+    }
 
 
 def is_user_defined_config(option_name: str, framework: str) -> bool:

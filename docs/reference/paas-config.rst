@@ -83,9 +83,9 @@ See :ref:`ref_paas_config_structured_logging` for detailed structured logging op
 Environment variable name mappings
 ----------------------------------
 
-Use ``config.options`` to rename environment variables generated from user-defined charm
-configuration options. Mappings refer to existing options; they do not declare options
-or set their values.
+Use ``config.options`` to rename environment variables generated from charm configuration
+options, including framework-provided options. Mappings refer to existing options; they
+do not declare options or set their values.
 
 This example assumes ``log-level`` is a string option and ``credentials`` has ``type: secret``:
 
@@ -105,9 +105,10 @@ Each option must use exactly one field: ``env-var`` for a non-secret option, or
 ``secret-env-vars`` for an option declared with ``type: secret``.
 
 Source names must match options declared in ``charmcraft.yaml`` or ``config.yaml`` exactly.
-Framework-owned options, including ``app-secret-key``, cannot be mapped. This includes
-framework field names and aliases, and options under the reserved ``app-``, ``webserver-``,
-and framework-specific prefixes.
+Framework options with environment outputs, such as ``app-secret-key`` and ``flask-debug``,
+can be mapped. Options that only configure files or arguments, such as Gunicorn's
+``webserver-workers``, cannot. Settings declared only in ``paas-config.yaml``, such as
+``port``, are not charm configuration options and cannot be mapping sources.
 
 Destination names are used verbatim, without adding prefixes or changing punctuation or
 case. They must be non-empty strings without NUL characters or ``=``. Other characters
@@ -124,13 +125,16 @@ Keys under ``secret-env-vars`` are exact Juju secret content keys. The example r
 the ``username`` and ``password`` entries of the secret configured through ``credentials``.
 Unmapped entries retain their default environment variable names.
 
+For ``app-secret-key``, use ``secret-env-vars: {value: SESSION_SECRET}`` to rename the
+effective key. This includes the automatically generated key when no secret is configured.
+
 If a configured secret lacks a mapped key, the charm skips that entry and logs a warning
 naming the configuration option, secret content key, and destination, never the secret value.
 
 Values and defaults
 ~~~~~~~~~~~~~~~~~~~
 
-Mappings change names only; existing validation and secret resolution still apply.
+Mappings change names only; existing framework validation and secret resolution still apply.
 Strings are unchanged; booleans and numbers are JSON-encoded (for example, ``false``
 becomes the string ``"false"``).
 
@@ -138,10 +142,9 @@ Defaults are mapped too. A ``log-level`` default of ``info`` emits ``LOG_LEVEL=i
 without the operator setting the option. Resetting an option uses its default rather
 than making it unset.
 
-A source with no value, including an option with no configured Juju secret, contributes no
-mapped variable. Any lower-priority destination value remains unchanged. Empty strings,
-``false``, and zero are values and override lower-priority outputs. Unmapped options retain
-their existing handling of unset values.
+A source with no value contributes no mapped variable. Any lower-priority destination
+value remains unchanged. Empty strings, ``false``, and zero are values and override
+lower-priority outputs. Unmapped options retain their existing handling of unset values.
 
 Precedence and collisions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,7 +202,7 @@ The file ``paas-config.yaml`` allows you to:
 * Configure the workload metrics endpoint
 * Define custom Prometheus scrape targets for metrics collection
 * Enable structured framework logs in JSON format
-* Rename environment variables generated from user-defined config options and secrets
+* Rename environment variables generated from config options and secrets
 
 For the detailed configuration schema and detailed examples, see:
 

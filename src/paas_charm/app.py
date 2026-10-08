@@ -453,6 +453,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             The final environment with string-encoded values.
         """
         env = self._framework_environment()
+        framework_sources = self._framework_config_mapping_sources(env)
         for name, value in self._generate_integration_environments(
             prefix=self.integrations_prefix
         ).items():
@@ -463,7 +464,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                     name,
                 )
             env[name] = value
-        for name, (source, value) in self._mapped_config_environment().items():
+        for name, (source, value) in self._mapped_config_environment(framework_sources).items():
             if name in env:
                 logger.warning(
                     "Explicit config.options mapping from %r overwrites environment variable %r",
@@ -473,8 +474,59 @@ class App:  # pylint: disable=too-many-instance-attributes
             env[name] = value
         return env
 
-    def _mapped_config_environment(self) -> dict[str, tuple[str, str]]:
+    def _framework_config_environment_names(self, field: str) -> tuple[str, ...]:
+        """Get the existing environment outputs for a framework model field.
+
+        Args:
+            field: Framework model field name.
+
+        Returns:
+            Default environment names, with the configured value before any fallback.
+        """
+        names: tuple[str, ...] = (f"{self.framework_config_prefix}{field.upper()}",)
+        if field in ("secret_key", "app_secret_key"):
+            names += (f"{self.configuration_prefix}SECRET_KEY",)
+        return names
+
+    def _framework_config_mapping_sources(
+        self, env: dict[str, str]
+    ) -> dict[str, str | dict[str, str]]:
+        """Capture framework outputs before removing their mapped default names.
+
+        Args:
+            env: Config/framework environment, updated to omit renamed outputs.
+
+        Returns:
+            Mapping source values using the original outputs' encoding.
+        """
+        original = env.copy()
+        sources: dict[str, str | dict[str, str]] = {}
+        for option, mapping in self._charm_state.config_options.options.items():
+            normalized = option.replace("-", "_")
+            field = self._charm_state.framework_config_fields.get(normalized)
+            if field is None:
+                continue
+            names = self._framework_config_environment_names(field)
+            value = next((original[name] for name in names if name in original), None)
+            if value is None:
+                continue
+            if isinstance(mapping, SecretEnvVarsConfig):
+                sources[normalized] = {"value": value}
+                if "value" not in mapping.secret_env_vars:
+                    continue
+            else:
+                sources[normalized] = value
+            for name in names:
+                env.pop(name, None)
+        return sources
+
+    def _mapped_config_environment(
+        self, framework_sources: dict[str, str | dict[str, str]]
+    ) -> dict[str, tuple[str, str]]:
         """Generate explicit config destinations from their original source values.
+
+        Args:
+            framework_sources: Resolved framework outputs, including secret-key fallbacks.
 
         Returns:
             Destinations mapped to source names and encoded values, omitting absent values.
@@ -483,8 +535,9 @@ class App:  # pylint: disable=too-many-instance-attributes
             PaasConfigError: If a secret mapping receives non-secret content.
         """
         env: dict[str, tuple[str, str]] = {}
+        sources = self._charm_state.user_defined_config | framework_sources
         for option, mapping in self._charm_state.config_options.options.items():
-            value = self._charm_state.user_defined_config.get(option.replace("-", "_"))
+            value = sources.get(option.replace("-", "_"))
             if value is None:
                 continue
             if isinstance(mapping, SecretEnvVarsConfig):
