@@ -15,10 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
 * fix: Relation outputs now override FastAPI and Spring Boot framework-generated settings
   when names collide, even without explicit environment mappings.
-* fix: Warn when relation outputs override config/framework variables without logging values.
-* fix: Exclude framework-owned aliases from application config validation, including when
-  environment mappings are disabled.
-* fix: Report mapping validation errors and missing secret keys with their exact source names.
 * feat: Add the public `paas_charm.relations.CustomRelation` extension API so
   charm authors can add their own Juju relations to a 12-factor charm
   (environment variables, readiness/blocking, reconcile) without importing or

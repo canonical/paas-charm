@@ -110,13 +110,13 @@ can be mapped. Options that only configure files or arguments, such as Gunicorn'
 ``webserver-workers``, cannot. Settings declared only in ``paas-config.yaml``, such as
 ``port``, are not charm configuration options and cannot be mapping sources.
 
-Destination names are used verbatim, without adding prefixes or changing punctuation or
-case. They must be non-empty strings without NUL characters or ``=``. Other characters
+Destination names are used exactly as written, without adding prefixes or changing punctuation
+or case. They must be non-empty strings without NUL characters or ``=``. Other characters
 are accepted, but the workload and any shell scripts must support the chosen names.
 
 Mappings replace default names rather than add aliases. In Flask, the example emits
 ``LOG_LEVEL`` instead of ``FLASK_LOG_LEVEL``. Unmapped options retain their existing names.
-Another source can still independently generate the old name.
+Other sources can still produce a variable with the original name.
 
 Secret entries
 ~~~~~~~~~~~~~~
@@ -126,30 +126,33 @@ the ``username`` and ``password`` entries of the secret configured through ``cre
 Unmapped entries retain their default environment variable names.
 
 For ``app-secret-key``, use ``secret-env-vars: {value: SESSION_SECRET}`` to rename the
-effective key. This includes the automatically generated key when no secret is configured.
+application's secret key. The mapping also applies to the automatically generated key
+when no secret is configured.
 
-Configured secrets must still pass their original validation; ``app-secret-key`` requires
-exactly one entry named ``value``. After validation, if a secret lacks a mapped key,
-the charm skips that entry and logs a warning
-naming the configuration option, secret content key, and destination, never the secret value.
+Configured secrets must pass the option's usual validation. ``app-secret-key`` requires
+exactly one content entry named ``value``. If the secret passes validation but does not
+contain a mapped key, the charm skips that entry and logs a warning. The warning names
+the option, missing key, and destination variable, but never includes the secret value.
+
 For framework options exposing a secret as a JSON object, mapped entries are removed from
 that object; unmapped entries remain in the original output.
 
 Values and defaults
 ~~~~~~~~~~~~~~~~~~~
 
-Mappings preserve resolved framework values and their existing encoding. User-defined
-strings pass through unchanged; booleans and numbers are JSON-encoded (for example,
-``false`` becomes the string ``"false"``). Framework validation and secret resolution
-still apply.
+For framework options, mappings use the values already prepared by the framework, with
+their existing encoding. For user-defined options, strings pass through unchanged;
+booleans and numbers are JSON-encoded (for example, ``false`` becomes the string
+``"false"``). Configuration validation and secret resolution still apply.
 
 Defaults are mapped too. A ``log-level`` default of ``info`` emits ``LOG_LEVEL=info``
 without the operator setting the option. Resetting an option uses its default rather
 than making it unset.
 
-A source with no value contributes no mapped variable. Any lower-priority destination
-value remains unchanged. Empty strings, ``false``, and zero are values and override
-lower-priority outputs. Unmapped options retain their existing handling of unset values.
+If an option has no value, its mapping adds no environment variable and leaves any existing
+destination variable unchanged. Empty strings, ``false``, and zero count as values and
+replace existing destination values. Options without mappings keep their existing behavior
+when unset.
 
 Precedence and collisions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,12 +173,13 @@ Environment variables are applied in this order, from lowest to highest priority
    * - 4
      - Explicit ``config.options`` mappings whose sources have values.
 
-The charm warns when relation outputs replace configuration/framework variables or when
-explicit mappings replace existing variables. Warnings name the destination without logging
-values; mapping warnings also identify the source option.
-Renames use original source values, so swapping two destination names is supported.
-Destinations can override framework variables; charm authors must ensure that the workload
-still functions.
+The charm logs a warning when a relation replaces a configuration or framework variable,
+or when a mapping replaces an existing variable. Warnings name the destination variable
+without logging its value. Mapping warnings also name the source option.
+
+Each mapping reads its own option's value, so two options can swap environment variable names.
+Mappings can also replace framework variables. Charm authors must ensure that the workload
+still works with the chosen names.
 
 Validation
 ----------
