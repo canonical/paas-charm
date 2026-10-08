@@ -7,9 +7,14 @@ import pathlib
 from unittest.mock import MagicMock
 
 import pytest
-from pydantic import Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
-from paas_charm.charm_state import CharmState, IntegrationRequirers, RelationDataError
+from paas_charm.charm_state import (
+    CharmState,
+    IntegrationRequirers,
+    RelationDataError,
+    framework_config_option_fields,
+)
 from paas_charm.flask.charm import FlaskConfig
 from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
@@ -17,6 +22,59 @@ from paas_charm.saml import InvalidSAMLRelationDataError
 from paas_charm.valkey import InvalidValkeyRelationDataError
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+
+@pytest.mark.parametrize(
+    "settings, names, expected",
+    [
+        pytest.param(
+            {},
+            {"public-option", "internal_name", "port"},
+            {"public-option": "internal_name", "port": "port"},
+            id="alias-only",
+        ),
+        pytest.param({}, {"internal_name", "port"}, {"port": "port"}, id="ignored-name"),
+        pytest.param(
+            {"populate_by_name": True},
+            {"internal_name", "port"},
+            {"internal_name": "internal_name", "port": "port"},
+            id="name-enabled",
+        ),
+        pytest.param(
+            {"populate_by_name": True},
+            {"public-option", "internal_name", "port"},
+            {"public-option": "internal_name", "port": "port"},
+            id="alias-precedes-name",
+        ),
+        pytest.param(
+            {"validate_by_alias": False, "validate_by_name": True},
+            {"public-option", "internal_name", "port"},
+            {"internal_name": "internal_name", "port": "port"},
+            id="alias-disabled",
+        ),
+    ],
+)
+def test_framework_config_option_fields(settings, names, expected):
+    """Assign ownership only to inputs accepted and selected by Pydantic."""
+
+    class Config(BaseModel):
+        model_config = ConfigDict(**settings)
+        internal_name: str = Field(alias="public-option")
+        port: int
+
+    assert framework_config_option_fields(Config, names) == expected
+
+
+@pytest.mark.parametrize(
+    "names, expected", [({"first", "second"}, "first"), ({"second"}, "second")]
+)
+def test_framework_alias_choice_priority(names, expected):
+    """Follow the same alias-choice priority as model validation."""
+
+    class Config(BaseModel):
+        value: int = Field(validation_alias=AliasChoices("first", "second"))
+
+    assert framework_config_option_fields(Config, names) == {expected: "value"}
 
 
 @pytest.mark.parametrize(

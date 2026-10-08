@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from ops import testing
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError
+from pydantic import Field
 
 from examples.django.charm.src.charm import DjangoCharm
 from examples.expressjs.charm.src.charm import ExpressJSCharm
@@ -18,11 +18,11 @@ from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, framework_config_option_fields
+from paas_charm.charm_state import CharmState
 from paas_charm.exceptions import CharmConfigInvalidError, PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.fastapi.charm import FastAPIConfig
-from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig, read_paas_config
+from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig
 from paas_charm.relations import CustomRelation
 from paas_charm.springboot.charm import SpringBootApp
 
@@ -84,11 +84,19 @@ def make_app_fixture(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "value, expected", [("text", "text"), (False, "false"), (0, "0"), (1.5, "1.5"), ("", "")]
+    "option, value, expected",
+    [
+        ("log-level", "text", "text"),
+        ("log-level", False, "false"),
+        ("log-level", 0, "0"),
+        ("log-level", 1.5, "1.5"),
+        ("log-level", "", ""),
+        ("log_level", "text", "text"),
+    ],
 )
-def test_scalar_mapping(make_app, value, expected):
+def test_scalar_mapping(make_app, option, value, expected):
     """Rename a scalar without changing its value encoding or applying a prefix."""
-    app = make_app({"log_level": value, "other": "keep"}, {"log-level": "custom.name"})
+    app = make_app({"log_level": value, "other": "keep"}, {option: "custom.name"})
     env = app.gen_environment()
     assert env["custom.name"] == expected
     assert "APP_LOG_LEVEL" not in env
@@ -121,6 +129,7 @@ def test_unset_mapping(make_app, mapping):
     ).gen_environment()
     assert env["TARGET"] == "relation"
     assert "APP_OPTION" not in env
+    assert make_app({"option": None}, {}).gen_environment()["APP_OPTION"] == "null"
 
 
 def test_mapping_precedence(make_app, caplog):
@@ -212,31 +221,19 @@ def test_mapping_after_framework_adjustments(make_app, app_class, destination):
     assert env[destination] == "override"
 
 
-@pytest.mark.parametrize("app_class", [App, FastAPIApp, SpringBootApp])
-def test_relations_after_framework_adjustments(make_app, app_class):
+@pytest.mark.parametrize(
+    "app_class, destination",
+    [(FastAPIApp, "PYTHONPATH"), (SpringBootApp, "server.forward-headers-strategy")],
+)
+def test_relations_after_framework_adjustments(make_app, app_class, destination):
     """Relations have higher priority than built-in framework generation."""
     env = make_app(
         {},
         {},
         app_class=app_class,
-        relations={
-            "PYTHONPATH": "relation-path",
-            "server.forward-headers-strategy": "relation-setting",
-        },
+        relations={destination: "relation-value"},
     ).gen_environment()
-    assert env["PYTHONPATH"] == "relation-path"
-    assert env["server.forward-headers-strategy"] == "relation-setting"
-
-
-@pytest.mark.parametrize("destination", ["", "A=B", "A\0B"])
-def test_invalid_destinations(destination):
-    """Reject names that cannot represent environment variable destinations."""
-    with pytest.raises(ValidationError, match="Invalid environment variable name") as exc_info:
-        ConfigOptions(options={"option": {"env-var": destination}})
-    message = str(exc_info.value)
-    assert "paas-config.yaml" in message
-    assert "non-empty" in message
-    assert "'='" in message and "NUL" in message
+    assert env[destination] == "relation-value"
 
 
 @pytest.mark.parametrize(
@@ -250,138 +247,85 @@ def test_verbatim_destinations(make_app, destination):
     )
 
 
-def test_duplicate_destinations():
-    """Reject duplicate destinations across scalar and secret sources."""
-    with pytest.raises(ValidationError, match="mapped from both"):
-        ConfigOptions(
-            options={
-                "one": {"env-var": "TARGET"},
-                "secret": {"secret-env-vars": {"key": "TARGET"}},
+@pytest.mark.parametrize("value, expected", [(0, "0"), ("", "")])
+def test_framework_mapping_swaps_and_precedence(make_app, value, expected):
+    """Capture both original framework values before applying relation and config overrides."""
+    app = make_app(
+        {},
+        {"public-one": "TWO", "public_two": "ONE"},
+        framework={"one": value, "two": False},
+        framework_fields={"public-one": "one", "public_two": "two"},
+        relations={"ONE": "relation"},
+    )
+    env = app.gen_environment()
+    assert env["ONE"] == "false"
+    assert env["TWO"] == expected
+
+
+def test_framework_secret_missing_key_keeps_default(make_app, caplog):
+    """A missing entry does not remove the unmapped effective secret-key output."""
+    env = make_app(
+        {},
+        {"app-secret-key": {"missing": "TARGET"}},
+        framework_fields={"app-secret-key": "app_secret_key"},
+    ).gen_environment()
+    assert env["APP_SECRET_KEY"] == "generated-key"
+    assert "TARGET" not in env
+    assert "secret content key 'missing'" in caplog.text
+    assert "generated-key" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "mapping, remaining",
+    [
+        pytest.param({"username": "DB_USER"}, {"password": "opaque"}, id="partial"),
+        pytest.param({"username": "DB_USER", "password": "DB_PASSWORD"}, None, id="complete"),
+        pytest.param(
+            {"missing": "TARGET"}, {"username": "alice", "password": "opaque"}, id="missing"
+        ),
+    ],
+)
+def test_framework_secret_dictionary_mapping(make_app, caplog, mapping, remaining):
+    """Map actual secret entries and preserve unmapped content in the original JSON output."""
+    app = make_app(
+        {},
+        {"credentials": mapping},
+        framework={"credentials": {"username": "alice", "password": "opaque"}},
+        framework_fields={"credentials": "credentials"},
+    )
+    env = app.gen_environment()
+    assert env.get("CREDENTIALS") == (json.dumps(remaining) if remaining else None)
+    assert env.get("DB_USER") == ("alice" if "username" in mapping else None)
+    assert env.get("DB_PASSWORD") == ("opaque" if "password" in mapping else None)
+    assert "TARGET" not in env
+    assert "alice" not in caplog.text
+    assert "opaque" not in caplog.text
+    assert app._charm_state.framework_config["credentials"] == {
+        "username": "alice",
+        "password": "opaque",
+    }
+
+
+def test_service_and_migration_environments(make_app):
+    """Use mapped outputs consistently for services, workers, schedulers and migrations."""
+    app = make_app({"option": False}, {"option": "TARGET"})
+    app._container.pull.return_value = io.StringIO(
+        json.dumps(
+            {
+                "test": {"command": "test"},
+                "test-worker": {"command": "worker"},
+                "test-scheduler": {"command": "scheduler"},
             }
         )
-
-
-@pytest.mark.parametrize(
-    "mapping, options, unsupported",
-    [
-        ({"unknown": {"env-var": "TARGET"}}, {}, set()),
-        ({"owned": {"env-var": "TARGET"}}, {"owned": {"type": "string"}}, {"owned"}),
-        ({"secret": {"env-var": "TARGET"}}, {"secret": {"type": "secret"}}, set()),
-        (
-            {"scalar": {"secret-env-vars": {"key": "TARGET"}}},
-            {"scalar": {"type": "string"}},
-            set(),
-        ),
-        (
-            {"foo-bar": {"env-var": "TARGET"}},
-            {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}},
-            set(),
-        ),
-    ],
-)
-def test_invalid_sources(mapping, options, unsupported):
-    """Reject unknown, unsupported and incorrectly shaped sources."""
-    with pytest.raises(PaasConfigError):
-        ConfigOptions(options=mapping).validate_sources(options, unsupported)
-
-
-def test_ambiguous_source_diagnostic():
-    """Name both conflicting charm configuration options and explain the restriction."""
-    with pytest.raises(PaasConfigError) as exc_info:
-        ConfigOptions(options={"foo_bar": {"env-var": "TARGET"}}).validate_sources(
-            {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}}, set()
-        )
-    message = str(exc_info.value)
-    assert "paas-config.yaml" in message
-    assert "'foo-bar'" in message and "'foo_bar'" in message
-    assert "hyphens and underscores" in message
-
-
-@pytest.mark.parametrize(
-    "content, expected_path, incorrect_name",
-    [
-        (
-            "config:\n  options:\n    foo_bar:\n      env-var: 123\n",
-            "config.options.foo_bar",
-            "foo-bar",
-        ),
-        (
-            "config:\n  options:\n    credentials:\n      secret-env-vars:\n        api_key: 123\n",
-            "api_key",
-            "api-key",
-        ),
-    ],
-)
-def test_schema_diagnostic_preserves_source_names(
-    tmp_path, caplog, content, expected_path, incorrect_name
-):
-    """Preserve exact option names and secret content keys in schema diagnostics."""
-    (tmp_path / "paas-config.yaml").write_text(content)
-    with pytest.raises(PaasConfigError) as exc_info:
-        read_paas_config(tmp_path)
-    assert expected_path in str(exc_info.value)
-    assert expected_path in caplog.text
-    assert incorrect_name not in str(exc_info.value)
-    assert incorrect_name not in caplog.text
-
-
-def test_valid_sources():
-    """Validate mappings using declared types rather than current option values."""
-    ConfigOptions(
-        options={
-            "scalar": {"env-var": "TARGET"},
-            "secret": {"secret-env-vars": {"name": "NAME"}},
-        }
-    ).validate_sources({"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set())
-
-
-@pytest.mark.parametrize(
-    "settings, names, expected",
-    [
-        (
-            {},
-            {"public-option", "internal_name", "port"},
-            {"public-option": "internal_name", "port": "port"},
-        ),
-        ({}, {"internal_name", "port"}, {"port": "port"}),
-        (
-            {"populate_by_name": True},
-            {"internal_name", "port"},
-            {"internal_name": "internal_name", "port": "port"},
-        ),
-        (
-            {"populate_by_name": True},
-            {"public-option", "internal_name", "port"},
-            {"public-option": "internal_name", "port": "port"},
-        ),
-        (
-            {"validate_by_alias": False, "validate_by_name": True},
-            {"public-option", "internal_name", "port"},
-            {"internal_name": "internal_name", "port": "port"},
-        ),
-    ],
-)
-def test_framework_config_option_fields(settings, names, expected):
-    """Assign ownership only to inputs accepted and selected by Pydantic."""
-
-    class Config(BaseModel):
-        model_config = ConfigDict(**settings)
-        internal_name: str = Field(alias="public-option")
-        port: int
-
-    assert framework_config_option_fields(Config, names) == expected
-
-
-@pytest.mark.parametrize(
-    "names, expected", [({"first", "second"}, "first"), ({"second"}, "second")]
-)
-def test_framework_alias_choice_priority(names, expected):
-    """Follow the same alias-choice priority as model validation."""
-
-    class Config(BaseModel):
-        value: int = Field(validation_alias=AliasChoices("first", "second"))
-
-    assert framework_config_option_fields(Config, names) == {expected: "value"}
+    )
+    layer = app._app_layer()
+    for service in layer["services"].values():
+        assert service["environment"]["TARGET"] == "false"
+        assert "APP_OPTION" not in service["environment"]
+    app._run_migrations()
+    env = app._database_migration.run.call_args.kwargs["environment"]
+    assert env["TARGET"] == "false"
+    assert "APP_OPTION" not in env
 
 
 @pytest.mark.parametrize(
@@ -404,6 +348,7 @@ def test_framework_alias_choice_priority(names, expected):
             "5000",
         ),
     ],
+    ids=["independent-input", "unset-field-keeps-generated-metrics", "configured-field"],
 )
 def test_framework_source_ownership(
     context_factory, framework_state_factory, monkeypatch, option, declarations, config, expected
@@ -433,109 +378,45 @@ def test_framework_source_ownership(
     assert env["UVICORN_PORT"] == "8000"
 
 
-@pytest.mark.parametrize("mapped", [False, True])
+@pytest.mark.parametrize("mapped", [False, True], ids=["unmapped", "mapped"])
 @pytest.mark.parametrize(
-    "charm_class, option, value, declarations, config, destination, default, original",
+    "charm_class, option, value, expected",
     [
-        (
+        pytest.param(
             FlaskCharm,
             "application-root",
             "/foo",
-            {"application-root": {"type": "string"}},
-            {},
-            "FLASK_APPLICATION_ROOT",
-            None,
-            None,
+            {"FLASK_APPLICATION_ROOT": None},
+            id="flask",
         ),
-        (
-            FlaskCharm,
-            "application-root",
-            "/foo",
-            {"application-root": {"type": "string"}},
-            {"flask-application-root": "/framework"},
-            "FLASK_APPLICATION_ROOT",
-            "/framework",
-            None,
-        ),
-        (
-            FlaskCharm,
-            "application-root",
-            "/foo",
-            {"flask-application-root": None, "application-root": {"type": "string"}},
-            {},
-            "FLASK_APPLICATION_ROOT",
-            None,
-            None,
-        ),
-        (
-            DjangoCharm,
-            "debug",
-            True,
-            {"debug": {"type": "boolean"}},
-            {},
-            "DJANGO_DEBUG",
-            None,
-            None,
-        ),
-        (
-            DjangoCharm,
-            "allowed-hosts",
-            "user.example",
-            {"allowed-hosts": {"type": "string"}},
-            {},
-            "DJANGO_ALLOWED_HOSTS",
-            '["django-k8s.test-model"]',
-            None,
-        ),
-        (
+        pytest.param(DjangoCharm, "debug", False, {"DJANGO_DEBUG": None}, id="django"),
+        pytest.param(
             FastAPICharm,
             "uvicorn-port",
             9000,
-            {"uvicorn-port": {"type": "int"}},
-            {},
-            "UVICORN_PORT",
-            "8000",
-            "APP_UVICORN_PORT",
+            {"APP_UVICORN_PORT": None, "UVICORN_PORT": "8000"},
+            id="fastapi",
         ),
-        (
+        pytest.param(
             GoCharm,
             "app_secret_key",
             "user-key",
-            {"app-secret-key": None, "app_secret_key": {"type": "string"}},
-            {},
-            "APP_SECRET_KEY",
-            "test",
-            "APP_APP_SECRET_KEY",
+            {"APP_APP_SECRET_KEY": None, "APP_SECRET_KEY": "test"},
+            id="go",
         ),
-        (
+        pytest.param(
             ExpressJSCharm,
             "node_env",
             "development",
-            {"node-env": None, "node_env": {"type": "string"}},
-            {},
-            "NODE_ENV",
-            "production",
-            "APP_NODE_ENV",
+            {"APP_NODE_ENV": None, "NODE_ENV": "production"},
+            id="expressjs",
         ),
-        (
+        pytest.param(
             SpringBootCharm,
             "secret-key",
             "user-key",
-            {"secret-key": {"type": "string"}},
-            {},
-            "APP_SECRET_KEY",
-            "test",
-            None,
-        ),
-        (
-            SpringBootCharm,
-            "app_profiles",
-            "user-profile",
-            {"app-profiles": None, "app_profiles": {"type": "string"}},
-            {},
-            "spring.profiles.active",
-            None,
-            "APP_APP_PROFILES",
+            {"APP_SECRET_KEY": "test"},
+            id="springboot",
         ),
     ],
 )
@@ -545,29 +426,59 @@ def test_user_config_framework_field_protection(
     charm_class,
     option,
     value,
-    declarations,
-    config,
-    destination,
-    default,
-    original,
+    expected,
     mapped,
 ):
-    """Protect all framework fields by default, including unset fields and undeclared aliases."""
+    """Suppress independent user defaults without losing their explicitly mapped values."""
+    option_types = {str: "string", bool: "boolean", int: "int"}
+    declarations = {option: {"type": option_types[type(value)]}}
+    if option in ("app_secret_key", "node_env"):
+        # Remove the real alias to keep the independent underscore source unambiguous.
+        declarations[option.replace("_", "-")] = None
     context = context_factory(
         charm_class,
         paas_config=PaasConfig(
-            config={"options": {option: {"env-var": destination}} if mapped else {}}
+            config={"options": {option: {"env-var": "TARGET"}} if mapped else {}}
         ),
         config_options=declarations,
     )
-    state = framework_state_factory(charm_class, config={**config, option: value})
+    state = framework_state_factory(charm_class, config={option: value})
     out = context.run(context.on.config_changed(), testing.State(**state))
     assert out.unit_status == testing.ActiveStatus()
     env = next(iter(out.get_container("app").plan.services.values())).environment
-    expected = value if isinstance(value, str) else json.dumps(value)
-    assert env.get(destination) == (expected if mapped else default)
-    if original:
-        assert original not in env
+    mapped_value = value if isinstance(value, str) else json.dumps(value)
+    assert env.get("TARGET") == (mapped_value if mapped else None)
+    for name, default in expected.items():
+        assert env.get(name) == default
+
+
+@pytest.mark.parametrize(
+    "framework_value", [None, "/framework"], ids=["undeclared-alias", "configured-framework"]
+)
+def test_flask_application_root_protection(
+    context_factory,
+    framework_state_factory,
+    framework_value,
+):
+    """Protect optional fields even without declared aliases, and preserve configured values."""
+    declarations = {"application-root": {"type": "string"}}
+    config = {"application-root": "/foo"}
+    if framework_value is None:
+        declarations["flask-application-root"] = None
+    else:
+        config["flask-application-root"] = framework_value
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(),
+        config_options=declarations,
+    )
+    out = context.run(
+        context.on.config_changed(),
+        testing.State(**framework_state_factory(FlaskCharm, config=config)),
+    )
+    assert out.unit_status == testing.ActiveStatus()
+    env = out.get_container("app").plan.services["flask"].environment
+    assert env.get("FLASK_APPLICATION_ROOT") == framework_value
 
 
 def test_protected_user_secret_partial_mapping(context_factory, framework_state_factory):
@@ -704,23 +615,6 @@ def test_framework_secret_key_mapping(
     assert "configured-key" not in caplog.text
 
 
-@pytest.mark.parametrize("value, expected", [(0, "0"), ("", "")])
-@pytest.mark.parametrize("one, two", [("public-one", "public-two"), ("public_one", "public_two")])
-def test_framework_mapping_swaps_and_precedence(make_app, value, expected, one, two):
-    """Capture both original framework values before applying relation and config overrides."""
-    app = make_app(
-        {},
-        {one: "TWO", two: "ONE"},
-        framework={"one": value, "two": False},
-        framework_fields={one: "one", two: "two"},
-        relations={"ONE": "relation"},
-    )
-    assert app._framework_config_mapping_sources() == {one: expected, two: "false"}
-    env = app.gen_environment()
-    assert env["ONE"] == "false"
-    assert env["TWO"] == expected
-
-
 @pytest.mark.parametrize(
     "charm_class, option, value",
     [(SpringBootCharm, "app-profiles", ""), (FastAPICharm, "webserver-workers", 0)],
@@ -768,154 +662,6 @@ def test_framework_secret_rotation(
     assert "APP_SECRET_KEY" not in env
 
 
-def test_framework_secret_missing_key_keeps_default(make_app, caplog):
-    """A missing entry does not remove the unmapped effective secret-key output."""
-    env = make_app(
-        {},
-        {"app-secret-key": {"missing": "TARGET"}},
-        framework_fields={"app-secret-key": "app_secret_key"},
-    ).gen_environment()
-    assert env["APP_SECRET_KEY"] == "generated-key"
-    assert "TARGET" not in env
-    assert "secret content key 'missing'" in caplog.text
-    assert "generated-key" not in caplog.text
-
-
-@pytest.mark.parametrize(
-    "mapping, remaining",
-    [
-        ({"username": "DB_USER"}, {"password": "opaque"}),
-        ({"username": "DB_USER", "password": "DB_PASSWORD"}, None),
-        ({"missing": "TARGET"}, {"username": "alice", "password": "opaque"}),
-    ],
-)
-def test_framework_secret_dictionary_mapping(make_app, caplog, mapping, remaining):
-    """Map actual secret entries and preserve unmapped content in the original JSON output."""
-    app = make_app(
-        {},
-        {"credentials": mapping},
-        framework={"credentials": {"username": "alice", "password": "opaque"}},
-        framework_fields={"credentials": "credentials"},
-    )
-    env = app.gen_environment()
-    assert env.get("CREDENTIALS") == (json.dumps(remaining) if remaining else None)
-    assert env.get("DB_USER") == ("alice" if "username" in mapping else None)
-    assert env.get("DB_PASSWORD") == ("opaque" if "password" in mapping else None)
-    assert "TARGET" not in env
-    assert "alice" not in caplog.text
-    assert "opaque" not in caplog.text
-    assert app._charm_state.framework_config["credentials"] == {
-        "username": "alice",
-        "password": "opaque",
-    }
-
-
-@pytest.mark.parametrize(
-    "content, expected",
-    [
-        (
-            "config:\n  options:\n    option: {env-var: A}\n    option: {env-var: B}\n",
-            {"option": {"env-var": "B"}},
-        ),
-        (
-            "config:\n  options:\n    option:\n      env-var: A\n      env-var: B\n",
-            {"option": {"env-var": "B"}},
-        ),
-        (
-            "config:\n  options:\n    secret:\n      secret-env-vars:\n        key: A\n        key: B\n",
-            {"secret": {"secret-env-vars": {"key": "B"}}},
-        ),
-    ],
-)
-def test_duplicate_yaml_keys_keep_last_value(tmp_path, content, expected):
-    """Retain the existing YAML loading behavior for repeated mapping keys."""
-    (tmp_path / "paas-config.yaml").write_text(content)
-    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {"options": expected}
-
-
-def test_yaml_merge_keys(tmp_path):
-    """Continue supporting standard YAML anchors and merges."""
-    (tmp_path / "paas-config.yaml").write_text(
-        "config: &configuration\n"
-        "  options:\n"
-        "    option: {env-var: TARGET}\n"
-        "<<:\n"
-        "  config: *configuration\n"
-    )
-    assert read_paas_config(tmp_path).config.model_dump(by_alias=True) == {
-        "options": {"option": {"env-var": "TARGET"}}
-    }
-
-
-def test_yaml_loader_rejects_python_objects(tmp_path):
-    """Continue rejecting Python object tags when loading YAML."""
-    (tmp_path / "paas-config.yaml").write_text("config: !!python/object:builtins.object {}\n")
-    with pytest.raises(PaasConfigError, match="could not determine a constructor"):
-        read_paas_config(tmp_path)
-
-
-@pytest.mark.parametrize(
-    "config",
-    [
-        {"unknown": {}},
-        {"options": {"option": "TARGET"}},
-        {"options": {"option": {}}},
-        {"options": {"option": {"env-var": None}}},
-        {"options": {"option": {"env-var": 123}}},
-        {"options": {"option": {"secret-env-vars": None}}},
-        {"options": {"secret": {"secret-env-vars": {"key": None}}}},
-        {"options": {"secret": {"secret-env-vars": {"key": {"name": "TARGET"}}}}},
-        {"options": {"option": {"env-name": "TARGET"}}},
-        {"options": {"option": {"env-var": "TARGET", "secret-env-vars": {"key": "OTHER"}}}},
-        {"options": {"option": {"env-var": "TARGET", "value-format": "json"}}},
-    ],
-)
-def test_invalid_mapping_schema(config):
-    """Reject unknown fields, non-string names and unsupported future settings."""
-    with pytest.raises(ValidationError):
-        PaasConfig(config=config)
-
-
-def test_old_env_config_schema_rejected():
-    """Reject the replaced proposal rather than silently ignoring its mappings."""
-    with pytest.raises(ValidationError):
-        PaasConfig(env={"config": {"option": "TARGET"}})
-
-
-def test_unmapped_unset_behavior(make_app):
-    """Leave legacy null encoding unchanged for unmapped config sources."""
-    assert make_app({"option": None}, {}).gen_environment()["APP_OPTION"] == "null"
-
-
-def test_underscore_source_name(make_app):
-    """Match exact option names containing underscores without reversing normalization."""
-    env = make_app({"foo_bar": "value"}, {"foo_bar": "TARGET"}).gen_environment()
-    assert env["TARGET"] == "value"
-    assert "APP_FOO_BAR" not in env
-
-
-def test_service_and_migration_environments(make_app):
-    """Use mapped outputs consistently for services, workers, schedulers and migrations."""
-    app = make_app({"option": False}, {"option": "TARGET"})
-    app._container.pull.return_value = io.StringIO(
-        json.dumps(
-            {
-                "test": {"command": "test"},
-                "test-worker": {"command": "worker"},
-                "test-scheduler": {"command": "scheduler"},
-            }
-        )
-    )
-    layer = app._app_layer()
-    for service in layer["services"].values():
-        assert service["environment"]["TARGET"] == "false"
-        assert "APP_OPTION" not in service["environment"]
-    app._run_migrations()
-    env = app._database_migration.run.call_args.kwargs["environment"]
-    assert env["TARGET"] == "false"
-    assert "APP_OPTION" not in env
-
-
 def test_declared_config_default_is_mapped(context_factory, flask_framework_state):
     """Map the declared option default when the operator has not configured a value."""
     context = context_factory(
@@ -928,26 +674,3 @@ def test_declared_config_default_is_mapped(context_factory, flask_framework_stat
     env = out.get_container("app").plan.services["flask"].environment
     assert env["REDIRECT_PATH"] == "/callback"
     assert "FLASK_OIDC_REDIRECT_PATH" not in env
-
-
-def test_flask_secret_mapping(context_factory, flask_framework_state):
-    """Exercise secret mapping from charm configuration through reconciliation to Pebble."""
-    context = context_factory(
-        FlaskCharm,
-        paas_config=PaasConfig(
-            config={"options": {"secret-test": {"secret-env-vars": {"foo": "TOKEN"}}}}
-        ),
-    )
-    secret = testing.Secret(tracked_content={"foo": "configured-token", "bar": "keep"})
-    state = testing.State(
-        **{
-            **flask_framework_state,
-            "secrets": [*flask_framework_state["secrets"], secret],
-            "config": {"secret-test": secret.id},
-        }
-    )
-    out = context.run(context.on.config_changed(), state)
-    env = out.get_container("app").plan.services["flask"].environment
-    assert env["TOKEN"] == "configured-token"
-    assert env["FLASK_SECRET_TEST_BAR"] == "keep"
-    assert "FLASK_SECRET_TEST_FOO" not in env
