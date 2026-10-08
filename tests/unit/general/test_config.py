@@ -461,23 +461,26 @@ def test_app_config_class_factory(
     )
 
 
-def test_app_config_class_factory_excludes_framework_aliases(tmp_path):
+@pytest.mark.parametrize(
+    "option, field", [("user-option", "user_option"), ("public_option", "public_option")]
+)
+def test_app_config_class_factory_excludes_framework_aliases(tmp_path, option, field):
     """Exclude owned aliases while still requiring ordinary user configuration."""
     (tmp_path / "config.yaml").write_text(
         "options:\n"
         "  public-option:\n"
         "    type: string\n"
         "    optional: false\n"
-        "  user-option:\n"
+        f"  {option}:\n"
         "    type: string\n"
         "    optional: false\n"
     )
     model = paas_charm.charm_state.app_config_class_factory(
-        tmp_path, "flask", framework_options={"public_option"}
+        tmp_path, "flask", framework_options={"public-option"}
     )
-    assert set(model.model_fields) == {"user_option"}
-    assert model(user_option="ordinary").user_option == "ordinary"
-    with pytest.raises(ValidationError, match="user_option"):
+    assert set(model.model_fields) == {field}
+    assert getattr(model(**{field: "ordinary"}), field) == "ordinary"
+    with pytest.raises(ValidationError, match=field):
         model()
 
 

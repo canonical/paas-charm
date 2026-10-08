@@ -63,7 +63,10 @@ def test_charm_state_integration_state_build_error(error):
         )
 
 
-def test_required_framework_alias_is_not_user_config(tmp_path):
+@pytest.mark.parametrize(
+    "option, field", [("user-option", "user_option"), ("public_option", "public_option")]
+)
+def test_required_framework_alias_is_not_user_config(tmp_path, option, field):
     """Accept a required framework alias without mappings or duplicate app validation."""
 
     class ExtendedFlaskConfig(FlaskConfig):
@@ -74,13 +77,13 @@ def test_required_framework_alias_is_not_user_config(tmp_path):
         "  public-option:\n"
         "    type: string\n"
         "    optional: false\n"
-        "  user-option:\n"
+        f"  {option}:\n"
         "    type: string\n"
         "    optional: false\n"
     )
     state = CharmState.from_charm(
         charm_dir=tmp_path,
-        config={"public-option": "configured", "user-option": "ordinary"},
+        config={"public-option": "configured", option: "ordinary"},
         framework="flask",
         framework_config=ExtendedFlaskConfig(**{"public-option": "configured"}),
         secret_key=MagicMock(is_ready=False),
@@ -88,6 +91,6 @@ def test_required_framework_alias_is_not_user_config(tmp_path):
         integration_requirers=IntegrationRequirers(databases={}),
     )
     assert state.framework_config["internal_name"] == "configured"
-    assert state.user_defined_config == {"user_option": "ordinary"}
+    assert state.user_defined_config == {field: "ordinary"}
     assert state.config_options.options == {}
     assert state.framework_config_fields["public-option"] == "internal_name"

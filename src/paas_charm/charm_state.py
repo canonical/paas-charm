@@ -139,12 +139,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         ).items():
             if field_name not in framework_fields.values():
                 framework_fields[option] = field_name
-        framework_options = {option.replace("-", "_") for option in framework_fields}
+        framework_options = set(framework_fields)
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
-            if is_user_defined_config(k, framework)
-            and k.replace("-", "_") not in framework_options
+            if is_user_defined_config(k, framework) and k not in framework_options
         }
 
         app_config_class = app_config_class_factory(
@@ -444,7 +443,7 @@ def app_config_class_factory(
     Args:
         charm_dir: The charm directory.
         framework: The framework name.
-        framework_options: Normalized framework-owned option names to exclude.
+        framework_options: Exact framework-owned option names to exclude.
             If omitted, only reserved prefixes are excluded.
 
     Returns:
@@ -455,7 +454,7 @@ def app_config_class_factory(
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
         if is_user_defined_config(option_name, framework)
-        and (framework_options is None or option_name.replace("-", "_") not in framework_options)
+        and (framework_options is None or option_name not in framework_options)
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]

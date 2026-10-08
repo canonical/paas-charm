@@ -558,15 +558,18 @@ def test_framework_secret_key_mapping(
 
 
 @pytest.mark.parametrize("value, expected", [(0, "0"), ("", "")])
-def test_framework_mapping_swaps_and_precedence(make_app, value, expected):
+@pytest.mark.parametrize("one, two", [("public-one", "public-two"), ("public_one", "public_two")])
+def test_framework_mapping_swaps_and_precedence(make_app, value, expected, one, two):
     """Capture both original framework values before applying relation and config overrides."""
-    env = make_app(
+    app = make_app(
         {},
-        {"public-one": "TWO", "public-two": "ONE"},
+        {one: "TWO", two: "ONE"},
         framework={"one": value, "two": False},
-        framework_fields={"public-one": "one", "public-two": "two"},
+        framework_fields={one: "one", two: "two"},
         relations={"ONE": "relation"},
-    ).gen_environment()
+    )
+    assert app._framework_config_mapping_sources() == {one: expected, two: "false"}
+    env = app.gen_environment()
     assert env["ONE"] == "false"
     assert env["TWO"] == expected
 

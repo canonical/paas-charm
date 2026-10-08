@@ -499,7 +499,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Read resolved framework values without borrowing unrelated generated outputs.
 
         Returns:
-            Mapping source values using the framework's existing encoding and key fallback.
+            Values keyed by exact option names, using the existing encoding and key fallback.
         """
         sources: dict[str, str | dict[str, str]] = {}
         for option, mapping in self._charm_state.config_options.options.items():
@@ -511,16 +511,15 @@ class App:  # pylint: disable=too-many-instance-attributes
                 value = self._charm_state.secret_key
             if value is None:
                 continue
-            source = option.replace("-", "_")
             if isinstance(mapping, SecretEnvVarsConfig):
                 if isinstance(value, dict):
-                    sources[source] = value
+                    sources[option] = value
                 elif field in ("secret_key", "app_secret_key"):
-                    sources[source] = {"value": encode_env(value)}
+                    sources[option] = {"value": encode_env(value)}
                 else:
-                    sources[source] = encode_env(value)
+                    sources[option] = encode_env(value)
             else:
-                sources[source] = encode_env(value)
+                sources[option] = encode_env(value)
         return sources
 
     def _mapped_config_environment(
@@ -529,7 +528,8 @@ class App:  # pylint: disable=too-many-instance-attributes
         """Generate explicit config destinations from their original source values.
 
         Args:
-            framework_sources: Resolved framework outputs, including secret-key fallbacks.
+            framework_sources: Resolved framework outputs keyed by exact option names,
+                including secret-key fallbacks.
 
         Returns:
             Destinations mapped to source names and encoded values, omitting absent values.
@@ -538,9 +538,12 @@ class App:  # pylint: disable=too-many-instance-attributes
             PaasConfigError: If a secret mapping receives non-secret content.
         """
         env: dict[str, tuple[str, str]] = {}
-        sources = self._charm_state.user_defined_config | framework_sources
         for option, mapping in self._charm_state.config_options.options.items():
-            value = sources.get(option.replace("-", "_"))
+            value = (
+                framework_sources.get(option)
+                if option in self._charm_state.framework_config_fields
+                else self._charm_state.user_defined_config.get(option.replace("-", "_"))
+            )
             if value is None:
                 continue
             if isinstance(mapping, SecretEnvVarsConfig):
