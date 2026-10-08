@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * feat: Rename environment variables for config options and secret entries using
   `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
+  Unmapped options retain their existing protection against framework field names.
 * fix: Relation outputs now override FastAPI and Spring Boot framework-generated settings
   when names collide, even without explicit environment mappings.
 * feat: Add the public `paas_charm.relations.CustomRelation` extension API so

@@ -118,6 +118,10 @@ Mappings replace default names rather than add aliases. In Flask, the example em
 ``LOG_LEVEL`` instead of ``FLASK_LOG_LEVEL``. Unmapped options retain their existing names.
 Other sources can still produce a variable with the original name.
 
+Without a mapping, user-defined options cannot replace framework fields with matching names,
+even when those fields have no value. For example, a user-defined ``application-root`` option
+does not replace Flask's ``flask-application-root`` setting unless it is explicitly mapped.
+
 Secret entries
 ~~~~~~~~~~~~~~
 

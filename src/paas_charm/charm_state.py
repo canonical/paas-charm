@@ -53,6 +53,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         proxy: proxy information.
         config_options: Settings for existing charm configuration options.
         framework_config_fields: Accepted framework config input names mapped to model fields.
+        framework_config_field_names: Framework fields protected from implicit user config outputs.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -69,6 +70,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         config_options: ConfigOptions | None = None,
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
+        framework_config_field_names: set[str] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -84,6 +86,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             config_options: Settings for existing charm configuration options.
             framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
+            framework_config_field_names: Framework fields protected from implicit user outputs.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -95,6 +98,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.base_url = base_url
         self.config_options = config_options if config_options is not None else ConfigOptions()
         self.framework_config_fields = framework_config_fields or {}
+        self.framework_config_field_names = framework_config_field_names or set()
         self.custom_relations = custom_relations or []
 
     @classmethod
@@ -249,6 +253,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns=peer_fqdns,
             config_options=config_options,
             framework_config_fields=framework_fields,
+            framework_config_field_names=set(type(framework_config).model_fields),
             integrations=integrations,
             base_url=base_url,
             custom_relations=custom_relations,

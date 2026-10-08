@@ -8,7 +8,6 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-import yaml
 from ops import testing
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError
 
@@ -423,25 +422,173 @@ def test_framework_source_ownership(
     context = context_factory(
         FastAPICharm,
         paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}}),
+        config_options=declarations,
     )
-    path = context.charm_root / "charmcraft.yaml"
-    metadata = yaml.safe_load(path.read_text())
-    metadata["config"]["options"].update(declarations)
-    path.write_text(yaml.safe_dump(metadata))
-    with testing.Context(
-        FastAPICharm,
-        config=metadata.pop("config"),
-        actions=metadata.pop("actions"),
-        meta=metadata,
-        charm_root=context.charm_root,
-    ) as declared:
-        state = framework_state_factory(FastAPICharm, config=config)
-        out = declared.run(declared.on.config_changed(), testing.State(**state))
+    state = framework_state_factory(FastAPICharm, config=config)
+    out = context.run(context.on.config_changed(), testing.State(**state))
     assert out.unit_status == testing.ActiveStatus()
     env = next(iter(out.get_container("app").plan.services.values())).environment
     assert env["TARGET"] == expected
     assert env["METRICS_PORT"] == "8000"
     assert env["UVICORN_PORT"] == "8000"
+
+
+@pytest.mark.parametrize("mapped", [False, True])
+@pytest.mark.parametrize(
+    "charm_class, option, value, declarations, config, destination, default, original",
+    [
+        (
+            FlaskCharm,
+            "application-root",
+            "/foo",
+            {"application-root": {"type": "string"}},
+            {},
+            "FLASK_APPLICATION_ROOT",
+            None,
+            None,
+        ),
+        (
+            FlaskCharm,
+            "application-root",
+            "/foo",
+            {"application-root": {"type": "string"}},
+            {"flask-application-root": "/framework"},
+            "FLASK_APPLICATION_ROOT",
+            "/framework",
+            None,
+        ),
+        (
+            FlaskCharm,
+            "application-root",
+            "/foo",
+            {"flask-application-root": None, "application-root": {"type": "string"}},
+            {},
+            "FLASK_APPLICATION_ROOT",
+            None,
+            None,
+        ),
+        (
+            DjangoCharm,
+            "debug",
+            True,
+            {"debug": {"type": "boolean"}},
+            {},
+            "DJANGO_DEBUG",
+            None,
+            None,
+        ),
+        (
+            DjangoCharm,
+            "allowed-hosts",
+            "user.example",
+            {"allowed-hosts": {"type": "string"}},
+            {},
+            "DJANGO_ALLOWED_HOSTS",
+            '["django-k8s.test-model"]',
+            None,
+        ),
+        (
+            FastAPICharm,
+            "uvicorn-port",
+            9000,
+            {"uvicorn-port": {"type": "int"}},
+            {},
+            "UVICORN_PORT",
+            "8000",
+            "APP_UVICORN_PORT",
+        ),
+        (
+            GoCharm,
+            "app_secret_key",
+            "user-key",
+            {"app-secret-key": None, "app_secret_key": {"type": "string"}},
+            {},
+            "APP_SECRET_KEY",
+            "test",
+            "APP_APP_SECRET_KEY",
+        ),
+        (
+            ExpressJSCharm,
+            "node_env",
+            "development",
+            {"node-env": None, "node_env": {"type": "string"}},
+            {},
+            "NODE_ENV",
+            "production",
+            "APP_NODE_ENV",
+        ),
+        (
+            SpringBootCharm,
+            "secret-key",
+            "user-key",
+            {"secret-key": {"type": "string"}},
+            {},
+            "APP_SECRET_KEY",
+            "test",
+            None,
+        ),
+        (
+            SpringBootCharm,
+            "app_profiles",
+            "user-profile",
+            {"app-profiles": None, "app_profiles": {"type": "string"}},
+            {},
+            "spring.profiles.active",
+            None,
+            "APP_APP_PROFILES",
+        ),
+    ],
+)
+def test_user_config_framework_field_protection(
+    context_factory,
+    framework_state_factory,
+    charm_class,
+    option,
+    value,
+    declarations,
+    config,
+    destination,
+    default,
+    original,
+    mapped,
+):
+    """Protect all framework fields by default, including unset fields and undeclared aliases."""
+    context = context_factory(
+        charm_class,
+        paas_config=PaasConfig(
+            config={"options": {option: {"env-var": destination}} if mapped else {}}
+        ),
+        config_options=declarations,
+    )
+    state = framework_state_factory(charm_class, config={**config, option: value})
+    out = context.run(context.on.config_changed(), testing.State(**state))
+    assert out.unit_status == testing.ActiveStatus()
+    env = next(iter(out.get_container("app").plan.services.values())).environment
+    expected = value if isinstance(value, str) else json.dumps(value)
+    assert env.get(destination) == (expected if mapped else default)
+    if original:
+        assert original not in env
+
+
+def test_protected_user_secret_partial_mapping(context_factory, framework_state_factory):
+    """Keep suppressed defaults suppressed while mapping an independent secret's selected entry."""
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(
+            config={"options": {"secret-key": {"secret-env-vars": {"token": "TOKEN"}}}}
+        ),
+        config_options={"secret-key": {"type": "secret"}},
+    )
+    secret = testing.Secret(tracked_content={"token": "mapped-token", "unmapped": "keep"})
+    state = framework_state_factory(FlaskCharm, config={"secret-key": secret.id})
+    state["secrets"].append(secret)
+    out = context.run(context.on.config_changed(), testing.State(**state))
+    assert out.unit_status == testing.ActiveStatus()
+    env = next(iter(out.get_container("app").plan.services.values())).environment
+    assert env["TOKEN"] == "mapped-token"
+    assert env["FLASK_SECRET_KEY"] == "test"
+    assert "FLASK_SECRET_KEY_TOKEN" not in env
+    assert "FLASK_SECRET_KEY_UNMAPPED" not in env
 
 
 @pytest.mark.parametrize(

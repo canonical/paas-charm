@@ -613,7 +613,9 @@ class App:  # pylint: disable=too-many-instance-attributes
         }
         for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
             mapping = mappings.get(app_config_key)
-            if isinstance(mapping, EnvVarConfig):
+            if app_config_key in self._charm_state.framework_config_field_names or isinstance(
+                mapping, EnvVarConfig
+            ):
                 continue
             if isinstance(mapping, SecretEnvVarsConfig) and app_config_value is None:
                 continue
