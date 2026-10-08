@@ -11,19 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* feat: Support environment variable renaming through `config.options` in `paas-config.yaml`,
-  using `env-var` for non-secret charm configuration options and `secret-env-vars` for
-  individual Juju secret content keys. Explicit mappings override generated values with
-  collision warnings and omit unset sources.
-* fix: Assemble framework-specific environment settings before relation outputs, giving
-  author-defined environment mappings a consistent final precedence across frameworks.
-* fix: Warn when relation outputs override config/framework environment variables without
-  disclosing their values.
-* fix: Exclude framework-owned aliases from application config validation so required aliases
-  do not incorrectly block custom framework charms, including when mappings are disabled.
-* fix: Preserve exact charm configuration option names and secret content keys in
-  `paas-config.yaml` validation errors. Explain invalid destinations and conflicting option
-  names, and include the affected environment variable in missing secret content key warnings.
+* feat: Rename environment variables for user-defined config options and secret entries using
+  `config.options` in `paas-config.yaml`.
+* fix: Relation outputs now override FastAPI and Spring Boot framework-generated settings
+  when names collide, even without explicit environment mappings.
+* fix: Warn when relation outputs override config/framework variables without logging values.
+* fix: Exclude framework-owned aliases from application config validation, including when
+  environment mappings are disabled.
+* fix: Report mapping validation errors and missing secret keys with their exact source names.
 * feat: Add the public `paas_charm.relations.CustomRelation` extension API so
   charm authors can add their own Juju relations to a 12-factor charm
   (environment variables, readiness/blocking, reconcile) without importing or

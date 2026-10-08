@@ -8,6 +8,8 @@ can include in their charm to customize runtime behavior of 12-factor app charms
 
 When used, the ``paas-config.yaml`` file must be placed in the charm root directory
 alongside your ``charmcraft.yaml`` file and included in the packed charm file.
+For packaging with the ``uv`` plugin, see
+:doc:`the packaging instructions </how-to/uv-migration>`.
 The file and all of its keys are optional. Omitted settings use the defaults of the
 selected framework.
 This file is distinct from charm configuration options managed through ``juju config``.
@@ -81,92 +83,70 @@ See :ref:`ref_paas_config_structured_logging` for detailed structured logging op
 Environment variable name mappings
 ----------------------------------
 
-Charm authors can use ``config.options`` to rename environment variables generated from
-user-defined charm configuration options. These entries refer to existing options;
-they do not declare new charm configuration options or set their values.
+Use ``config.options`` to rename environment variables generated from user-defined charm
+configuration options. Mappings refer to existing options; they do not declare options
+or set their values.
 
-The following example assumes that ``log-level`` and ``api-token`` are declared as
-string charm configuration options, and ``credentials`` is declared with ``type: secret``.
+This example assumes ``log-level`` is a string option and ``credentials`` has ``type: secret``:
 
 .. code-block:: yaml
+   :caption: paas-config.yaml
 
     config:
       options:
         log-level:
           env-var: LOG_LEVEL
-        api-token:
-          env-var: API_TOKEN
         credentials:
           secret-env-vars:
             username: SERVICE_USERNAME
             password: SERVICE_PASSWORD
 
-Each listed option must use exactly one of ``env-var`` or ``secret-env-vars``.
-Use ``env-var`` for a non-secret option and ``secret-env-vars`` for an option
-declared with ``type: secret``. The two fields are mutually exclusive. These
-settings belong in ``paas-config.yaml``, not in the option declarations in
-``charmcraft.yaml`` or ``config.yaml``.
+Each option must use exactly one field: ``env-var`` for a non-secret option, or
+``secret-env-vars`` for an option declared with ``type: secret``.
 
-The source names are the exact option names declared in ``charmcraft.yaml`` or
-``config.yaml``. Destination names are complete names used verbatim: the charm does not
-add a prefix, replace punctuation, or change their case. Names must be non-empty strings
-without NUL characters or ``=``. Dots, hyphens, spaces, and non-ASCII characters are
-accepted, although the workload and any shell scripts must support the names you choose.
+Source names must match options declared in ``charmcraft.yaml`` or ``config.yaml`` exactly.
+Framework-owned options, including ``app-secret-key``, cannot be mapped. This includes
+framework field names and aliases, and options under the reserved ``app-``, ``webserver-``,
+and framework-specific prefixes.
 
-Only user-defined charm configuration options are supported as sources. Options used
-to configure the framework, including ``app-secret-key``, and options under the reserved ``app-``,
-``webserver-``, and framework-specific prefixes cannot be mapped. This also applies
-to option names used for framework settings, even without a reserved prefix. Some of
-these options configure files or command arguments rather than environment variables.
-A destination can nevertheless override an environment variable supplied by the framework;
-the charm author is responsible for ensuring that the workload still functions.
+Destination names are used verbatim, without adding prefixes or changing punctuation or
+case. They must be non-empty strings without NUL characters or ``=``. Other characters
+are accepted, but the workload and any shell scripts must support the chosen names.
 
-A mapping renames an output, rather than adding an alias. For example, in Flask,
-setting ``env-var: LOG_LEVEL`` under ``log-level`` emits ``LOG_LEVEL`` instead of
-``FLASK_LOG_LEVEL``.
-Unmapped options retain their existing names and behavior. The old name can still be
-present if another source independently generates it.
+Mappings replace default names rather than add aliases. In Flask, the example emits
+``LOG_LEVEL`` instead of ``FLASK_LOG_LEVEL``. Unmapped options retain their existing names.
+Another source can still independently generate the old name.
 
-Secret options
+Secret entries
 ~~~~~~~~~~~~~~
 
-An option declared with ``type: secret`` must use ``secret-env-vars``, even if its secret
-contains only one entry. The keys under ``secret-env-vars`` are exact secret content keys.
-For example, the ``credentials`` mapping above reads the Juju secret configured through
-that option and renames its ``username`` and ``password`` entries separately. Unmapped
-secret entries retain their default environment variable names.
+Keys under ``secret-env-vars`` are exact Juju secret content keys. The example renames
+the ``username`` and ``password`` entries of the secret configured through ``credentials``.
+Unmapped entries retain their default environment variable names.
 
-If a configured Juju secret lacks a mapped secret content key, the charm skips that
-mapping and logs a warning containing the charm configuration option, secret content key,
-and destination environment variable names, never the secret value. This behavior also
-applies when secret content changes on rotation.
+If a configured secret lacks a mapped key, the charm skips that entry and logs a warning
+naming the configuration option, secret content key, and destination, never the secret value.
 
-Defaults and unset options
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Values and defaults
+~~~~~~~~~~~~~~~~~~~
 
-Declared charm configuration defaults are mapped too. For example, if ``log-level``
-has the default ``info``, the mapping emits ``LOG_LEVEL=info`` even when the operator
-has not set the option. Resetting the option to its default does not make it unset.
+Mappings change names only; existing validation and secret resolution still apply.
+Strings are unchanged; booleans and numbers are JSON-encoded (for example, ``false``
+becomes the string ``"false"``).
 
-If a mapped charm configuration option has no value, including no configured Juju
-secret for an option of type ``secret``, it contributes no mapped environment variable.
-An existing lower-priority variable at the destination remains unchanged. Empty strings,
-``false``, and zero are actual values and do override lower-priority outputs.
+Defaults are mapped too. A ``log-level`` default of ``info`` emits ``LOG_LEVEL=info``
+without the operator setting the option. Resetting an option uses its default rather
+than making it unset.
 
-Value formatting
-~~~~~~~~~~~~~~~~
-
-Mappings change names only. Existing validation, secret resolution, and value encoding
-remain in effect. Strings are passed through unchanged; booleans and numbers are
-JSON-encoded (for example, ``false`` becomes the string ``"false"``).
-No value translation, templates, or formatting settings are supported by this section.
-The omission of unset values applies to mapped sources only; unmapped sources retain
+A source with no value, including an option with no configured Juju secret, contributes no
+mapped variable. Any lower-priority destination value remains unchanged. Empty strings,
+``false``, and zero are values and override lower-priority outputs. Unmapped options retain
 their existing handling of unset values.
 
 Precedence and collisions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The environment is assembled in the following order, from lowest to highest priority:
+Environment variables are applied in this order, from lowest to highest priority:
 
 .. list-table::
    :header-rows: 1
@@ -174,56 +154,20 @@ The environment is assembled in the following order, from lowest to highest prio
    * - Priority
      - Source
    * - 1
-     - Environment variables from charm configuration options and framework settings,
-       including metrics, proxies, base URL, and peer information.
+     - Charm configuration and framework-generated settings.
    * - 2
-     - Environment variables for built-in and custom relations and Prometheus metrics.
+     - Built-in relations and Prometheus metrics.
    * - 3
-     - Explicit ``config.options`` mappings.
+     - Custom relations, in registration order.
+   * - 4
+     - Explicit ``config.options`` mappings whose sources have values.
 
-Among variables at priority 1, framework settings override user-defined charm configuration
-options; environment variables for metrics, connections, proxies, and peers are added afterward.
-The generated application secret key is a fallback, inserted only if its name is absent.
-Framework-specific adjustments are completed before relation variables are merged.
-Explicit application and metrics settings elsewhere in ``paas-config.yaml`` retain
-their existing precedence over corresponding charm configuration options.
-
-Environment variables for built-in relations and Prometheus metrics are merged in
-this order: OpenFGA, RabbitMQ, Valkey, S3,
-databases, SAML, SMTP, tracing, Prometheus, then OAuth. Later generators win when their
-names collide. Database outputs are merged in their existing iteration order; in
-particular, multiple Spring Boot databases can generate the same ``spring.datasource.*``
-properties.
-
-Custom relation outputs are merged after built-in relation outputs, in their registration
-order. They can overwrite earlier variables, but explicit ``config.options`` mappings
-still take precedence.
-
-When an environment variable for a relation or Prometheus metrics replaces an environment
-variable from a charm configuration option or a framework setting, the charm logs a warning
-naming the destination without logging its value.
-
-Explicit mappings are applied last and take precedence over other environment variables,
-including framework-specific logging settings. When a mapped destination replaces an
-existing variable, the charm logs a warning identifying the charm configuration option
-and destination, without logging values. A newly connected optional relation does not cause a
-collision error: the mapped value still wins. Renames are resolved together, so swapping
-two source variables' names is supported.
-
-Two explicit sources cannot target the same destination, even if one is currently unset.
-Unknown source options, use of the wrong field for an option's declared type, and invalid
-destination names are also errors.
-
-YAML loading behavior is unchanged: anchors and merges are supported, and repeated
-YAML mapping keys keep the last value. Mapping validation applies to the resulting
-configuration.
-
-These are charm-authoring errors that cause a hook failure, reported by Juju as an error,
-rather than asking the operator to resolve them through charm configuration changes.
-
-The library treats hyphens and underscores identically in charm configuration option
-names internally. Options such as ``foo-bar`` and ``foo_bar`` therefore cannot be
-distinguished as mapping sources and are rejected.
+The charm warns when relation outputs replace configuration/framework variables or when
+explicit mappings replace existing variables. Warnings name the destination without logging
+values; mapping warnings also identify the source option.
+Renames use original source values, so swapping two destination names is supported.
+Destinations can override framework variables; charm authors must ensure that the workload
+still functions.
 
 Validation
 ----------
@@ -241,6 +185,10 @@ Common validation errors include:
 * Unknown fields
 * Missing required fields in nested configuration sections
 * Invalid field values
+* Unknown source options or mapping fields that do not match an option's declared type
+* Duplicate mapping destinations, even when a source is unset
+* Ambiguous source option names such as ``foo-bar`` and ``foo_bar``, which the library
+  treats identically
 
 Functionality provided
 ----------------------
