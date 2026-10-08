@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix: Preserve exact charm configuration option names and secret content keys in
   `paas-config.yaml` validation errors. Explain invalid destinations and conflicting option
   names, and include the affected environment variable in missing secret content key warnings.
+* feat: Add the public `paas_charm.relations.CustomRelation` extension API so
+  charm authors can add their own Juju relations to a 12-factor charm
+  (environment variables, readiness/blocking, reconcile) without importing or
+  extending paas-charm internals. Register a relation via the charm
+  `custom_relations` class attribute; required-vs-optional is read from the
+  metadata `optional` flag.
+* feat: Add the stable `Context`, `OnChange`, and `CustomRelation` public
+  types and re-export `InvalidRelationDataError`/`RelationDataError` from
+  `paas_charm.relations`.
+* docs: Add a how-to and reference for custom relations. The example Flask
+  implementation uses `CustomRelation` to integrate with a Temporal server.
 * chore: Add a unit test that keeps the example charm dependencies in sync with the root
   `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.

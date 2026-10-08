@@ -599,6 +599,17 @@ class App:  # pylint: disable=too-many-instance-attributes
                 relation_data=self._charm_state.integrations.oauth,
             )
         )
+
+        for relation in self._charm_state.custom_relations:
+            for key, value in (relation.gen_environment() or {}).items():
+                if key in env:
+                    logger.warning(
+                        "Custom relation %s overwrites environment variable %s",
+                        relation.relation_name,
+                        key,
+                    )
+                env[key] = value
+
         return {prefix + k: v for (k, v) in env.items()}
 
     @property

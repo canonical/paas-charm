@@ -177,7 +177,7 @@ The environment is assembled in the following order, from lowest to highest prio
      - Environment variables from charm configuration options and framework settings,
        including metrics, proxies, base URL, and peer information.
    * - 2
-     - Environment variables for built-in relations and Prometheus metrics.
+     - Environment variables for built-in and custom relations and Prometheus metrics.
    * - 3
      - Explicit ``config.options`` mappings.
 
@@ -194,6 +194,10 @@ databases, SAML, SMTP, tracing, Prometheus, then OAuth. Later generators win whe
 names collide. Database outputs are merged in their existing iteration order; in
 particular, multiple Spring Boot databases can generate the same ``spring.datasource.*``
 properties.
+
+Custom relation outputs are merged after built-in relation outputs, in their registration
+order. They can overwrite earlier variables, but explicit ``config.options`` mappings
+still take precedence.
 
 When an environment variable for a relation or Prometheus metrics replaces an environment
 variable from a charm configuration option or a framework setting, the charm logs a warning

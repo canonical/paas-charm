@@ -20,6 +20,7 @@ from paas_charm.charm_state import CharmState, framework_config_option_names
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig, read_paas_config
+from paas_charm.relations import CustomRelation
 from paas_charm.springboot.charm import SpringBootApp
 
 
@@ -27,13 +28,16 @@ from paas_charm.springboot.charm import SpringBootApp
 def make_app_fixture(tmp_path):
     """Build an app with controlled config sources and relation outputs."""
 
-    def make_app(config, mappings, *, app_class=App, relations=None, framework=None):
+    def make_app(
+        config, mappings, *, app_class=App, relations=None, framework=None, custom_relations=None
+    ):
         state = CharmState(
             framework="test",
             is_secret_key_ready=True,
             secret_key="generated-key",
             user_defined_config=config,
             framework_config=framework,
+            custom_relations=custom_relations,
             config_options=ConfigOptions(
                 options={
                     option: (
@@ -61,7 +65,8 @@ def make_app_fixture(tmp_path):
             workload_config=workload,
             database_migration=MagicMock(),
         )
-        app._generate_integration_environments = MagicMock(return_value=relations or {})
+        if custom_relations is None:
+            app._generate_integration_environments = MagicMock(return_value=relations or {})
         return app
 
     return make_app
@@ -120,6 +125,30 @@ def test_mapping_precedence(make_app, caplog):
     assert env["APP_OPTION"] == "independent-output"
     assert "option" in caplog.text and "METRICS_PORT" in caplog.text
     assert "configured-value" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "value, expected", [("configured-value", "configured-value"), (None, "relation-value")]
+)
+def test_mapping_precedence_over_custom_relations(make_app, caplog, value, expected):
+    """Mappings override custom relation outputs only when their source is set."""
+    relation = MagicMock(spec=CustomRelation)
+    relation.relation_name = "custom"
+    relation.gen_environment.return_value = {"TARGET": "relation-value"}
+    app = make_app(
+        {"option": value},
+        {"option": "TARGET"},
+        custom_relations=[relation],
+    )
+
+    env = app.gen_environment()
+
+    assert env["TARGET"] == expected
+    assert "APP_OPTION" not in env
+    relation.gen_environment.assert_called_once_with()
+    assert ("Explicit config.options mapping" in caplog.text) == (value is not None)
+    assert "configured-value" not in caplog.text
+    assert "relation-value" not in caplog.text
 
 
 @pytest.mark.parametrize(
