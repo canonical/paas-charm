@@ -62,7 +62,11 @@ def test_flask_config(
     [
         pytest.param(
             {"secret-test": {"bar": "bar", "foo-bar": "foo-bar"}},
-            {"SECRET_TEST_BAR": "bar", "SECRET_TEST_FOO_BAR": "foo-bar"},
+            {
+                "SECRET_TEST_BAR": "bar",
+                "SECRET_TEST_TOKEN": "foo-bar",
+                "SECRET_TEST_FOO_BAR": None,
+            },
             id="user-secret",
         ),
         pytest.param(
@@ -82,8 +86,9 @@ def test_flask_secret_config(
 ):
     """
     arrange: build and deploy the flask charm, and change secret configurations.
-    act: query flask environment variables from the Flask server.
-    assert: the flask environment variables should match secret configuration values.
+    act: query secret configuration values from the Flask server.
+    assert: mapped entries use their selected names, unmapped entries keep their default
+        names, and renamed entries are absent under their default names.
     """
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():

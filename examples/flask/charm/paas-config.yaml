@@ -4,6 +4,11 @@
 framework_logging_format: json
 metrics-port: 9102
 metrics-path: /metrics
+config:
+  options:
+    secret-test:
+      secret-env-vars:
+        foo-bar: FLASK_SECRET_TEST_TOKEN
 prometheus:
   scrape_configs:
     # Additional job scraping all units on port 8081
