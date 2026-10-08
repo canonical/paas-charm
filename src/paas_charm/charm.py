@@ -396,12 +396,17 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         :class:`Context` and the required flag (read from the metadata
         ``optional`` field), and finally set up with the reconcile callback.
 
+        Builtin relation classes are only required if declared and
+        non-optional in the metadata.
+
         Returns:
             The list of instantiated custom relations.
         """
-        relations_list = (self.custom_relations or []) + (builtin_relations or [])
-        if 0 == len(relations_list):
+        builtin_relations = builtin_relations or []
+        relations_list = (self.custom_relations or []) + builtin_relations
+        if not relations_list:
             return []
+        builtin_set = set(builtin_relations)
         context = self._build_custom_relation_context()
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         relations: list[CustomRelation] = []
@@ -412,7 +417,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 raise CustomRelationError(f"non-CustomRelation entry: {relation_class!r}")
             relation_name = relation_class.relation_name
             if relation_name not in requires:
-                raise CustomRelationError(f"Unused custom relation: {relation_class!r}")
+                if relation_class not in builtin_set:
+                    raise CustomRelationError(f"Unused custom relation: {relation_class!r}")
+                continue
             instance = relation_class(self)
             # Framework-injected private state; pylint: disable=protected-access
             instance._context = context
@@ -571,19 +578,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _has_missing_relations(self, charm_state: CharmState) -> bool:
         """Check if any relations are missing or not ready."""
         missing_integrations = list(self._missing_required_integrations(charm_state))
+
+        relation_data_error: RelationDataError | None = None
+        try:
+            missing_integrations.extend(self._missing_custom_relations())
+        except RelationDataError as e:
+            relation_data_error = e
+
         if missing_integrations:
             logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
             self._stop_all_and_set_blocked(message)
             return True
 
-        try:
-            missing_integrations = list(self._missing_custom_relations())
-            if missing_integrations:
-                logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
-                self._stop_all_and_set_blocked(message)
-                return True
-        except RelationDataError as e:
-            logger.error(message := f"RelationDataError: {e}")
+        if relation_data_error:
+            logger.error(message := f"RelationDataError: {relation_data_error}")
             self._stop_all_and_set_blocked(message)
             return True
 
