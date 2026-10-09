@@ -110,6 +110,13 @@ names generated extension parts. For example,
 every framework, so compare overrides with the expanded Ubuntu 26.04 LTS
 project rather than changing names blindly.
 
+On Ubuntu 26.04 LTS, entries in the ``prime`` key of the
+``install-app`` part must start with ``app``. For example, update
+``flask/app/app.py`` to ``app/app.py``. Rockcraft rejects the previous
+framework-prefixed form when packing. See the
+:ref:`Rockcraft Flask extension reference <rockcraft:reference-flask-framework-prime>`
+for the ``prime`` format.
+
 Flask and Django rocks have an additional layout change: the application
 root is now ``/app`` and ``gunicorn.conf.py`` is under
 ``/var/lib/gunicorn``. Access and error logs continue to use stdout and
@@ -161,8 +168,7 @@ Keep the generated Ubuntu 26.04 LTS contract, including:
 * the generated ``paas-charm>=2.0.dev1,<3`` dependency and generated
   ``charmlibs`` interface dependencies for OAuth, OpenFGA, and tracing,
   which replace the corresponding Charmhub-fetched libraries;
-* a Valkey relation instead of the obsolete Redis relation; and
-* the generated ``uv.lock`` file.
+* a Valkey relation instead of the obsolete Redis relation.
 
 For Flask, the lower-base ``flask-app`` workload container and
 ``flask-app-image`` resource become ``app`` and ``app-image``. For Django,
@@ -180,9 +186,12 @@ apply to that generated charm part. Keep the new profile's ``parts.charm``
 definition instead of copying a lower-base override unchanged.
 
 Add the existing charm's application-specific Python dependencies to the
-generated ``pyproject.toml``. Retain the generated ``uv.lock`` unchanged
-when dependencies are unchanged. After any dependency change, regenerate
-and commit the lock file from ``charm-26-04``:
+generated ``pyproject.toml``.
+
+``charmcraft init`` doesn't create a ``uv.lock`` file, and
+``charmcraft pack`` fails without one. Generate the lock file from
+``charm-26-04`` and commit it with the project. Regenerate it after any
+dependency change:
 
 .. code-block:: bash
 

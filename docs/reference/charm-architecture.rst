@@ -74,11 +74,13 @@ frameworks:
   ``/django/app``. Gunicorn access and error logs use the workload container's
   stdout and stderr streams.
 * On the Ubuntu 26.04 LTS base, ``/var/lib/gunicorn`` holds the mutable
-  ``gunicorn.conf.py`` file used by Flask and Django, kept separate from the
-  read-only application directory.
-* ``/app-data`` is a writable application data directory available to the
-  ``_daemon_`` user on the Ubuntu 26.04 LTS base, where 12-factor charms run as
-  a non-root user by default.
+  ``gunicorn.conf.py`` file used by Flask and Django, separate from the
+  ``/app`` directory.
+* ``/app-data`` is a writable application data directory for
+  application-generated data, owned by the ``_daemon_`` user on the Ubuntu 26.04
+  LTS base, where 12-factor charms run as a non-root user by default. It is
+  part of the container filesystem, so its contents don't persist across
+  container replacement unless a volume is mounted at that path.
 
 Juju events
 -----------

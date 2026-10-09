@@ -44,8 +44,8 @@ Before refreshing a deployment:
 
 1. Migrate and rebuild every rock with an Ubuntu 26.04 LTS base or build base.
 2. Migrate and rebuild every charm with ``base: ubuntu@26.04``, the ``uv``
-   plugin, ``pyproject.toml`` and ``uv.lock``, and a compatible dependency such
-   as ``paas-charm>=2.0.dev1,<3``.
+   plugin, ``pyproject.toml``, a ``uv.lock`` file that you generate with
+   ``uv lock``, and a compatible dependency such as ``paas-charm>=2.0.dev1,<3``.
 3. Ensure each charm defines the ``app`` container, ``app-image`` resource,
    ``peers`` relation, and a single secret-typed ``app-secret-key`` option. If
    used, stage the charm-owned ``paas-config.yaml`` into the packed charm.
@@ -259,7 +259,9 @@ Ubuntu 26.04 LTS effective build base, including bare rocks whose
 ``build-base`` is Ubuntu 26.04 LTS. Update custom part overrides and references
 to use the newly expanded names, such as
 ``flask-framework.dependencies`` instead of
-``flask-framework/dependencies``.
+``flask-framework/dependencies``. Entries in the ``prime`` key of the
+``install-app`` part must also start with ``app`` on Ubuntu 26.04 LTS, for
+example ``app/app.py`` instead of ``flask/app/app.py``.
 
 Redis replaced with Valkey
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
