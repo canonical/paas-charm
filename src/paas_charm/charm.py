@@ -18,7 +18,12 @@ from ops.model import Container
 from pydantic import BaseModel, ValidationError
 
 from paas_charm.app import App, WorkloadConfig
-from paas_charm.charm_state import CharmState, IntegrationRequirers
+from paas_charm.charm_state import (
+    CharmState,
+    IntegrationRequirers,
+    framework_config_option_fields,
+    is_user_defined_config,
+)
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
@@ -32,6 +37,7 @@ from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
 from paas_charm.paas_config import (
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
+    ConfigOptions,
     LoggingFormat,
     read_paas_config,
 )
@@ -45,6 +51,7 @@ from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
+    config_metadata,
     get_endpoints_by_interface_name,
     merge_cos_directories,
 )
@@ -96,6 +103,19 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         super().__init__(framework)
         self._framework_name = framework_name
         self._paas_config = read_paas_config()
+        config_options: ConfigOptions = self._paas_config.config
+        if config_options.options:  # pylint: disable=no-member
+            options = config_metadata(pathlib.Path(self.charm_dir))["options"]
+            framework_fields = framework_config_option_fields(
+                self.framework_config_class, options.keys()
+            )
+            unsupported = {
+                option
+                for option in options
+                if not is_user_defined_config(option, framework_name)
+                and option not in framework_fields
+            }
+            config_options.validate_sources(options, unsupported)  # pylint: disable=no-member
 
         self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
         self._peers = Peers(charm=self)
@@ -769,6 +789,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=config,
             framework=self._framework_name,
             framework_config=self.get_framework_config(),
+            config_options=self._paas_config.config,
             secret_key=self._secret_key,
             peers=self._peers,
             integration_requirers=IntegrationRequirers(

@@ -360,20 +360,23 @@ class SpringBootApp(App):
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
 
-    def gen_environment(self) -> dict[str, str]:
-        """Generate a environment dictionary from the charm configurations.
+    def _framework_environment(self) -> dict[str, str]:
+        """Build the config/framework layer with Spring Boot-specific settings.
 
-        Adds to the base environment variables specific ones for the Spring Boot framework.
+        Relation outputs and explicit mappings are applied afterward.
 
         Returns:
-            A dictionary representing the application environment variables.
+            Config and library-owned variables before relations and explicit mappings.
         """
-        env = super().gen_environment()
+        env = super()._framework_environment()
         env.pop("METRICS_PORT", None)
         env.pop("METRICS_PATH", None)
         # Name of the profiles field in SpringBootConfig
         profiles_field = "app_profiles"
-        if profiles_field in self._charm_state.framework_config:
+        if (
+            profiles_field in self._charm_state.framework_config
+            and profiles_field not in self._mapped_framework_config_fields()
+        ):
             env["spring.profiles.active"] = str(self._charm_state.framework_config[profiles_field])
         # Required because of the strip prefix in the ingress configuration.
         env["server.forward-headers-strategy"] = "framework"

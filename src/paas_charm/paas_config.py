@@ -153,6 +153,110 @@ class PrometheusConfig(BaseModel):
         return self
 
 
+class EnvVarConfig(BaseModel):
+    """Environment variable name for a non-secret charm configuration option.
+
+    Attributes:
+        env_var: Complete environment variable name.
+        model_config: Pydantic model configuration.
+    """
+
+    env_var: str = Field(alias="env-var")
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class SecretEnvVarsConfig(BaseModel):
+    """Environment variable names for a secret charm configuration option.
+
+    Attributes:
+        secret_env_vars: Secret content keys mapped to complete environment variable names.
+        model_config: Pydantic model configuration.
+    """
+
+    secret_env_vars: dict[str, str] = Field(alias="secret-env-vars")
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class ConfigOptions(BaseModel):
+    """Settings for existing charm configuration options.
+
+    Attributes:
+        options: Exact charm configuration option names mapped to their settings.
+        model_config: Pydantic model configuration.
+    """
+
+    options: dict[str, EnvVarConfig | SecretEnvVarsConfig] = Field(default_factory=dict)
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    @model_validator(mode="after")
+    def validate_destinations(self) -> "ConfigOptions":
+        """Validate destination names and reject ambiguous mappings.
+
+        Returns:
+            The validated configuration.
+
+        Raises:
+            ValueError: If a destination is invalid or used by multiple sources.
+        """
+        destinations: dict[str, str] = {}
+        for option, mapping in self.options.items():  # pylint: disable=no-member
+            entries = (
+                mapping.secret_env_vars.items()
+                if isinstance(mapping, SecretEnvVarsConfig)
+                else [(None, mapping.env_var)]
+            )
+            for key, destination in entries:
+                source = option if key is None else f"{option}.{key}"
+                if not destination or "\0" in destination or "=" in destination:
+                    raise ValueError(
+                        f"Invalid environment variable name for {source!r} in {CONFIG_FILE_NAME}: "
+                        "destination names must be non-empty and contain neither '=' nor NUL"
+                    )
+                if destination in destinations:
+                    raise ValueError(
+                        f"Environment variable {destination!r} is mapped from both "
+                        f"{destinations[destination]!r} and {source!r}"
+                    )
+                destinations[destination] = source
+        return self
+
+    def validate_sources(self, options: dict, unsupported: set[str]) -> None:
+        """Validate sources against charm configuration metadata.
+
+        Args:
+            options: Charm configuration option metadata.
+            unsupported: Option names without mappable environment outputs.
+
+        Raises:
+            PaasConfigError: If an option is unknown, unsupported, or has the wrong mapping shape.
+        """
+        for option, mapping in self.options.items():  # pylint: disable=no-member
+            if option not in options:
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: config.options references unknown "
+                    f"charm configuration option {option!r}"
+                )
+            if option in unsupported:
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: config.options cannot map option {option!r}: "
+                    "it has no configuration-derived environment output"
+                )
+            normalized = option.replace("-", "_")
+            for other in options:
+                if other != option and other.replace("-", "_") == normalized:
+                    raise PaasConfigError(
+                        f"{CONFIG_FILE_NAME}: config.options cannot distinguish charm configuration "
+                        f"options {option!r} and {other!r}: hyphens and underscores are "
+                        "treated identically internally"
+                    )
+            is_secret = options[option]["type"] == "secret"
+            if is_secret != isinstance(mapping, SecretEnvVarsConfig):
+                expected = "secret-env-vars" if is_secret else "env-var"
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: config.options.{option} must use {expected!r}"
+                )
+
+
 class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
@@ -165,11 +269,13 @@ class PaasConfig(BaseModel):
         port: Optional override for the port on which the application server listens.
         metrics_port: Optional override for the port on which the application serves metrics.
         metrics_path: Optional override for the path on which the application serves metrics.
+        config: Settings for existing charm configuration options.
     """
 
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
+    config: ConfigOptions = Field(default_factory=ConfigOptions)
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",
@@ -273,7 +379,7 @@ def read_paas_config(charm_root: pathlib.Path | None = None) -> PaasConfig:
     try:
         return PaasConfig(**config_data)
     except ValidationError as exc:
-        error_details = build_validation_error_message(exc, underscore_to_dash=True)
+        error_details = build_validation_error_message(exc)
         error_msg = f"Invalid {CONFIG_FILE_NAME}: {error_details.short}"
         logger.error("%s: %s", error_msg, error_details.long)
         raise PaasConfigError(error_msg) from exc

@@ -262,6 +262,7 @@ def context_factory_fixture(
         charm_type: type,
         *,
         paas_config: PaasConfig | None = None,
+        config_options: dict | None = None,
         additional_oauth: bool = False,
         no_database_metadata: bool = False,
         unit_id: int = 0,
@@ -272,6 +273,11 @@ def context_factory_fixture(
         root = CHARM_ROOTS[charm_type]
         resolved_paas_config = paas_config if paas_config is not None else read_paas_config(root)
         charmcraft = yaml.safe_load((root / "charmcraft.yaml").read_text(encoding="utf-8"))
+        for option, settings in (config_options or {}).items():
+            if settings is None:
+                charmcraft["config"]["options"].pop(option)
+            else:
+                charmcraft["config"]["options"][option] = settings
         if additional_oauth:
             _add_oauth_metadata(charmcraft)
         if no_database_metadata:

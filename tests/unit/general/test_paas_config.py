@@ -27,6 +27,7 @@ from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
+    ConfigOptions,
     LoggingFormat,
     PaasConfig,
     PrometheusConfig,
@@ -138,6 +139,114 @@ class TestPaasConfig:
             PaasConfig.model_validate({field: value})
 
 
+class TestConfigOptions:
+    """Tests for mapping schema and charm-metadata validation."""
+
+    @pytest.mark.parametrize("destination", ["", "A=B", "A\0B"])
+    def test_invalid_destinations(self, destination):
+        """Reject destinations that cannot represent environment variable names."""
+        with pytest.raises(ValidationError, match="Invalid environment variable name") as exc:
+            ConfigOptions(options={"option": {"env-var": destination}})
+        message = str(exc.value)
+        assert "paas-config.yaml" in message
+        assert "non-empty" in message
+        assert "'='" in message and "NUL" in message
+
+    def test_duplicate_destinations(self):
+        """Reject duplicate destinations across scalar and secret sources."""
+        with pytest.raises(ValidationError, match="mapped from both"):
+            ConfigOptions(
+                options={
+                    "one": {"env-var": "TARGET"},
+                    "secret": {"secret-env-vars": {"key": "TARGET"}},
+                }
+            )
+
+    @pytest.mark.parametrize(
+        "mapping, options, unsupported, diagnostic",
+        [
+            pytest.param(
+                {"unknown": {"env-var": "TARGET"}},
+                {},
+                set(),
+                "unknown charm configuration option 'unknown'",
+                id="unknown-option",
+            ),
+            pytest.param(
+                {"owned": {"env-var": "TARGET"}},
+                {"owned": {"type": "string"}},
+                {"owned"},
+                "no configuration-derived environment output",
+                id="unsupported-output",
+            ),
+            pytest.param(
+                {"secret": {"env-var": "TARGET"}},
+                {"secret": {"type": "secret"}},
+                set(),
+                "must use 'secret-env-vars'",
+                id="secret-as-scalar",
+            ),
+            pytest.param(
+                {"scalar": {"secret-env-vars": {"key": "TARGET"}}},
+                {"scalar": {"type": "string"}},
+                set(),
+                "must use 'env-var'",
+                id="scalar-as-secret",
+            ),
+            pytest.param(
+                {"foo_bar": {"env-var": "TARGET"}},
+                {"foo-bar": {"type": "string"}, "foo_bar": {"type": "string"}},
+                set(),
+                "'foo_bar' and 'foo-bar': hyphens and underscores",
+                id="ambiguous-options",
+            ),
+        ],
+    )
+    def test_invalid_sources(self, mapping, options, unsupported, diagnostic):
+        """Identify the actual reason that a declared mapping source is invalid."""
+        with pytest.raises(PaasConfigError, match=diagnostic):
+            ConfigOptions(options=mapping).validate_sources(options, unsupported)
+
+    def test_valid_sources(self):
+        """Validate mappings using declared types rather than current option values."""
+        ConfigOptions(
+            options={
+                "scalar": {"env-var": "TARGET"},
+                "secret": {"secret-env-vars": {"name": "NAME"}},
+            }
+        ).validate_sources({"scalar": {"type": "string"}, "secret": {"type": "secret"}}, set())
+
+    @pytest.mark.parametrize(
+        "config",
+        [
+            pytest.param({"unknown": {}}, id="unknown-section-field"),
+            pytest.param({"options": {"option": "TARGET"}}, id="non-object-mapping"),
+            pytest.param({"options": {"option": {}}}, id="missing-mapping-field"),
+            pytest.param({"options": {"option": {"env-var": 123}}}, id="non-string-scalar-name"),
+            pytest.param(
+                {"options": {"secret": {"secret-env-vars": {"key": None}}}},
+                id="non-string-secret-name",
+            ),
+            pytest.param(
+                {
+                    "options": {
+                        "option": {"env-var": "TARGET", "secret-env-vars": {"key": "OTHER"}}
+                    }
+                },
+                id="both-mapping-fields",
+            ),
+            pytest.param(
+                {"options": {"option": {"env-var": "TARGET", "value-format": "json"}}},
+                id="unknown-mapping-field",
+            ),
+        ],
+    )
+    def test_invalid_schema(self, config):
+        """Require exactly one typed mapping field and reject unknown fields."""
+        with pytest.raises(ValidationError):
+            PaasConfig(config=config)
+
+
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""
 
@@ -198,6 +307,33 @@ class TestReadPaasConfig:
         with pytest.raises(PaasConfigError) as exc_info:
             read_paas_config(tmp_path)
         assert "Invalid" in str(exc_info.value)
+
+    @pytest.mark.parametrize(
+        "content, expected_path, incorrect_name",
+        [
+            (
+                "config:\n  options:\n    foo_bar:\n      env-var: 123\n",
+                "config.options.foo_bar",
+                "foo-bar",
+            ),
+            (
+                "config:\n  options:\n    credentials:\n      secret-env-vars:\n        api_key: 123\n",
+                "api_key",
+                "api-key",
+            ),
+        ],
+    )
+    def test_mapping_diagnostic_preserves_source_names(
+        self, tmp_path, caplog, content, expected_path, incorrect_name
+    ):
+        """Preserve exact option names and secret content keys in schema diagnostics."""
+        (tmp_path / CONFIG_FILE_NAME).write_text(content)
+        with pytest.raises(PaasConfigError) as exc:
+            read_paas_config(tmp_path)
+        assert expected_path in str(exc.value)
+        assert expected_path in caplog.text
+        assert incorrect_name not in str(exc.value)
+        assert incorrect_name not in caplog.text
 
     def test_file_read_error_raises_error(self, tmp_path):
         """Test that file read error raises PaasConfigError."""

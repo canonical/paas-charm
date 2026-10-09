@@ -111,6 +111,9 @@ config:
     secret-test:
       description: A test configuration option for testing user provided Juju secrets.
       type: secret
+    foo-str:
+      description: A test configuration option for string environment variable mapping.
+      type: string
     oidc-redirect-path:
       type: string
       description: The path that the user will be redirected upon completing login.
