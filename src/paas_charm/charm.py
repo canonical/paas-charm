@@ -48,7 +48,7 @@ from paas_charm.utils import (
     get_endpoints_by_interface_name,
     merge_cos_directories,
 )
-from paas_charm.valkey import ValkeyClientRequirer
+from paas_charm.valkey import ValkeyRelation
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +101,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._peers = Peers(charm=self)
         self._database_requirers = make_database_requirers(self, self.app.name)
 
+        builtin_relations: list[type[CustomRelation]] = []
         requires: dict[str, RelationMeta] = self.framework.meta.requires
-        self._valkey = self._init_valkey(requires)
+        builtin_relations.append(ValkeyRelation)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
@@ -179,26 +180,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._reconcile_without_migrations,
         )
 
-        self._custom_relations: list[CustomRelation] = self._init_custom_relations()
+        self._custom_relations: list[CustomRelation] = self._init_custom_relations(
+            builtin_relations=self._override_builtin_relations(builtin_relations)
+        )
 
-    def _init_valkey(self, requires: dict[str, RelationMeta]) -> "ValkeyClientRequirer | None":
-        """Initialize the Valkey relation if it is required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the Valkey relation or None
-        """
-        _valkey = None
-        if "valkey" in requires and requires["valkey"].interface_name == "valkey_client":
-            _valkey = ValkeyClientRequirer(charm=self, relation_name="valkey")
-            self.framework.observe(
-                _valkey.valkey_interface.on.resource_created,
-                self._reconcile_with_migrations,
-            )
-
-        return _valkey
+    def _override_builtin_relations(
+        self, builtin_relations: list[type[CustomRelation]]
+    ) -> list[type[CustomRelation]]:
+        """Override relation(s) class(es), if necessary."""
+        return builtin_relations
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
@@ -396,7 +386,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             config=self._resolve_charm_config(),
         )
 
-    def _init_custom_relations(self) -> list[CustomRelation]:
+    def _init_custom_relations(
+        self, builtin_relations: list[type[CustomRelation]] | None = None
+    ) -> list[CustomRelation]:
         """Instantiate and wire author-supplied custom relations.
 
         Each class in :attr:`custom_relations` is validated against the charm
@@ -404,22 +396,30 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         :class:`Context` and the required flag (read from the metadata
         ``optional`` field), and finally set up with the reconcile callback.
 
+        Builtin relation classes are only required if declared and
+        non-optional in the metadata.
+
         Returns:
             The list of instantiated custom relations.
         """
-        if not self.custom_relations:
+        builtin_relations = builtin_relations or []
+        relations_list = (self.custom_relations or []) + builtin_relations
+        if not relations_list:
             return []
+        builtin_set = set(builtin_relations)
         context = self._build_custom_relation_context()
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         relations: list[CustomRelation] = []
-        for relation_class in self.custom_relations:
+        for relation_class in relations_list:
             if not isinstance(relation_class, type) or not issubclass(
                 relation_class, CustomRelation
             ):
                 raise CustomRelationError(f"non-CustomRelation entry: {relation_class!r}")
             relation_name = relation_class.relation_name
             if relation_name not in requires:
-                raise CustomRelationError(f"Unused custom relation: {relation_class!r}")
+                if relation_class not in builtin_set:
+                    raise CustomRelationError(f"Unused custom relation: {relation_class!r}")
+                continue
             instance = relation_class(self)
             # Framework-injected private state; pylint: disable=protected-access
             instance._context = context
@@ -578,19 +578,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _has_missing_relations(self, charm_state: CharmState) -> bool:
         """Check if any relations are missing or not ready."""
         missing_integrations = list(self._missing_required_integrations(charm_state))
+
+        relation_data_error: RelationDataError | None = None
+        try:
+            missing_integrations.extend(self._missing_custom_relations())
+        except RelationDataError as e:
+            relation_data_error = e
+
         if missing_integrations:
             logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
             self._stop_all_and_set_blocked(message)
             return True
 
-        try:
-            missing_integrations = list(self._missing_custom_relations())
-            if missing_integrations:
-                logger.info(message := f"missing integrations: {', '.join(missing_integrations)}")
-                self._stop_all_and_set_blocked(message)
-                return True
-        except RelationDataError as e:
-            logger.error(message := f"RelationDataError: {e}")
+        if relation_data_error:
+            logger.error(message := f"RelationDataError: {relation_data_error}")
             self._stop_all_and_set_blocked(message)
             return True
 
@@ -660,13 +661,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             oauth_endpoint_name = get_endpoints_by_interface_name(requires, "oauth")[0][0]
             if not requires[oauth_endpoint_name].optional:
                 yield "oauth"
-
-        if (
-            self._valkey
-            and not charm_state.integrations.valkey
-            and not requires["valkey"].optional
-        ):
-            yield "valkey"
 
     def _missing_custom_relations(self) -> typing.Generator:
         """Return custom relations that are not established and required.
@@ -773,7 +767,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             peers=self._peers,
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
-                valkey=self._valkey,
                 rabbitmq=self._rabbitmq,
                 s3=self._s3,
                 saml=self._saml,

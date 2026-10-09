@@ -9,18 +9,19 @@ import typing
 from urllib.parse import urlparse
 
 import ops
+from dpcharmlibs.interfaces import ValkeyResponseModel
 from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
-from paas_charm.app import generate_valkey_env as base_generate_valkey_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
+from paas_charm.relations import CustomRelation
+from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
     from charmlibs.interfaces.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
-    from dpcharmlibs.interfaces import ValkeyResponseModel
 
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
@@ -193,34 +194,6 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_valkey_env(
-    relation_data: "ValkeyResponseModel | None" = None,
-) -> dict[str, str]:
-    """Generate Spring Boot environment variables from Valkey relation data.
-
-    Args:
-        relation_data: The charm Valkey integration relation data.
-
-    Returns:
-        Spring Boot Valkey environment mappings if relation data is available, empty
-        dictionary otherwise.
-    """
-    base_env = base_generate_valkey_env(relation_data)
-    if not base_env:
-        return {}
-
-    env = {
-        "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
-        "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
-        "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
-    }
-    if username := base_env.get("VALKEY_DB_USERNAME"):
-        env["spring.data.valkey.username"] = username
-    if password := base_env.get("VALKEY_DB_PASSWORD"):
-        env["spring.data.valkey.password"] = password
-    return env
-
-
 def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from S3 relation data.
 
@@ -333,6 +306,39 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
     }
 
 
+class SpringValkeyRelation(ValkeyRelation):
+    """Modified `ValkeyRelation` to produce environment vars for Spring framework."""
+
+    @staticmethod
+    def _generate_valkey_env(
+        relation_data: ValkeyResponseModel | None = None,
+    ) -> dict[str, str]:
+        """Generate Spring Boot environment variables from Valkey relation data.
+
+        Args:
+            relation_data: The charm Valkey integration relation data.
+
+        Returns:
+            Spring Boot Valkey environment mappings if relation data is available, empty
+            dictionary otherwise.
+        """
+        base_env = ValkeyRelation._generate_valkey_env(relation_data)
+
+        if 0 == len(base_env):
+            return base_env
+
+        env = {
+            "spring.data.valkey.url": base_env["VALKEY_DB_CONNECT_STRING"],
+            "spring.data.valkey.host": base_env["VALKEY_DB_HOSTNAME"],
+            "spring.data.valkey.port": base_env["VALKEY_DB_PORT"],
+        }
+        if username := base_env.get("VALKEY_DB_USERNAME"):
+            env["spring.data.valkey.username"] = username
+        if password := base_env.get("VALKEY_DB_PASSWORD"):
+            env["spring.data.valkey.password"] = password
+        return env
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -340,7 +346,6 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_valkey_env: Maps Valkey connection information to environment variables.
         generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
@@ -352,7 +357,6 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_valkey_env = staticmethod(generate_valkey_env)
     generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
@@ -400,6 +404,15 @@ class Charm(PaasCharm):
             framework: operator framework.
         """
         super().__init__(framework=framework, framework_name="spring-boot")
+
+    def _override_builtin_relations(
+        self, builtin_relations: list[type[CustomRelation]]
+    ) -> list[type[CustomRelation]]:
+        """Override ValkeyRelation."""
+        if ValkeyRelation in builtin_relations:
+            idx = builtin_relations.index(ValkeyRelation)
+            builtin_relations[idx] = SpringValkeyRelation
+        return builtin_relations
 
     @property
     def _workload_config(self) -> WorkloadConfig:
