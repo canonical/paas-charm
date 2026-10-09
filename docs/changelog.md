@@ -33,9 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * breaking: Remove the `paas_app_charmer` import path.
 * fix: Replace the deprecated `hydra.oauth` charm library with
   `charmlibs.interfaces.oauth`.
-* breaking: Unify the Flask and Django application root directory and access/error logs under
-  `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
-  keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
+* breaking: Unify the Flask and Django application root directory under `/app` instead of
+  `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while keeping the
+  mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory. Access and error
+  logs continue to use stdout and stderr.
   Requires rebuilding the rock with an Ubuntu 26.04 LTS base or build base.
 * feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
   and store the auto-generated application secret key in a Juju application-owned
