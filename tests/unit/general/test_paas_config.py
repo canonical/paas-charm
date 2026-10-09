@@ -137,6 +137,11 @@ class TestPaasConfig:
         with pytest.raises(ValidationError):
             PaasConfig.model_validate({field: value})
 
+    @pytest.mark.parametrize("path", ["", "metrics", "/metrics?format=json"])
+    def test_metrics_path_accepts_string(self, path):
+        """Test that runtime metrics path validation accepts string values."""
+        assert PaasConfig.model_validate({"metrics-path": path}).metrics_path == path
+
 
 class TestReadPaasConfig:
     """Tests for read_paas_config function."""

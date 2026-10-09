@@ -17,6 +17,7 @@ deployable
 Disposability
 downscaled
 entrypoint
+enablement
 ephemeral
 ExpressJS
 FastAPI
@@ -38,9 +39,9 @@ libs
 js
 md
 natively
-OAuth
 OCI
 OIDC
+OAuth
 Onboarded
 OpenFGA
 openfga
@@ -63,6 +64,8 @@ Spring Boot
 src
 SSL
 SSO
+stderr
+stdout
 Terraform
 tox
 Trivy
