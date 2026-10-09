@@ -6,6 +6,8 @@ metrics-port: 9102
 metrics-path: /metrics
 config:
   options:
+    foo-str:
+      env-var: FLASK_MAPPED_STRING
     secret-test:
       secret-env-vars:
         foo-bar: FLASK_SECRET_TEST_TOKEN
