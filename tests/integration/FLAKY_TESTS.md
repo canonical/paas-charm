@@ -32,10 +32,27 @@ Several dependencies are not pinned to a revision (`postgresql-k8s` `14/stable`,
 channels, `smtp-integrator` `latest/edge`, `mongodb`/`mysql` partly pinned), so upstream
 changes can also cause failures.
 
+## Likely root cause: hooks are not retried
+
+`concierge.yaml` sets the Juju model default `automatically-retry-hooks: "false"` (added in the
+charm-ci migration, #298). Every temporary test model inherits it, so a hook that fails once for a
+transient reason (API server `i/o timeout`, postgres not yet listening) leaves the unit in `error`
+for good and the test waits until its timeout. This matches every failure above. This branch
+sets it to `"true"` so Juju retries failed hooks; CI on this PR is the validation.
+
+## Local reproduction attempt
+
+Built all artifacts with `opcli artifacts build` (about 1 hour) and ran
+`opcli spread run -- integration-test-local:ubuntu-24.04:build/tests/integration/run:integrations_test_smtp`.
+The LXD VM provisioning failed before any test ran: the VM root disk was 19 GB (the `disk: 50G`
+backend option is not honoured in local mode), so the rawfile CSI driver reported
+`ResourceExhausted: Not enough disk space` and the Juju controller pod never started.
+Running locally needs a larger default LXD root disk.
+
 ## Not done
 
-No local run was made (`opcli`, LXD and spread are installed, but the machine had about 7 GB
-free memory and the observability and identity stacks need much more).
+No test ran locally (see above). The `smtp` failure (`SMTPServerDisconnected` surfaced by the
+Django app) is not explained by the retry setting and needs separate investigation.
 
 ## Next steps
 
