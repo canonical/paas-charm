@@ -48,10 +48,12 @@ In this documentation
        :ref:`Publish a charm <how_to_publish_charm>`
    * - **Configure**
      - :ref:`paas-config.yaml <ref_paas_config>` |
+       :ref:`Custom relations <how_to_add_custom_relation>` |
        :ref:`Customizable features <ref_supported_customization>` |
        :ref:`Secrets <ref_secrets>`
    * - **Integrations and observability**
      - :ref:`Observability and relations <ref_observability_relations>` |
+       :ref:`Custom relations API reference <ref_custom_relations>` |
        :ref:`Add custom dashboards and alert rules <how_to_add_custom_cos_assets>` |
        :ref:`Prometheus configuration <ref_paas_config_prometheus>` |
        :ref:`Structured logging <ref_paas_config_structured_logging>`
