@@ -73,6 +73,8 @@ We pin major versions of ``paas-charm`` and do not introduce breaking changes in
 minor or patch releases. To upgrade to a new version of the ``paas-charm``
 library, repack the charm using ``charmcraft pack``.
 
+.. _how_to_upgrade_paas_charm_2:
+
 Upgrade to ``paas-charm`` 2.0
 -----------------------------
 

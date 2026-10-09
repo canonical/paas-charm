@@ -12,7 +12,7 @@ These release notes cover new features and changes in ``paas-charm``
 version 2.0 and its extended support into Charmcraft and Rockcraft.
 
 This is a major release that introduces backwards-incompatible changes.
-See :ref:`how_to_upgrade` for migration instructions.
+See :ref:`how_to_upgrade_paas_charm_2` for migration instructions.
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
 
@@ -52,7 +52,7 @@ Before refreshing a deployment:
 4. Review the :ref:`Backwards-incompatible changes <paas_charm_2_breaking_changes>`
    before refreshing the deployment.
 
-See :ref:`Upgrade to paas-charm 2.0 <how_to_upgrade>` for complete instructions
+See :ref:`Upgrade to paas-charm 2.0 <how_to_upgrade_paas_charm_2>` for complete instructions
 and links to the current Charmcraft and Rockcraft migration references.
 
 Updates
@@ -197,7 +197,7 @@ Backwards-incompatible changes
 ------------------------------
 
 The following are breaking changes introduced in ``paas-charm``.
-See :ref:`how_to_upgrade` for migration instructions.
+See :ref:`how_to_upgrade_paas_charm_2` for migration instructions.
 
 ``paas-charm``
 ~~~~~~~~~~~~~~

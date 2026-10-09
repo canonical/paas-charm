@@ -31,9 +31,9 @@ Releases
 .. toctree::
     :titlesonly:
 
-    release-notes-1.8
-    release-notes-1.9
-    release-notes-1.10
-    release-notes-1.11
-    release-notes-1.12
     release-notes-2.0
+    release-notes-1.12
+    release-notes-1.11
+    release-notes-1.10
+    release-notes-1.9
+    release-notes-1.8
