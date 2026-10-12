@@ -262,6 +262,7 @@ rst_epilog = """
 intersphinx_mapping = {
     "sphinxcontrib-mermaid": ("https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest", None),
     "juju": ("https://canonical.com/juju/docs/juju-cli/3.6/", None),
+<<<<<<< before updating
     "charmcraft": ("https://canonical.com/juju/docs/charmcraft/latest/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/latest/", None),
     "pebble": ("https://documentation.ubuntu.com/pebble/", None),
@@ -278,3 +279,6 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 if os.path.exists('./reuse/substitutions.yaml'):
     with open('./reuse/substitutions.yaml', 'r') as fd:
         myst_substitutions = yaml.safe_load(fd.read())
+=======
+}
+>>>>>>> after updating
