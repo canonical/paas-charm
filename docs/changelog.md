@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Notable changes to paas-charm, including new features, bug fixes, and backwards-incompatible changes."
+---
+
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
 
 (changelog)=
@@ -11,11 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Add the public `paas_charm.relations.CustomRelation` extension API so
+  charm authors can add their own Juju relations to a 12-factor charm
+  (environment variables, readiness/blocking, reconcile) without importing or
+  extending paas-charm internals. Register a relation via the charm
+  `custom_relations` class attribute; required-vs-optional is read from the
+  metadata `optional` flag.
+* feat: Add the stable `Context`, `OnChange`, and `CustomRelation` public
+  types and re-export `InvalidRelationDataError`/`RelationDataError` from
+  `paas_charm.relations`.
+* docs: Add a how-to and reference for custom relations. The example Flask
+  implementation uses `CustomRelation` to integrate with a Temporal server.
+* chore: Add a unit test that keeps the example charm dependencies in sync with the root
+  `pyproject.toml`.
 * breaking: Remove the `paas_app_charmer` import path.
-* breaking: Unify the Flask and Django application root directory and access/error logs under
-  `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
-  keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
-  Requires a rock built with the corresponding gunicorn v2 extension.
+* fix: Replace the deprecated `hydra.oauth` charm library with
+  `charmlibs.interfaces.oauth`.
+* breaking: Unify the Flask and Django application root directory under `/app` instead of
+  `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while keeping the
+  mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory. Access and error
+  logs continue to use stdout and stderr.
+  Requires rebuilding the rock with an Ubuntu 26.04 LTS base or build base.
 * feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
   and store the auto-generated application secret key in a Juju application-owned
   secret instead of the peer relation databag. The peer relation is now used only
@@ -40,6 +62,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `app-secret-key` and `app-secret-key-id` options. Framework-prefixed workload variables
   (`FLASK_SECRET_KEY`, `DJANGO_SECRET_KEY`) are preserved.
 * fix: Use the charm application name for the OpenFGA store name.
+* fix: Replace the deprecated OpenFGA Charmhub library with
+  `charmlibs.interfaces.openfga`.
+* breaking: Remove support for the v0 version of the `loki_push_api` library;
+  charms must fetch the v1 library (`charmcraft fetch-lib charms.loki_k8s.v1.loki_push_api`).
+* docs: Onboarded documentation into Copier-based
+  [platform-engineering-documentation-files](https://github.com/canonical/platform-engineering-documentation-files)
+  central management solution.
+* fix: Replace the deprecated tracing Charmhub library with
+  `charmlibs.interfaces.tracing`.
 
 ## 1.12.0 - 2026-07-03
 

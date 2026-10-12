@@ -6,7 +6,7 @@
 import logging
 
 import ops
-from charms.hydra.v0.oauth import ClientConfig, OAuthRequirer
+from charmlibs.interfaces.oauth import ClientConfig, OAuthRequirer
 from ops import ConfigData
 from pydantic import BaseModel, ValidationError
 
@@ -95,6 +95,11 @@ class PaaSOAuthRequirer(OAuthRequirer):
             if not self.is_client_created():
                 return None
             prod_info = self.get_provider_info()
+            client_config = self._client_config
+            if prod_info is None or client_config is None:
+                raise InvalidOAuthRelationDataError(
+                    "OAuth provider or client configuration is unavailable."
+                )
             user_name_attribute = str(
                 self._charm_config.get(f"{self._relation_name}-user-name-attribute", "sub")
             )
@@ -107,9 +112,9 @@ class PaaSOAuthRequirer(OAuthRequirer):
                     "token_endpoint": prod_info.token_endpoint,
                     "userinfo_endpoint": prod_info.userinfo_endpoint,
                     "jwks_endpoint": prod_info.jwks_endpoint,
-                    "scopes": self._client_config.scope,
+                    "scopes": client_config.scope,
                     "provider_name": self._relation_name,
-                    "redirect_uri": self._client_config.redirect_uri,
+                    "redirect_uri": client_config.redirect_uri,
                     "user_name_attribute": user_name_attribute,
                 }
             )
@@ -160,7 +165,13 @@ class PaaSOAuthRequirer(OAuthRequirer):
     def get_related_app_name(self) -> str:
         """Return the related Oauth provider charm's name.
 
+        Raises:
+            InvalidOAuthRelationDataError: If no OAuth provider is related.
+
         Returns:
             Name of the Oauth provider charm.
         """
-        return self.model.relations.get(self._relation_name)[0].app.name
+        relations = self.model.relations.get(self._relation_name)
+        if not relations:
+            raise InvalidOAuthRelationDataError("No OAuth provider is related.")
+        return relations[0].app.name

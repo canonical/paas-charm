@@ -1,3 +1,6 @@
+.. meta::
+   :description: Technical details about the optional paas-config.yaml configuration file used by 12-factor app charms.
+
 .. _ref_paas_config:
 
 paas-config.yaml
@@ -51,9 +54,11 @@ For example:
     metrics-port: 8080
     metrics-path: /metrics
 
-Ports must be between 1 and 65535. ``metrics-path`` must start with ``/`` and identify a
-non-root endpoint. These values are packaged with the charm and cannot be changed with
-``juju config``. Omitted values use the framework defaults.
+Ports must be between 1 and 65535. When Charmcraft builds the project, it requires
+``metrics-path`` to be a slash-prefixed RFC 3986 HTTP path. ``paas-charm`` treats the
+packaged value as a string and does not repeat this build-time validation at runtime.
+These values are packaged with the charm and cannot be changed with ``juju config``.
+Omitted values use the framework defaults.
 
 The default application port is ``8000`` for Flask, Django, and FastAPI, and ``8080`` for
 ExpressJS, Go, and Spring Boot. The resolved port is always written to the

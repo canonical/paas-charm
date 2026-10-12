@@ -29,21 +29,17 @@ charm-libs:
   version: '0'
 - lib: saml-integrator.saml
   version: '0'
-- lib: openfga-k8s.openfga
-  version: '1'
 - lib: smtp-integrator.smtp
-  version: '0'
-- lib: tempo-coordinator-k8s.tracing
-  version: '0'
-- lib: hydra.oauth
   version: '0'
 - lib: squid_forward_proxy.http_proxy
   version: '0'
 
 actions:
   rotate-secret-key:
-    description: Rotate the secret key. Users will be forced to log in again.
-      This might be useful if a security breach occurs.
+    description: >-
+      Rotate the charm-managed fallback secret key. This does not rotate a user-managed
+      secret configured with app-secret-key; users are signed out only when the active
+      fallback key changes.
 
 assumes:
   - k8s-api

@@ -18,7 +18,7 @@ from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 
 if typing.TYPE_CHECKING:
-    from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData
+    from charmlibs.interfaces.openfga import OpenfgaProviderAppData
     from charms.smtp_integrator.v0.smtp import SmtpRelationData
     from dpcharmlibs.interfaces import ValkeyResponseModel
 
@@ -420,7 +420,6 @@ class Charm(PaasCharm):
             app_dir=base_dir,
             state_dir=state_dir,
             service_name=framework_name,
-            log_files=[],
             unit_name=self.unit.name,
             metrics_path=metrics_path,
             metrics_port=metrics_port,

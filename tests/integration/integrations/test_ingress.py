@@ -19,7 +19,7 @@ from tests.integration.types import App
     [
         ("django_app", "/len/users", None),
         ("expressjs_app", "/", None),
-        ("fastapi_app", "/", None),
+        ("fastapi_app", "/", '"Hello, World!"'),
         ("flask_app", "/", None),
         ("go_app", "/", "Hello, World!"),
         ("spring_boot_app", "/hello-world", None),

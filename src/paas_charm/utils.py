@@ -85,25 +85,6 @@ def build_validation_error_message(
     return ValidationErrorMessage(short=short_str, long=long_str)
 
 
-def enable_pebble_log_forwarding() -> bool:
-    """Check if the current environment allows to enable pebble log forwarding feature.
-
-    Returns:
-        True if the current environment allows to enable pebble log forwarding feature.
-    """
-    juju_version = ops.JujuVersion.from_environ()
-    if (juju_version.major, juju_version.minor) < (3, 4):
-        return False
-    try:
-        # disable "imported but unused" and "import outside toplevel" error
-        # pylint: disable=import-outside-toplevel,unused-import
-        import charms.loki_k8s.v1.loki_push_api  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
 @functools.lru_cache
 def config_metadata(charm_dir: pathlib.Path) -> dict:
     """Get charm configuration metadata for the given charm directory.

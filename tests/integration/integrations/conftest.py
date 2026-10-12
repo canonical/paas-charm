@@ -451,9 +451,10 @@ def deploy_prometheus_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
+        juju.cli("trust", prometheus_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[prometheus_app_name].is_active,
-        error=jubilant.any_blocked,
+        error=jubilant.any_error,
         timeout=6 * 60,
     )
     return App(prometheus_app_name)
@@ -467,9 +468,10 @@ def deploy_loki_fixture(
     """Deploy loki."""
     if not juju.status().apps.get(loki_app_name):
         juju.deploy(loki_app_name, channel="1/stable", trust=True)
+        juju.cli("trust", loki_app_name, "--scope=cluster", include_model=False)
     juju.wait(
         lambda status: status.apps[loki_app_name].is_active,
-        error=jubilant.any_blocked,
+        error=jubilant.any_error,
     )
     return App(loki_app_name)
 
@@ -490,6 +492,7 @@ def deploy_cos_fixture(
             base="ubuntu@20.04",
             trust=True,
         )
+        juju.cli("trust", grafana_app_name, "--scope=cluster", include_model=False)
         juju.wait(
             lambda status: jubilant.all_active(
                 status, loki_app.name, prometheus_app.name, grafana_app_name
