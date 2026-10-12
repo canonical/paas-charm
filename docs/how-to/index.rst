@@ -1,6 +1,9 @@
 .. Copyright 2025 Canonical Ltd.
 .. See LICENSE file for licensing details.
 
+.. meta::
+   :description: Browse how-to guides for managing 12-factor app rocks and charms, including upgrading to paas-charm 2.0.
+
 How-to guides
 =============
 
@@ -55,8 +58,8 @@ The pages below describe general tasks related to managing a deployment:
 
 * :ref:`Publish a 12-factor app charm to Charmhub <how_to_publish_charm>`: How to upload your charm and OCI
   image resource to Charmhub and release them to a channel.
-* :ref:`Upgrade <how_to_upgrade>`: Information for upgrading your 12-factor app rock, deployed
-  charm, or ``paas-charm`` version.
+* :ref:`Upgrade <how_to_upgrade>`: Upgrade a 12-factor app rock or deployed charm, including the
+  complete ``paas-charm`` 2.0 and Ubuntu 24.04 LTS to Ubuntu 26.04 LTS migration workflow.
 * :ref:`Get support <how_to_get_support>`: A useful guide for if you get stuck or have questions.
 
 
