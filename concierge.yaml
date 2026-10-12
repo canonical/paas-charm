@@ -4,7 +4,7 @@
 version: 1
 
 juju:
-  channel: 4.0/candidate
+  channel: 4.0/stable
   model-defaults:
     test-mode: "true"
     automatically-retry-hooks: "false"
