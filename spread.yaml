@@ -12,6 +12,10 @@ backends:
     disk: 50G
     systems:
       - ubuntu-24.04
+    prepare: |
+      if [ -n "${PRE_SCRIPT:-}" ]; then
+        bash "${SPREAD_PATH}/${PRE_SCRIPT}"
+      fi
     debug: |
       set +e
 
@@ -60,3 +64,5 @@ integration-suites:
       - integration-test
     environment:
       CONCIERGE: concierge.yaml
+      PRE_SCRIPT/integrations_test_s3: s3-installation.sh
+      PRE_SCRIPT/integrations_test_tracing: s3-installation.sh
