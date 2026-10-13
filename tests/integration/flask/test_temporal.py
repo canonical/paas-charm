@@ -25,7 +25,7 @@ def temporal_app_fixture(juju: jubilant.Juju) -> App:
     if TEMPORAL_APP not in deployed_apps:
         juju.deploy(
             TEMPORAL_APP,
-            channel="1.23/edge",
+            channel="1.23/stable",
             config={
                 "external-hostname": TEMPORAL_HOST,
                 "global-rps-limit": 100,
@@ -33,7 +33,7 @@ def temporal_app_fixture(juju: jubilant.Juju) -> App:
             },
         )
     if TEMPORAL_ADMIN_APP not in deployed_apps:
-        juju.deploy(TEMPORAL_ADMIN_APP, channel="1.23/edge")
+        juju.deploy(TEMPORAL_ADMIN_APP, channel="1.23/stable")
     if POSTGRESQL_APP not in deployed_apps:
         juju.deploy(POSTGRESQL_APP, channel="14/stable", trust=True)
     if CERTIFICATES_APP not in deployed_apps:

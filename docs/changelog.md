@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Use compatible stable Temporal charms in the Flask integration test.
 * feat: Rename environment variables for config options and secret entries using
   `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
   Unmapped options retain their existing protection against framework field names.
