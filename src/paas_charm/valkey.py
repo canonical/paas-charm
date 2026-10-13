@@ -14,7 +14,7 @@ from dpcharmlibs.interfaces import (
 from pydantic import ValidationError
 
 from paas_charm.app import _db_url_to_env_variables
-from paas_charm.exceptions import InvalidRelationDataError
+from paas_charm.exceptions import InvalidRelationDataError, RelationDataError
 from paas_charm.relations import CustomRelation, OnChange
 from paas_charm.utils import build_validation_error_message
 
@@ -141,21 +141,24 @@ class ValkeyRelation(CustomRelation):
             self._requirer.valkey_interface.on.resource_created, on_change, True
         )
 
-    def is_ready(self) -> bool:
-        """Return True when Valkey relation data is present.
+    def ensure_ready(self) -> None:
+        """Check that configured Valkey relation data is ready.
 
-        Returns:
-            True if the relation is not configured or has valid data;
-            False if configured but data is absent.
+        Raises:
+            RelationDataError: If configured Valkey relation data is absent, invalid,
+                or unsupported.
         """
         if not self._requirer:  # not configured
-            return True
-        return self._requirer.to_relation_data() is not None
+            return
+        try:
+            relation_data = self._requirer.to_relation_data()
+        except RelationDataError as exc:
+            raise RelationDataError(str(exc), self.relation_name) from exc
+        if relation_data is None:
+            raise RelationDataError("Valkey relation data is not ready", self.relation_name)
 
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
-
-        Called only when :meth:`is_ready` returns ``True``.
 
         Returns:
             A mapping of environment variable names to values (default ``{}``).

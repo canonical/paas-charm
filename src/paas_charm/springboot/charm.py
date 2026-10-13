@@ -16,7 +16,6 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
-from paas_charm.relations import CustomRelation
 from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
@@ -390,9 +389,11 @@ class Charm(PaasCharm):
     Attrs:
         framework_config_class: Base class for framework configuration.
         paas_config_framework_fields: Mapping from framework fields to paas-config fields.
+        builtin_relations: Built-in relation classes with Spring Boot-specific behavior.
     """
 
     framework_config_class = SpringBootConfig
+    builtin_relations = [SpringValkeyRelation]
     paas_config_framework_fields = {
         "server_port": "port",
     }
@@ -404,15 +405,6 @@ class Charm(PaasCharm):
             framework: operator framework.
         """
         super().__init__(framework=framework, framework_name="spring-boot")
-
-    def _override_builtin_relations(
-        self, builtin_relations: list[type[CustomRelation]]
-    ) -> list[type[CustomRelation]]:
-        """Override ValkeyRelation."""
-        if ValkeyRelation in builtin_relations:
-            idx = builtin_relations.index(ValkeyRelation)
-            builtin_relations[idx] = SpringValkeyRelation
-        return builtin_relations
 
     @property
     def _workload_config(self) -> WorkloadConfig:

@@ -11,22 +11,10 @@ import json
 import pytest
 from ops import testing
 
-from paas_charm.relations import CustomRelation
+from paas_charm.charm import PaasCharm
+from paas_charm.springboot.charm import Charm as SpringBootCharm
 from paas_charm.springboot.charm import SpringValkeyRelation
 from paas_charm.valkey import ValkeyRelation
-
-
-class _SampleRelation(CustomRelation):
-    """Sample relation used as a placeholder when overriding builtin relations."""
-
-    relation_name = "sample"
-
-    def setup(self, on_change) -> None:  # pylint: disable=unused-argument
-        """No-op setup."""
-
-    def gen_environment(self) -> dict[str, str]:
-        """Return no environment variables."""
-        return {}
 
 
 @pytest.mark.parametrize(
@@ -166,47 +154,14 @@ def test_metrics_config(
     ]
 
 
-@pytest.mark.parametrize(
-    "builtin_relations, expected",
-    [
-        pytest.param(
-            [ValkeyRelation],
-            [SpringValkeyRelation],
-            id="valkey replaced",
-        ),
-        pytest.param(
-            [],
-            [],
-            id="no builtin relations",
-        ),
-        pytest.param(
-            [_SampleRelation, ValkeyRelation],
-            [_SampleRelation, SpringValkeyRelation],
-            id="other relations preserved",
-        ),
-        pytest.param(
-            [SpringValkeyRelation],
-            [SpringValkeyRelation],
-            id="idempotent",
-        ),
-    ],
-)
-def test_override_builtin_relations(
-    springboot_context,
-    base_state,
-    builtin_relations: list[type[CustomRelation]],
-    expected: list[type[CustomRelation]],
-) -> None:
+def test_builtin_relations():
     """
-    arrange: a springboot charm with a set of builtin relation classes.
-    act: call the builtin relations override hook with the given relation classes.
-    assert: ValkeyRelation is replaced by SpringValkeyRelation while any other
-        relation class is left untouched.
+    arrange: the base and Spring Boot charm classes.
+    act: inspect their builtin relation declarations.
+    assert: Spring Boot uses SpringValkeyRelation without changing the base defaults.
     """
-    state = testing.State(**base_state)
-    with springboot_context(springboot_context.on.config_changed(), state) as manager:
-        assert manager.charm._override_builtin_relations(builtin_relations) == expected
-        manager.run()
+    assert SpringBootCharm.builtin_relations == [SpringValkeyRelation]
+    assert PaasCharm.builtin_relations == [ValkeyRelation]
 
 
 def test_builtin_valkey_relation_is_spring_valkey(springboot_context, base_state) -> None:

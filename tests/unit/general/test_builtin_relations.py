@@ -5,8 +5,14 @@
 
 from unittest.mock import MagicMock
 
+import pytest
+
+from paas_charm.exceptions import RelationDataError
 from paas_charm.valkey import (
+    InvalidValkeyRelationDataError,
+    ValkeyMultipleRelationsNotSupportedError,
     ValkeyRelation,
+    ValkeyTLSNotSupportedError,
 )
 
 
@@ -31,26 +37,67 @@ def _make_relation(charm_mock, relation_class, relation_name, optional=True):
     return relation
 
 
-def test_valkey_relation_is_ready_with_data():
+@pytest.mark.parametrize("optional", [True, False])
+def test_valkey_relation_ensure_ready_with_data(optional):
     """
     arrange: A ValkeyRelation containing valkey data.
-    act: Call is_ready.
-    assert: Returns True.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
     """
     charm_mock = MagicMock()
-    relation = _make_relation(charm_mock, ValkeyRelation, "valkey")
+    relation = _make_relation(charm_mock, ValkeyRelation, "valkey", optional=optional)
     relation._requirer = MagicMock()
-    assert relation.is_ready() is True
+    assert relation.ensure_ready() is None
+    relation._requirer.to_relation_data.assert_called_once_with()
 
 
-def test_valkey_relation_not_ready_without_data():
+@pytest.mark.parametrize("optional", [True, False])
+def test_valkey_relation_not_ready_without_data(optional):
     """
-    arrange: A ValkeyRelation no valkey data, required.
-    act: Call is_ready.
-    assert: Returns False.
+    arrange: A configured ValkeyRelation with no Valkey data.
+    act: Call ensure_ready.
+    assert: Raises RelationDataError identifying the Valkey endpoint.
     """
     charm_mock = MagicMock()
-    relation = _make_relation(charm_mock, ValkeyRelation, "valkey", optional=False)
+    relation = _make_relation(charm_mock, ValkeyRelation, "valkey", optional=optional)
     relation._requirer = MagicMock()
     relation._requirer.to_relation_data.return_value = None
-    assert relation.is_ready() is False
+    with pytest.raises(RelationDataError, match="Valkey relation data is not ready") as exc:
+        relation.ensure_ready()
+    assert exc.value.relation == "valkey"
+
+
+def test_valkey_relation_ensure_ready_when_not_configured():
+    """
+    arrange: A ValkeyRelation without a configured requirer.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), ValkeyRelation, "valkey")
+    assert relation.ensure_ready() is None
+
+
+@pytest.mark.parametrize(
+    "error_type",
+    [
+        InvalidValkeyRelationDataError,
+        ValkeyMultipleRelationsNotSupportedError,
+        ValkeyTLSNotSupportedError,
+    ],
+)
+def test_valkey_relation_ensure_ready_wraps_invalid_data(error_type):
+    """
+    arrange: A ValkeyRelation whose requirer rejects invalid or unsupported data.
+    act: Call ensure_ready.
+    assert: RelationDataError preserves the original message, endpoint, and cause.
+    """
+    relation = _make_relation(MagicMock(), ValkeyRelation, "valkey")
+    relation._requirer = MagicMock()
+    error = error_type("Invalid Valkey data")
+    relation._requirer.to_relation_data.side_effect = error
+    with pytest.raises(RelationDataError, match="Invalid Valkey data") as exc:
+        relation.ensure_ready()
+    assert type(exc.value) is RelationDataError
+    assert str(exc.value) == str(error)
+    assert exc.value.relation == "valkey"
+    assert exc.value.__cause__ is error

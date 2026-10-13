@@ -410,7 +410,6 @@ def test_custom_relation_environments():
         "VALKEY_VERSION": "",
     }
     valkey = MagicMock()
-    valkey.is_ready.return_value = True
     valkey.gen_environment.return_value = ValkeyRelation._generate_valkey_env(
         ValkeyResponseModel(
             endpoints="valkey://localhost:6379?db=0&timeout=5",

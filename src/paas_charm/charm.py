@@ -60,11 +60,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         framework_config_class: base class for the framework config.
         paas_config_framework_fields: Mapping from framework fields to paas-config fields.
         custom_relations: Classes describing charm relations.
+        builtin_relations: Built-in relation classes, overridable by framework charms.
     """
 
     framework_config_class: type[BaseModel]
     paas_config_framework_fields: dict[str, str] = {}
     custom_relations: list[type[CustomRelation]] = []
+    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation]
 
     @property
     @abc.abstractmethod
@@ -101,9 +103,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._peers = Peers(charm=self)
         self._database_requirers = make_database_requirers(self, self.app.name)
 
-        builtin_relations: list[type[CustomRelation]] = []
         requires: dict[str, RelationMeta] = self.framework.meta.requires
-        builtin_relations.append(ValkeyRelation)
         self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
@@ -181,14 +181,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
 
         self._custom_relations: list[CustomRelation] = self._init_custom_relations(
-            builtin_relations=self._override_builtin_relations(builtin_relations)
+            builtin_relations=self.builtin_relations
         )
-
-    def _override_builtin_relations(
-        self, builtin_relations: list[type[CustomRelation]]
-    ) -> list[type[CustomRelation]]:
-        """Override relation(s) class(es), if necessary."""
-        return builtin_relations
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
