@@ -9,13 +9,14 @@ import pathlib
 import typing
 from dataclasses import dataclass, field
 
-from pydantic import BaseModel, Field, ValidationError, create_model
+from pydantic import AliasChoices, BaseModel, Field, ValidationError, create_model
 
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
     InvalidRelationDataError,
     RelationDataError,
 )
+from paas_charm.paas_config import ConfigOptions
 from paas_charm.peers import Peers
 from paas_charm.relations import CustomRelation
 from paas_charm.secret_key import SecretKeyStorage
@@ -50,6 +51,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: the charm managed application secret key.
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
+        config_options: Settings for existing charm configuration options.
+        framework_config_fields: Accepted framework config input names mapped to model fields.
+        framework_config_field_names: Framework fields protected from implicit user config outputs.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -58,12 +62,15 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework: str,
         is_secret_key_ready: bool,
         user_defined_config: dict[str, int | str | bool | dict[str, str]] | None = None,
-        framework_config: dict[str, int | str] | None = None,
+        framework_config: dict[str, int | str | dict[str, str]] | None = None,
         secret_key: str | None = None,
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
+        config_options: ConfigOptions | None = None,
+        framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
+        framework_config_field_names: set[str] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -76,7 +83,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
+            config_options: Settings for existing charm configuration options.
+            framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
+            framework_config_field_names: Framework fields protected from implicit user outputs.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -86,6 +96,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.config_options = config_options if config_options is not None else ConfigOptions()
+        self.framework_config_fields = framework_config_fields or {}
+        self.framework_config_field_names = framework_config_field_names or set()
         self.custom_relations = custom_relations or []
 
     @classmethod
@@ -101,6 +114,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         integration_requirers: "IntegrationRequirers",
         custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
+        config_options: ConfigOptions | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
@@ -114,6 +128,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integration_requirers: The collection of integration requirers.
             custom_relations: Custom relations.
             base_url: Base URL for the service.
+            config_options: Settings for existing charm configuration options.
 
         Return:
             The CharmState instance created by the provided charm.
@@ -122,16 +137,22 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             CharmConfigInvalidError: If some parameter in invalid.
             RelationDataError: When relation data is either unavailable, invalid or not usable.
         """
+        framework_fields = framework_config_option_fields(type(framework_config), config.keys())
+        for option, field_name in framework_config_option_fields(
+            type(framework_config), config_metadata(pathlib.Path(charm_dir))["options"]
+        ).items():
+            if field_name not in framework_fields.values():
+                framework_fields[option] = field_name
+        framework_options = set(framework_fields)
         user_defined_config = {
             k.replace("-", "_"): v
             for k, v in config.items()
-            if is_user_defined_config(k, framework)
-        }
-        user_defined_config = {
-            k: v for k, v in user_defined_config.items() if k not in framework_config.dict().keys()
+            if is_user_defined_config(k, framework) and k not in framework_options
         }
 
-        app_config_class = app_config_class_factory(charm_dir, framework)
+        app_config_class = app_config_class_factory(
+            charm_dir, framework, framework_options=framework_options
+        )
         try:
             app_config_class(**user_defined_config)
         except ValidationError as exc:
@@ -230,6 +251,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_key=(secret_key.get_secret_key() if secret_key.is_ready else None),
             is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
+            config_options=config_options,
+            framework_config_fields=framework_fields,
+            framework_config_field_names=set(type(framework_config).model_fields),
             integrations=integrations,
             base_url=base_url,
             custom_relations=custom_relations,
@@ -256,7 +280,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         )
 
     @property
-    def framework_config(self) -> dict[str, str | int | bool]:
+    def framework_config(self) -> dict[str, str | int | bool | dict[str, str]]:
         """Get the value of the framework application specific configuration.
 
         Returns:
@@ -413,12 +437,19 @@ def _create_config_attribute(option_name: str, option: dict) -> tuple[str, tuple
     return (option_name, type_tuple)
 
 
-def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[BaseModel]:
+def app_config_class_factory(
+    charm_dir: pathlib.Path,
+    framework: str,
+    *,
+    framework_options: set[str] | None = None,
+) -> type[BaseModel]:
     """App config class factory.
 
     Args:
         charm_dir: The charm directory.
         framework: The framework name.
+        framework_options: Exact framework-owned option names to exclude.
+            If omitted, only reserved prefixes are excluded.
 
     Returns:
         Constructed app config class.
@@ -428,9 +459,41 @@ def app_config_class_factory(charm_dir: pathlib.Path, framework: str) -> type[Ba
         _create_config_attribute(option_name, config_options[option_name])
         for option_name in config_options
         if is_user_defined_config(option_name, framework)
+        and (framework_options is None or option_name not in framework_options)
     )
     # mypy doesn't like the model_attributes dict
     return create_model("AppConfig", **model_attributes)  # type: ignore[call-overload]
+
+
+def framework_config_option_fields(
+    framework_config_class: type[BaseModel], options: typing.Collection[str]
+) -> dict[str, str]:
+    """Map accepted flat config inputs to their framework model fields.
+
+    Args:
+        framework_config_class: Framework configuration model class.
+        options: Available charm configuration option names.
+
+    Returns:
+        Exact input names selected according to the model's alias validation rules.
+    """
+    config = framework_config_class.model_config
+    allow_name = config.get("validate_by_name", config.get("populate_by_name", False))
+    fields: dict[str, str] = {}
+    for field_name, model_field in framework_config_class.model_fields.items():
+        names: list[str] = []
+        alias = model_field.validation_alias
+        if config.get("validate_by_alias") is not False:
+            if isinstance(alias, str):
+                names.append(alias)
+            elif isinstance(alias, AliasChoices):
+                names.extend(name for name in alias.choices if isinstance(name, str))
+        if alias is None or allow_name:
+            names.append(field_name)
+        source = next((name for name in names if name in options), None)
+        if source is not None:
+            fields[source] = field_name
+    return fields
 
 
 def is_user_defined_config(option_name: str, framework: str) -> bool:

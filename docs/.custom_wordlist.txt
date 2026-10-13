@@ -1,6 +1,7 @@
 Analytics
 args
 async
+booleans
 CHANGELOG
 Changelog
 changelog
