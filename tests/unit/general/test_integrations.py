@@ -934,18 +934,26 @@ def test_openfga_not_activated(
 
 
 @pytest.mark.parametrize(
-    "charm_type",
-    [FlaskCharm, DjangoCharm, FastAPICharm, GoCharm, ExpressJSCharm],
+    "charm_type, framework, app_prefix",
+    [
+        pytest.param(FlaskCharm, "flask", "FLASK", id="flask"),
+        pytest.param(DjangoCharm, "django", "DJANGO", id="django"),
+        pytest.param(FastAPICharm, "fastapi", "APP", id="fastapi"),
+        pytest.param(GoCharm, "go", "APP", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", "APP", id="expressjs"),
+    ],
 )
 def test_peers_relation_departed_hook(
     charm_type: type,
+    framework: str,
+    app_prefix: str,
     context_factory,
     framework_state_factory,
 ):
     """
     arrange: Run initial hooks. Add a unit to the peers relation.
     act: Remove one unit from the peers relation.
-    assert: The _reconcile function should be called once.
+    assert: The departing unit should be removed from the peer environment variable.
     """
     state_dict = framework_state_factory(charm_type)
     peer_relation = next(
@@ -958,13 +966,55 @@ def test_peers_relation_departed_hook(
     )
     state_dict["relations"].append(peer_relation)
     context = context_factory(charm_type)
-    with context(
+    out = context.run(
         context.on.relation_departed(peer_relation, remote_unit=1),
         testing.State(**state_dict),
-    ) as manager:
-        manager.charm._reconcile = unittest.mock.MagicMock()
-        manager.run()
-        manager.charm._reconcile.assert_called_once()
+    )
+
+    service_env = out.get_container("app").plan.services[framework].environment
+    assert f"{app_prefix}_PEER_FQDNS" not in service_env
+
+
+@pytest.mark.parametrize(
+    "charm_type, framework, app_prefix",
+    [
+        pytest.param(FlaskCharm, "flask", "FLASK", id="flask"),
+        pytest.param(DjangoCharm, "django", "DJANGO", id="django"),
+        pytest.param(FastAPICharm, "fastapi", "APP", id="fastapi"),
+        pytest.param(GoCharm, "go", "APP", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs", "APP", id="expressjs"),
+    ],
+)
+def test_peers_relation_changed_excludes_marked_departing_unit(
+    charm_type: type,
+    framework: str,
+    app_prefix: str,
+    context_factory,
+    framework_state_factory,
+):
+    """
+    arrange: Mark a unit in the peers relation as departing.
+    act: Reconcile the relation change.
+    assert: The marked unit should be excluded from the peer environment variable.
+    """
+    state_dict = framework_state_factory(charm_type)
+    peer_relation = next(
+        relation for relation in state_dict["relations"] if relation.endpoint == "peers"
+    )
+    state_dict["relations"].remove(peer_relation)
+    peer_relation = testing.PeerRelation(
+        "peers",
+        peers_data={1: {"departing": "true"}},
+    )
+    state_dict["relations"].append(peer_relation)
+    context = context_factory(charm_type)
+    out = context.run(
+        context.on.relation_changed(peer_relation, remote_unit=1),
+        testing.State(**state_dict),
+    )
+
+    service_env = out.get_container("app").plan.services[framework].environment
+    assert f"{app_prefix}_PEER_FQDNS" not in service_env
 
 
 @pytest.mark.parametrize(
