@@ -10,16 +10,9 @@ import pytest
 from paas_charm.valkey import (
     ValkeyClientRequirer,
     ValkeyMultipleRelationsNotSupportedError,
+    ValkeyRelation,
     ValkeyTLSNotSupportedError,
 )
-
-
-# map the new relation interface to legacy one
-# Note: similar, but not the same as in tests/unit/springboot/test_integrations.py
-def generate_valkey_env(relation_data=None) -> dict[str, str]:
-    from paas_charm.valkey import ValkeyRelation
-
-    return ValkeyRelation._generate_valkey_env(relation_data)
 
 
 @pytest.mark.parametrize(
@@ -87,10 +80,10 @@ def generate_valkey_env(relation_data=None) -> dict[str, str]:
 def test_valkey_environ_mapper_generate_env(relation_data, expected_env):
     """
     arrange: given Valkey relation data (ValkeyResponseModel).
-    act: when generate_valkey_env is called.
+    act: when ValkeyRelation._generate_valkey_env is called.
     assert: expected environment variables are generated.
     """
-    assert generate_valkey_env(relation_data) == expected_env
+    assert ValkeyRelation._generate_valkey_env(relation_data) == expected_env
 
 
 @patch("paas_charm.valkey.ResourceRequirerEventHandler")

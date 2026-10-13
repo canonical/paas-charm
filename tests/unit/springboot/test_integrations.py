@@ -14,12 +14,6 @@ from paas_charm.springboot.charm import SpringValkeyRelation, generate_smtp_env
 # pylint: disable=R0801
 
 
-# map the new relation interface to legacy one
-# Note: similar, but not the same as in tests/unit/general/test_valkey.py
-def generate_valkey_env(relation_data=None) -> dict[str, str]:
-    return SpringValkeyRelation._generate_valkey_env(relation_data)
-
-
 def test_integration_mappers_without_relation_data() -> None:
     """
     arrange: no SMTP or Valkey relation data.
@@ -27,7 +21,7 @@ def test_integration_mappers_without_relation_data() -> None:
     assert: no environment variables are generated.
     """
     assert not generate_smtp_env()
-    assert not generate_valkey_env()
+    assert not SpringValkeyRelation._generate_valkey_env()
 
 
 def test_valkey_environment_with_credentials() -> None:
@@ -47,7 +41,7 @@ def test_valkey_environment_with_credentials() -> None:
         **{"pass" + "word": credential},
     )
 
-    assert generate_valkey_env(relation_data) == {
+    assert SpringValkeyRelation._generate_valkey_env(relation_data) == {
         "spring.data.valkey.url": (f"valkey://application:{credential}@valkey-primary:6379"),
         "spring.data.valkey.host": "valkey-primary",
         "spring.data.valkey.port": "6379",
