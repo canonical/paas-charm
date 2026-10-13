@@ -801,11 +801,14 @@ def deploy_postgresql(
 
     juju.deploy(
         "postgresql-k8s",
-        channel="16/edge",
-        base="ubuntu@24.04",
+        channel="14/stable",
+        revision=925,
+        base="ubuntu@22.04",
         trust=True,
         config={
             "profile": "testing",
+            "plugin_hstore_enable": "true",
+            "plugin_pg_trgm_enable": "true",
         },
         force=True,
     )

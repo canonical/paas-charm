@@ -31,7 +31,7 @@ def update_config(juju: jubilant.Juju, request: pytest.FixtureRequest, django_ap
 
     request_config = {k: str(v) for k, v in request.param.items()}
     juju.config(app_name, request_config)
-    juju.wait(lambda status: jubilant.all_active(status, app_name))
+    juju.wait(lambda status: jubilant.all_active(status, app_name), successes=5, delay=5)
 
     yield request_config
 
@@ -61,7 +61,7 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, dj
         secret_ids.append(secret_id)
 
     juju.config(app_name, request_config)
-    juju.wait(lambda status: jubilant.all_active(status, app_name))
+    juju.wait(lambda status: jubilant.all_active(status, app_name), successes=5, delay=5)
 
     yield request_config
 
@@ -69,6 +69,7 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, dj
     restore_config = {k: str(v) for k, v in orig_config.items() if k in request_config}
     reset_config = [k for k in request_config if orig_config.get(k) is None]
     juju.config(app_name, restore_config, reset=reset_config)
+    juju.wait(lambda status: jubilant.all_active(status, app_name), successes=5, delay=5)
 
     for secret_id in secret_ids:
         juju.remove_secret(secret_id)

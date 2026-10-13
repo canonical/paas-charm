@@ -35,7 +35,7 @@ def temporal_app_fixture(juju: jubilant.Juju) -> App:
     if TEMPORAL_ADMIN_APP not in deployed_apps:
         juju.deploy(TEMPORAL_ADMIN_APP, channel="1.23/edge")
     if POSTGRESQL_APP not in deployed_apps:
-        juju.deploy(POSTGRESQL_APP, channel="14/stable", trust=True)
+        juju.deploy(POSTGRESQL_APP, channel="14/stable", trust=True, force=True)
     if CERTIFICATES_APP not in deployed_apps:
         juju.deploy(CERTIFICATES_APP, channel="latest/stable")
 

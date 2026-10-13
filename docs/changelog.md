@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Support Juju 4 in integration tests and exclude departing units from peer addresses.
 * feat: Add the public `paas_charm.relations.CustomRelation` extension API so
   charm authors can add their own Juju relations to a 12-factor charm
   (environment variables, readiness/blocking, reconcile) without importing or
