@@ -12,7 +12,7 @@ juju:
 providers:
   lxd:
     enable: true
-    bootstrap: true
+    bootstrap: false
   k8s:
     enable: true
     bootstrap: true
