@@ -1,3 +1,6 @@
+.. meta::
+   :description: Technical reference for the features and capabilities you can customize in a 12-factor app charm.
+
 .. _ref_supported_customization:
 
 Supported customizable features and capabilities
@@ -15,8 +18,11 @@ in a 12-factor app rock and charm:
 * :ref:`Adding custom relations <how_to_add_custom_relation>` (via the public
   ``CustomRelation`` extension API)
 * :ref:`Handling secrets <charmcraft:configure-12-factor-charms-manage-secrets>`
+* :ref:`Application secret key storage and rotation <ref_secrets>`
 * :ref:`Overriding commands <rockcraft:set-up-web-app-rock-override-commands>`
 * Application and metrics ports and the metrics path via ``paas-config.yaml``
+* Additional Prometheus scrape jobs via ``prometheus.scrape_configs`` in ``paas-config.yaml``
+* Valkey integration through the ``valkey_client`` interface
 * Structured framework logging in JSON via ``framework_logging_format: json`` in ``paas-config.yaml``
 * Task manager and scheduler
     .. tabs::

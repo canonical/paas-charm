@@ -1,5 +1,8 @@
+.. Copyright 2025 Canonical Ltd.
+.. See LICENSE file for licensing details.
+
 .. meta::
-   :description: Technical details about 12-factor charm architecture.
+   :description: Technical details about the architecture of a 12-factor app charm, including its workload layout and event handling.
 
 .. _ref_charm_architecture:
 
@@ -58,6 +61,26 @@ We use :doc:`Rockcraft <rockcraft:index>` to build OCI Images for the web app ch
    :ref:`How to publish your charm on Charmhub <charmcraft:publish-a-charm>`
    
    :ref:`Build a 12-factor app rock <rockcraft:how-to-manage-a-12-factor-app-rock>`
+
+Workload layout
+---------------
+
+The workload container uses a consistent filesystem layout across all supported
+frameworks:
+
+* ``/app`` holds the application source code. On the Ubuntu 26.04 LTS base,
+  the Rockcraft extensions place the application in ``/app``; on lower bases
+  some frameworks use a framework-prefixed directory such as ``/flask/app`` or
+  ``/django/app``. Gunicorn access and error logs use the workload container's
+  stdout and stderr streams.
+* On the Ubuntu 26.04 LTS base, ``/var/lib/gunicorn`` holds the mutable
+  ``gunicorn.conf.py`` file used by Flask and Django, separate from the
+  ``/app`` directory.
+* ``/app-data`` is a writable application data directory for
+  application-generated data, owned by the ``_daemon_`` user on the Ubuntu 26.04
+  LTS base, where 12-factor charms run as a non-root user by default. It is
+  part of the container filesystem, so its contents don't persist across
+  container replacement unless a volume is mounted at that path.
 
 Juju events
 -----------
