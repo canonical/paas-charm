@@ -7,10 +7,10 @@ import collections
 import contextlib
 import logging
 import pathlib
+import socket
 import subprocess
 import sys
 import time
-from secrets import token_hex
 from typing import cast
 
 import jubilant
@@ -20,7 +20,6 @@ import urllib3.util.connection
 from lightkube import Client
 from lightkube.generic_resource import create_namespaced_resource
 from lightkube.resources.core_v1 import Service
-from minio import Minio
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from tests.integration.conftest import deploy_postgresql, generate_app_fixture
@@ -29,6 +28,9 @@ from tests.integration.types import App
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 HOSTNAME = "gateway.internal"
+S3_ACCESS_KEY = "my-lovely-key"
+S3_SECRET_KEY = "this-is-very-secret"
+S3_PORT = 7480
 
 logger = logging.getLogger(__name__)
 
@@ -186,23 +188,16 @@ def expressjs_app_fixture(
     )
 
 
-@pytest.fixture(scope="module", name="minio_app_name")
-def minio_app_name_fixture() -> str:
-    return "minio"
-
-
 @pytest.fixture(scope="module", name="s3_credentials")
-def s3_credentials_fixture(
-    juju: jubilant.Juju,
-):
+def s3_credentials_fixture():
     return {
-        "access-key": token_hex(16),
-        "secret-key": token_hex(16),
+        "access-key": S3_ACCESS_KEY,
+        "secret-key": S3_SECRET_KEY,
     }
 
 
 @pytest.fixture(scope="module", name="s3_configuration")
-def s3_configuration_fixture(minio_app_name: str) -> dict:
+def s3_configuration_fixture() -> dict:
     """Return the S3 configuration to use for media
 
     Returns:
@@ -213,23 +208,14 @@ def s3_configuration_fixture(minio_app_name: str) -> dict:
         "path": "/path",
         "region": "us-east-1",
         "s3-uri-style": "path",
-        "endpoint": f"http://{minio_app_name}-0.{minio_app_name}-endpoints:9000",
+        "endpoint": f"http://{_get_routable_host_ip()}:{S3_PORT}",
     }
 
 
-@pytest.fixture(scope="module", name="minio_app")
-def minio_app_fixture(juju: jubilant.Juju, minio_app_name, s3_credentials):
-    """Deploy and set up minio and s3-integrator needed for s3-like storage backend in the HA charms."""
-    config = s3_credentials
-    juju.deploy(
-        minio_app_name,
-        channel="edge",
-        config=config,
-        trust=True,
-    )
-
-    juju.wait(lambda status: status.apps[minio_app_name].is_active, timeout=60 * 30)
-    return App(minio_app_name)
+def _get_routable_host_ip() -> str:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
 
 
 @pytest.fixture(scope="module", name="valkey_app_name")
@@ -288,7 +274,7 @@ def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
 
 
 @pytest.fixture(scope="module", name="s3_integrator_app")
-def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3_configuration):
+def s3_integrator_app_fixture(juju: jubilant.Juju, s3_credentials, s3_configuration):
     s3_integrator = "s3-integrator"
     juju.deploy(
         s3_integrator,
@@ -298,21 +284,6 @@ def s3_integrator_app_fixture(juju: jubilant.Juju, minio_app, s3_credentials, s3
         lambda status: jubilant.all_blocked(status, s3_integrator),
         timeout=120,
     )
-    status = juju.status()
-    minio_addr = status.apps[minio_app.name].units[minio_app.name + "/0"].address
-
-    mc_client = Minio(
-        f"{minio_addr}:9000",
-        access_key=s3_credentials["access-key"],
-        secret_key=s3_credentials["secret-key"],
-        secure=False,
-    )
-
-    # create tempo bucket
-    bucket_name = s3_configuration["bucket"]
-    found = mc_client.bucket_exists(bucket_name)
-    if not found:
-        mc_client.make_bucket(bucket_name)
 
     # configure s3-integrator
     juju.config(
@@ -330,7 +301,7 @@ def tempo_app_fixture(
     juju: jubilant.Juju,
     s3_integrator_app,
 ):
-    """Deploys tempo in its HA version together with minio and s3-integrator."""
+    """Deploy Tempo in its HA version together with s3-integrator."""
     tempo_app = "tempo"
     worker_app = "tempo-worker"
     tempo_worker_charm_url, worker_channel = "tempo-worker-k8s", "2/edge"
