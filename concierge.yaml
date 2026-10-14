@@ -7,7 +7,7 @@ juju:
   channel: 3/stable
   model-defaults:
     test-mode: "true"
-    automatically-retry-hooks: "false"
+    automatically-retry-hooks: "true"
 
 providers:
   lxd:
