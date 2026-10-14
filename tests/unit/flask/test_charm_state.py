@@ -161,8 +161,7 @@ def test_secret_configuration(flask_context, base_state):
     """
     arrange: prepare a juju secret configuration.
     act: set secret-test charm configurations.
-    assert: user_defined_config in the charm state should contain the value of the secret \
-        configuration.
+    assert: the workload receives mapped and unmapped secret entries under their expected names.
     """
     secret = testing.Secret(
         tracked_content={"foo": "foo", "bar": "bar", "foo-bar": "foobar"},
@@ -184,7 +183,8 @@ def test_secret_configuration(flask_context, base_state):
     # Expect: FLASK_SECRET_TEST_FOO=foo
     assert env.get("FLASK_SECRET_TEST_FOO") == "foo"
     assert env.get("FLASK_SECRET_TEST_BAR") == "bar"
-    assert env.get("FLASK_SECRET_TEST_FOO_BAR") == "foobar"
+    assert env.get("FLASK_SECRET_TEST_TOKEN") == "foobar"
+    assert "FLASK_SECRET_TEST_FOO_BAR" not in env
 
 
 def test_flask_secret_key_config(flask_context, base_state):
