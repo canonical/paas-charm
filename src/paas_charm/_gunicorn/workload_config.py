@@ -33,8 +33,7 @@ def create_workload_config(
     """
     paas_config = paas_config or PaasConfig()
     application_port = paas_config.application_port(default_port=8000)
-    # By default, the rock's statsd exporter serves the metrics on 9102 at /metrics. The charm
-    # doesn't configure it, so overriding them in paas-config.yaml is up to the user to serve.
+    # The statsd exporter port is not changed by these values.
     metrics_port, metrics_path = paas_config.metrics_endpoint(
         default_port=9102, default_path="/metrics"
     )
