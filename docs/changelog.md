@@ -24,8 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * breaking: All frameworks now store charm state (database migration status, original Pebble
   services) in `/tmp/paas-charm` instead of per-framework paths (`/tmp/<framework>/state`,
   `/app/state`). The directory is created by the charm, so rocks no longer need to provide
-  `/app/state`. On upgrade, the database migration runs once more.
-
+  `/app/state`.
+* refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
+  a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.
 * feat: Rename environment variables for config options and secret entries using
   `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
