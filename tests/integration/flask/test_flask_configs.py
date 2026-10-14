@@ -62,7 +62,11 @@ def test_flask_config(
     [
         pytest.param(
             {"secret-test": {"bar": "bar", "foo-bar": "foo-bar"}},
-            {"SECRET_TEST_BAR": "bar", "SECRET_TEST_FOO_BAR": "foo-bar"},
+            {
+                "SECRET_TEST_BAR": "bar",
+                "SECRET_TEST_TOKEN": "foo-bar",
+                "SECRET_TEST_FOO_BAR": None,
+            },
             id="user-secret",
         ),
         pytest.param(
@@ -82,8 +86,9 @@ def test_flask_secret_config(
 ):
     """
     arrange: build and deploy the flask charm, and change secret configurations.
-    act: query flask environment variables from the Flask server.
-    assert: the flask environment variables should match secret configuration values.
+    act: query secret configuration values from the Flask server.
+    assert: mapped entries use their selected names, unmapped entries keep their default
+        names, and renamed entries are absent under their default names.
     """
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():
@@ -137,7 +142,11 @@ def test_invalid_flask_config(
 @pytest.mark.parametrize(
     "update_config, expected_config",
     [
-        pytest.param({"foo-str": "testing"}, {"FOO_STR": "testing"}, id="str"),
+        pytest.param(
+            {"foo-str": "testing"},
+            {"MAPPED_STRING": "testing", "FOO_STR": None},
+            id="str",
+        ),
         pytest.param({"foo-int": 128}, {"FOO_INT": 128}, id="int"),
         pytest.param({"foo-bool": True}, {"FOO_BOOL": True}, id="bool"),
         pytest.param({"foo-dict": json.dumps({"a": 1})}, {"FOO_DICT": {"a": 1}}, id="dict"),
@@ -150,12 +159,13 @@ def test_app_config(
     flask_app: App,
     juju: jubilant.Juju,
     session_with_retry: requests.Session,
-    expected_config: dict[str, str | int | bool],
+    expected_config: dict[str, str | int | bool | dict[str, int] | None],
 ):
     """
     arrange: build and deploy the flask charm, and change Flask app configurations.
     act: none.
-    assert: Flask application should receive the application configuration correctly.
+    assert: Flask receives configuration values, including the renamed string option
+        without its default environment variable name.
     """
     status = juju.status()
     for unit in status.apps[flask_app.name].units.values():

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Notable changes to paas-charm, including new features, bug fixes, and backwards-incompatible changes."
+---
+
 <!-- vale Canonical.007-Headings-sentence-case = NO -->
 
 (changelog)=
@@ -11,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Use compatible stable Temporal charms in the Flask integration test.
+* feat: Rename environment variables for config options and secret entries using
+  `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.
+  Unmapped options retain their existing protection against framework field names.
+* fix: Relation outputs now override FastAPI and Spring Boot framework-generated settings
+  when names collide, even without explicit environment mappings.
 * feat: Add the public `paas_charm.relations.CustomRelation` extension API so
   charm authors can add their own Juju relations to a 12-factor charm
   (environment variables, readiness/blocking, reconcile) without importing or
@@ -27,10 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * breaking: Remove the `paas_app_charmer` import path.
 * fix: Replace the deprecated `hydra.oauth` charm library with
   `charmlibs.interfaces.oauth`.
-* breaking: Unify the Flask and Django application root directory and access/error logs under
-  `/app` instead of `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while
-  keeping the mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory.
-  Requires a rock built with the corresponding gunicorn v2 extension.
+* breaking: Unify the Flask and Django application root directory under `/app` instead of
+  `/flask` or `/django`, matching the FastAPI and ExpressJS convention, while keeping the
+  mutable `gunicorn.conf.py` under the separate `/var/lib/gunicorn` directory. Access and error
+  logs continue to use stdout and stderr.
+  Requires rebuilding the rock with an Ubuntu 26.04 LTS base or build base.
 * feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
   and store the auto-generated application secret key in a Juju application-owned
   secret instead of the peer relation databag. The peer relation is now used only
