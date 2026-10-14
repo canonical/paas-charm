@@ -27,7 +27,7 @@ def valkey_app_fixture(juju: jubilant.Juju):
     return App(valkey_app_name)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App):
     """Integrate Valkey with Flask apps."""
 
@@ -48,14 +48,6 @@ def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App)
         and jubilant.all_active(status, flask_app.name, valkey_app.name),
         timeout=10 * 60,
     )
-    yield
-    if relation_exists(juju.status()):
-        juju.remove_relation(flask_app.name, valkey_app.name)
-        juju.wait(
-            lambda status: not relation_exists(status)
-            and jubilant.all_active(status, flask_app.name, valkey_app.name),
-            timeout=10 * 60,
-        )
 
 
 @pytest.mark.parametrize(
