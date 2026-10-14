@@ -52,7 +52,7 @@ refreshing the application:
 .. code-block:: bash
     
     juju refresh myapp --resource app-image=localhost:32000/myapp:0.1 \
-    --path ./myapp-22.04-amd64.charm
+    --path ./<charm file>.charm
 
 Upgrading the charm itself
 --------------------------
@@ -63,11 +63,12 @@ If you've made changes to the charm source code, you need to repack the charm:
 
     charmcraft pack
 
-This generates a ``.charm`` file in the current directory. You can then refresh it in Juju:
+This generates a ``.charm`` file in the current directory. Its name depends on the
+charm name, base and architecture. You can then refresh it in Juju:
 
 .. code-block:: bash
 
-    juju refresh myapp --path ./myapp-22.04-amd64.charm
+    juju refresh myapp --path ./<charm file>.charm
 
 We pin major versions of ``paas-charm`` and do not introduce breaking changes in
 minor or patch releases. To upgrade to a new version of the ``paas-charm``
@@ -240,8 +241,12 @@ variables when packing:
 
    ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 rockcraft pack
    CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 charmcraft pack
-   juju refresh myapp --path ./myapp_amd64.charm \
+   juju refresh myapp --path ./myapp_amd64.charm --base ubuntu@26.04 \
      --resource app-image=<registry>/<rock name>:<version>
+
+Pass ``--base ubuntu@26.04`` explicitly. Without it, the units can stay on the
+previous base and fail after the refresh. For more details on changing bases, see
+:ref:`Change to the Ubuntu 26.04 LTS base <charmcraft:howto-change-to-ubuntu-26-04>`.
 
 After the refresh completes, verify the application with ``juju status`` and
 confirm that the workload is active and the ingress and observability relations

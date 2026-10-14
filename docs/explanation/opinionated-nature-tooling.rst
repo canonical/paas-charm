@@ -155,10 +155,13 @@ about the Python version used:
 
 * Specifying ``base: ubuntu@22.04`` (or ``base: bare`` and ``build-base: ubuntu@22.04``) will use Python 3.10 
 * Specifying ``base: ubuntu@24.04`` (or ``base: bare`` and ``build-base: ubuntu@24.04``) will use Python 3.12 
+* Specifying ``base: ubuntu@26.04`` (or ``base: bare`` and ``build-base: ubuntu@26.04``) will use the
+  Python version shipped with Ubuntu 26.04 (Python 3.14)
 
 For the Spring Boot framework, the base determines the default JDK version. This is a weak
 opinion that can be overridden by specifying the preferred version in the ``rockcraft.yaml``
-file under ``extensions > spring-boot-framework/install-app: > build-packages``.
+file under ``parts > spring-boot-framework/install-app > build-packages`` on Ubuntu 22.04 and 24.04, or
+``parts > spring-boot-framework.install-app > build-packages`` on Ubuntu 26.04.
 
 The JDK version has forward-compatibility but not backward-compatibility. For instance,
 a Spring Boot app using Java 8 will also work with Java 11, but not vice versa.

@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Review the Ubuntu 26.04 LTS documentation: correct the juju events reference,
+  the FastAPI default metrics port, the `paas-config.yaml` staging guidance, the
+  `uv` migration guide, the resource names per base, the upgrade steps (`--base`),
+  and the 2.0 release notes; fix typos and extension part names in the examples.
 * refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
   a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.

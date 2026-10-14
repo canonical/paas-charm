@@ -11,9 +11,19 @@ In ``paas-charm`` 2.0 and charms using the Ubuntu 26.04 LTS base, the
 plugin is the default. Charms using ``paas-charm`` 1.x use the ``charm`` plugin
 by default, and converting such a charm is considered a breaking change.
 This guide walks you
-through manually converting a V1 12-factor charm that uses
+through manually converting a 12-factor charm that uses
 the legacy ``charm`` plugin to the modern
 ``uv`` plugin backed by uv.
+
+.. important::
+
+    The Ubuntu 26.04 LTS framework extension adds the ``charm`` part (using the ``uv``
+    plugin and the ``charmlibs-pydeps`` dependency group) and, when a ``paas-config.yaml``
+    file exists, a ``config`` part automatically. Charmcraft rejects a ``charmcraft.yaml``
+    file that defines ``parts.charm`` together with the framework extension on 26.04.
+    For such charms, only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you
+    must not add the ``parts`` blocks below. The ``parts`` examples apply only if you
+    manage the charm build parts yourself.
 
 .. admonition:: Why migrate?
 
@@ -31,19 +41,19 @@ dependencies with pinned versions.
 
 For example, if your ``requirements.txt`` looks like:
 
-.. code-block:: bash
+.. code-block:: text
    :caption: requirements.txt
 
    cosl
    dpcharmlibs-interfaces==1.0.2
-   jsonschema >=4.19,&lt;4.20
+   jsonschema >=4.19,<4.20
    ops >= 2.6
    pydantic==2.13.3
    paas-charm==1.11.3
 
 Then replace the file with its equivalent ``pyproject.toml``:
 
-.. code-block:: bash
+.. code-block:: toml
    :caption: pyproject.toml
 
    [project]
@@ -61,6 +71,15 @@ Then replace the file with its equivalent ``pyproject.toml``:
        "pydantic==2.13.3",
        "paas-charm==1.11.3",
    ]
+
+   [dependency-groups]
+   charmlibs-pydeps = []
+
+.. note::
+
+    The empty ``charmlibs-pydeps`` dependency group is required by the Ubuntu 26.04 LTS
+    framework extension, which installs it during the build. Use ``paas-charm>=2.0.dev1,<3``
+    instead of ``paas-charm==1.11.3`` if you are migrating to ``paas-charm`` 2.0.
 
 .. tip::
 
@@ -97,7 +116,7 @@ The key differences are:
 
 For example, if your ``charmcraft.yaml`` contains the following snippet:
 
-.. code-block:: bash
+.. code-block:: yaml
    :caption: charmcraft.yaml
 
    parts:
@@ -112,7 +131,7 @@ For example, if your ``charmcraft.yaml`` contains the following snippet:
 
 Then update your file to use:
 
-.. code-block:: bash
+.. code-block:: yaml
    :caption: charmcraft.yaml
 
    parts:
@@ -134,7 +153,7 @@ If your charm ships a ``paas-config.yaml`` file, you need a dedicated
 the file will not be included in your charm because the ``uv`` plugin
 only stages Python artifacts.
 
-.. code:: bash
+.. code-block:: yaml
 
    parts:
      charm:
@@ -183,35 +202,35 @@ Complete ``parts`` example
 
     .. group-tab:: without ``paas-config.yaml``
 
-        .. code-block:: bash
+        .. code-block:: yaml
 
             parts:
-            charm:
+              charm:
                 source: .
                 plugin: uv
                 build-snaps:
-                - astral-uv
-                - rustup
+                  - astral-uv
+                  - rustup
                 override-build: |-
-                rustup default stable
-                craftctl default
+                  rustup default stable
+                  craftctl default
 
     .. group-tab:: with ``paas-config.yaml``
 
-        .. code-block:: bash
+        .. code-block:: yaml
 
             parts:
-            charm:
+              charm:
                 source: .
                 plugin: uv
                 build-snaps:
-                - astral-uv
-                - rustup
+                  - astral-uv
+                  - rustup
                 override-build: |-
-                rustup default stable
-                craftctl default
-            config:
+                  rustup default stable
+                  craftctl default
+              config:
                 plugin: dump
                 source: .
                 stage:
-                - paas-config.yaml
+                  - paas-config.yaml

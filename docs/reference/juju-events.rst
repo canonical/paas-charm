@@ -52,9 +52,6 @@ For a web app charm, the following events are observed:
   * - ``ingress_revoked``
     - Fired when the ingress for the web app is not ready anymore.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - ``redis_relation_updated``
-    - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
-    - Validate the configuration, run pending migrations and restart the workload.
   * - ``valkey_resource_created``
     - Fired when the Valkey relation data is available.
     - Validate the configuration, run pending migrations and restart the workload.
@@ -94,8 +91,17 @@ For a web app charm, the following events are observed:
   * - ``smtp_data_available``
     - Fired when new SMTP data is present in the relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``rotate_secret_key``
-    - Fired when ``secret-rotate`` is executed.
+  * - ``oauth_info_changed``
+    - Fired when the OAuth provider information changes.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``oauth_info_removed``
+    - Fired when the OAuth provider information is removed.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``http-proxy_relation_changed``
+    - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``rotate_secret_key_action``
+    - Fired when the ``rotate-secret-key`` action is run. The action fails on non-leader units.
     - Generate a new secret token for the application.
 
 .. seealso::

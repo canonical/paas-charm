@@ -26,6 +26,9 @@ Requirements and compatibility
 
 ``paas-charm`` 2.0 requires Python 3.12 or greater.
 
+Building Ubuntu 26.04 LTS rocks and charms requires Rockcraft 1.21 or later and
+Charmcraft 4.5 or later.
+
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
 ``build-base: ubuntu@26.04``. Charms use ``base: ubuntu@26.04``.
@@ -48,7 +51,8 @@ Before refreshing a deployment:
    ``uv lock``, and a compatible dependency such as ``paas-charm>=2.0.dev1,<3``.
 3. Ensure each charm defines the ``app`` container, ``app-image`` resource,
    ``peers`` relation, and a single secret-typed ``app-secret-key`` option. If
-   used, stage the charm-owned ``paas-config.yaml`` into the packed charm.
+   you use a ``paas-config.yaml`` file, keep it in the charm project directory;
+   the framework extension packs it with the charm automatically.
 4. Review the :ref:`Backwards-incompatible changes <paas_charm_2_breaking_changes>`
    before refreshing the deployment.
 
@@ -135,6 +139,32 @@ for details.
 
 * `Pull request #372 <https://github.com/canonical/paas-charm/pull/372>`_
 * `Pull request #373 <https://github.com/canonical/paas-charm/pull/373>`_
+
+Custom relations API
+~~~~~~~~~~~~~~~~~~~~
+
+The public ``paas_charm.relations.CustomRelation`` API lets charm authors add their
+own Juju relations to a 12-factor charm, including environment variables, readiness,
+and reconcile behavior. See :ref:`Add a custom relation <how_to_add_custom_relation>`
+and :ref:`Custom relations <ref_custom_relations>` for details.
+
+* `Pull request #359 <https://github.com/canonical/paas-charm/pull/359>`_
+
+Environment variable names for config options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Environment variables generated from charm configuration options and secrets can be
+renamed with ``config.options`` in ``paas-config.yaml``. See
+:ref:`paas-config.yaml <ref_paas_config>` for details.
+
+* `Pull request #379 <https://github.com/canonical/paas-charm/pull/379>`_
+
+Valkey integration uses the custom relations framework
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Valkey integration is migrated to the custom relations framework.
+
+* `Pull request #381 <https://github.com/canonical/paas-charm/pull/381>`_
 
 OpenFGA store uses the charm application name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
