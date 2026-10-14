@@ -77,3 +77,7 @@ class CustomRelationError(Exception):
     subclass, or when the relation class is not declared in the charm metadata
     (unused custom relation).
     """
+
+
+class InvalidRelationInterfaceError(Exception):
+    """Raised when the relation interface is invalid."""
