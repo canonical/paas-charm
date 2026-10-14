@@ -14,7 +14,11 @@ from dpcharmlibs.interfaces import (
 from pydantic import ValidationError
 
 from paas_charm.app import _db_url_to_env_variables
-from paas_charm.exceptions import InvalidRelationDataError, RelationDataError
+from paas_charm.exceptions import (
+    InvalidRelationDataError,
+    InvalidRelationInterfaceError,
+    RelationDataError,
+)
 from paas_charm.relations import CustomRelation, OnChange
 from paas_charm.utils import build_validation_error_message
 
@@ -131,8 +135,10 @@ class ValkeyRelation(CustomRelation):
             on_change: callback requesting a reconcile/``restart``.
         """
         requires = self.charm.framework.meta.requires
-        if "valkey" not in requires or requires["valkey"].interface_name != "valkey_client":
-            return
+        if requires["valkey"].interface_name != "valkey_client":
+            raise InvalidRelationInterfaceError(
+                "Built-in Valkey relation interface is not 'valkey_client'"
+            )
 
         self._requirer = ValkeyClientRequirer(
             charm=self.charm, relation_name=ValkeyRelation.relation_name

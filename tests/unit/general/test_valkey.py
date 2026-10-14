@@ -7,12 +7,34 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from paas_charm.exceptions import InvalidRelationInterfaceError
 from paas_charm.valkey import (
     ValkeyClientRequirer,
     ValkeyMultipleRelationsNotSupportedError,
     ValkeyRelation,
     ValkeyTLSNotSupportedError,
 )
+
+
+@patch("paas_charm.valkey.ValkeyClientRequirer")
+def test_valkey_setup_invalid_relation_interface(mock_requirer):
+    """
+    arrange: given a Valkey relation configured with an invalid interface.
+    act: when the relation is set up.
+    assert: InvalidRelationInterfaceError is raised before creating the requirer.
+    """
+    mock_charm = MagicMock()
+    mock_charm.framework.meta.requires["valkey"].interface_name = "invalid"
+    relation = ValkeyRelation.__new__(ValkeyRelation)
+    relation._charm = mock_charm
+
+    with pytest.raises(
+        InvalidRelationInterfaceError,
+        match="Built-in Valkey relation interface is not 'valkey_client'",
+    ):
+        relation.setup(MagicMock())
+
+    mock_requirer.assert_not_called()
 
 
 @pytest.mark.parametrize(
