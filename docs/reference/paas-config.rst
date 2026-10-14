@@ -80,11 +80,10 @@ FastAPI default to ``9464`` and ``/metrics``.
 
 .. note::
 
-    For Flask and Django, the metrics are served by the statsd exporter that the rock
-    starts, which listens on ``9102`` and serves ``/metrics``. Changing ``metrics-port`` or
-    ``metrics-path`` only changes the Prometheus scrape job and the environment variables.
-    Unless the rock's exporter service is also reconfigured, the scrape job targets an endpoint
-    that is not served.
+    For Flask and Django, the default metrics endpoint is served by the statsd exporter that
+    the rock starts, listening on ``9102`` and serving ``/metrics``. The charm doesn't
+    configure the exporter, so if you change ``metrics-port`` or ``metrics-path``, you are
+    responsible for serving metrics on the new endpoint.
 
 The charm publishes a Prometheus scrape job for the resolved ``metrics-port`` and ``metrics-path``.
 Additional scrape jobs can be configured independently under ``prometheus.scrape_configs``. Their
