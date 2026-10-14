@@ -4,6 +4,7 @@
 name: expressjs-k8s
 
 base: ubuntu@26.04
+charm-user: non-root
 
 platforms:
   amd64:
