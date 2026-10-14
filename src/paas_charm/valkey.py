@@ -133,6 +133,10 @@ class ValkeyRelation(CustomRelation):
 
         Args:
             on_change: callback requesting a reconcile/``restart``.
+
+        Raises:
+            InvalidRelationInterfaceError: If the built-in Valkey relation uses an invalid
+                interface.
         """
         requires = self.charm.framework.meta.requires
         if requires["valkey"].interface_name != "valkey_client":
