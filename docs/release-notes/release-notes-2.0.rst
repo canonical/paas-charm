@@ -26,8 +26,9 @@ Requirements and compatibility
 
 ``paas-charm`` 2.0 requires Python 3.12 or greater.
 
-Building Ubuntu 26.04 LTS rocks and charms requires Rockcraft 1.21 or later and
-Charmcraft 4.5 or later.
+Building Ubuntu 26.04 LTS rocks requires Rockcraft 1.21 or later. Building Ubuntu 26.04 LTS
+charms requires a Charmcraft release that includes the updated 12-factor
+extension contract, which is expected in Charmcraft 4.5.
 
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
