@@ -403,7 +403,7 @@ def flask_container(
         },
         mounts={
             "flask": testing.Mount(location="/app", source=mount_source),
-            "state": testing.Mount(location="/tmp/flask/state", source=state_source),
+            "state": testing.Mount(location="/tmp/paas-charm", source=state_source),
             "gunicorn-config": testing.Mount(
                 location="/var/lib/gunicorn", source=gunicorn_config_source
             ),
@@ -430,7 +430,7 @@ def django_container(
         can_connect=True,
         mounts={
             "django": testing.Mount(location="/app", source=mount_source),
-            "state": testing.Mount(location="/tmp/django/state", source=state_source),
+            "state": testing.Mount(location="/tmp/paas-charm", source=state_source),
             "gunicorn-config": testing.Mount(
                 location="/var/lib/gunicorn", source=gunicorn_config_source
             ),
