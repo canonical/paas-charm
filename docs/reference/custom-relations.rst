@@ -182,6 +182,9 @@ environment variable (whether built-in, framework-provided, or from another
 custom relation), the custom variable overwrites it and the charm logs a
 warning naming the relation and the colliding variable.
 
+Explicit ``config.options`` mappings in ``paas-config.yaml`` are applied after custom
+relation variables and take precedence when their source configuration option has a value.
+
 Optional charm libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

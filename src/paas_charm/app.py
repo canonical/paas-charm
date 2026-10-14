@@ -16,7 +16,8 @@ from dpcharmlibs.interfaces import ValkeyResponseModel
 
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
-from paas_charm.paas_config import LoggingFormat
+from paas_charm.exceptions import PaasConfigError
+from paas_charm.paas_config import EnvVarConfig, LoggingFormat, SecretEnvVarsConfig
 
 logger = logging.getLogger(__name__)
 
@@ -442,38 +443,198 @@ class App:  # pylint: disable=too-many-instance-attributes
         self._run_migrations()
         self._container.replan()
 
-    # 2024/04/25 - we're refactoring this method which will get rid of map_integrations_to_env
-    # wrapper function. Ignore too-complex error from flake8 for now.
-    # pylint: disable=too-many-branches
-    def gen_environment(self) -> dict[str, str]:  # noqa: too-complex
-        """Generate a environment dictionary from the charm configurations.
+    def gen_environment(self) -> dict[str, str]:
+        """Generate the final workload environment in precedence order.
 
-        The environment generation follows these rules:
-             1. User-defined configuration cannot overwrite built-in framework configurations,
-                even if the built-in framework application configuration value is None (undefined).
-             2. Boolean and integer-typed configuration values will be JSON encoded before
-                being passed to application.
-             3. String-typed configuration values will be passed to the application as environment
-                variables directly.
-             4. Different prefixes can be set to the environment variable names depending on the
-                framework.
+        Explicit config mappings override integrations, which override library-generated
+        variables. The config/framework layer comes from ``_framework_environment``.
 
         Returns:
-            A dictionary representing the application environment variables.
+            The final environment with string-encoded values.
+        """
+        framework_sources = self._framework_config_mapping_sources()
+        env = self._framework_environment()
+        for name, value in self._generate_integration_environments(
+            prefix=self.integrations_prefix
+        ).items():
+            if name in env:
+                logger.warning(
+                    "Environment variable %r for a relation or Prometheus metrics overwrites an "
+                    "environment variable from charm configuration or framework settings",
+                    name,
+                )
+            env[name] = value
+        for name, (source, value) in self._mapped_config_environment(framework_sources).items():
+            if name in env:
+                logger.warning(
+                    "Explicit config.options mapping from %r overwrites environment variable %r",
+                    source,
+                    name,
+                )
+            env[name] = value
+        return env
+
+    def _mapped_framework_config_fields(self) -> set[str]:
+        """Get framework fields whose default outputs are explicitly renamed.
+
+        Returns:
+            Framework field names, excluding unmapped secret-key entries.
+        """
+        mappings = self._charm_state.config_options.options
+        return {
+            field
+            for option, field in self._charm_state.framework_config_fields.items()
+            if (mapping := mappings.get(option)) is not None
+            and (
+                isinstance(mapping, EnvVarConfig)
+                or (
+                    field in ("secret_key", "app_secret_key")
+                    and "value" in mapping.secret_env_vars
+                    and not isinstance(self._charm_state.framework_config.get(field), dict)
+                )
+            )
+        }
+
+    def _framework_config_mapping_sources(self) -> dict[str, str | dict[str, str]]:
+        """Read resolved framework values without borrowing unrelated generated outputs.
+
+        Returns:
+            Values keyed by exact option names, using the existing encoding and key fallback.
+        """
+        sources: dict[str, str | dict[str, str]] = {}
+        for option, mapping in self._charm_state.config_options.options.items():
+            field = self._charm_state.framework_config_fields.get(option)
+            if field is None:
+                continue
+            value = self._charm_state.framework_config.get(field)
+            if value is None and field in ("secret_key", "app_secret_key"):
+                value = self._charm_state.secret_key
+            if value is None:
+                continue
+            if isinstance(mapping, SecretEnvVarsConfig):
+                if isinstance(value, dict):
+                    sources[option] = value
+                elif field in ("secret_key", "app_secret_key"):
+                    sources[option] = {"value": encode_env(value)}
+                else:
+                    sources[option] = encode_env(value)
+            else:
+                sources[option] = encode_env(value)
+        return sources
+
+    def _mapped_config_environment(
+        self, framework_sources: dict[str, str | dict[str, str]]
+    ) -> dict[str, tuple[str, str]]:
+        """Generate explicit config destinations from their original source values.
+
+        Args:
+            framework_sources: Resolved framework outputs keyed by exact option names,
+                including secret-key fallbacks.
+
+        Returns:
+            Destinations mapped to source names and encoded values, omitting absent values.
+
+        Raises:
+            PaasConfigError: If a secret mapping receives non-secret content.
+        """
+        env: dict[str, tuple[str, str]] = {}
+        for option, mapping in self._charm_state.config_options.options.items():
+            value = (
+                framework_sources.get(option)
+                if option in self._charm_state.framework_config_fields
+                else self._charm_state.user_defined_config.get(option.replace("-", "_"))
+            )
+            if value is None:
+                continue
+            if isinstance(mapping, SecretEnvVarsConfig):
+                if not isinstance(value, collections.abc.Mapping):
+                    raise PaasConfigError(
+                        f"config.options.{option}.secret-env-vars requires secret content"
+                    )
+                for key, destination in mapping.secret_env_vars.items():
+                    if key not in value:
+                        logger.warning(
+                            "Charm configuration option %r has no secret content key %r; "
+                            "skipping mapped environment variable %r",
+                            option,
+                            key,
+                            destination,
+                        )
+                        continue
+                    env[destination] = (f"{option}.{key}", encode_env(value[key]))
+            else:
+                env[mapping.env_var] = (option, encode_env(value))
+        return env
+
+    def _unmapped_framework_config(self) -> dict[str, str | int | bool | dict[str, str]]:
+        """Keep framework defaults and secret entries that have not been renamed.
+
+        Returns:
+            Resolved framework configuration with mapped fields or secret entries omitted.
+        """
+        mapped_fields = self._mapped_framework_config_fields()
+        config = {
+            field: value
+            for field, value in self._charm_state.framework_config.items()
+            if field not in mapped_fields
+        }
+        for option, field in self._charm_state.framework_config_fields.items():
+            mapping = self._charm_state.config_options.options.get(option)
+            value = config.get(field)
+            if (
+                isinstance(mapping, SecretEnvVarsConfig)
+                and isinstance(value, dict)
+                and value.keys() & mapping.secret_env_vars.keys()
+            ):
+                remaining = {
+                    key: val for key, val in value.items() if key not in mapping.secret_env_vars
+                }
+                if remaining:
+                    config[field] = remaining
+                else:
+                    config.pop(field)
+        return config
+
+    def _framework_environment(self) -> dict[str, str]:  # noqa: too-complex
+        """Build config and library-owned variables before higher-priority overrides.
+
+        Explicitly mapped sources are omitted from their default names. Unmapped config
+        retains its existing prefixes and value encoding. Framework subclasses extend
+        this layer; ``gen_environment`` then applies relations and explicit mappings.
+
+        Returns:
+            The config/framework environment with string-encoded values.
         """
         prefix = self.configuration_prefix
         env = {}
+        mappings = {
+            option.replace("-", "_"): mapping
+            for option, mapping in self._charm_state.config_options.options.items()
+        }
         for app_config_key, app_config_value in self._charm_state.user_defined_config.items():
+            mapping = mappings.get(app_config_key)
+            if app_config_key in self._charm_state.framework_config_field_names or isinstance(
+                mapping, EnvVarConfig
+            ):
+                continue
+            if isinstance(mapping, SecretEnvVarsConfig) and app_config_value is None:
+                continue
+            mapped_keys = (
+                mapping.secret_env_vars if isinstance(mapping, SecretEnvVarsConfig) else {}
+            )
             if isinstance(app_config_value, collections.abc.Mapping):
                 for k, v in app_config_value.items():
+                    if k in mapped_keys:
+                        continue
                     env[f"{prefix}{app_config_key.upper()}_{k.replace('-', '_').upper()}"] = (
                         encode_env(v)
                     )
             else:
                 env[f"{prefix}{app_config_key.upper()}"] = encode_env(app_config_value)
 
-        framework_config = self._charm_state.framework_config
+        framework_config = self._unmapped_framework_config()
         framework_config_prefix = self.framework_config_prefix
+        mapped_fields = self._mapped_framework_config_fields()
         env.update(
             {
                 f"{framework_config_prefix}{k.upper()}": encode_env(v)
@@ -488,7 +649,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         if self._charm_state.base_url:
             env[f"{prefix}BASE_URL"] = self._charm_state.base_url
         secret_key_env = f"{prefix}SECRET_KEY"
-        if secret_key_env not in env:
+        if secret_key_env not in env and not {"secret_key", "app_secret_key"} & mapped_fields:
             env[secret_key_env] = self._charm_state.secret_key
         for proxy_variable in ("http_proxy", "https_proxy", "no_proxy"):
             proxy_value = getattr(self._charm_state.proxy, proxy_variable)
@@ -498,8 +659,6 @@ class App:  # pylint: disable=too-many-instance-attributes
 
         if self._charm_state.peer_fqdns is not None:
             env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
-
-        env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
 
         return env
 
