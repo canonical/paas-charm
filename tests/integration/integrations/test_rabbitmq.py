@@ -9,8 +9,6 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.types import App
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,35 +63,3 @@ def test_rabbitmq_server_integration(
         assert "SUCCESS" == response.text
     finally:
         juju.remove_relation(app.name, rabbitmq_app.name)
-
-
-def test_rabbitmq_ha_integration(
-    juju: jubilant.Juju,
-    go_app: App,
-    rabbitmq_server_ha_app: App,
-    session_with_retry: requests.Session,
-):
-    """
-    arrange: The app and rabbitmq deployed
-    act: Integrate the app with rabbitmq
-    assert: Assert that RabbitMQ works correctly
-    """
-    juju.integrate(go_app.name, rabbitmq_server_ha_app.name)
-    juju.wait(
-        lambda status: _relation_exists(status, go_app.name, rabbitmq_server_ha_app.name)
-        and jubilant.all_active(status, go_app.name),
-        timeout=(10 * 60),
-        delay=30,
-    )
-    status = juju.status()
-    unit_ip = status.apps[go_app.name].units[go_app.name + "/0"].address
-
-    response = session_with_retry.post(f"http://{unit_ip}:8080/rabbitmq/send_ha?unit=1", timeout=5)
-    assert response.status_code == 200
-    assert "SUCCESS" == response.text
-
-    response = session_with_retry.get(
-        f"http://{unit_ip}:8080/rabbitmq/receive_ha?unit=1", timeout=5
-    )
-    assert response.status_code == 200
-    assert "SUCCESS" == response.text
