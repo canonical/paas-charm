@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -145,21 +146,28 @@ def test_shared_fixtures_are_staged_for_each_task(framework, tmp_path):
 
 @pytest.mark.parametrize("framework", FRAMEWORKS)
 def test_task_generates_packaged_configuration(framework, tmp_path):
-    """Execute the included commands and verify initial and replacement configurations."""
+    """Verify task-generated configurations match the YAML-only tutorial snippets."""
     script = yaml.safe_load((FIXTURES / framework / "task.yaml").read_text())["execute"]
     port = 8000 if framework in ("django", "fastapi", "flask") else 8080
     expected = f"port: {port}\n"
     page_name = "express" if framework == "expressjs" else framework
     page = (DOCS / f"tutorial/kubernetes-charm-{page_name}-26-04.rst").read_text()
-    for marker in ("create-paas-config", "configure-greeting"):
+    for marker, delimiter in (
+        ("create-paas-config", "BASE_PAAS_CONFIG"),
+        ("configure-greeting", "GREETING_PAAS_CONFIG"),
+    ):
         snippet = script.split(f"# [docs:{marker}]\n", 1)[1]
         snippet = snippet.split(f"# [docs:{marker}-end]", 1)[0]
-        assert f":start-after: [docs:{marker}]" in page
-        assert f":end-before: [docs:{marker}-end]" in page
+        start = f"cat > paas-config.yaml <<'{delimiter}'"
+        assert f":start-after: {start}" in page
+        assert f":end-before: {delimiter}" in page
         subprocess.run(["bash", "-eu", "-c", snippet], cwd=tmp_path, check=True)
         if marker == "configure-greeting":
             expected += "config:\n  options:\n    greeting:\n      env-var: GREETING_VAR\n"
         assert (tmp_path / "paas-config.yaml").read_text() == expected
+        source = (FIXTURES / framework / "task.yaml").read_text()
+        included = source.split(start + "\n", 1)[1].split(delimiter, 1)[0]
+        assert textwrap.dedent(included) == expected
 
 
 @pytest.mark.parametrize(

@@ -50,7 +50,7 @@ and cluster setup are the shared files in `docs/reuse/tutorial/`. The small
 depending on Charmcraft's external snap testing tools.
 
 Each framework task creates its tiny `paas-config.yaml` directly, using the
-same commands included in its tutorial. Shared Go/Express migration snippets
+same YAML contents included in its tutorial. Shared Go/Express migration snippets
 live in `docs/reuse/tutorial/fixtures/`; the suite's `prepare-each` stages these
 under their original filenames. Framework-specific app code and charm
 configuration remain separate.

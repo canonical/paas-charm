@@ -284,12 +284,13 @@ your web app. Install uv and create the lockfile before packing:
     :dedent: 2
 
 Create ``paas-config.yaml`` beside ``charmcraft.yaml`` to set the
-workload's runtime port by running:
+workload's runtime port:
 
 .. literalinclude:: code-26-04/spring-boot/task.yaml
-    :language: bash
-    :start-after: [docs:create-paas-config]
-    :end-before: [docs:create-paas-config-end]
+    :caption: charm/paas-config.yaml
+    :language: yaml
+    :start-after: cat > paas-config.yaml <<'BASE_PAAS_CONFIG'
+    :end-before: BASE_PAAS_CONFIG
     :dedent: 2
 
 Charmcraft packages this file into the charm. Its ``port`` key takes
@@ -542,13 +543,14 @@ the Spring Boot app. Add the following to the end of the
     :caption: ~/spring-boot-hello-world/charm/charmcraft.yaml
     :language: yaml
 
-Replace ``paas-config.yaml`` by running the following command to map the new
+Replace ``paas-config.yaml`` with the following content to map the new
 ``greeting`` option to ``GREETING_VAR``, matching the app code:
 
 .. literalinclude:: code-26-04/spring-boot/task.yaml
-    :language: bash
-    :start-after: [docs:configure-greeting]
-    :end-before: [docs:configure-greeting-end]
+    :caption: charm/paas-config.yaml
+    :language: yaml
+    :start-after: cat > paas-config.yaml <<'GREETING_PAAS_CONFIG'
+    :end-before: GREETING_PAAS_CONFIG
     :dedent: 2
 
 The option is declared in ``charmcraft.yaml``. By default, ``greeting``

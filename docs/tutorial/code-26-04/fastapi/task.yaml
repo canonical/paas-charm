@@ -92,9 +92,9 @@ execute: |
   # [docs:lock-charm-dependencies-end]
 
   # [docs:create-paas-config]
-  cat > paas-config.yaml <<'EOF'
+  cat > paas-config.yaml <<'BASE_PAAS_CONFIG'
   port: 8000
-  EOF
+  BASE_PAAS_CONFIG
   # [docs:create-paas-config-end]
 
   # update platforms in charmcraft.yaml file
@@ -155,13 +155,13 @@ execute: |
   cat greeting_charmcraft.yaml >> ./charm/charmcraft.yaml
   cd charm
   # [docs:configure-greeting]
-  cat > paas-config.yaml <<'EOF'
+  cat > paas-config.yaml <<'GREETING_PAAS_CONFIG'
   port: 8000
   config:
     options:
       greeting:
         env-var: GREETING_VAR
-  EOF
+  GREETING_PAAS_CONFIG
   # [docs:configure-greeting-end]
 
   # [docs:refresh-deployment]

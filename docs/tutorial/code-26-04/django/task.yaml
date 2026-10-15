@@ -112,9 +112,9 @@ execute: |
   # [docs:lock-charm-dependencies-end]
 
   # [docs:create-paas-config]
-  cat > paas-config.yaml <<'EOF'
+  cat > paas-config.yaml <<'BASE_PAAS_CONFIG'
   port: 8000
-  EOF
+  BASE_PAAS_CONFIG
   # [docs:create-paas-config-end]
 
   sed -i "s/amd64/$(dpkg --print-architecture)/g" charmcraft.yaml
@@ -241,13 +241,13 @@ execute: |
   # Update greeting config in charmcraft.yaml
   cat $HOME/tmp/greeting_charmcraft.yaml >> ./charmcraft.yaml
   # [docs:configure-greeting]
-  cat > paas-config.yaml <<'EOF'
+  cat > paas-config.yaml <<'GREETING_PAAS_CONFIG'
   port: 8000
   config:
     options:
       greeting:
         env-var: GREETING_VAR
-  EOF
+  GREETING_PAAS_CONFIG
   # [docs:configure-greeting-end]
 
   # [docs:repack-refresh-2nd-deployment]
