@@ -173,6 +173,10 @@ linkcheck_ignore = [
     "https://github.com",
     r"https://matrix\.to/.*",
     "https://example.com",
+    # Tutorial-only gateway hostnames are resolved inside the development VM.
+    r"http://[a-z-]+-hello-world\.internal/.*",
+    # These valid package pages reject automated requests with HTTP 403.
+    r"https://www\.npmjs\.com/package/(knex|prisma)/?$",
     # SourceForge domains often block linkcheck
     r"https://.*\.sourceforge\.(net|io)/.*",
 ]
