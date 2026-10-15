@@ -228,6 +228,7 @@ myst_fence_as_directive = {"mermaid"}
 exclude_patterns = [
     "doc-cheat-sheet*",
     "reuse/release-notes-template.rst",
+    "reuse/tutorial/*.rst",
     ".venv*",
 ]
 
@@ -267,6 +268,7 @@ intersphinx_mapping = {
     "pebble": ("https://documentation.ubuntu.com/pebble/", None),
     "cos": ("https://documentation.ubuntu.com/observability/latest/", None),
     "ops": ("https://documentation.ubuntu.com/ops/latest/", None),
+    "multipass": ("https://documentation.ubuntu.com/multipass/latest/", None),
     "open-documentation-academy": ("https://documentation.academy/", None),
 }
 

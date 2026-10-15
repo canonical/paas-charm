@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Move the six Ubuntu 26.04 framework tutorials from Charmcraft into
+  the 12-Factor app support documentation, including their example apps and
+  opt-in manual walkthrough tests.
+* test: Add fast tutorial consistency checks to the pull-request workflow and
+  dedicated tox entrypoints for checking tutorials and listing live walkthroughs.
 * refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
   a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.

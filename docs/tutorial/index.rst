@@ -4,6 +4,22 @@
 Tutorials
 =========
 
+Ubuntu 26.04
+------------
+
+Follow the :doc:`Ubuntu 26.04 tutorials <ubuntu-26-04>` to build and deploy
+an app using the experimental framework extensions and ``paas-charm`` 2.0.
+Each tutorial covers local development, rock and charm builds, configuration,
+PostgreSQL integration, and cleanup.
+
+.. toctree::
+   :maxdepth: 1
+
+   ubuntu-26-04
+
+Ubuntu 22.04 and 24.04
+------------------------
+
 Rockcraft and Charmcraft have comprehensive getting started tutorials teaching
 you to containerize a web app into an OCI-compliant image, create a
 software operator around the container image, and set up a Kubernetes environment
@@ -36,5 +52,3 @@ or a fully deployed and integrated web app (Charmcraft).
   * - Spring Boot
     - :ref:`Build a Spring Boot app rock <rockcraft:tutorial-build-a-rock-for-a-spring-boot-app>`
     - :ref:`Write a Spring Boot app charm <charmcraft:write-your-first-kubernetes-charm-for-a-spring-boot-app>`
-
-

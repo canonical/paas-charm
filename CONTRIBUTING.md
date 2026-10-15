@@ -172,6 +172,15 @@ For faster iteration you can run pytest directly against the current host:
 
 See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 
+#### Tutorial tests
+
+Run `tox -e tutorial` for the fast tutorial consistency checks also run by the
+pull-request workflow. Run `tox -e tutorial-list` to list the five opt-in
+Ubuntu 26.04 walkthroughs (Spring Boot excluded) without contacting a guest.
+Live tests require separately provisioned disposable Ubuntu 26.04 guests; see
+the [tutorial test instructions](tests/tutorial/README.md) for prerequisites
+and the framework-specific `opcli spread run` command.
+
 ## Add an integration
 
 There are a few recommended steps to add a new integration which we'll go

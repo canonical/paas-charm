@@ -1,0 +1,30 @@
+#!/bin/bash
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+set -eu
+
+if [ "$#" -lt 5 ] || [ "$1" != "-n" ] || [ "$3" != "--wait" ]; then
+    echo "Usage: retry -n ATTEMPTS --wait SECONDS COMMAND [ARG...]" >&2
+    exit 2
+fi
+attempts=$2
+delay=$4
+shift 4
+if ! [[ "$attempts" =~ ^[1-9][0-9]*$ && "$delay" =~ ^[0-9]+$ ]]; then
+    echo "ATTEMPTS must be positive and SECONDS must be non-negative integers." >&2
+    exit 2
+fi
+
+for ((attempt = 1; attempt <= attempts; attempt++)); do
+    if "$@"; then
+        exit 0
+    else
+        status=$?
+    fi
+    if [ "$attempt" -lt "$attempts" ]; then
+        sleep "$delay"
+    fi
+done
+echo "Command failed after $attempts attempts: $*" >&2
+exit "$status"

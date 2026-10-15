@@ -4,6 +4,21 @@ on:
   pull_request:
 
 jobs:
+  tutorial-checks:
+    name: Tutorial consistency checks (no deployment)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install test tooling
+        run: python -m pip install tox tox-uv
+      - name: Check tutorials
+        run: tox -e tutorial
   unit-tests:
     uses: canonical/operator-workflows/.github/workflows/test.yaml@main
     secrets: inherit
