@@ -84,6 +84,20 @@ def test_django_refresh_starts_at_project_root():
     assert snippet.lstrip().startswith("cd charm\n")
 
 
+def test_registry_manifest_is_downloaded_not_embedded():
+    """Keep the shared setup concise while retaining the repository manifest."""
+    setup = (DOCS / "reuse/tutorial/setup_26_04.rst").read_text()
+    assert ".. literalinclude:: /reuse/tutorial/registry_26_04.yaml" not in setup
+    assert "curl --fail --location --output registry.yaml" in setup
+    assert (
+        "https://raw.githubusercontent.com/canonical/paas-charm/main/"
+        "docs/reuse/tutorial/registry_26_04.yaml"
+    ) in setup
+    assert (DOCS / "reuse/tutorial/registry_26_04.yaml").is_file()
+    bootstrap = (DOCS / "reuse/tutorial/bootstrap_26_04.sh").read_text()
+    assert "sudo k8s kubectl apply -f registry.yaml" in bootstrap
+
+
 def test_manual_suite_is_isolated():
     """Keep live tutorial deployments out of existing automatic integration jobs."""
     config = yaml.safe_load((ROOT / "spread.yaml").read_text())

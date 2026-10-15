@@ -71,13 +71,14 @@ Create a local image registry
 
 Canonical Kubernetes doesn't include a registry addon. We'll deploy an OCI
 registry in the cluster to store the rocks built during this tutorial.
-Create ``registry.yaml`` with the following contents:
+Download the registry manifest from the ``paas-charm`` repository:
 
-.. literalinclude:: /reuse/tutorial/registry_26_04.yaml
-    :language: yaml
-    :caption: registry.yaml
+.. code-block:: bash
 
-Deploy the registry and wait for it to be ready:
+    curl --fail --location --output registry.yaml \
+      https://raw.githubusercontent.com/canonical/paas-charm/main/docs/reuse/tutorial/registry_26_04.yaml
+
+Apply the downloaded ``registry.yaml`` and wait for the registry to be ready:
 
 .. literalinclude:: /reuse/tutorial/bootstrap_26_04.sh
     :language: bash
