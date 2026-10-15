@@ -35,10 +35,6 @@ def test_framework_walkthrough(framework):
     assert "$REGISTRY" not in script
     assert "greeting='Hi!'" in script
     assert ("16/edge" if framework == "django" else "14/edge") in script
-    port = 8000 if framework in ("django", "fastapi", "flask") else 8080
-    mapping = yaml.safe_load((SHARED_FIXTURES / f"greeting-paas-config-{port}.yaml").read_text())
-    assert mapping["config"]["options"]["greeting"]["env-var"] == "GREETING_VAR"
-
     page_name = "express" if framework == "expressjs" else framework
     basename = f"kubernetes-charm-{page_name}-26-04"
     page = DOCS / f"tutorial/{basename}.rst"
@@ -138,18 +134,32 @@ def test_shared_fixtures_are_staged_for_each_task(framework, tmp_path):
         env={**os.environ, "SPREAD_PATH": str(tmp_path), "SPREAD_TASK": task_path},
         check=True,
     )
-    port = 8000 if framework in ("django", "fastapi", "flask") else 8080
-    assert (task / "paas-config.yaml").read_bytes() == (
-        shared / f"paas-config-{port}.yaml"
-    ).read_bytes()
-    assert (task / "greeting_paas_config.yaml").read_bytes() == (
-        shared / f"greeting-paas-config-{port}.yaml"
-    ).read_bytes()
+    assert not (task / "paas-config.yaml").exists()
+    assert not (task / "greeting_paas_config.yaml").exists()
     if framework in ("expressjs", "go"):
         for name in ("visitors_migrate.sh", "visitors_rockcraft.yaml"):
             assert (task / name).read_bytes() == (shared / name).read_bytes()
     elif framework == "spring-boot":
         assert not (task / "visitors_migrate.sh").exists()
+
+
+@pytest.mark.parametrize("framework", FRAMEWORKS)
+def test_task_generates_packaged_configuration(framework, tmp_path):
+    """Execute the included commands and verify initial and replacement configurations."""
+    script = yaml.safe_load((FIXTURES / framework / "task.yaml").read_text())["execute"]
+    port = 8000 if framework in ("django", "fastapi", "flask") else 8080
+    expected = f"port: {port}\n"
+    page_name = "express" if framework == "expressjs" else framework
+    page = (DOCS / f"tutorial/kubernetes-charm-{page_name}-26-04.rst").read_text()
+    for marker in ("create-paas-config", "configure-greeting"):
+        snippet = script.split(f"# [docs:{marker}]\n", 1)[1]
+        snippet = snippet.split(f"# [docs:{marker}-end]", 1)[0]
+        assert f":start-after: [docs:{marker}]" in page
+        assert f":end-before: [docs:{marker}-end]" in page
+        subprocess.run(["bash", "-eu", "-c", snippet], cwd=tmp_path, check=True)
+        if marker == "configure-greeting":
+            expected += "config:\n  options:\n    greeting:\n      env-var: GREETING_VAR\n"
+        assert (tmp_path / "paas-config.yaml").read_text() == expected
 
 
 @pytest.mark.parametrize(

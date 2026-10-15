@@ -101,7 +101,11 @@ execute: |
   uv lock
   # [docs:lock-charm-dependencies-end]
 
-  cp ../paas-config.yaml .
+  # [docs:create-paas-config]
+  cat > paas-config.yaml <<'EOF'
+  port: 8080
+  EOF
+  # [docs:create-paas-config-end]
 
   # update platforms in charmcraft.yaml file
   sed -i "s/amd64/$(dpkg --print-architecture)/g" charmcraft.yaml
@@ -159,7 +163,15 @@ execute: |
 
   cat greeting_charmcraft.yaml >> ./charm/charmcraft.yaml
   cd charm
-  cp ../greeting_paas_config.yaml paas-config.yaml
+  # [docs:configure-greeting]
+  cat > paas-config.yaml <<'EOF'
+  port: 8080
+  config:
+    options:
+      greeting:
+        env-var: GREETING_VAR
+  EOF
+  # [docs:configure-greeting-end]
 
   # [docs:refresh-deployment]
   charmcraft pack

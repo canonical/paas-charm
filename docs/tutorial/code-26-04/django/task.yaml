@@ -111,7 +111,11 @@ execute: |
   uv lock
   # [docs:lock-charm-dependencies-end]
 
-  cp $HOME/tmp/paas-config.yaml .
+  # [docs:create-paas-config]
+  cat > paas-config.yaml <<'EOF'
+  port: 8000
+  EOF
+  # [docs:create-paas-config-end]
 
   sed -i "s/amd64/$(dpkg --print-architecture)/g" charmcraft.yaml
 
@@ -236,7 +240,15 @@ execute: |
 
   # Update greeting config in charmcraft.yaml
   cat $HOME/tmp/greeting_charmcraft.yaml >> ./charmcraft.yaml
-  cp $HOME/tmp/greeting_paas_config.yaml paas-config.yaml
+  # [docs:configure-greeting]
+  cat > paas-config.yaml <<'EOF'
+  port: 8000
+  config:
+    options:
+      greeting:
+        env-var: GREETING_VAR
+  EOF
+  # [docs:configure-greeting-end]
 
   # [docs:repack-refresh-2nd-deployment]
   charmcraft pack
