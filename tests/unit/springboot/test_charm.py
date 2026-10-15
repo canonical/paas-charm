@@ -11,6 +11,11 @@ import json
 import pytest
 from ops import testing
 
+from paas_charm.charm import PaasCharm
+from paas_charm.springboot.charm import Charm as SpringBootCharm
+from paas_charm.springboot.charm import SpringValkeyRelation
+from paas_charm.valkey import ValkeyRelation
+
 
 @pytest.mark.parametrize(
     "config, env",
@@ -147,3 +152,32 @@ def test_metrics_config(
             "static_configs": [{"targets": ["*:8080"]}],
         }
     ]
+
+
+def test_builtin_relations():
+    """
+    arrange: the base and Spring Boot charm classes.
+    act: inspect their builtin relation declarations.
+    assert: Spring Boot uses SpringValkeyRelation without changing the base defaults.
+    """
+    assert SpringBootCharm.builtin_relations == [SpringValkeyRelation]
+    assert PaasCharm.builtin_relations == [ValkeyRelation]
+
+
+def test_builtin_valkey_relation_is_spring_valkey(springboot_context, base_state) -> None:
+    """
+    arrange: a springboot charm with the valkey integration in its metadata.
+    act: initialize the springboot charm.
+    assert: the builtin valkey relation is instantiated as SpringValkeyRelation.
+    """
+    state = testing.State(**base_state)
+    with springboot_context(springboot_context.on.config_changed(), state) as manager:
+        valkey_relations = [
+            relation
+            for relation in manager.charm._custom_relations
+            if relation.relation_name == "valkey"
+        ]
+        assert [type(relation) for relation in valkey_relations] == [SpringValkeyRelation]
+        out = manager.run()
+
+    assert out.unit_status == testing.ActiveStatus()

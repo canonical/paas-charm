@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
+  a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.
 * feat: Rename environment variables for config options and secret entries using
   `config.options` in `paas-config.yaml`, including framework outputs and generated secret keys.

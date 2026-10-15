@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from ops import testing
 
-from paas_charm.springboot.charm import generate_smtp_env, generate_valkey_env
+from paas_charm.springboot.charm import SpringValkeyRelation, generate_smtp_env
 
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
@@ -21,7 +21,7 @@ def test_integration_mappers_without_relation_data() -> None:
     assert: no environment variables are generated.
     """
     assert not generate_smtp_env()
-    assert not generate_valkey_env()
+    assert not SpringValkeyRelation._generate_valkey_env()
 
 
 def test_valkey_environment_with_credentials() -> None:
@@ -41,7 +41,7 @@ def test_valkey_environment_with_credentials() -> None:
         **{"pass" + "word": credential},
     )
 
-    assert generate_valkey_env(relation_data) == {
+    assert SpringValkeyRelation._generate_valkey_env(relation_data) == {
         "spring.data.valkey.url": (f"valkey://application:{credential}@valkey-primary:6379"),
         "spring.data.valkey.host": "valkey-primary",
         "spring.data.valkey.port": "6379",
@@ -215,6 +215,7 @@ def test_valkey_integration(
     assert environment["spring.data.valkey.host"] == "valkey-primary"
     assert environment["spring.data.valkey.port"] == "6379"
     assert environment["spring.data.valkey.url"] == "valkey://valkey-primary:6379"
+    assert "VALKEY_DB_CONNECT_STRING" not in environment
     assert "spring.data.valkey.client-type" not in environment
     assert environment.get("spring.data.valkey.username") is None
     assert environment.get("spring.data.valkey.password") is None
