@@ -4,7 +4,9 @@
 
 set -e
 
-if [ "$(. /etc/os-release; echo "$VERSION_ID")" != "26.04" ]; then
+# shellcheck source=/dev/null
+. /etc/os-release
+if [ "$VERSION_ID" != "26.04" ]; then
     echo "Tutorial walkthroughs require a disposable Ubuntu 26.04 guest." >&2
     exit 1
 fi
