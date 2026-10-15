@@ -98,6 +98,18 @@ def test_registry_manifest_is_downloaded_not_embedded():
     assert "sudo k8s kubectl apply -f registry.yaml" in bootstrap
 
 
+def test_vm_address_placeholder():
+    """Keep reader commands independent of shell variables and example-specific IPs."""
+    setup = (DOCS / "reuse/tutorial/setup_26_04.rst").read_text()
+    assert "multipass info charm-dev" in setup
+    assert 'sudo k8s set load-balancer.cidrs="<VM_IP>/32"' in setup
+    for page in PAGES:
+        text = page.read_text()
+        assert "NODE_IP" not in text
+        if page.name.startswith("kubernetes-charm-"):
+            assert ':80:"<VM_IP>"' in text
+
+
 def test_manual_suite_is_isolated():
     """Keep live tutorial deployments out of existing automatic integration jobs."""
     config = yaml.safe_load((ROOT / "spread.yaml").read_text())

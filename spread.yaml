@@ -94,6 +94,9 @@ suites:
       . "$SPREAD_PATH/tests/tutorial/prepare.sh"
       cp "$SPREAD_PATH/docs/reuse/tutorial/registry_26_04.yaml" registry.yaml
       . "$SPREAD_PATH/docs/reuse/tutorial/bootstrap_26_04.sh"
+      node_ip=$(sudo k8s kubectl get nodes \
+        -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+      sudo k8s set load-balancer.cidrs="${node_ip}/32"
     debug-each: |
       sudo k8s kubectl get all -A
       juju status

@@ -479,7 +479,7 @@ The app is exposed at ``http://fastapi-hello-world.internal/fastapi-hello-world-
 The ``/fastapi-hello-world-fastapi-hello-world`` prefix combines the Juju model
 and application names. The gateway strips it before forwarding requests,
 so the app's existing routes don't need to change. The load balancer
-uses the VM's ``NODE_IP``, which we set during cluster setup.
+uses the VM address represented by ``<VM_IP>`` in the commands below.
 
 Monitor ``juju status`` until everything has a status of ``active``.
 
@@ -487,14 +487,14 @@ Test the deployment by sending a request via the ingress:
 
 .. code-block:: bash
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
 It should return the ``{"message":"Hello World"}`` greeting.
 
 .. note::
 
     The ``--resolve`` option maps ``fastapi-hello-world.internal`` to the VM's
-    ``NODE_IP`` without setting a DNS record.
+    address (``<VM_IP>``) without setting a DNS record.
 
 
 The development cycle
@@ -606,7 +606,7 @@ Check that the response is still ``{"message":"Hello, world!"}`` using:
 
 .. code-block:: bash
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
 Now let's change the greeting:
 
@@ -620,7 +620,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
 The response should now return the updated ``{"message":"Hi!"}`` greeting.
 
@@ -749,7 +749,7 @@ Send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
 It should still return the ``{"message":"Hi!"}`` greeting.
 
@@ -757,7 +757,7 @@ Check the local visitors:
 
 .. code-block:: bash
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
 This request should return
 ``{"count":1}`` after the previous request to the root endpoint. This should
@@ -769,7 +769,7 @@ this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/fastapi-hello-world/charm
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
     {"message":"Hi!"}
 
@@ -778,7 +778,7 @@ this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/fastapi-hello-world/charm
 
-    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"$NODE_IP"
+    curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"<VM_IP>"
 
     {"count":2}
 

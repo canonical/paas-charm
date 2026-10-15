@@ -446,7 +446,7 @@ The app is exposed at ``http://spring-boot-hello-world.internal/spring-boot-hell
 The ``/spring-boot-hello-world-spring-boot-hello-world`` prefix combines the Juju model
 and application names. The gateway strips it before forwarding requests,
 so the app's existing routes don't need to change. The load balancer
-uses the VM's ``NODE_IP``, which we set during cluster setup.
+uses the VM address represented by ``<VM_IP>`` in the commands below.
 
 The port in ``paas-config.yaml`` is 8080. The charm passes it to the app as
 ``SERVER_PORT``.
@@ -457,14 +457,14 @@ Send a request via the ingress:
 
 .. code-block:: bash
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
 The request should return the ``Hello, world!`` greeting.
 
 .. note::
 
     The ``--resolve`` option maps ``spring-boot-hello-world.internal`` to the VM's
-    ``NODE_IP`` without setting a DNS record.
+    address (``<VM_IP>``) without setting a DNS record.
 
 
 The development cycle
@@ -576,7 +576,7 @@ Check that the response is still ``Hello, world!`` using:
 
 .. code-block:: bash
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
 Now let's change the greeting:
 
@@ -590,7 +590,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world  --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world  --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
 The response should now return the updated ``Hi!`` greeting.
 
@@ -756,7 +756,7 @@ Send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
 It should still return the ``Hi!`` greeting.
 
@@ -764,7 +764,7 @@ Check the local visitors:
 
 .. code-block:: bash
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
 This request should return ``Number of visitors 1`` after the
 previous request to the root endpoint.
@@ -776,7 +776,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/spring-boot-hello-world/charm
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
     Hi!
 
@@ -785,7 +785,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/spring-boot-hello-world/charm
 
-    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:"$NODE_IP"
+    curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:"<VM_IP>"
 
     Number of visitors 2
 

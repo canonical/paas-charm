@@ -48,23 +48,29 @@ The ``--wait-ready`` option waits for the cluster to become ready.
 Local storage supplies the volumes needed by Juju, PostgreSQL, and the image registry.
 Gateway API supplies the ingress controller used later in the tutorial.
 
-Find the VM's Kubernetes node address:
-
-.. literalinclude:: /reuse/tutorial/bootstrap_26_04.sh
-    :language: bash
-    :start-after: [docs:cluster-addresses]
-    :end-before: [docs:cluster-addresses-end]
-
-Keep this terminal open. The remaining commands use ``NODE_IP``.
-If you open a new terminal, run these address commands again.
-
 Configure the load balancer to use the VM's address, so the app will be
-accessible from outside the VM:
+accessible from outside the VM. In a separate terminal on your host, find the
+VM's IPv4 address:
+
+.. code-block:: bash
+
+    multipass info charm-dev
+
+Return to the VM terminal and enable the load balancer:
 
 .. literalinclude:: /reuse/tutorial/bootstrap_26_04.sh
     :language: bash
     :start-after: [docs:enable-load-balancer]
     :end-before: [docs:enable-load-balancer-end]
+
+Set its address range, replacing ``<VM_IP>`` with that IPv4 address:
+
+.. code-block:: bash
+
+    sudo k8s set load-balancer.cidrs="<VM_IP>/32"
+
+Use the same address in place of ``<VM_IP>`` in the later ``curl`` commands.
+Keep the quotes around the placeholder when replacing it.
 
 Create a local image registry
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,15 +94,6 @@ Apply the downloaded ``registry.yaml`` and wait for the registry to be ready:
 Access the registry at ``localhost:32000`` from within the VM.
 It uses a persistent volume so its images survive pod restarts.
 The NodePort service also exposes port 32000 on the VM's network interfaces.
-
-This registry uses unauthenticated HTTP for an isolated development VM only.
-Don't expose it to an untrusted network or use it in production.
-Configure containerd to pull images from this HTTP registry:
-
-.. literalinclude:: /reuse/tutorial/bootstrap_26_04.sh
-    :language: bash
-    :start-after: [docs:configure-registry]
-    :end-before: [docs:configure-registry-end]
 
 Bootstrap Juju
 ~~~~~~~~~~~~~~~
