@@ -286,7 +286,7 @@ your web app. Install uv and create the lockfile before packing:
 Create ``paas-config.yaml`` beside ``charmcraft.yaml`` to set the
 workload's runtime port:
 
-.. literalinclude:: code-26-04/spring-boot/paas-config.yaml
+.. literalinclude:: /reuse/tutorial/fixtures/paas-config-8080.yaml
     :caption: charm/paas-config.yaml
     :language: yaml
 
@@ -543,7 +543,7 @@ the Spring Boot app. Add the following to the end of the
 Replace ``paas-config.yaml`` with the following content to map the new
 ``greeting`` option to ``GREETING_VAR``, matching the app code:
 
-.. literalinclude:: code-26-04/spring-boot/greeting_paas_config.yaml
+.. literalinclude:: /reuse/tutorial/fixtures/greeting-paas-config-8080.yaml
     :caption: charm/paas-config.yaml
     :language: yaml
 

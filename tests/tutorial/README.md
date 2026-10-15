@@ -49,6 +49,12 @@ and cluster setup are the shared files in `docs/reuse/tutorial/`. The small
 `tools/retry` helper supports the task files' `-n` and `--wait` options without
 depending on Charmcraft's external snap testing tools.
 
+Identical port configurations, greeting mappings, and Go/Express migration
+snippets live in `docs/reuse/tutorial/fixtures/`. Each framework page includes
+the appropriate shared files directly. The suite's `prepare-each` stages them
+under the original filenames before running each framework's unchanged task.
+Framework-specific app code and charm configuration remain separate.
+
 Do not add early builder cleanup or silently increase guest capacity to conceal
 storage failures. Retained builders, the controller's storage, the 8 GiB registry
 claim, and PostgreSQL can exhaust a 50 GB guest. Record those failures and keep

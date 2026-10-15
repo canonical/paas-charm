@@ -279,7 +279,7 @@ your web app. Install uv and create the lockfile before packing:
 Create ``paas-config.yaml`` beside ``charmcraft.yaml`` to set the
 workload's runtime port:
 
-.. literalinclude:: code-26-04/expressjs/paas-config.yaml
+.. literalinclude:: /reuse/tutorial/fixtures/paas-config-8080.yaml
     :caption: charm/paas-config.yaml
     :language: yaml
 
@@ -538,7 +538,7 @@ the Express app. Add the following to the end of the
 Replace ``paas-config.yaml`` with the following content to map the new
 ``greeting`` option to ``GREETING_VAR``, matching the app code:
 
-.. literalinclude:: code-26-04/expressjs/greeting_paas_config.yaml
+.. literalinclude:: /reuse/tutorial/fixtures/greeting-paas-config-8080.yaml
     :caption: charm/paas-config.yaml
     :language: yaml
 
@@ -612,7 +612,7 @@ Back out to the ``~/expressjs-hello-world/app`` directory.
 Create the ``migrate.sh`` file using a text editor and paste the
 following code into it:
 
-.. literalinclude:: code-26-04/expressjs/visitors_migrate.sh
+.. literalinclude:: /reuse/tutorial/fixtures/visitors_migrate.sh
     :caption: ~/expressjs-hello-world/app/migrate.sh
     :language: bash
 
@@ -681,7 +681,7 @@ slice, so that the rock doesn't include unnecessary files. Open the
 ``rockcraft.yaml`` file using a text editor and add the following to the
 end of the file:
 
-.. literalinclude:: code-26-04/expressjs/visitors_rockcraft.yaml
+.. literalinclude:: /reuse/tutorial/fixtures/visitors_rockcraft.yaml
     :caption: ~/expressjs-hello-world/rockcraft.yaml
     :language: yaml
 

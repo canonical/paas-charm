@@ -97,6 +97,21 @@ suites:
       node_ip=$(sudo k8s kubectl get nodes \
         -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
       sudo k8s set load-balancer.cidrs="${node_ip}/32"
+    prepare-each: |
+      fixtures="$SPREAD_PATH/docs/reuse/tutorial/fixtures"
+      task="$SPREAD_PATH/$SPREAD_TASK"
+      case "${SPREAD_TASK##*/}" in
+        django|fastapi|flask) port=8000 ;;
+        expressjs|go|spring-boot) port=8080 ;;
+        *) echo "Unknown tutorial framework: $SPREAD_TASK" >&2; exit 1 ;;
+      esac
+      cp "$fixtures/paas-config-$port.yaml" "$task/paas-config.yaml"
+      cp "$fixtures/greeting-paas-config-$port.yaml" "$task/greeting_paas_config.yaml"
+      case "${SPREAD_TASK##*/}" in
+        expressjs|go)
+          cp "$fixtures/visitors_migrate.sh" "$fixtures/visitors_rockcraft.yaml" "$task/"
+          ;;
+      esac
     debug-each: |
       sudo k8s kubectl get all -A
       juju status

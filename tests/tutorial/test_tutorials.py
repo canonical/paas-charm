@@ -3,7 +3,9 @@
 
 """Fast tutorial checks; these do not build rocks, deploy charms or contact guests."""
 
+import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -13,6 +15,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
 FIXTURES = DOCS / "tutorial/code-26-04"
+SHARED_FIXTURES = DOCS / "reuse/tutorial/fixtures"
 FRAMEWORKS = ("django", "expressjs", "fastapi", "flask", "go", "spring-boot")
 PAGES = sorted((DOCS / "tutorial").glob("*-26-04.rst"))
 RETRY = ROOT / "tests/tutorial/tools/retry"
@@ -32,7 +35,8 @@ def test_framework_walkthrough(framework):
     assert "$REGISTRY" not in script
     assert "greeting='Hi!'" in script
     assert ("16/edge" if framework == "django" else "14/edge") in script
-    mapping = yaml.safe_load((fixtures / "greeting_paas_config.yaml").read_text())
+    port = 8000 if framework in ("django", "fastapi", "flask") else 8080
+    mapping = yaml.safe_load((SHARED_FIXTURES / f"greeting-paas-config-{port}.yaml").read_text())
     assert mapping["config"]["options"]["greeting"]["env-var"] == "GREETING_VAR"
 
     page_name = "express" if framework == "expressjs" else framework
@@ -117,6 +121,35 @@ def test_manual_suite_is_isolated():
     assert suite["manual"] is True
     assert suite["backends"] == ["tutorial"]
     assert config["integration-suites"]["tests/integration/"]["backends"] == ["integration-test"]
+
+
+@pytest.mark.parametrize("framework", FRAMEWORKS)
+def test_shared_fixtures_are_staged_for_each_task(framework, tmp_path):
+    """Stage the original filenames before task scripts move them to their app projects."""
+    shared = tmp_path / "docs/reuse/tutorial/fixtures"
+    shutil.copytree(SHARED_FIXTURES, shared)
+    task_path = f"docs/tutorial/code-26-04/{framework}"
+    task = tmp_path / task_path
+    shutil.copytree(FIXTURES / framework, task)
+    config = yaml.safe_load((ROOT / "spread.yaml").read_text())
+    script = config["suites"]["docs/tutorial/code-26-04/"]["prepare-each"]
+    subprocess.run(
+        ["bash", "-eu", "-c", script],
+        env={**os.environ, "SPREAD_PATH": str(tmp_path), "SPREAD_TASK": task_path},
+        check=True,
+    )
+    port = 8000 if framework in ("django", "fastapi", "flask") else 8080
+    assert (task / "paas-config.yaml").read_bytes() == (
+        shared / f"paas-config-{port}.yaml"
+    ).read_bytes()
+    assert (task / "greeting_paas_config.yaml").read_bytes() == (
+        shared / f"greeting-paas-config-{port}.yaml"
+    ).read_bytes()
+    if framework in ("expressjs", "go"):
+        for name in ("visitors_migrate.sh", "visitors_rockcraft.yaml"):
+            assert (task / name).read_bytes() == (shared / name).read_bytes()
+    elif framework == "spring-boot":
+        assert not (task / "visitors_migrate.sh").exists()
 
 
 @pytest.mark.parametrize(

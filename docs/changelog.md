@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Consolidate identical Ubuntu 26.04 tutorial fixtures while preserving
+  framework-specific examples and staging the shared files for manual tests.
 * docs: Move the six Ubuntu 26.04 framework tutorials from Charmcraft into
   the 12-Factor app support documentation, including their example apps and
   opt-in manual walkthrough tests.
