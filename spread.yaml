@@ -7,18 +7,6 @@ kill-timeout: 4h
 warn-timeout: 1h
 
 backends:
-  tutorial:
-    type: adhoc
-    systems:
-      - ubuntu-26.04:
-          username: ubuntu
-    allocate: |
-      if [ -z "$TUTORIAL_HOST" ]; then
-        FATAL "Set TUTORIAL_HOST to a disposable Ubuntu 26.04 guest"
-      fi
-      ADDRESS "$TUTORIAL_HOST"
-    discard: |
-      echo "The externally provisioned tutorial guest is not deleted by Spread."
   integration-test:
     type: integration-test
     systems:
@@ -78,39 +66,3 @@ integration-suites:
       CONCIERGE: concierge.yaml
       PRE_SCRIPT/integrations_test_s3: s3-installation.sh
       PRE_SCRIPT/integrations_test_tracing: s3-installation.sh
-
-suites:
-  docs/tutorial/code-26-04/:
-    summary: Ubuntu 26.04 framework tutorial walkthroughs
-    manual: true
-    backends:
-      - tutorial
-    systems:
-      - ubuntu-26.04
-    environment:
-      TUTORIAL_HOST: '$(HOST: echo "${TUTORIAL_HOST:-}")'
-      PATH: $SPREAD_PATH/tests/tutorial/tools:$PATH
-    prepare: |
-      . "$SPREAD_PATH/tests/tutorial/prepare.sh"
-      cp "$SPREAD_PATH/docs/reuse/tutorial/registry_26_04.yaml" registry.yaml
-      . "$SPREAD_PATH/docs/reuse/tutorial/bootstrap_26_04.sh"
-      node_ip=$(sudo k8s kubectl get nodes \
-        -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-      sudo k8s set load-balancer.cidrs="${node_ip}/32"
-    prepare-each: |
-      fixtures="$SPREAD_PATH/docs/reuse/tutorial/fixtures"
-      task="$SPREAD_PATH/$SPREAD_TASK"
-      case "${SPREAD_TASK##*/}" in
-        expressjs|go)
-          cp "$fixtures/visitors_migrate.sh" "$fixtures/visitors_rockcraft.yaml" "$task/"
-          ;;
-      esac
-    debug-each: |
-      sudo k8s kubectl get all -A
-      juju status
-      juju debug-log --no-tail --limit 1000
-    restore: |
-      juju destroy-controller --force --destroy-all-models \
-        --destroy-storage --no-prompt dev-controller
-      sudo snap remove k8s --purge
-      rm registry.yaml
