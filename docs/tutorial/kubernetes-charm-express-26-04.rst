@@ -175,13 +175,16 @@ The top of the file should look similar to the following snippet:
 .. code-block:: yaml
     :caption: ~/expressjs-hello-world/rockcraft.yaml
 
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/express-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
+
     name: expressjs-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # as an alternative, an Ubuntu base can be used
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.1' # just for humans. Semantic versioning is recommended
-    summary: A summary of your ExpressJS app # 79 char long summary
+    summary: A summary of your ExpressJS application # 79 char long summary
     description: |
         This is expressjs-hello-world's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,
@@ -308,13 +311,15 @@ The top of the file should look similar to the following snippet:
     :caption: ~/expressjs-hello-world/charm/charmcraft.yaml
 
     # This file configures Charmcraft.
-    # See https://juju.is/docs/sdk/charmcraft-config for guidance.
+    # See https://documentation.ubuntu.com/charmcraft/stable/reference/files/charmcraft-yaml-file/ for guidance.
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: expressjs-hello-world
 
     type: charm
 
     base: ubuntu@26.04
+    charm-user: non-root
 
     # the platforms this charm should be built on and run on.
     # you can check your architecture with `dpkg --print-architecture`
@@ -325,7 +330,11 @@ The top of the file should look similar to the following snippet:
       # s390x:
 
     # (Required)
-    summary: A very short one-line summary of the ExpressJS app.
+    summary: A very short one-line summary of the ExpressJS application.
+
+    # (Required)
+    description: |
+      A comprehensive overview of your ExpressJS application.
 
     ...
 
@@ -489,20 +498,31 @@ Update the rock
 ~~~~~~~~~~~~~~~
 
 Since we’re changing the app we should update the version of the rock.
+Return to the rock project directory:
+
+.. literalinclude:: code-26-04/expressjs/task.yaml
+    :language: bash
+    :start-after: [docs:return-to-rock-dir]
+    :end-before: [docs:return-to-rock-dir-end]
+    :dedent: 2
+
 Increment the ``version`` in ``rockcraft.yaml`` to ``0.2`` such that the
 top of the ``rockcraft.yaml`` file looks similar to the following:
 
 .. code-block:: yaml
     :caption: ~/expressjs-hello-world/rockcraft.yaml
-    :emphasize-lines: 6
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/express-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: expressjs-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # as an alternative, an Ubuntu base can be used
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.2' # just for humans. Semantic versioning is recommended
-    summary: A summary of your ExpressJS app # 79 char long summary
+    summary: A summary of your ExpressJS application # 79 char long summary
     description: |
         This is expressjs-hello-world's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,
@@ -684,6 +704,14 @@ Add the new package in the Express project:
 Update the rock again
 ~~~~~~~~~~~~~~~~~~~~~
 
+Return to the rock project directory:
+
+.. literalinclude:: code-26-04/expressjs/task.yaml
+    :language: bash
+    :start-after: [docs:return-to-rock-dir-again]
+    :end-before: [docs:return-to-rock-dir-again-end]
+    :dedent: 2
+
 For the migrations to work, we need the ``postgresql-client`` package
 installed in the rock. By default, the ``expressjs-framework`` uses the ``bare``
 base, so we will also need to install a shell interpreter. Let's do it as a
@@ -700,15 +728,18 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
 .. code-block:: yaml
     :caption: ~/expressjs-hello-world/rockcraft.yaml
-    :emphasize-lines: 6
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/express-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: expressjs-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # as an alternative, an Ubuntu base can be used
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.3' # just for humans. Semantic versioning is recommended
-    summary: A summary of your ExpressJS app # 79 char long summary
+    summary: A summary of your ExpressJS application # 79 char long summary
     description: |
         This is expressjs-hello-world's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,

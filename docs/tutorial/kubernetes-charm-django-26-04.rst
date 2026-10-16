@@ -236,25 +236,28 @@ The top of the file should look similar to the following snippet:
 .. code-block:: yaml
     :caption: ~/django-tutorial/rockcraft.yaml
 
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/django-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
+
     name: django-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
-    version: '0.1' # just for humans. Semantic versioning is recommended
-    summary: A summary of your Django app # 79 char long summary
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
+    version: "0.1" # just for humans. Semantic versioning is recommended
+    summary: A summary of your Django application # 79 char long summary
     description: |
-        This is django-hello-world's description. You have a paragraph or two to tell the
-        most important story about it. Keep it under 100 words though,
-        we live in tweetspace and your description wants to look good in the
-        container registries out there.
+      This is django-hello-world's description. You have a paragraph or two to tell the
+      most important story about it. Keep it under 100 words though,
+      we live in tweetspace and your description wants to look good in the
+      container registries out there.
     # the platforms this rock should be built on and run on.
     # you can check your architecture with `dpkg --print-architecture`
     platforms:
-        amd64:
-        # arm64:
-        # ppc64el:
-        # s390x:
+      amd64:
+      # arm64:
+      # ppc64el:
+      # s390x:
 
 Verify that the ``name`` is ``django-hello-world``.
 
@@ -679,27 +682,30 @@ the ``rockcraft.yaml`` file should look similar to the following:
 
 .. code-block:: yaml
     :caption: ~/django-tutorial/rockcraft.yaml
-    :emphasize-lines: 5
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/django-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: django-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
-    version: '0.2' # just for humans. Semantic versioning is recommended
-    summary: A summary of your Django app # 79 char long summary
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
+    version: "0.2" # just for humans. Semantic versioning is recommended
+    summary: A summary of your Django application # 79 char long summary
     description: |
-        This is django-hello-world's description. You have a paragraph or two to tell the
-        most important story about it. Keep it under 100 words though,
-        we live in tweetspace and your description wants to look good in the
-        container registries out there.
+      This is django-hello-world's description. You have a paragraph or two to tell the
+      most important story about it. Keep it under 100 words though,
+      we live in tweetspace and your description wants to look good in the
+      container registries out there.
     # the platforms this rock should be built on and run on.
     # you can check your architecture with `dpkg --print-architecture`
     platforms:
-        amd64:
-        # arm64:
-        # ppc64el:
-        # s390x:
+      amd64:
+      # arm64:
+      # ppc64el:
+      # s390x:
 
 Now let's pack and upload the new version of the rock using similar commands
 as before:
@@ -766,27 +772,30 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
 .. code-block:: yaml
     :caption: ~/django-tutorial/rockcraft.yaml
-    :emphasize-lines: 5
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/django-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: django-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
-    version: '0.3' # just for humans. Semantic versioning is recommended
-    summary: A summary of your Django app # 79 char long summary
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
+    version: "0.3" # just for humans. Semantic versioning is recommended
+    summary: A summary of your Django application # 79 char long summary
     description: |
-        This is django-hello-world's description. You have a paragraph or two to tell the
-        most important story about it. Keep it under 100 words though,
-        we live in tweetspace and your description wants to look good in the
-        container registries out there.
+      This is django-hello-world's description. You have a paragraph or two to tell the
+      most important story about it. Keep it under 100 words though,
+      we live in tweetspace and your description wants to look good in the
+      container registries out there.
     # the platforms this rock should be built on and run on.
     # you can check your architecture with `dpkg --print-architecture`
     platforms:
-        amd64:
-        # arm64:
-        # ppc64el:
-        # s390x:
+      amd64:
+      # arm64:
+      # ppc64el:
+      # s390x:
 
 Let's pack and upload the new version of the rock:
 

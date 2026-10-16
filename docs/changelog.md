@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Align Ubuntu 26.04 tutorial snippets with generated configuration, fix
+  version highlights, and return to the Express rock directory before repacking.
 * docs: Document the Maven incremental-pack bug and clean the build environment
   before subsequent rock packs in the Ubuntu 26.04 Spring Boot tutorial.
 * docs: Use Java 25 for the Spring Boot tutorial app.

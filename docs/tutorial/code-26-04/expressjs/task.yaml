@@ -149,7 +149,9 @@ execute: |
   curl -I http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP
   # [docs:curl-init-deployment-end]
 
-  cd ..
+  # [docs:return-to-rock-dir]
+  cd ~/expressjs-hello-world
+  # [docs:return-to-rock-dir-end]
   cat greeting_index.js > app/routes/index.js
   sed -i "s/version: .*/version: 0.2/g" rockcraft.yaml
 
@@ -208,18 +210,20 @@ execute: |
   # [docs:change-migrate-permissions-end]
 
   cd ..
-  cat visitors_rockcraft.yaml >> rockcraft.yaml
-  sed -i "s/version: .*/version: 0.3/g" rockcraft.yaml
-
   cat visitors.js > app/routes/visitors.js
   cat visitors_index.js > app/routes/index.js
   cat visitors_app.js > app/app.js
 
-  pushd app
+  cd app
   # [docs:check-expressjs-app]
   npm install pg-promise
   # [docs:check-expressjs-app-end]
-  popd
+
+  # [docs:return-to-rock-dir-again]
+  cd ~/expressjs-hello-world
+  # [docs:return-to-rock-dir-again-end]
+  cat visitors_rockcraft.yaml >> rockcraft.yaml
+  sed -i "s/version: .*/version: 0.3/g" rockcraft.yaml
 
   # [docs:docker-2nd-update]
   rockcraft pack

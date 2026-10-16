@@ -202,13 +202,16 @@ The top of the file should look similar to the following snippet:
 .. code-block:: yaml
     :caption: ~/fastapi-hello-world/rockcraft.yaml
 
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/fastapi-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
+
     name: fastapi-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.1' # just for humans. Semantic versioning is recommended
-    summary: A summary of your FastAPI app # 79 char long summary
+    summary: A summary of your FastAPI application # 79 char long summary
     description: |
         This is fastapi project's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,
@@ -335,13 +338,15 @@ The top of the file should look similar to the following snippet:
     :caption: ~/fastapi-hello-world/charm/charmcraft.yaml
 
     # This file configures Charmcraft.
-    # See https://juju.is/docs/sdk/charmcraft-config for guidance.
+    # See https://documentation.ubuntu.com/charmcraft/stable/reference/files/charmcraft-yaml-file/ for guidance.
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: fastapi-hello-world
 
     type: charm
 
     base: ubuntu@26.04
+    charm-user: non-root
 
     # the platforms this charm should be built on and run on.
     # you can check your architecture with `dpkg --print-architecture`
@@ -352,7 +357,11 @@ The top of the file should look similar to the following snippet:
       # s390x:
 
     # (Required)
-    summary: A very short one-line summary of the FastAPI app.
+    summary: A very short one-line summary of the FastAPI application.
+
+    # (Required)
+    description: |
+      A comprehensive overview of your FastAPI application.
 
     ...
 
@@ -528,15 +537,18 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
 .. code-block:: yaml
     :caption: ~/fastapi-hello-world/rockcraft.yaml
-    :emphasize-lines: 5
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/fastapi-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: fastapi-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.2' # just for humans. Semantic versioning is recommended
-    summary: A summary of your FastAPI app # 79 char long summary
+    summary: A summary of your FastAPI application # 79 char long summary
     description: |
         This is fastapi project's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,
@@ -676,15 +688,18 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
 .. code-block:: yaml
     :caption: ~/fastapi-hello-world/rockcraft.yaml
-    :emphasize-lines: 5
+    :emphasize-lines: 9
+
+    # See https://documentation.ubuntu.com/rockcraft/1/reference/extensions/fastapi-framework
+    # For questions or help, visit https://matrix.to/#/#12-factor-charms:ubuntu.com
 
     name: fastapi-hello-world
-    # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiseled rocks
-    base: bare # the runtime image contains only the app and its dependencies
-    build-base: ubuntu@26.04 # the environment used to build the rock
+    # see https://documentation.ubuntu.com/rockcraft/1/explanation/bases/
+    # for more information about bases and using 'bare' bases for chiselled rocks
+    base: bare # as an alternative, an ubuntu base can be used
+    build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.3' # just for humans. Semantic versioning is recommended
-    summary: A summary of your FastAPI app # 79 char long summary
+    summary: A summary of your FastAPI application # 79 char long summary
     description: |
         This is fastapi project's description. You have a paragraph or two to tell the
         most important story about it. Keep it under 100 words though,
