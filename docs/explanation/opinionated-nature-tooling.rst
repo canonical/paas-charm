@@ -93,7 +93,8 @@ Flask
 ~~~~~
 
 The Flask project must contain a ``requirements.txt`` or ``pyproject.toml`` file where
-Flask is listed as a dependency. In the same directory, there must also be an WSGI app
+Flask is listed as a dependency. When the project contains both ``pyproject.toml`` and
+``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv`` and skips this check. In the same directory, there must also be an WSGI app
 declared in an ``app.py`` file with the path ``app:app``. The name of the
 Flask object must be set to ``app``.
 
