@@ -28,7 +28,7 @@ class FastAPIConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    uvicorn_port: int = Field(alias="webserver-port", default=8000, gt=0)
+    uvicorn_port: int = Field(default=8000, gt=0)
     uvicorn_host: str = Field(alias="webserver-host", default="0.0.0.0")  # nosec
     web_concurrency: int = Field(alias="webserver-workers", default=1, gt=0)
     uvicorn_log_level: typing.Literal["critical", "error", "warning", "info", "debug", "trace"] = (

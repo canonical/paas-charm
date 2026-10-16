@@ -78,6 +78,10 @@ Flask and Django default to ``9102`` and ``/metrics``. Go default to ``8080``
 and ``/metrics``, Spring Boot, which uses ``8080`` and ``/actuator/prometheus``, and ExpressJS and
 FastAPI default to ``9464`` and ``/metrics``.
 
+.. note::
+
+    For Flask and Django, the statsd exporter port is not changed by ``metrics-port``.
+
 The charm publishes a Prometheus scrape job for the resolved ``metrics-port`` and ``metrics-path``.
 Additional scrape jobs can be configured independently under ``prometheus.scrape_configs``. Their
 targets must match endpoints that the workload actually serves.

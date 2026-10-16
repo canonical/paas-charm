@@ -40,6 +40,7 @@ assumes:
   - k8s-api
 
 base: ubuntu@26.04
+charm-user: non-root
 
 platforms:
   amd64:

@@ -33,6 +33,7 @@ def create_workload_config(
     """
     paas_config = paas_config or PaasConfig()
     application_port = paas_config.application_port(default_port=8000)
+    # The statsd exporter port is not changed by these values.
     metrics_port, metrics_path = paas_config.metrics_endpoint(
         default_port=9102, default_path="/metrics"
     )
