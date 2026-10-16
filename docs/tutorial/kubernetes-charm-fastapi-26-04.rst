@@ -46,7 +46,7 @@ than the sufficient resources, the tutorial will take longer to complete.
 What you'll do
 ~~~~~~~~~~~~~~
 
-#. Create a FastAPI app with FastAPI 0.142.2.
+#. Create a FastAPI app.
 #. Use that to create a rock with Rockcraft.
 #. Use that to create a charm with Charmcraft.
 #. Use that to test, deploy, configure, etc., your FastAPI app on a local
