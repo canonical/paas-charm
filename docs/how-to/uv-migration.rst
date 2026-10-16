@@ -17,10 +17,13 @@ the legacy ``charm`` plugin to the modern
 
 .. important::
 
-    If your charm uses a framework extension, Charmcraft generates the ``charm`` part for
-    you. Only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you must not add the
-    ``charm`` part from the ``parts`` blocks below: Charmcraft rejects ``parts.charm``
-    together with an extension ("incompatible with customized charm part").
+    If your charm uses a framework extension on Ubuntu 26.04 LTS, Charmcraft generates the
+    ``charm`` part for you. Only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you
+    must not add the ``charm`` part from the ``parts`` blocks below: Charmcraft rejects
+    ``parts.charm`` together with an extension ("incompatible with customized charm part").
+
+    On Ubuntu 24.04 LTS, extension charms still read ``requirements.txt``. Keep that file
+    and upgrade the base first, following :ref:`how_to_upgrade_paas_charm_2`.
 
 .. admonition:: Why migrate?
 

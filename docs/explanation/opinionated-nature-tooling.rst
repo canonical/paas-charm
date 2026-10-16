@@ -41,8 +41,8 @@ When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions
 Rockcraft searches for these two files
 and expects to find a global variable named ``application`` in the ``wsgi.py`` file. 
 
-The build will fail if Rockcraft does not find the ``requirements.txt`` file,
-the ``wsgi.py`` file, or the global variable ``application``.
+The build will fail if Rockcraft does not find the ``requirements.txt`` file (unless
+the project uses ``uv``), the ``wsgi.py`` file, or the global variable ``application``.
 
 Express
 ~~~~~~~

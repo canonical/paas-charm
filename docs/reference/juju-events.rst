@@ -98,7 +98,7 @@ For a web app charm, the following events are observed:
   * - ``oauth_info_removed``
     - Fired when the OAuth provider information is removed.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - ``http-proxy_relation_changed``
+  * - ``http_proxy_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the configuration, run pending migrations and restart the workload.
   * - ``openfga_store_created``
