@@ -20,9 +20,8 @@ the legacy ``charm`` plugin to the modern
     If your charm uses a framework extension, Charmcraft generates the ``charm`` part for
     you. Only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you must not add the
     ``charm`` part from the ``parts`` blocks below: Charmcraft rejects ``parts.charm``
-    together with an extension ("incompatible with customized charm part"). You can still
-    define other parts, for example to install extra build packages. The ``parts`` blocks
-    below are for charms that don't use a framework extension.
+    together with an extension ("incompatible with customized charm part"). The ``parts``
+    blocks below are for charms that don't use a framework extension.
 
 .. admonition:: Why migrate?
 
