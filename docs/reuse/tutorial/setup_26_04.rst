@@ -67,7 +67,7 @@ accessible from outside the VM. Enable the load balancer:
     :end-before: [docs:enable-load-balancer-end]
 
 Save the node's internal address in an environment variable and use it to set
-the load balancer's address range:
+the address range for the load balancer:
 
 .. code-block:: bash
 
