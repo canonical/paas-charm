@@ -19,7 +19,8 @@ the legacy ``charm`` plugin to the modern
 
     On Ubuntu 26.04 LTS, the framework extension adds the ``charm`` part (using the ``uv``
     plugin and the ``charmlibs-pydeps`` dependency group) automatically. It also adds a
-    ``config`` part when a ``paas-config.yaml`` file exists. Charmcraft rejects a
+    ``config`` part when a ``paas-config.yaml`` file exists. On Ubuntu 24.04 LTS, the
+    extension still uses the legacy ``charm`` plugin and adds no ``config`` part. Charmcraft rejects a
     ``charmcraft.yaml`` file that defines ``parts.charm`` together with a framework
     extension on any base ("incompatible with customized charm part"). For charms that use
     the extension, only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you must
