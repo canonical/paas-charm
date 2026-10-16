@@ -550,7 +550,7 @@ following output:
 
     App                 Version  Status  Scale  Charm               Channel    Rev  Address         Exposed  Message
     django-hello-world           active      1  django-hello-world               3  10.152.183.126  no
-    postgresql-k8s      16       active      1  postgresql-k8s      16/edge    969  10.152.183.197  no
+    postgresql-k8s      16       active      1  postgresql-k8s      16/stable  957  10.152.183.197  no
 
     Unit                   Workload  Agent  Address      Ports  Message
     django-hello-world/0*  active    idle   10.1.157.80
