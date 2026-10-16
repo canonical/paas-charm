@@ -151,6 +151,9 @@ endpoint. You will need a new terminal for this; use
 
 The FastAPI app should respond with exactly ``Hello world!``, with no trailing newline.
 
+All greeting and visitor responses use ``text/plain`` with no trailing newline,
+rather than FastAPI's default JSON responses.
+
 Close the app
 ~~~~~~~~~~~~~
 
@@ -620,7 +623,7 @@ new configuration has been added:
 
     juju config fastapi-hello-world | grep -A 6 greeting:
 
-Check that the response is now ``{"message":"Hello, world!"}`` using:
+Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 
@@ -640,7 +643,7 @@ Wait for the app to restart, then check the response:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-The response should now return the updated ``{"message":"Hi!"}`` greeting.
+The response should now return the updated ``Hi!`` greeting.
 
 Integrate with a database
 -------------------------
@@ -773,7 +776,7 @@ Send a request to the endpoint:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-It should still return the ``{"message":"Hi!"}`` greeting.
+It should still return the ``Hi!`` greeting.
 
 Check the local visitors:
 
@@ -782,7 +785,7 @@ Check the local visitors:
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
 This request should return
-``{"count":1}`` after the previous request to the root endpoint. This should
+``Number of visitors 1`` after the previous request to the root endpoint. This should
 be incremented each time the root endpoint is requested. If we repeat
 this process, the output should be as follows:
 
@@ -793,7 +796,7 @@ this process, the output should be as follows:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-    {"message":"Hi!"}
+    Hi!
 
 .. terminal::
     :user: ubuntu
@@ -802,7 +805,7 @@ this process, the output should be as follows:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-    {"count":2}
+    Number of visitors 2
 
 Tear things down
 ----------------

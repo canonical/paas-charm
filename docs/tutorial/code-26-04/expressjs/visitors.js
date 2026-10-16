@@ -15,17 +15,17 @@ router.get("/", async function (req, res, next) {
 
   if (!db) {
     console.error("Database connection is not initialized");
-    return res.status(500).send("Database connection error");
+    return res.status(500).type("text/plain").send("Database connection error");
   }
 
   try {
     const result = await db.one("SELECT count(*) FROM visitors");
     const numVisitors = result.count;
 
-    res.send(`Number of visitors: ${numVisitors}\n`);
+    res.type("text/plain").send(`Number of visitors ${numVisitors}`);
   } catch (error) {
     console.error("An error occurred while executing query:", error);
-    res.status(500).send("Error retrieving visitors count");
+    res.status(500).type("text/plain").send("Error retrieving visitors count");
   }
 });
 

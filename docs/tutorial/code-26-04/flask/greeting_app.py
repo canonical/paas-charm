@@ -11,7 +11,7 @@ app.config.from_prefixed_env()
 @app.route("/")
 def index():
     greeting = os.getenv("GREETING_VAR", "Hello, world!")
-    return f"{greeting}\n"
+    return flask.Response(greeting, mimetype="text/plain")
 
 
 if __name__ == "__main__":

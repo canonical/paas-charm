@@ -16,13 +16,13 @@ public class HelloController {
     public HelloController(VisitorService visitorService) {
         this.visitorService = visitorService;
     }
-    @GetMapping("/")
+    @GetMapping(value = "/", produces = "text/plain")
     public String index(@RequestHeader(value = "User-Agent") String userAgent) {
         visitorService.createVisitor(userAgent);
         return greeting;
     }
 
-    @GetMapping("/visitors")
+    @GetMapping(value = "/visitors", produces = "text/plain")
     public String visitorsCount() {
         return String.format("Number of visitors %d", visitorService.countVisitors());
     }

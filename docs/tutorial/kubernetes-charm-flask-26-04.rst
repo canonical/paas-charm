@@ -147,6 +147,8 @@ endpoint. You will need a new terminal for this; use
 
 The Flask app should respond with exactly ``Hello world!``, with no trailing newline.
 
+All greeting and visitor responses use ``text/plain`` with no trailing newline.
+
 Close the app
 ~~~~~~~~~~~~~
 
@@ -727,7 +729,7 @@ Check the total number of visitors:
 
     curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
 
-This request should return ``1`` after the previous request to the root endpoint.
+This request should return ``Number of visitors 1`` after the previous request to the root endpoint.
 This should be incremented each time the root endpoint is requested. If we
 repeat this process, the output should be as follows:
 
@@ -747,7 +749,7 @@ repeat this process, the output should be as follows:
 
     curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
 
-    2
+    Number of visitors 2
 
 Tear things down
 ----------------

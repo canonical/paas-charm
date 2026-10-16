@@ -9,7 +9,7 @@ router.get('/', async function(req, res, next) {
 
   if (!PG_CONNECT_STR) {
     console.error("Database connection string is not set");
-    return res.status(500).send("Database connection error");
+    return res.status(500).type("text/plain").send("Database connection error");
   }
 
   const db = pgp(PG_CONNECT_STR);
@@ -24,10 +24,10 @@ router.get('/', async function(req, res, next) {
     );
 
     const greeting = process.env["GREETING_VAR"] || "Hello, world!";
-    res.send(greeting + "\n");
+    res.type("text/plain").send(greeting);
   } catch (error) {
     console.error("An error occurred:", error);
-    res.status(500).send("An error occurred while processing your request");
+    res.status(500).type("text/plain").send("An error occurred while processing your request");
   } finally {
     db.$pool.end(); // Close the database connection pool
   }

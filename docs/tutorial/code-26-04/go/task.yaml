@@ -178,7 +178,7 @@ execute: |
   juju wait-for application go-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello
-  retry -n 5 --wait 5 sh -c "curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | grep Hello"
+  retry -n 5 --wait 5 sh -c "curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config go-hello-world greeting='Hi!'
@@ -188,7 +188,7 @@ execute: |
   juju wait-for application go-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 5 --wait 5 sh -c "curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | grep Hi"
+  retry -n 5 --wait 5 sh -c "curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   cat visitors_migrate.sh >> migrate.sh
@@ -241,10 +241,10 @@ execute: |
   # wait until the endpoint works
   retry -n 5 --wait 5 curl --fail http://go-hello-world.internal/go-hello-world-go-hello-world/visitors --resolve go-hello-world.internal:80:$NODE_IP
 
-  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | grep Hi
-  curl http://go-hello-world.internal/go-hello-world-go-hello-world/visitors --resolve go-hello-world.internal:80:$NODE_IP | grep 1
-  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | grep Hi
-  curl http://go-hello-world.internal/go-hello-world-go-hello-world/visitors --resolve go-hello-world.internal:80:$NODE_IP | grep 2
+  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl http://go-hello-world.internal/go-hello-world-go-hello-world/visitors --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
+  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl http://go-hello-world.internal/go-hello-world-go-hello-world/visitors --resolve go-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
 
   # [docs:clean-environment]
   charmcraft clean

@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Align initial, configurable greeting, and visitor responses across the
+  Ubuntu 26.04 tutorials as plain text with no trailing newline.
 * docs: Make all six Ubuntu 26.04 tutorial apps initially return the identical
   12-byte body `Hello world!`, without a trailing newline or JSON wrapper.
 * docs: Align Ubuntu 26.04 tutorial snippets with generated configuration, fix

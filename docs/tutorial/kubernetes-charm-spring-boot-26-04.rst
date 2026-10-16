@@ -137,7 +137,9 @@ in Multipass:
     :end-before: [docs:curl-spring-boot-end]
     :dedent: 2
 
-The Spring Boot app should respond with exactly ``Hello world!``, with no trailing newline,
+The Spring Boot app should respond with exactly ``Hello world!``, with no trailing newline.
+
+All greeting and visitor responses use ``text/plain`` with no trailing newline.
 
 The Spring Boot app looks good, so let's stop it for now
 with :kbd:`Ctrl` + :kbd:`C` and close the second terminal.

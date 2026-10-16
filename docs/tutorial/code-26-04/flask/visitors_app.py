@@ -26,7 +26,7 @@ def index():
 
 
     greeting = os.getenv("GREETING_VAR", "Hello, world!")
-    return f"{greeting}\n"
+    return flask.Response(greeting, mimetype="text/plain")
 
 
 @app.route("/visitors")
@@ -35,7 +35,7 @@ def visitors():
         cur.execute("SELECT COUNT(*) FROM visitors")
         total_visitors = cur.fetchone()[0]
 
-    return f"{total_visitors}\n"
+    return flask.Response(f"Number of visitors {total_visitors}", mimetype="text/plain")
 
 
 if __name__ == "__main__":

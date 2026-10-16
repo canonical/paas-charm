@@ -1,9 +1,10 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 
 app = FastAPI()
 
-@app.get("/")
+@app.get("/", response_class=PlainTextResponse)
 async def root():
-    return {"message": os.getenv("GREETING_VAR", "Hello World")}
+    return os.getenv("GREETING_VAR", "Hello, world!")

@@ -4,4 +4,4 @@ from django.http import HttpResponse
 
 
 def index(request):
-    return HttpResponse(f"{os.environ.get('GREETING_VAR', 'Hello, world!')}\n")
+    return HttpResponse(os.environ.get("GREETING_VAR", "Hello, world!"), content_type="text/plain")

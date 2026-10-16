@@ -218,7 +218,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep Hello"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   # Update django_hello_world/greeting/views.py
@@ -258,7 +258,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is still Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep Hello"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config django-hello-world greeting='Hi!'
@@ -268,7 +268,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep Hi"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:clean-environment]
   charmcraft clean

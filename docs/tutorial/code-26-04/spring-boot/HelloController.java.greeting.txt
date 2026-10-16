@@ -10,7 +10,7 @@ public class HelloController {
     @Value("${GREETING_VAR:Hello, world!}")
     private String greeting;
 
-    @GetMapping("/")
+    @GetMapping(value = "/", produces = "text/plain")
     public String index() {
         return greeting;
     }

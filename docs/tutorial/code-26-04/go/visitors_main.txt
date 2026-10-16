@@ -34,7 +34,8 @@ func helloWorldHandler(w http.ResponseWriter, req *http.Request) {
                 greeting = "Hello, world!"
         }
 
-        fmt.Fprintln(w, greeting)
+        w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+        fmt.Fprint(w, greeting)
 }
 
 func visitorsHandler(w http.ResponseWriter, req *http.Request) {
@@ -52,7 +53,8 @@ func visitorsHandler(w http.ResponseWriter, req *http.Request) {
                 log.Printf("An error occurred while executing query: %v", err)
                 return
         }
-        fmt.Fprintf(w, "Number of visitors %d\n", numVisitors)
+        w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+        fmt.Fprintf(w, "Number of visitors %d", numVisitors)
 }
 
 func main() {

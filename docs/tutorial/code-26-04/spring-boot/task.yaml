@@ -191,7 +191,7 @@ execute: |
   juju wait-for application spring-boot-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello
-  retry -n 10 --wait 20 sh -c "curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep Hello"
+  retry -n 10 --wait 20 sh -c "curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config spring-boot-hello-world greeting='Hi!'
@@ -200,7 +200,7 @@ execute: |
   juju wait-for application spring-boot-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 10 --wait 20 sh -c "curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep Hi"
+  retry -n 10 --wait 20 sh -c "curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   # [docs:add-generate-ddl]
@@ -260,10 +260,10 @@ execute: |
   juju wait-for application postgresql-k8s --query='status=="active"' --timeout 20m | juju status --relations
   juju wait-for application spring-boot-hello-world --query='status=="active"' --timeout 20m | juju status --relations
 
-  retry -n 10 --wait 20 sh -c "curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep Hi"
-  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep 1
-  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep Hi
-  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep 2
+  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
+  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world/visitors --resolve spring-boot-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
 
   # [docs:clean-environment]
   charmcraft clean

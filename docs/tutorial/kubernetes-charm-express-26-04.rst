@@ -134,6 +134,8 @@ endpoint. You will need a new terminal for this; use
 
 The app should respond with exactly ``Hello world!``, with no trailing newline.
 
+All greeting and visitor responses use ``text/plain`` with no trailing newline.
+
 Close the app
 ~~~~~~~~~~~~~
 
@@ -818,7 +820,7 @@ Check the local visitors:
 
     curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
-This request should return ``Number of visitors: 1`` after the
+This request should return ``Number of visitors 1`` after the
 previous request to the root endpoint.
 This should be incremented each time the root endpoint is requested. If we
 repeat this process, the output should be as follows:
@@ -839,7 +841,7 @@ repeat this process, the output should be as follows:
 
     curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
-    Number of visitors: 2
+    Number of visitors 2
 
 Tear things down
 ----------------

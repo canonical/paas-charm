@@ -9,7 +9,7 @@ if (!greeting){
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.send(greeting);
+  res.type("text/plain").send(greeting);
 });
 
 module.exports = router;
