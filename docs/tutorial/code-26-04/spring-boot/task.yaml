@@ -161,6 +161,7 @@ execute: |
   sed -i "s/version: .*/version: 0.2/g" rockcraft.yaml
 
   # [docs:skopeo-update]
+  rockcraft clean
   rockcraft pack
   rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
     oci-archive:spring-boot-hello-world_0.2_$(dpkg --print-architecture).rock \
@@ -229,6 +230,7 @@ execute: |
   rm pom.xml.visitors.dependencies.txt
 
   # [docs:skopeo-2nd-update]
+  rockcraft clean
   rockcraft pack
   rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
     oci-archive:spring-boot-hello-world_0.3_$(dpkg --print-architecture).rock \

@@ -222,8 +222,7 @@ minutes to finish.
 Once Rockcraft has finished packing the Spring Boot rock,
 the terminal will respond with something similar to
 ``Packed spring-boot-hello-world_0.1_<architecture>.rock``. The file name
-reflects your system's architecture. After the initial
-pack, subsequent rock packings are faster.
+reflects your system's architecture.
 
 The rock needs to be copied to the local OCI registry. This registry acts as a
 temporary Docker Hub, storing OCI archives so they can be downloaded and
@@ -525,7 +524,17 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
         # ppc64el:
         # s390x:
 
-Let's pack and upload the new version of the rock:
+.. warning::
+
+    A `Rockcraft Maven plugin bug <https://github.com/canonical/rockcraft/issues/1388>`_
+    can cause incremental packs to fail with
+    ``ln: failed to create symbolic link './java': File exists``.
+    While this bug affects your Rockcraft version, run ``rockcraft clean`` in
+    ``~/spring-boot-hello-world`` before each subsequent ``rockcraft pack``.
+    Cleaning removes the cached build environment, so the next pack will take longer.
+
+From ``~/spring-boot-hello-world``, clean the build environment, then pack and
+upload the new version of the rock:
 
 .. literalinclude:: code-26-04/spring-boot/task.yaml
     :language: bash
@@ -719,7 +728,8 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
         # s390x:
 
 
-Let's pack and upload the new version of the rock:
+From ``~/spring-boot-hello-world``, run ``rockcraft clean`` again to avoid the
+Maven plugin bug, then pack and upload the new version of the rock:
 
 .. literalinclude:: code-26-04/spring-boot/task.yaml
     :language: bash
