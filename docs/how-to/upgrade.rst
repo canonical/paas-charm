@@ -87,6 +87,12 @@ Charmcraft project that retains an Ubuntu 22.04 LTS or Ubuntu 24.04 LTS base
 continues to use and pin ``paas-charm`` 1.x; repacking such a project is not a
 supported upgrade path to ``paas-charm`` 2.0.
 
+The ``paas-charm`` 2.0 charm contract (the ``peers`` relation, the secret-typed
+``app-secret-key`` option, and the ``--base`` option of ``charmcraft init``) is generated
+by Charmcraft 4.5 or later, which isn't released yet. Charmcraft 4.4.2 doesn't accept
+``charmcraft init --base``, and for Ubuntu 26.04 LTS it still generates the earlier
+contract, with the ``secret-storage`` relation and ``flask-secret-key`` options.
+
 Before refreshing a deployment, manually migrate and rebuild **every** rock and
 charm:
 
@@ -201,8 +207,8 @@ dependency change:
    uv lock
 
 When carrying over custom relation handling or application code, replace
-obsolete Redis integration with the generated ``valkey`` relation and
-``/valkey/*`` endpoints.
+obsolete Redis integration with the generated ``valkey`` relation. The library no longer
+provides the ``REDIS_DB_*`` environment variables; use the ``VALKEY_DB_*`` variables.
 
 For more details about the generated contract and dependency migration, see
 the :ref:`Charmcraft framework extension reference <charmcraft:extensions>`

@@ -65,8 +65,9 @@ Omitted values use the framework defaults.
 
 The default application port is ``8000`` for Flask, Django, and FastAPI, and ``8080`` for
 ExpressJS, Go, and Spring Boot. The resolved port is always written to the
-workload environment when the framework uses an application port environment variable.
-Go uses ``PORT``; Flask and Django configure the port directly in Gunicorn instead.
+workload environment when the framework uses an application port environment variable:
+``PORT`` for ExpressJS and Go, ``UVICORN_PORT`` for FastAPI, and ``SERVER_PORT`` for
+Spring Boot. Flask and Django configure the port directly in Gunicorn instead.
 
 The charm always passes the resolved ``metrics-port`` and ``metrics-path`` values to the workload.
 Workload code is responsible for consuming this configuration and exposing the corresponding

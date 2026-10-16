@@ -108,9 +108,11 @@ Error semantics
 relation is not ready or relation data is missing or malformed. The framework
 calls ``ensure_ready()`` for every established relation and converts any raised
 exception into ``BlockedStatus("RelationDataError: <exception message>")``.
+If another required integration is also missing, the
+``missing integrations: <name>`` status is reported first.
 The same information is logged with the ``ERROR`` priority.
 
-Relations must not be raising exceptions from ``get_environment()``, doing so
+Relations must not be raising exceptions from ``gen_environment()``, doing so
 will block the charm.
 
 .. list-table::
@@ -121,16 +123,16 @@ will block the charm.
      - Outcome
    * - Data present but malformed
      - raises ``InvalidRelationDataError(message, relation=...)``
-     - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
-       optional or required
+     - ``BlockedStatus("RelationDataError: <exception message>")``, whether the
+       relation is optional or required
    * - No relation
      - not called
      - required → ``BlockedStatus("missing integrations: <name>")``; optional →
        no environment, no block
    * - Integrated but data not usable
      - raises ``RelationDataError``
-     - ``BlockedStatus("missing integrations: <name>")``, whether the relation is
-       optional or required
+     - ``BlockedStatus("RelationDataError: <exception message>")``, whether the
+       relation is optional or required
    * - Data valid and usable → ``gen_environment()`` contributes environment variables
        and usable
      - called always, even when relation is not ready

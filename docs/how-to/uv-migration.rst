@@ -17,13 +17,14 @@ the legacy ``charm`` plugin to the modern
 
 .. important::
 
-    The Ubuntu 26.04 LTS framework extension adds the ``charm`` part (using the ``uv``
-    plugin and the ``charmlibs-pydeps`` dependency group) and, when a ``paas-config.yaml``
-    file exists, a ``config`` part automatically. Charmcraft rejects a ``charmcraft.yaml``
-    file that defines ``parts.charm`` together with the framework extension on 26.04.
-    For such charms, only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you
-    must not add the ``parts`` blocks below. The ``parts`` examples apply only if you
-    manage the charm build parts yourself.
+    On Ubuntu 26.04 LTS, the framework extension adds the ``charm`` part (using the ``uv``
+    plugin and the ``charmlibs-pydeps`` dependency group) automatically. It also adds a
+    ``config`` part when a ``paas-config.yaml`` file exists. Charmcraft rejects a
+    ``charmcraft.yaml`` file that defines ``parts.charm`` together with a framework
+    extension on any base ("incompatible with customized charm part"). For charms that use
+    the extension, only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you must
+    not add the ``parts`` blocks below. The ``parts`` sections apply only to charms that
+    don't use the framework extension.
 
 .. admonition:: Why migrate?
 
@@ -78,8 +79,13 @@ Then replace the file with its equivalent ``pyproject.toml``:
 .. note::
 
     The empty ``charmlibs-pydeps`` dependency group is required by the Ubuntu 26.04 LTS
-    framework extension, which installs it during the build. Use ``paas-charm>=2.0.dev1,<3``
-    instead of ``paas-charm==1.11.3`` if you are migrating to ``paas-charm`` 2.0.
+    framework extension, which installs it during the build.
+
+    The pins above are for a ``paas-charm`` 1.x charm. ``paas-charm`` 2.0 requires
+    Python 3.12 or greater and pins its own versions of ``ops``, ``pydantic``,
+    ``jsonschema``, ``cosl`` and ``dpcharmlibs-interfaces``, so pinning older versions of
+    these makes ``uv lock`` fail. For ``paas-charm`` 2.0, set ``requires-python = ">=3.12"``
+    and list ``paas-charm>=2.0.dev1,<3`` with only the extra dependencies your own code needs.
 
 .. tip::
 
