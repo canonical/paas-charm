@@ -59,28 +59,24 @@ Local storage supplies the volumes needed by Juju, PostgreSQL, and the image reg
 Gateway API supplies the ingress controller used later in the tutorial.
 
 Configure the load balancer to use the VM's address, so the app will be
-accessible from outside the VM. In a separate terminal on your host, find the
-VM's IPv4 address:
-
-.. code-block:: bash
-
-    multipass info charm-dev
-
-Return to the VM terminal and enable the load balancer:
+accessible from outside the VM. Enable the load balancer:
 
 .. literalinclude:: /reuse/tutorial/bootstrap_26_04.sh
     :language: bash
     :start-after: [docs:enable-load-balancer]
     :end-before: [docs:enable-load-balancer-end]
 
-Set its address range, replacing ``<VM_IP>`` with that IPv4 address:
+Save the node's internal address in an environment variable and use it to set
+the load balancer's address range:
 
 .. code-block:: bash
 
-    sudo k8s set load-balancer.cidrs="<VM_IP>/32"
+    export VM_IP=$(sudo k8s kubectl get nodes \
+      -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+    sudo k8s set load-balancer.cidrs="${VM_IP}/32"
 
-Use the same address in place of ``<VM_IP>`` in the later ``curl`` commands.
-Keep the quotes around the placeholder when replacing it.
+The later ``curl`` commands use ``VM_IP`` in the same terminal. If you open a
+new terminal in the VM, run the ``export`` command again.
 
 Create a local image registry
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

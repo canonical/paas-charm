@@ -437,7 +437,7 @@ The app is exposed at ``http://flask-hello-world.internal/flask-hello-world-flas
 The ``/flask-hello-world-flask-hello-world`` prefix combines the Juju model
 and application names. The gateway strips it before forwarding requests,
 so the app's existing routes don't need to change. The load balancer
-uses the VM address represented by ``<VM_IP>`` in the commands below.
+uses the VM address saved in ``VM_IP`` during setup.
 
 Monitor ``juju status`` until everything has a status of ``active``.
 
@@ -445,14 +445,14 @@ Test the deployment by sending a request via the ingress:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
 The request should return the ``Hello, world!`` greeting.
 
 .. note::
 
     The ``--resolve`` option maps ``flask-hello-world.internal`` to the VM's
-    address (``<VM_IP>``) without setting a DNS record.
+    address (``$VM_IP``) without setting a DNS record.
 
 
 The development cycle
@@ -565,7 +565,7 @@ Check that the response is still ``Hello, world!`` using:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
 Now let's change the greeting:
 
@@ -579,7 +579,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
 The response should now return the updated ``Hi!`` greeting.
 
@@ -708,7 +708,7 @@ Send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
 It should still return the ``Hi!`` greeting.
 
@@ -716,7 +716,7 @@ Check the total number of visitors:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
 
 This request should return ``1`` after the previous request to the root endpoint.
 This should be incremented each time the root endpoint is requested. If we
@@ -727,7 +727,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/flask-hello-world/charm
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
     Hi!
 
@@ -736,7 +736,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/flask-hello-world/charm
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"<VM_IP>"
+    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
 
     2
 

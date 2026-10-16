@@ -444,7 +444,7 @@ The app is exposed at ``http://expressjs-hello-world.internal/expressjs-hello-wo
 The ``/expressjs-hello-world-expressjs-hello-world`` prefix combines the Juju model
 and application names. The gateway strips it before forwarding requests,
 so the app's existing routes don't need to change. The load balancer
-uses the VM address represented by ``<VM_IP>`` in the commands below.
+uses the VM address saved in ``VM_IP`` during setup.
 
 The port in ``paas-config.yaml`` is 8080. The charm passes it to the app as
 ``PORT``.
@@ -455,14 +455,14 @@ Send a request via the ingress:
 
 .. code-block:: bash
 
-    curl -I http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl -I http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
 It should show the ``HTTP/1.1 200 OK`` status message.
 
 .. note::
 
     The ``--resolve`` option maps ``expressjs-hello-world.internal`` to the VM's
-    address (``<VM_IP>``) without setting a DNS record.
+    address (``$VM_IP``) without setting a DNS record.
 
 The development cycle
 ---------------------
@@ -581,7 +581,7 @@ Check that the response is still ``Hello, world!`` using:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
 Now let's change the greeting:
 
@@ -595,7 +595,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
 The response should now return the updated ``Hi!`` greeting.
 
@@ -771,7 +771,7 @@ Once the Express app is ``active``, send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
 It should still return the ``Hi!`` greeting.
 
@@ -779,7 +779,7 @@ Check the local visitors:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
 This request should return ``Number of visitors: 1`` after the
 previous request to the root endpoint.
@@ -791,7 +791,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/expressjs-hello-world/charm
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
     Hi!
 
@@ -800,7 +800,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/expressjs-hello-world/charm
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"<VM_IP>"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
     Number of visitors: 2
 
