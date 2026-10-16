@@ -17,14 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* docs: Review the Ubuntu 26.04 LTS documentation: correct the juju events reference,
-  the FastAPI default metrics port, the `paas-config.yaml` staging guidance, the
-  `uv` migration guide, the resource names per base, the upgrade steps (`--base`),
-  and the 2.0 release notes; fix typos and extension part names in the examples.
-* docs: Correct the custom relations docs (`gen_environment`, blocked status text, missing
-  imports), the `app-secret-key` guidance for the Charmcraft extension, the `uv` migration
-  guide, the Rockcraft project-structure checks, and the custom relation statement. Document
-  packaging `cos_custom/` on Ubuntu 26.04 and the Charmcraft `latest/edge` requirement.
+* docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
+  `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0
+  release notes pages, and the `app-secret-key` guidance. Document packaging `cos_custom/` on
+  Ubuntu 26.04 LTS and the Charmcraft `latest/edge` requirement. Fix typos, resource names
+  per base and extension part names in the examples.
 * refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
   a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.
