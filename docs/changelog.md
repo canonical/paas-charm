@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Use Java 25 for the Spring Boot tutorial app.
 * docs: Allocate 75 GB for the Django and Express tutorial VMs and use
   PostgreSQL 16/stable for Django.
 * docs: Keep Ubuntu 26.04 tutorial rocks on the bare base, install uv during

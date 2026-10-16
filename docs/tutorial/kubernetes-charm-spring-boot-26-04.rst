@@ -78,7 +78,7 @@ Create the Spring Boot app
 Start by creating the "Hello, world" Spring Boot app that will be
 used for this tutorial.
 
-Install ``devpack-for-spring`` and Java.
+Install ``devpack-for-spring`` and Java 25.
 
 .. literalinclude:: code-26-04/spring-boot/task.yaml
     :language: bash
