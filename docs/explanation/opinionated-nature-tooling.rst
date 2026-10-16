@@ -32,7 +32,9 @@ The project must be set up with the structure
 of the Django project. The rock must be initialized in the ``project-name`` directory.
 
 There must be a ``project-name/requirements.txt`` file where Django is declared as
-a dependency. There must also be a ``project-name/project_name/project_name/wsgi.py`` file
+a dependency. Rockcraft only checks that the file exists. When the project contains both
+``pyproject.toml`` and ``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv``
+and the ``requirements.txt`` file isn't required. There must also be a ``project-name/project_name/project_name/wsgi.py`` file
 in the project.
 
 When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
@@ -60,8 +62,9 @@ The build will fail if Rockcraft does not find the file and both keys.
 FastAPI
 ~~~~~~~
 
-The FastAPI project must contain a ``requirements.txt`` file where ``fastapi`` is
-listed as a dependency. 
+The FastAPI project must contain a ``requirements.txt`` file where ``fastapi`` or
+``starlette`` is listed as a dependency. When the project contains both ``pyproject.toml``
+and ``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv`` and skips this check.
 The rock must be initialized in the same directory as the ``requirements.txt`` file.
 
 There must also be an ASGI app in the FastAPI project with the global variable ``app``.
