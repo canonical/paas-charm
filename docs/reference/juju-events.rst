@@ -33,7 +33,8 @@ For a web app charm, the following events are observed:
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``update_status``
     - Fired at regular intervals.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Restart the workload if the last database migration failed, and refresh the ingress
+      relation data.
   * - ``secret_changed``
     - Fired when the secret owner publishes a new secret revision.
     - Validate the configuration, run pending migrations and restart the workload.
@@ -93,16 +94,19 @@ For a web app charm, the following events are observed:
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``oauth_info_changed``
     - Fired when the OAuth provider information changes.
-    - Validate the configuration and restart the workload.
+    - Validate the configuration, run pending migrations and restart the workload.
   * - ``oauth_info_removed``
     - Fired when the OAuth provider information is removed.
-    - Validate the configuration and restart the workload.
+    - Validate the configuration, run pending migrations and restart the workload.
   * - ``http-proxy_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
-    - Validate the configuration and restart the workload.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``openfga_store_created``
+    - Fired when the OpenFGA store is created.
+    - Validate the configuration, run pending migrations and restart the workload.
   * - ``rotate_secret_key_action``
     - Fired when the ``rotate-secret-key`` action is run. The action fails on non-leader units.
-    - Generate a new secret token for the application.
+    - Generate a new secret token for the application and restart the workload.
 
 .. seealso::
 
