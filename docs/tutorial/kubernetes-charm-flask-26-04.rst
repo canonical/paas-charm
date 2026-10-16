@@ -145,7 +145,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-flask-end]
     :dedent: 2
 
-The Flask app should respond with ``Hello, world!``.
+The Flask app should respond with ``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -450,7 +450,7 @@ Test the deployment by sending a request via the ingress:
 
     curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
-The request should return the ``Hello, world!`` greeting.
+The request should return the ``Hello world!`` greeting.
 
 .. note::
 
@@ -567,7 +567,7 @@ the new configuration has been added:
 
     juju config flask-hello-world | grep -A 6 greeting:
 
-Check that the response is still ``Hello, world!`` using:
+Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 

@@ -149,7 +149,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-fastapi-end]
     :dedent: 2
 
-The FastAPI app should respond with ``{"message":"Hello World"}``.
+The FastAPI app should respond with ``{"message":"Hello world!"}``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -500,7 +500,7 @@ Test the deployment by sending a request via the ingress:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-It should return the ``{"message":"Hello World"}`` greeting.
+It should return the ``{"message":"Hello world!"}`` greeting.
 
 .. note::
 
@@ -620,7 +620,7 @@ new configuration has been added:
 
     juju config fastapi-hello-world | grep -A 6 greeting:
 
-Check that the response is still ``{"message":"Hello, world!"}`` using:
+Check that the response is now ``{"message":"Hello, world!"}`` using:
 
 .. code-block:: bash
 

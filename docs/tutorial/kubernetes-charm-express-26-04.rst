@@ -97,6 +97,13 @@ Install ``npm`` and ``express-generator`` to initialize the Express module:
 Run the Express app locally
 ---------------------------
 
+Replace ``routes/index.js`` with the following code to return the
+initial greeting instead of the generated welcome page:
+
+.. literalinclude:: code-26-04/expressjs/initial_index.js
+    :caption: ~/expressjs-hello-world/app/routes/index.js
+    :language: javascript
+
 Install the necessary packages for the app so it can run:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
@@ -125,8 +132,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-expressjs-end]
     :dedent: 2
 
-If the output has an *HTTP/1.1 200 OK* status message, then we know the newly-built
-app is working.
+The app should respond with ``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -464,9 +470,9 @@ Send a request via the ingress:
 
 .. code-block:: bash
 
-    curl -I http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
-It should show the ``HTTP/1.1 200 OK`` status message.
+It should return the ``Hello world!`` greeting.
 
 .. note::
 
@@ -597,7 +603,7 @@ has been added:
 
     juju config expressjs-hello-world | grep -A 6 greeting:
 
-Check that the response is still ``Hello, world!`` using:
+Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 

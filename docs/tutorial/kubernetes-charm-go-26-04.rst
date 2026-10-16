@@ -135,7 +135,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-go-end]
     :dedent: 2
 
-The Go app should respond with ``Hello, world!``.
+The Go app should respond with ``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -481,7 +481,7 @@ Send a request via the ingress:
 
     curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:"$VM_IP"
 
-The request should return the ``Hello, world!`` greeting.
+The request should return the ``Hello world!`` greeting.
 
 .. note::
 
@@ -599,7 +599,7 @@ has been added:
 
     juju config go-hello-world | grep -A 6 greeting:
 
-Check that the response is still ``Hello, world!`` using:
+Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 

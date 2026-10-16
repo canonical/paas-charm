@@ -57,6 +57,8 @@ execute: |
   # cd into django project dir
   cd django_hello_world
 
+  cat $HOME/tmp/urls_initial.py > django_hello_world/urls.py
+
   # Update settings.py file
   cat $HOME/tmp/settings_local_run.py > $HOME/django-tutorial/django_hello_world/django_hello_world/settings.py
 
@@ -66,7 +68,7 @@ execute: |
   # Test the Django app
   retry -n 5 --wait 5 curl --fail localhost:8000
 
-  curl localhost:8000 | grep Congratulations
+  curl localhost:8000 | grep -Fx 'Hello world!'
 
   kill $!
   cd $HOME/django-tutorial
@@ -173,7 +175,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP
 
   # curl the Django app
-  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep Congratulations
+  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
 
   cd ..
   cd django_hello_world

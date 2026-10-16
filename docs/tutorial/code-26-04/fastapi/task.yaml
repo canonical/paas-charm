@@ -49,7 +49,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail localhost:8080
 
   # [docs:curl-fastapi]
-  curl localhost:8080
+  curl localhost:8080 | grep -Fx '{"message":"Hello world!"}'
   # [docs:curl-fastapi-end]
 
   kill $!
@@ -133,7 +133,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$NODE_IP
 
   # [docs:curl-init-deployment]
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$NODE_IP
+  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$NODE_IP | grep -Fx '{"message":"Hello world!"}'
   # [docs:curl-init-deployment-end]
 
   cd ..

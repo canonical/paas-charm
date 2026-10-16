@@ -69,7 +69,7 @@ execute: |
   retry -n 5 --wait 2 curl localhost:8080
 
   # [docs:curl-spring-boot]
-  curl localhost:8080
+  curl localhost:8080 | grep -Fx 'Hello world!'
   # [docs:curl-spring-boot-end]
 
   kill $!
@@ -153,7 +153,7 @@ execute: |
   juju wait-for application gateway-api-integrator --query='status=="active"' --timeout 10m
 
   # [docs:curl-init-deployment]
-  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP
+  curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
   # [docs:curl-init-deployment-end]
 
   cd ..

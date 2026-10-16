@@ -152,6 +152,14 @@ to allow all traffic:
 
 Save and close the ``settings.py`` file.
 
+Replace ``django_hello_world/urls.py`` with the following code to serve
+the initial greeting at the root URL:
+
+.. literalinclude:: code-26-04/django/urls_initial.py
+    :caption: ~/django-tutorial/django_hello_world/django_hello_world/urls.py
+    :language: python
+    :lines: 4-
+
 Now, run the Django app to verify that it works:
 
 .. code-block:: bash
@@ -182,7 +190,7 @@ browser. Open a new tab and visit
 ``<Multipass private IP>`` with your VM's private IP address.
 
 The Django app should respond in the browser with
-``The install worked successfully! Congratulations!``.
+``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -559,7 +567,7 @@ following output:
     django-hello-world/0*  active    idle   10.1.157.80
     postgresql-k8s/0*      active    idle   10.1.157.78         Primary
 
-To be able to test the deployment, we need to enable debug mode for now.
+Enable debug mode temporarily to help diagnose the development deployment.
 Set the configuration:
 
 .. literalinclude:: code-26-04/django/task.yaml
@@ -616,7 +624,7 @@ private IP address you previously used.
 
 Now you can open a new tab and visit http://django-hello-world.internal/django-hello-world-django-hello-world. The
 Django app should respond in the browser with
-``The install worked successfully! Congratulations!``.
+``Hello world!``.
 
 
 The development cycle
@@ -632,8 +640,8 @@ Add a "Hello, world" app
 
 In this iteration, we'll add a greeting app that returns a ``Hello, world!`` greeting.
 
-The generated Django project doesn't come with an app, which is why
-we had to initially enable debug mode for testing.  We will need to go back
+The initial greeting is defined in the project's URL configuration. We'll
+move it into a separate Django app and update its greeting. We will need to go back
 out to the ``~/django-tutorial`` directory where the rock is and enter
 into the ``./django_hello_world`` directory where the Django app
 is. Let's add a new Django app:
@@ -730,7 +738,7 @@ From the Django project root, ``~/django-tutorial``, run:
     :end-before: [docs:refresh-deployment-end]
     :dedent: 2
 
-Now that we have the greeting app, we can disable debug mode:
+Now that we've checked the greeting app, disable debug mode:
 
 .. literalinclude:: code-26-04/django/task.yaml
     :language: bash

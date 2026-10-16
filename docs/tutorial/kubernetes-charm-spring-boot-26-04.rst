@@ -137,7 +137,7 @@ in Multipass:
     :end-before: [docs:curl-spring-boot-end]
     :dedent: 2
 
-The Spring Boot app should respond with ``Hello, world!``
+The Spring Boot app should respond with ``Hello world!``
 
 The Spring Boot app looks good, so let's stop it for now
 with :kbd:`Ctrl` + :kbd:`C` and close the second terminal.
@@ -474,7 +474,7 @@ Send a request via the ingress:
 
     curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$VM_IP"
 
-The request should return the ``Hello, world!`` greeting.
+The request should return the ``Hello world!`` greeting.
 
 .. note::
 
@@ -603,7 +603,7 @@ has been added:
 
     juju config spring-boot-hello-world | grep -A 6 greeting:
 
-Check that the response is still ``Hello, world!`` using:
+Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 

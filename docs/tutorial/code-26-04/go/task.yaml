@@ -57,7 +57,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail localhost:8080
 
   # [docs:curl-go]
-  curl localhost:8080
+  curl localhost:8080 | grep -Fx 'Hello world!'
   # [docs:curl-go-end]
 
   kill $!
@@ -141,7 +141,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP
 
   # [docs:curl-init-deployment]
-  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP
+  curl http://go-hello-world.internal/go-hello-world-go-hello-world --resolve go-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
   # [docs:curl-init-deployment-end]
 
   cd ..

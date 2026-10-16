@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Make all six Ubuntu 26.04 tutorial apps initially return `Hello world!`.
 * docs: Align Ubuntu 26.04 tutorial snippets with generated configuration, fix
   version highlights, and return to the Express rock directory before repacking.
 * docs: Document the Maven incremental-pack bug and clean the build environment
