@@ -79,8 +79,10 @@ Then replace the file with its equivalent ``pyproject.toml``:
 
 .. note::
 
-    The empty ``charmlibs-pydeps`` dependency group is required by the Ubuntu 26.04 LTS
-    framework extension, which installs it during the build.
+    The Ubuntu 26.04 LTS framework extension installs the ``charmlibs-pydeps`` dependency
+    group during the build (``uv sync --group charmlibs-pydeps``). The group can be empty,
+    but it must be defined in ``pyproject.toml``: otherwise uv fails with "Group
+    ``charmlibs-pydeps`` is not defined".
 
     The pins above are for a ``paas-charm`` 1.x charm. ``paas-charm`` 2.0 requires
     Python 3.12 or greater and pins its own versions of ``ops``, ``pydantic``,
