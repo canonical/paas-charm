@@ -565,6 +565,51 @@ def lxd_model_fixture(
             juju.destroy_model(lxd_model_name, destroy_storage=True, force=True)
 
 
+@pytest.fixture(scope="session", name="rabbitmq_server_app")
+def deploy_rabbitmq_server_fixture(juju: jubilant.Juju, lxd_controller, lxd_model) -> App:
+    """Deploy rabbitmq server machine charm."""
+    rabbitmq_server_name = "rabbitmq-server"
+
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        if juju.status().apps.get(rabbitmq_server_name):
+            logger.info("rabbitmq server already deployed")
+            return App(rabbitmq_server_name)
+
+        juju.deploy(
+            rabbitmq_server_name,
+            channel="edge",
+        )
+
+        juju.cli("offer", f"{rabbitmq_server_name}:amqp", include_model=False)
+        juju.wait(
+            lambda status: jubilant.all_active(status, rabbitmq_server_name),
+            timeout=6 * 60,
+            delay=10,
+        )
+    # Add the offer in the original model
+    offer_name = f"{lxd_controller}:admin/{lxd_model}.{rabbitmq_server_name}"
+    juju.cli("consume", offer_name, include_model=False)
+    # The return is a string with the name of the applications, but will not
+    # contain the controller or model. Other apps can integrate to rabbitmq using this
+    # name as there is a local offer with this name.
+    return App(rabbitmq_server_name)
+
+
+@pytest.fixture(scope="session", name="rabbitmq_server_ha_app")
+def deploy_rabbitmq_server_ha_fixture(
+    juju: jubilant.Juju, lxd_controller, lxd_model, rabbitmq_server_app
+) -> App:
+    """Deploy rabbitmq server machine charm in ha mode."""
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        juju.add_unit(rabbitmq_server_app.name, num_units=2)
+        juju.wait(
+            lambda status: jubilant.all_active(status, rabbitmq_server_app.name),
+            timeout=6 * 60,
+            delay=10,
+        )
+    return rabbitmq_server_app
+
+
 @pytest.fixture(scope="session", name="rabbitmq_k8s_app")
 def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     """Deploy rabbitmq-k8s app."""
