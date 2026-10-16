@@ -106,14 +106,14 @@ Error semantics
 ``ensure_ready()`` may raise :class:`RelationDataError`, or
 :class:`InvalidRelationDataError` (carrying a ``relation`` attribute) when the
 relation is not ready or relation data is missing or malformed. The framework
-calls ``ensure_ready()`` for every established relation and converts any raised
-exception into ``BlockedStatus("RelationDataError: <exception message>")``.
+calls ``ensure_ready()`` for every established relation and converts a raised
+``RelationDataError`` (or ``InvalidRelationDataError``) into ``BlockedStatus("RelationDataError: <exception message>")``.
 If another required integration is also missing, the
 ``missing integrations: <name>`` status is reported first.
 The same information is logged with the ``ERROR`` priority.
 
-Relations must not be raising exceptions from ``gen_environment()``, doing so
-will block the charm.
+Raising ``RelationDataError`` from ``gen_environment()`` blocks the charm with the
+exception message. Any other exception fails the hook.
 
 .. list-table::
    :header-rows: 1

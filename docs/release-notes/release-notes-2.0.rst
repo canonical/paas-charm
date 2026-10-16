@@ -50,8 +50,10 @@ Before refreshing a deployment:
 2. Migrate and rebuild every charm with ``base: ubuntu@26.04``, the ``uv``
    plugin, ``pyproject.toml``, a ``uv.lock`` file that you generate with
    ``uv lock``, and a compatible dependency such as ``paas-charm>=2.0.dev1,<3``.
-3. Ensure each charm defines the ``app`` container, ``app-image`` resource,
-   ``peers`` relation, and a single secret-typed ``app-secret-key`` option. If
+3. Ensure the packed charm has the ``app`` container, ``app-image`` resource,
+   ``peers`` relation, and a single secret-typed ``app-secret-key`` option. The
+   framework extension provides them, so don't redeclare ``app-secret-key`` in
+   ``charmcraft.yaml``. If
    you use a ``paas-config.yaml`` file, keep it in the charm project directory;
    the framework extension packs it with the charm automatically.
 4. Review the :ref:`Backwards-incompatible changes <paas_charm_2_breaking_changes>`

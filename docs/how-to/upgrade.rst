@@ -250,8 +250,8 @@ variables when packing:
    juju refresh myapp --path ./myapp_amd64.charm --base ubuntu@26.04 \
      --resource app-image=<registry>/<rock name>:<version>
 
-Pass ``--base ubuntu@26.04`` explicitly. Without it, the units can stay on the
-previous base and fail after the refresh. For more details on changing bases, see
+Pass ``--base ubuntu@26.04`` explicitly. It tells Juju to refresh the
+application to the new base. For more details on changing bases, see
 :ref:`Change to the Ubuntu 26.04 LTS base <charmcraft:howto-change-to-ubuntu-26-04>`.
 
 After the refresh completes, verify the application with ``juju status`` and

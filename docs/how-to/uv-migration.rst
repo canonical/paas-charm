@@ -155,6 +155,10 @@ Then update your file to use:
 (If applicable) Add a config part for ``paas-config.yaml``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This applies only to charms that don't use a framework extension. Extension
+charms on Ubuntu 26.04 LTS don't need a ``config`` part: the extension stages
+``paas-config.yaml`` automatically.
+
 If your charm ships a ``paas-config.yaml`` file, you need a dedicated
 ``dump`` part to stage it into the packed charm. Without this part,
 the file will not be included in your charm because the ``uv`` plugin

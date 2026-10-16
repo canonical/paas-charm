@@ -115,7 +115,7 @@ The Go project must contain a ``go.mod`` file. The rock must be initialized in t
 same directory as this file.
 
 When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
-Rockcraft searches for this file. The initialization will
+Rockcraft searches for this file. The build will
 fail if Rockcraft does not find the file.
 
 When ``rockcraft pack`` is run, Rockcraft builds a binary with the same name as the Go project. 
@@ -138,7 +138,7 @@ whether an ``gradlew`` executable file exists in the same directory. If the exec
 file doesn't exist, Rockcraft will create the file.
 
 The ``mvnw`` or ``gradlew`` file must be executable, or the rock build will fail.
-The project must not contain both executable files, otherwise the rock initialization
+The project must not contain both executable files, otherwise the rock build
 will fail.
 
 When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
