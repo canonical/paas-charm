@@ -149,7 +149,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-fastapi-end]
     :dedent: 2
 
-The FastAPI app should respond with ``{"message":"Hello world!"}``.
+The FastAPI app should respond with exactly ``Hello world!``, with no trailing newline.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -500,7 +500,7 @@ Test the deployment by sending a request via the ingress:
 
     curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:"$VM_IP"
 
-It should return the ``{"message":"Hello world!"}`` greeting.
+It should return exactly ``Hello world!``, with no trailing newline.
 
 .. note::
 

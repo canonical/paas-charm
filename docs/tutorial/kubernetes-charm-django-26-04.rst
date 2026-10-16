@@ -190,7 +190,7 @@ browser. Open a new tab and visit
 ``<Multipass private IP>`` with your VM's private IP address.
 
 The Django app should respond in the browser with
-``Hello world!``.
+exactly ``Hello world!``, with no trailing newline.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -624,7 +624,7 @@ private IP address you previously used.
 
 Now you can open a new tab and visit http://django-hello-world.internal/django-hello-world-django-hello-world. The
 Django app should respond in the browser with
-``Hello world!``.
+exactly ``Hello world!``, with no trailing newline.
 
 
 The development cycle

@@ -67,7 +67,7 @@ execute: |
   curl localhost:3000
   # [docs:curl-expressjs-end]
 
-  curl localhost:3000 | grep -Fx 'Hello world!'
+  curl localhost:3000 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   kill "$app_pid"
   cd ..
@@ -153,7 +153,7 @@ execute: |
   curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP
   # [docs:curl-init-deployment-end]
 
-  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
+  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   # [docs:return-to-rock-dir]
   cd ~/expressjs-hello-world

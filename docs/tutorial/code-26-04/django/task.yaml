@@ -68,7 +68,7 @@ execute: |
   # Test the Django app
   retry -n 5 --wait 5 curl --fail localhost:8000
 
-  curl localhost:8000 | grep -Fx 'Hello world!'
+  curl localhost:8000 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   kill $!
   cd $HOME/django-tutorial
@@ -175,7 +175,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP
 
   # curl the Django app
-  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
+  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   cd ..
   cd django_hello_world

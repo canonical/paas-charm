@@ -49,7 +49,7 @@ execute: |
   retry -n 5 --wait 2 curl --fail localhost:8000
 
   # [docs:curl-flask]
-  curl localhost:8000 | grep -Fx 'Hello world!'
+  curl localhost:8000 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
   # [docs:curl-flask-end]
 
   kill $!
@@ -129,7 +129,7 @@ execute: |
   retry -n 5 --wait 5 curl --fail http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:$NODE_IP
 
   # [docs:curl-init-deployment]
-  curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:$NODE_IP | grep -Fx 'Hello world!'
+  curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
   # [docs:curl-init-deployment-end]
 
   cd ..

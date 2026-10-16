@@ -137,7 +137,7 @@ in Multipass:
     :end-before: [docs:curl-spring-boot-end]
     :dedent: 2
 
-The Spring Boot app should respond with ``Hello world!``
+The Spring Boot app should respond with exactly ``Hello world!``, with no trailing newline,
 
 The Spring Boot app looks good, so let's stop it for now
 with :kbd:`Ctrl` + :kbd:`C` and close the second terminal.
@@ -474,7 +474,7 @@ Send a request via the ingress:
 
     curl http://spring-boot-hello-world.internal/spring-boot-hello-world-spring-boot-hello-world --resolve spring-boot-hello-world.internal:80:"$VM_IP"
 
-The request should return the ``Hello world!`` greeting.
+The request should return exactly ``Hello world!``, with no trailing newline.
 
 .. note::
 

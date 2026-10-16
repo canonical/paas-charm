@@ -17,7 +17,7 @@ def index(request: HttpRequest) -> HttpResponse:
     Returns:
         The greeting response.
     """
-    return HttpResponse("Hello world!\n")
+    return HttpResponse("Hello world!")
 
 
 urlpatterns = [

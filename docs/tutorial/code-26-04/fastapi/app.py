@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 
 app = FastAPI()
 
-@app.get("/")
+@app.get("/", response_class=PlainTextResponse)
 async def root():
-    return {"message": "Hello world!"}
+    return "Hello world!"
