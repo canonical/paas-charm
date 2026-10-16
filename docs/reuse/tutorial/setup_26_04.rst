@@ -1,9 +1,9 @@
 First, :external+multipass:ref:`install Multipass <how-to-guides-install-multipass>`.
 Launch an Ubuntu 26.04 VM named ``charm-dev``:
 
-.. code-block:: bash
+.. parsed-literal::
 
-    multipass launch --cpus 4 --disk 50G --memory 8G --name charm-dev 26.04
+    multipass launch --cpus 4 --disk |tutorial-vm-disk| --memory 8G --name charm-dev 26.04
     multipass shell charm-dev
 
 Unless stated otherwise, work entirely within the VM from now on.

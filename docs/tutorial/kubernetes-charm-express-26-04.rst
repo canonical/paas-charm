@@ -60,6 +60,7 @@ Set things up
 
 .. include:: /reuse/tutorial/setup_26_04.rst
 .. |12FactorApp| replace:: Express
+.. |tutorial-vm-disk| replace:: 50G
 
 The Ubuntu 26.04 extensions are experimental. Enable them for both tools
 in the terminal where you'll build the rock and charm:
