@@ -31,6 +31,25 @@ Create the following directory structure in your charm project:
     Any other subdirectory name is considered invalid.
 
 
+Package the assets on Ubuntu 26.04 LTS
+--------------------------------------
+
+On Ubuntu 26.04 LTS, the framework extension builds the charm with the ``uv`` plugin,
+which doesn't copy the ``cos_custom/`` directory into the packed charm. Add a ``dump``
+part to ``charmcraft.yaml`` to stage it:
+
+.. code-block:: yaml
+    :caption: charmcraft.yaml
+
+    parts:
+      cos-custom:
+        plugin: dump
+        source: .
+        stage:
+          - cos_custom
+
+Don't define a part named ``charm``; the extension rejects it.
+
 Add dashboards
 --------------
 

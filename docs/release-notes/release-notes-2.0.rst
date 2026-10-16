@@ -26,13 +26,16 @@ Requirements and compatibility
 
 ``paas-charm`` 2.0 requires Python 3.12 or greater.
 
+Building Ubuntu 26.04 LTS rocks requires Rockcraft 1.21 or later. Building Ubuntu 26.04 LTS
+charms requires a Charmcraft release that includes the updated 12-factor
+extension contract. Until then, use the ``latest/edge`` channel of the Charmcraft snap.
+
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
 ``build-base: ubuntu@26.04``. Charms use ``base: ubuntu@26.04``.
 
-Charmcraft profiles for Ubuntu 22.04 LTS and Ubuntu 24.04 LTS retain the earlier
-generated contract and pin ``paas-charm`` 1.x. They are not a supported path to
-``paas-charm`` 2.0.
+Charmcraft's Ubuntu 24.04 LTS profiles keep the earlier generated contract and pin
+``paas-charm`` 1.x. They are not a supported path to ``paas-charm`` 2.0.
 
 Upgrade instructions
 --------------------
@@ -46,9 +49,11 @@ Before refreshing a deployment:
 2. Migrate and rebuild every charm with ``base: ubuntu@26.04``, the ``uv``
    plugin, ``pyproject.toml``, a ``uv.lock`` file that you generate with
    ``uv lock``, and a compatible dependency such as ``paas-charm>=2.0.dev1,<3``.
-3. Ensure each charm defines the ``app`` container, ``app-image`` resource,
-   ``peers`` relation, and a single secret-typed ``app-secret-key`` option. If
-   used, stage the charm-owned ``paas-config.yaml`` into the packed charm.
+3. Check that the packed charm has the ``app`` container, the ``app-image`` resource,
+   the ``peers`` relation and a secret-typed ``app-secret-key`` option. The framework
+   extension provides them, so don't redeclare ``app-secret-key`` in ``charmcraft.yaml``.
+   Keep ``paas-config.yaml``, if you use one, in the charm project directory: the
+   extension packs it automatically.
 4. Review the :ref:`Backwards-incompatible changes <paas_charm_2_breaking_changes>`
    before refreshing the deployment.
 
@@ -136,6 +141,32 @@ for details.
 * `Pull request #372 <https://github.com/canonical/paas-charm/pull/372>`_
 * `Pull request #373 <https://github.com/canonical/paas-charm/pull/373>`_
 
+Custom relations API
+~~~~~~~~~~~~~~~~~~~~
+
+The public ``paas_charm.relations.CustomRelation`` API lets charm authors add their
+own Juju relations to a 12-factor charm, including environment variables, readiness,
+and reconcile behavior. See :ref:`Add a custom relation <how_to_add_custom_relation>`
+and :ref:`Custom relations <ref_custom_relations>` for details.
+
+* `Pull request #359 <https://github.com/canonical/paas-charm/pull/359>`_
+
+Environment variable names for config options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Environment variables generated from charm configuration options and secrets can be
+renamed with ``config.options`` in ``paas-config.yaml``. See
+:ref:`paas-config.yaml <ref_paas_config>` for details.
+
+* `Pull request #379 <https://github.com/canonical/paas-charm/pull/379>`_
+
+Valkey integration uses the custom relations framework
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Valkey integration is migrated to the custom relations framework.
+
+* `Pull request #381 <https://github.com/canonical/paas-charm/pull/381>`_
+
 OpenFGA store uses the charm application name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -208,8 +239,8 @@ Application secret key regeneration
 On upgrade, a fresh application secret key is generated because existing values
 are not migrated from the former peer databag. Applications that use this key
 for session signing (including Flask, Django, FastAPI, ExpressJS, and Spring
-Boot) may invalidate existing sessions. Use a ``type: secret`` config option for
-user-provided secret material.
+Boot) may invalidate existing sessions. To provide your own key, set the
+``app-secret-key`` option to a Juju secret ID.
 (`Pull request #345 <https://github.com/canonical/paas-charm/pull/345>`_)
 
 ``secret-storage`` relation renamed to ``peers``
@@ -268,7 +299,8 @@ Redis replaced with Valkey
 
 Redis examples and tests are replaced with Valkey. Consumers that still relate
 through the ``redis`` endpoint or call ``/redis/*`` must move to the ``valkey``
-relation and ``/valkey/*`` endpoints.
+relation and ``/valkey/*`` endpoints. The ``REDIS_DB_*`` environment variables are no
+longer set; use ``VALKEY_DB_*`` instead.
 (`Pull request #347 <https://github.com/canonical/paas-charm/pull/347>`_)
 
 Loki ``loki_push_api`` v0 removal

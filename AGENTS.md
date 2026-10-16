@@ -50,7 +50,6 @@ opcli pytest run -- -k "test_name"
 ### Package layout
 
 - `src/paas_charm/` — main library; the canonical source for all new code
-- `src/paas_app_charmer/` — **deprecated** thin re-export shims (maintained for Juju bases 22.04/24.04; do not add new functionality here. Bug fixes and shim updates that mirror changes in `src/paas_charm/` to preserve backwards compatibility are the only permitted changes.)
 - `examples/` — reference charm implementations for each supported framework
 - `tests/unit/` / `tests/integration/` — framework-specific test suites
 
@@ -71,7 +70,7 @@ ops.CharmBase
             └─ springboot.Charm
 ```
 
-`PaasCharm.__init__` sets up *all* possible integrations (databases, Redis, Valkey, S3, SAML, RabbitMQ, tracing, SMTP, OpenFGA, HTTP proxy, ingress, OAuth, observability) by introspecting the charm metadata `requires` dict. Optional integrations are imported with `try/except ImportError` to preserve backwards compatibility when charm libraries have not been fetched.
+`PaasCharm.__init__` sets up *all* possible integrations (databases, Valkey, S3, SAML, RabbitMQ, tracing, SMTP, OpenFGA, HTTP proxy, ingress, OAuth, observability) by introspecting the charm metadata `requires` dict. Optional integrations are imported with `try/except ImportError` to preserve backwards compatibility when charm libraries have not been fetched.
 
 ### Framework config models
 

@@ -28,7 +28,7 @@ extensions:
 
 # Uncomment the sections you need and adjust according to your requirements.
 parts:
-#   go-framework/install-app:
+#   go-framework.install-app:
 #    # Select a specific Go version. Otherwise the current stable one will be used.
 #    build-snaps:
 #    - go/1.22/stable
@@ -41,7 +41,7 @@ parts:
 #    # You can also include here other binary files to be included in the rock.
 #      bin/otherbinary: usr/local/bin/projectname
 
-#   go-framework/assets:
+#   go-framework.assets:
 #     stage:
 #       # By default, only the files in templates/ and static/
 #       # are copied into the image. You can modify the list below to override

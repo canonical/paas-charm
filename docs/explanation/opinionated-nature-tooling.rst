@@ -18,9 +18,10 @@ the various ways in which the 12-factor tooling is opinionated.
 Project structure
 -----------------
 
-For Rockcraft to successfully initialize the rock for a web app, it inspects the
-directory where ``rockcraft init`` is run to search for specific files and global
-variables depending upon the selected framework. The following sub-sections
+For Rockcraft to successfully build the rock for a web app, it inspects the
+project directory to search for specific files and global
+variables depending upon the selected framework. ``rockcraft init`` doesn't check them;
+the checks run when you run ``rockcraft pack`` or ``rockcraft expand-extensions``. The following sub-sections
 detail the requirements for each of the supported frameworks.
 
 Django
@@ -31,14 +32,17 @@ The project must be set up with the structure
 of the Django project. The rock must be initialized in the ``project-name`` directory.
 
 There must be a ``project-name/requirements.txt`` file where Django is declared as
-a dependency. There must also be a ``project-name/project_name/project_name/wsgi.py`` file
+a dependency. Rockcraft only checks that the file exists. When the project contains both
+``pyproject.toml`` and ``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv``
+and the ``requirements.txt`` file isn't required. There must also be a ``project-name/project_name/project_name/wsgi.py`` file
 in the project.
 
-When ``rockcraft init`` is run, Rockcraft searches for these two files
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for these two files
 and expects to find a global variable named ``application`` in the ``wsgi.py`` file. 
 
-The initialization will fail if Rockcraft does not find the ``requirements.txt`` file,
-the ``wsgi.py`` file, or the global variable ``application``.
+The build will fail if Rockcraft does not find the ``requirements.txt`` file (unless
+the project uses ``uv``), the ``wsgi.py`` file, or the global variable ``application``.
 
 Express
 ~~~~~~~
@@ -49,16 +53,18 @@ script which defines how the server is run. Furthermore, the ``name`` key in the
 defined and set to the app name.
 
 The rock must be initialized outside of the ``app`` directory.
-When ``rockcraft init`` is run, Rockcraft searches for the ``app/package.json`` file
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for the ``app/package.json`` file
 and expects to find both the ``scripts: start`` and ``name`` keys. 
 
-The initialization will fail if Rockcraft does not find the file and both keys.
+The build will fail if Rockcraft does not find the file and both keys.
 
 FastAPI
 ~~~~~~~
 
-The FastAPI project must contain a ``requirements.txt`` file where ``fastapi`` is
-listed as a dependency. 
+The FastAPI project must contain a ``requirements.txt`` file where ``fastapi`` or
+``starlette`` is listed as a dependency. When the project contains both ``pyproject.toml``
+and ``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv`` and skips this check.
 The rock must be initialized in the same directory as the ``requirements.txt`` file.
 
 There must also be an ASGI app in the FastAPI project with the global variable ``app``.
@@ -78,29 +84,32 @@ Rockcraft will search for different names and locations for this file:
     - ``/app`` or ``/src`` directories
 
 
-When ``rockcraft init`` is run, Rockcraft searches for the project file in the root
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for the project file in the root
 directory, in the ``app`` directory, or in the ``src`` directory. Rockcraft expects
 to find the global variable ``app`` defined in the project file.
 
-The initialization will fail if Rockcraft does not find a project file or the global
+The build will fail if Rockcraft does not find a project file or the global
 variable ``app``.
 
 Flask
 ~~~~~
 
-The Flask project must contain a ``requirements.txt`` file where Flask is
-listed as a dependency. In the same directory, there must also be an WSGI app
+The Flask project must contain a ``requirements.txt`` or ``pyproject.toml`` file where
+Flask is listed as a dependency. When the project contains both ``pyproject.toml`` and
+``uv.lock`` on Ubuntu 26.04 LTS, Rockcraft builds it with ``uv`` and skips this check. In the same directory, there must also be an WSGI app
 declared in an ``app.py`` file with the path ``app:app``. The name of the
 Flask object must be set to ``app``.
 
 The rock must be initialized in the same directory as the ``requirements.txt``
 and ``app.py`` files.
 
-When ``rockcraft init`` is run, Rockcraft searches for these files in the root
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for these files in the root
 directory. Rockcraft expects to find the ``app:app`` path in ``app.py`` and to
 find the name of the Flask object to be ``app``.
 
-The initialization will fail if Rockcraft does not find both files, if the ``app:app``
+The build will fail if Rockcraft does not find both files, if the ``app:app``
 path is missing, or if the name of the Flask object is not ``app``.
 
 Go
@@ -109,7 +118,8 @@ Go
 The Go project must contain a ``go.mod`` file. The rock must be initialized in the
 same directory as this file.
 
-When ``rockcraft init`` is run, Rockcraft searches for this file. The initialization will
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for this file. The build will
 fail if Rockcraft does not find the file.
 
 When ``rockcraft pack`` is run, Rockcraft builds a binary with the same name as the Go project. 
@@ -121,7 +131,7 @@ Spring Boot
 
 The Spring Boot project must contain either a ``pom.xml`` or ``build.gradle`` file.
 The rock must be initialized in the same directory as this file. The project must not
-contain both files, otherwise the rock initialization will fail.
+contain both files, otherwise the rock build will fail.
 
 If you define the Spring Boot project using a ``pom.xml`` file, Rockcraft will install
 the Maven plugin and check whether an ``mvnw`` executable file exists in the same directory.
@@ -131,13 +141,14 @@ If you use a ``build.gradle`` file, Rockcraft will install the Gradle plugin and
 whether an ``gradlew`` executable file exists in the same directory. If the executable
 file doesn't exist, Rockcraft will create the file.
 
-The ``mvnw`` or ``gradlew`` file must be executable, or the rock initialization will fail.
-The project must not contain both executable files, otherwise the rock initialization
+The ``mvnw`` or ``gradlew`` file must be executable, or the rock build will fail.
+The project must not contain both executable files, otherwise the rock build
 will fail.
 
-When ``rockcraft init`` is run, Rockcraft searches for either of these files and their
+When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+Rockcraft searches for either of these files and their
 corresponding executable files.
-The initialization will fail if Rockcraft does not find either file and its corresponding
+The build will fail if Rockcraft does not find either file and its corresponding
 executable file, or if it finds both files or both executable files.
 
 Minimum supported versions of the frameworks
@@ -155,10 +166,13 @@ about the Python version used:
 
 * Specifying ``base: ubuntu@22.04`` (or ``base: bare`` and ``build-base: ubuntu@22.04``) will use Python 3.10 
 * Specifying ``base: ubuntu@24.04`` (or ``base: bare`` and ``build-base: ubuntu@24.04``) will use Python 3.12 
+* Specifying ``base: ubuntu@26.04`` (or ``base: bare`` and ``build-base: ubuntu@26.04``) will use the
+  Python version shipped with Ubuntu 26.04 (Python 3.14)
 
 For the Spring Boot framework, the base determines the default JDK version. This is a weak
 opinion that can be overridden by specifying the preferred version in the ``rockcraft.yaml``
-file under ``extensions > spring-boot-framework/install-app: > build-packages``.
+file under ``parts > spring-boot-framework/install-app > build-packages`` on Ubuntu 22.04 and 24.04, or
+``parts > spring-boot-framework.install-app > build-packages`` on Ubuntu 26.04.
 
 The JDK version has forward-compatibility but not backward-compatibility. For instance,
 a Spring Boot app using Java 8 will also work with Java 11, but not vice versa.
@@ -187,7 +201,9 @@ exposes the configuration to the web app workload.
 Relations
 ~~~~~~~~~
 
-Adding custom relations is currently not supported by the tooling in Charmcraft.
+You can declare additional ``requires`` endpoints in ``charmcraft.yaml``, and the framework
+extension keeps them. To handle such a relation in the charm, see
+:ref:`Add a custom relation <how_to_add_custom_relation>`.
 
 Available charm features
 ~~~~~~~~~~~~~~~~~~~~~~~~

@@ -48,8 +48,8 @@ charm. Note this number — you'll need it when releasing the charm publicly.
 Identify the OCI image resource name
 -------------------------------------
 
-Each 12-factor app charm exposes exactly one OCI image resource. The name of
-that resource depends on the framework:
+Each 12-factor app charm exposes exactly one OCI image resource. On Ubuntu 26.04 LTS,
+the resource is named ``app-image`` for every framework:
 
 .. list-table::
    :header-rows: 1
@@ -68,6 +68,9 @@ that resource depends on the framework:
      - ``app-image``
    * - Spring Boot
      - ``app-image``
+
+On Ubuntu 22.04 LTS and Ubuntu 24.04 LTS, Flask and Django charms use
+``flask-app-image`` and ``django-app-image`` instead.
 
 You can always confirm the resource name for your specific charm by inspecting
 the ``resources`` section of your expanded ``charmcraft.yaml``:

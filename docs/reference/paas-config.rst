@@ -65,8 +65,9 @@ Omitted values use the framework defaults.
 
 The default application port is ``8000`` for Flask, Django, and FastAPI, and ``8080`` for
 ExpressJS, Go, and Spring Boot. The resolved port is always written to the
-workload environment when the framework uses an application port environment variable.
-Go uses ``PORT``; Flask and Django configure the port directly in Gunicorn instead.
+workload environment when the framework uses an application port environment variable:
+``PORT`` for ExpressJS and Go, ``UVICORN_PORT`` for FastAPI, and ``SERVER_PORT`` for
+Spring Boot. Flask and Django configure the port directly in Gunicorn instead.
 
 The charm always passes the resolved ``metrics-port`` and ``metrics-path`` values to the workload.
 Workload code is responsible for consuming this configuration and exposing the corresponding
@@ -74,9 +75,9 @@ endpoint. Flask and Django receive framework-prefixed
 ``METRICS_PORT`` and ``METRICS_PATH`` variables. FastAPI, ExpressJS, and Go receive variables
 without framework prefixes. Spring Boot receives native ``management.*`` properties.
 
-Flask and Django default to ``9102`` and ``/metrics``. Go default to ``8080``
-and ``/metrics``, Spring Boot, which uses ``8080`` and ``/actuator/prometheus``, and ExpressJS and
-FastAPI default to ``9464`` and ``/metrics``.
+Flask and Django default to ``9102`` and ``/metrics``. FastAPI defaults to ``8000`` and
+``/metrics``. Go defaults to ``8080`` and ``/metrics``. ExpressJS defaults to ``9464``
+and ``/metrics``. Spring Boot defaults to ``8080`` and ``/actuator/prometheus``.
 
 The charm publishes a Prometheus scrape job for the resolved ``metrics-port`` and ``metrics-path``.
 Additional scrape jobs can be configured independently under ``prometheus.scrape_configs``. Their
