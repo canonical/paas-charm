@@ -46,7 +46,7 @@ backends:
       sudo -u ubuntu -H juju models --all
 
 environment:
-  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'
+  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge-juju3.yaml}")'
   OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-main}")'
 
 exclude:
@@ -56,13 +56,25 @@ exclude:
   - .*_cache
 
 integration-suites:
-  tests/integration/:
+  tests/integration-juju3/:
     working-dir: ./
-    summary: paas-charm integration tests
+    summary: paas-charm integration tests (Juju 3.6)
+    discover-path: tests/integration/
     auto-discover: true
     backends:
       - integration-test
     environment:
-      CONCIERGE: concierge.yaml
+      CONCIERGE: concierge-juju3.yaml
+      PRE_SCRIPT/integrations_test_s3: s3-installation.sh
+      PRE_SCRIPT/integrations_test_tracing: s3-installation.sh
+  tests/integration-juju4/:
+    working-dir: ./
+    summary: paas-charm integration tests (Juju 4)
+    discover-path: tests/integration/
+    auto-discover: true
+    backends:
+      - integration-test
+    environment:
+      CONCIERGE: concierge-juju4.yaml
       PRE_SCRIPT/integrations_test_s3: s3-installation.sh
       PRE_SCRIPT/integrations_test_tracing: s3-installation.sh

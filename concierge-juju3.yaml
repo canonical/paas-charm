@@ -4,7 +4,7 @@
 version: 1
 
 juju:
-  channel: 4.0/stable
+  channel: 3.6/stable
   model-defaults:
     test-mode: "true"
     automatically-retry-hooks: "true"
@@ -12,7 +12,7 @@ juju:
 providers:
   lxd:
     enable: true
-    bootstrap: false
+    bootstrap: true
   k8s:
     enable: true
     bootstrap: true
