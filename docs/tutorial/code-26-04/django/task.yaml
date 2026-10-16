@@ -75,10 +75,6 @@ execute: |
   rockcraft init --name django-hello-world --profile django-framework --base ubuntu@26.04
   # [docs:create-rockcraft-yaml-end]
 
-  # [docs:use-ubuntu-rock-base]
-  sed -i 's/^base: bare.*/base: ubuntu@26.04/; /^build-base:/d' rockcraft.yaml
-  # [docs:use-ubuntu-rock-base-end]
-
   sed -i "s/name: .*/name: django-hello-world/g" rockcraft.yaml
   sed -i "s/amd64/$(dpkg --print-architecture)/g" rockcraft.yaml
 
@@ -107,7 +103,6 @@ execute: |
   # [docs:charm-init-end]
 
   # [docs:lock-charm-dependencies]
-  sudo snap install astral-uv --classic
   uv lock
   # [docs:lock-charm-dependencies-end]
 

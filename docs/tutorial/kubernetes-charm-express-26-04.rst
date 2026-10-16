@@ -1,7 +1,7 @@
 .. _tutorial-kubernetes-charm-express-26-04:
 
 .. meta::
-    :description: Learn to build, configure, and deploy a Express Kubernetes charm on Ubuntu 26.04, then integrate it with PostgreSQL.
+    :description: Learn to build, configure, and deploy an Express Kubernetes charm on Ubuntu 26.04, then integrate it with PostgreSQL.
 
 Write your first Kubernetes charm for an Express app on Ubuntu 26.04
 ====================================================================
@@ -176,8 +176,8 @@ The top of the file should look similar to the following snippet:
 
     name: expressjs-hello-world
     # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiselled rocks
-    base: bare # as an alternative, a ubuntu base can be used
+    # for more information about bases and using 'bare' bases for chiseled rocks
+    base: bare # as an alternative, an Ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.1' # just for humans. Semantic versioning is recommended
     summary: A summary of your ExpressJS app # 79 char long summary
@@ -268,7 +268,7 @@ The files will automatically be created in your working directory.
 
 The Ubuntu 26.04 profile uses the uv plugin and ``pyproject.toml`` for
 the charm dependencies. These dependencies are separate from those of
-your web app. Install uv and create the lockfile before packing:
+your web app. Use uv, installed during setup, to create the lockfile before packing:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
     :language: bash
@@ -276,21 +276,24 @@ your web app. Install uv and create the lockfile before packing:
     :end-before: [docs:lock-charm-dependencies-end]
     :dedent: 2
 
-Create ``paas-config.yaml`` beside ``charmcraft.yaml`` to set the
-workload's runtime port:
+The charm needs to know which port the app listens on. ``paas-config.yaml``
+contains settings that the charm uses to run your app. Charmcraft packages this
+file with the charm, and the charm reads it when configuring the workload. Unlike
+options set with ``juju config``, these settings are part of the packaged charm;
+changing them requires repacking and refreshing it.
+
+Create ``paas-config.yaml`` beside ``charmcraft.yaml`` with the following content
+to set the app's runtime port:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
-    :caption: charm/paas-config.yaml
+    :caption: ~/expressjs-hello-world/charm/paas-config.yaml
     :language: yaml
     :start-after: cat > paas-config.yaml <<'BASE_PAAS_CONFIG'
     :end-before: BASE_PAAS_CONFIG
     :dedent: 2
 
-Charmcraft packages this file into the charm. Its ``port`` key takes
-precedence over the Juju ``app-port`` option. The extension supplies
-the ``app`` container, the ``app-image`` resource, and the ``peers``
-relation. Keep the generated ``base: ubuntu@26.04`` and
-``charm-user: non-root`` settings.
+The ``port`` key takes precedence over the Juju ``app-port`` option. For other
+packaged settings, see the :ref:`paas-config.yaml reference <ref_paas_config>`.
 
 Check out the contents of ``charmcraft.yaml``:
 
@@ -329,7 +332,7 @@ Verify that the ``name`` is ``expressjs-hello-world``. Ensure that ``platforms``
 includes the architecture of your host. Edit the ``platforms`` key in the
 project file if required.
 
-Let's :literalref:`pack<ref_commands_pack>` the charm:
+Let's :external+charmcraft:ref:`pack <ref_commands_pack>` the charm:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
     :language: bash
@@ -494,8 +497,8 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
     name: expressjs-hello-world
     # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiselled rocks
-    base: bare # as an alternative, a ubuntu base can be used
+    # for more information about bases and using 'bare' bases for chiseled rocks
+    base: bare # as an alternative, an Ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.2' # just for humans. Semantic versioning is recommended
     summary: A summary of your ExpressJS app # 79 char long summary
@@ -542,7 +545,7 @@ Replace ``paas-config.yaml`` with the following content to map the new
 ``greeting`` option to ``GREETING_VAR``, matching the app code:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
-    :caption: charm/paas-config.yaml
+    :caption: ~/expressjs-hello-world/charm/paas-config.yaml
     :language: yaml
     :start-after: cat > paas-config.yaml <<'GREETING_PAAS_CONFIG'
     :end-before: GREETING_PAAS_CONFIG
@@ -700,8 +703,8 @@ top of the ``rockcraft.yaml`` file looks similar to the following:
 
     name: expressjs-hello-world
     # see https://documentation.ubuntu.com/rockcraft/en/latest/explanation/bases/
-    # for more information about bases and using 'bare' bases for chiselled rocks
-    base: bare # as an alternative, a ubuntu base can be used
+    # for more information about bases and using 'bare' bases for chiseled rocks
+    base: bare # as an alternative, an Ubuntu base can be used
     build-base: ubuntu@26.04 # build-base is required when the base is bare
     version: '0.3' # just for humans. Semantic versioning is recommended
     summary: A summary of your ExpressJS app # 79 char long summary

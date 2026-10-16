@@ -97,7 +97,6 @@ execute: |
   # [docs:charm-init-end]
 
   # [docs:lock-charm-dependencies]
-  sudo snap install astral-uv --classic
   uv lock
   # [docs:lock-charm-dependencies-end]
 

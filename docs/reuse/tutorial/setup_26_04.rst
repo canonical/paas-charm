@@ -8,16 +8,18 @@ Launch an Ubuntu 26.04 VM named ``charm-dev``:
 
 Unless stated otherwise, work entirely within the VM from now on.
 
-Install Rockcraft and Charmcraft
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install Rockcraft, Charmcraft, and uv
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Ubuntu 26.04 extensions require the edge releases of Rockcraft and Charmcraft.
-Install both tools with classic confinement, which grants them access to the whole file system:
+Install these tools and uv, the charm's Python dependency manager, with classic
+confinement, which grants them access to the whole file system:
 
 .. code-block:: bash
 
     sudo snap install rockcraft --channel latest/edge --classic
     sudo snap install charmcraft --channel latest/edge --classic
+    sudo snap install astral-uv --classic
 
 Install LXD, Canonical Kubernetes, and Juju
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

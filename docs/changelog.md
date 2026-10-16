@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Keep Ubuntu 26.04 tutorial rocks on the bare base, install uv during
+  shared setup, and clarify packaged application configuration.
 * docs: Consolidate identical Ubuntu 26.04 tutorial fixtures while preserving
   framework-specific examples.
   Generate the small packaged port and greeting configurations directly in
