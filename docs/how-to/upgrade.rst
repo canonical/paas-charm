@@ -89,7 +89,7 @@ supported upgrade path to ``paas-charm`` 2.0.
 
 The ``paas-charm`` 2.0 charm contract (the ``peers`` relation, the secret-typed
 ``app-secret-key`` option, and the ``--base`` option of ``charmcraft init``) is generated
-by Charmcraft 4.5 or later, which isn't released yet. Charmcraft 4.4.2 doesn't accept
+by the ``latest/edge`` channel of the Charmcraft snap. Charmcraft 4.4.2 (``latest/stable``) doesn't accept
 ``charmcraft init --base``, and for Ubuntu 26.04 LTS it still generates the earlier
 contract, with the ``secret-storage`` relation and ``flask-secret-key`` options.
 
@@ -250,8 +250,7 @@ variables when packing:
    juju refresh myapp --path ./myapp_amd64.charm --base ubuntu@26.04 \
      --resource app-image=<registry>/<rock name>:<version>
 
-Pass ``--base ubuntu@26.04`` explicitly. It tells Juju to refresh the
-application to the new base. For more details on changing bases, see
+Pass ``--base ubuntu@26.04`` explicitly so that Juju selects the charm built for that base. For more details on changing bases, see
 :ref:`Change to the Ubuntu 26.04 LTS base <charmcraft:howto-change-to-ubuntu-26-04>`.
 
 After the refresh completes, verify the application with ``juju status`` and

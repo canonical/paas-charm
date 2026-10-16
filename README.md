@@ -52,7 +52,7 @@ Without a base option, these commands generate Ubuntu 24.04 projects that use
 `paas-charm` 1.x. For `paas-charm` 2.0 and Ubuntu 26.04, pass `--base ubuntu@26.04` to both
 `init` commands, and set `ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1` and
 `CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1` when you run `pack`. `charmcraft init --base` requires
-Charmcraft 4.5 or later. See the
+the Charmcraft `latest/edge` channel. See the
 [upgrade guide](https://canonical.com/juju/docs/12-factor/latest/how-to/upgrade/) for details.
 
 After packing the rock and charm using `rockcraft pack` and `charmcraft pack`

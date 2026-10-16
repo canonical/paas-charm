@@ -28,7 +28,7 @@ Requirements and compatibility
 
 Building Ubuntu 26.04 LTS rocks requires Rockcraft 1.21 or later. Building Ubuntu 26.04 LTS
 charms requires a Charmcraft release that includes the updated 12-factor
-extension contract, which is expected in Charmcraft 4.5.
+extension contract. Until then, use the ``latest/edge`` channel of the Charmcraft snap.
 
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
