@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Support Juju 4 in integration tests and exclude departing units from peer addresses.
 * refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
   a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.

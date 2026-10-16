@@ -52,6 +52,7 @@ def fixture_session_with_retry():
     adapter = HTTPAdapter(max_retries=retry_strategy)
     with requests.Session() as session_with_retry:
         session_with_retry.mount("http://", adapter)
+        session_with_retry.mount("https://", adapter)
         yield session_with_retry
 
 
@@ -810,6 +811,7 @@ def deploy_postgresql(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        force=True,
     )
 
 
@@ -943,7 +945,7 @@ def django_blocked_app_fixture(
         if "already exists" not in err.stderr:
             raise err
 
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=10 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -977,7 +979,7 @@ def fastapi_blocked_app_fixture(
         if "already exists" not in err.stderr:
             raise err
 
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=10 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -1011,7 +1013,7 @@ def go_blocked_app_fixture(
         if "already exists" not in err.stderr:
             raise err
 
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=10 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)
 
@@ -1045,6 +1047,6 @@ def expressjs_blocked_app_fixture(
         if "already exists" not in err.stderr:
             raise err
 
-    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=5 * 60)
+    juju.wait(lambda status: status.apps["postgresql-k8s"].is_active, timeout=10 * 60)
     juju.wait(lambda status: status.apps[app_name].is_blocked, timeout=5 * 60)
     return App(app_name)

@@ -268,6 +268,7 @@ def mysql_app_fixture(juju: jubilant.Juju, mysql_app_name):
             channel="8.0/stable",
             revision=140,
             trust=True,
+            force=True,
         )
 
     return App(mysql_app_name)
@@ -492,12 +493,22 @@ def deploy_openfga_server_fixture(juju: jubilant.Juju) -> App:
         return openfga_server_app
 
     deploy_postgresql(juju)
-    juju.deploy(openfga_server_app.name, channel="latest/stable")
+    juju.deploy(openfga_server_app.name, channel="latest/stable", trust=True)
     juju.integrate(openfga_server_app.name, "postgresql-k8s:database")
     juju.wait(
-        lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
+        lambda status: status.apps["postgresql-k8s"].is_active
+        and (
+            status.apps[openfga_server_app.name].is_active
+            or "schema-upgrade" in (status.apps[openfga_server_app.name].app_status.message or "")
+        ),
         timeout=6 * 60,
     )
+    if not juju.status().apps[openfga_server_app.name].is_active:
+        juju.run(f"{openfga_server_app.name}/0", "schema-upgrade")
+        juju.wait(
+            lambda status: jubilant.all_active(status, openfga_server_app.name, "postgresql-k8s"),
+            timeout=6 * 60,
+        )
     return openfga_server_app
 
 
@@ -599,7 +610,7 @@ def deploy_rabbitmq_server_ha_fixture(
     return rabbitmq_server_app
 
 
-@pytest.fixture(scope="module", name="rabbitmq_k8s_app")
+@pytest.fixture(scope="session", name="rabbitmq_k8s_app")
 def deploy_rabbitmq_k8s_fixture(juju: jubilant.Juju) -> App:
     """Deploy rabbitmq-k8s app."""
     rabbitmq_k8s = App("rabbitmq-k8s")
@@ -658,6 +669,32 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
     )
 
     juju.config("kratos", {"enforce_mfa": False})
+
+    for app in ("hydra", "kratos"):
+        juju.wait(
+            lambda status, app=app: status.apps["postgresql-k8s"].is_active
+            and (
+                status.apps[app].is_active
+                or "migration" in (status.apps[app].app_status.message or "").lower()
+            ),
+            timeout=10 * 60,
+        )
+        if not juju.status().apps[app].is_active:
+            juju.run(f"{app}/0", "run-migration")
+
+    juju.wait(
+        lambda status: jubilant.all_active(
+            status,
+            "hydra",
+            "identity-platform-login-ui-operator",
+            "kratos",
+            "postgresql-k8s",
+            "self-signed-certificates",
+            "traefik-admin",
+            "traefik-public",
+        ),
+        timeout=10 * 60,
+    )
 
 
 @pytest.fixture(scope="module", name="http_proxy_app")

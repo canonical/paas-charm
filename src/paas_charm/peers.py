@@ -37,8 +37,11 @@ class Peers(ops.Object):
         """
         return self._charm.model.get_relation(self._peer_relation_name) is not None
 
-    def get_peer_unit_fqdns(self) -> list | None:
+    def get_peer_unit_fqdns(self, excluded_unit_name: str | None = None) -> list | None:
         """Get the FQDNs of the units in the peer relation.
+
+        Args:
+            excluded_unit_name: Unit name to exclude from the result.
 
         Returns:
             Sorted list of peer unit FQDNs, or None if there are none.
@@ -48,7 +51,12 @@ class Peers(ops.Object):
         peer_relation = typing.cast(
             ops.Relation, self._charm.model.get_relation(self._peer_relation_name)
         )
-        unit_names = [unit.name for unit in peer_relation.units]
+        unit_names = [
+            unit.name
+            for unit in peer_relation.units
+            if unit.name != excluded_unit_name
+            and peer_relation.data[unit].get("departing") != "true"
+        ]
         unit_fqdns = []
         for unit_name in sorted(unit_names):
             unit_fqdn = build_k8s_unit_fqdn(

@@ -180,5 +180,5 @@ integration-tests = [
     "playwright==1.62.0",
     "lightkube==1.0.1",
     "pytest-jubilant>=2,<3",
-    "opcli"
+    "opcli",
 ]

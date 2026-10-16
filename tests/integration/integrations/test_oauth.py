@@ -51,20 +51,29 @@ def test_oauth_integrations(
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
 
-    if not status.apps.get(app.name).relations.get("ingress"):
+    def relation_exists(status: jubilant.Status, endpoint: str, related_app: str) -> bool:
+        return any(
+            relation.related_app == related_app
+            for relation in status.apps[app.name].relations.get(endpoint, [])
+        )
+
+    if not relation_exists(status, "ingress", "traefik-public"):
         juju.integrate(f"{app.name}", "traefik-public")
 
     juju.wait(
-        jubilant.all_active,
+        lambda status: relation_exists(status, "ingress", "traefik-public")
+        and jubilant.all_active(status, app.name, "traefik-public"),
         timeout=10 * 60,
         delay=5,
     )
 
-    if not status.apps.get(app.name).relations.get("oidc"):
+    status = juju.status()
+    if not relation_exists(status, "oidc", "hydra"):
         juju.integrate(f"{app.name}", "hydra")
 
     juju.wait(
-        jubilant.all_active,
+        lambda status: relation_exists(status, "oidc", "hydra")
+        and jubilant.all_active(status, app.name, "hydra"),
         timeout=10 * 60,
         delay=5,
     )
@@ -73,7 +82,7 @@ def test_oauth_integrations(
         juju.run(
             "kratos/0",
             "create-admin-account",
-            {"email": test_email, "password": test_password, "username": test_username},
+            {"email": test_email, "username": test_username},
         )
 
     try:
