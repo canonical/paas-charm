@@ -12,7 +12,7 @@ Install Rockcraft and Charmcraft
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Ubuntu 26.04 extensions require the edge releases of Rockcraft and Charmcraft.
-Install both tools with classic confinement:
+Install both tools with classic confinement, which grants them access to the whole file system:
 
 .. code-block:: bash
 
@@ -22,8 +22,16 @@ Install both tools with classic confinement:
 Install LXD, Canonical Kubernetes, and Juju
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-LXD provides the build environment for the rock and charm. If it isn't installed,
-install it with ``sudo snap install lxd``. Initialize it:
+LXD provides the build environment for the rock and charm.
+Make sure it is installed:
+
+.. code-block:: bash
+
+    lxd --version
+
+If LXD is not installed, install it with ``sudo snap install lxd``.
+
+Initialize LXD:
 
 .. code-block:: bash
 

@@ -17,8 +17,8 @@ PostgreSQL integration, and cleanup.
 
    ubuntu-26-04
 
-Ubuntu 22.04 and 24.04
-------------------------
+Ubuntu 22.04 LTS and 24.04 LTS
+------------------------------
 
 Rockcraft and Charmcraft have comprehensive getting started tutorials teaching
 you to containerize a web app into an OCI-compliant image, create a

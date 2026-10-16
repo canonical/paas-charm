@@ -3,8 +3,8 @@
 .. meta::
     :description: Learn to build, configure, and deploy a Django 6.1.2 Kubernetes charm on Ubuntu 26.04, then integrate it with PostgreSQL.
 
-Write your first Kubernetes charm for a Django app on Ubuntu 26.04
-==================================================================
+Write your first Kubernetes charm for a Django app on Ubuntu 26.04 LTS
+======================================================================
 
 Imagine you have a Django app backed up by a database such as
 PostgreSQL and need to deploy it. In a traditional setup, this can be
@@ -87,7 +87,7 @@ We'll name the outer workspace directory ``~/django-tutorial/`` so we can
 distinguish it from the Django project (``django_hello_world``) and
 the charm/rock artifacts (``django-hello-world``). Rockcraft and Charmcraft
 will generate projects named ``django-hello-world`` when we pass
-the name explicitly during the project initialisation.
+the name explicitly during the project initialization.
 
 Finally, install ``python3-venv`` and create a virtual environment:
 

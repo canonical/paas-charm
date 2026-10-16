@@ -3,11 +3,11 @@
 .. meta::
     :description: Learn to build and deploy Kubernetes charms with the Ubuntu 26.04 framework extensions, configure your apps, and integrate them with PostgreSQL.
 
-Ubuntu 26.04
-============
+Ubuntu 26.04 LTS
+================
 
-These tutorials use the experimental Ubuntu 26.04 framework extensions.
-Each lesson follows an app from local development through rock and charm
+These tutorials use the experimental Ubuntu 26.04 LTS framework extensions.
+Each guide follows an app from local development through rock and charm
 builds, deployment on Canonical Kubernetes, configuration, and PostgreSQL integration.
 
 Choose the tutorial for your framework:
