@@ -134,8 +134,6 @@ endpoint. You will need a new terminal for this; use
 
 The app should respond with exactly ``Hello world!``, with no trailing newline.
 
-All greeting and visitor responses use ``text/plain`` with no trailing newline.
-
 Close the app
 ~~~~~~~~~~~~~
 

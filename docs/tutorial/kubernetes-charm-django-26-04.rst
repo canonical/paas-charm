@@ -185,8 +185,6 @@ the VM; that environment variable is not set on your host machine.
 The Django app should respond in the browser with
 exactly ``Hello world!``, with no trailing newline.
 
-The greeting responses in this tutorial use ``text/plain`` with no trailing newline.
-
 Close the app
 ~~~~~~~~~~~~~
 

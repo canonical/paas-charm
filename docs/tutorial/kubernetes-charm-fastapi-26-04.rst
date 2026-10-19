@@ -151,9 +151,6 @@ endpoint. You will need a new terminal for this; use
 
 The FastAPI app should respond with exactly ``Hello world!``, with no trailing newline.
 
-All greeting and visitor responses use ``text/plain`` with no trailing newline,
-rather than FastAPI's default JSON responses.
-
 Close the app
 ~~~~~~~~~~~~~
 
