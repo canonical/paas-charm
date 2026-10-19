@@ -48,11 +48,7 @@ class Peers(ops.Object):
         peer_relation = typing.cast(
             ops.Relation, self._charm.model.get_relation(self._peer_relation_name)
         )
-        unit_names = [
-            unit.name
-            for unit in peer_relation.units
-            if peer_relation.data[unit].get("departing") != "true"
-        ]
+        unit_names = [unit.name for unit in peer_relation.units]
         unit_fqdns = []
         for unit_name in sorted(unit_names):
             unit_fqdn = build_k8s_unit_fqdn(

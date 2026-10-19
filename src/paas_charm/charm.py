@@ -176,7 +176,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self.framework.observe(
             self.on.peers_relation_departed,
-            self._on_peers_relation_departed,
+            self._reconcile_without_migrations,
         )
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.secret_changed, self._reconcile_without_migrations)
@@ -820,11 +820,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     def _reconcile_with_migrations(self, _: DatabaseRequiresEvent) -> None:
         """Handle an event that requires re-running migrations."""
         self._reconcile(rerun_migrations=True)
-
-    def _on_peers_relation_departed(self, event: ops.RelationDepartedEvent) -> None:
-        """Mark this unit as departing for the remaining peers."""
-        if event.departing_unit == self.unit:
-            event.relation.data[self.unit]["departing"] = "true"
 
     def _reconcile_without_migrations(self, _: ops.EventBase) -> None:
         """Handle a lifecycle or relation event without explicitly re-running migrations."""

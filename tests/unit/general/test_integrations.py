@@ -947,69 +947,22 @@ def test_openfga_not_activated(
     assert service_env.get("FGA_HTTP_API_URL") is None
 
 
-def test_peers_relation_departed_marks_local_unit(context_factory, flask_base_state):
-    """A locally departing unit should mark itself without reconciling."""
+def test_peers_relation_departed_reconciles(context_factory, flask_base_state):
+    """A departing peer should trigger normal reconciliation."""
+    peer_relation = next(
+        relation for relation in flask_base_state["relations"] if relation.endpoint == "peers"
+    )
     context = context_factory(FlaskCharm)
 
-    with context(context.on.config_changed(), testing.State(**flask_base_state)) as manager:
-        relation = manager.charm.model.get_relation("peers")
-        event = MagicMock(departing_unit=manager.charm.unit, relation=relation)
+    with context(
+        context.on.relation_departed(peer_relation, remote_unit=1, departing_unit=1),
+        testing.State(**flask_base_state),
+    ) as manager:
         manager.charm._reconcile = MagicMock()
 
-        manager.charm._on_peers_relation_departed(event)
+        manager.run()
 
-        assert relation.data[manager.charm.unit]["departing"] == "true"
-        manager.charm._reconcile.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    "charm_type, framework, app_prefix",
-    [
-        pytest.param(FlaskCharm, "flask", "FLASK", id="flask"),
-        pytest.param(DjangoCharm, "django", "DJANGO", id="django"),
-        pytest.param(FastAPICharm, "fastapi", "APP", id="fastapi"),
-        pytest.param(GoCharm, "go", "APP", id="go"),
-        pytest.param(ExpressJSCharm, "expressjs", "APP", id="expressjs"),
-    ],
-)
-def test_peers_relation_changed_excludes_marked_departing_unit(
-    charm_type: type,
-    framework: str,
-    app_prefix: str,
-    context_factory,
-    framework_state_factory,
-):
-    """
-    arrange: Mark a unit in the peers relation as departing.
-    act: Reconcile the relation change.
-    assert: The marked unit should be excluded from the peer environment variable.
-    """
-    state_dict = framework_state_factory(charm_type)
-    peer_relation = next(
-        relation for relation in state_dict["relations"] if relation.endpoint == "peers"
-    )
-    state_dict["relations"].remove(peer_relation)
-    peer_relation = testing.PeerRelation(
-        "peers",
-        peers_data={1: {"departing": "true"}},
-    )
-    state_dict["relations"].append(peer_relation)
-    context = context_factory(charm_type)
-    out = context.run(
-        context.on.relation_changed(peer_relation, remote_unit=1),
-        testing.State(**state_dict),
-    )
-
-    service_env = out.get_container("app").plan.services[framework].environment
-    assert f"{app_prefix}_PEER_FQDNS" not in service_env
-
-
-def test_peer_departure_state_is_relation_backed(context_factory, flask_base_state):
-    """Peer departure state should not be stored on the charm instance."""
-    context = context_factory(FlaskCharm)
-
-    with context(context.on.config_changed(), testing.State(**flask_base_state)) as manager:
-        assert not hasattr(manager.charm, "_departing_peer_unit_name")
+        manager.charm._reconcile.assert_called_once_with()
 
 
 @pytest.mark.parametrize(

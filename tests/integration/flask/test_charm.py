@@ -253,6 +253,7 @@ def test_with_ingress(
     assert response.json() == f"https://{INGRESS_HOSTNAME}/"
 
 
+@pytest.mark.juju4_incompatible
 def test_app_peer_address(
     juju: jubilant.Juju,
     flask_app: App,

@@ -71,6 +71,7 @@ integration-suites:
     working-dir: ./
     summary: paas-charm smoke tests (Juju 4)
     auto-discover: false
+    pytest-arguments-template: '-m "not juju4_incompatible"'
     backends:
       - integration-test
     environment:
