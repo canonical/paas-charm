@@ -34,9 +34,13 @@ Create the following directory structure in your charm project:
 Package the assets on Ubuntu 26.04 LTS
 --------------------------------------
 
-On Ubuntu 26.04 LTS, the framework extension builds the charm with the ``uv`` plugin,
-which doesn't copy the ``cos_custom/`` directory into the packed charm. Add a ``dump``
-part to ``charmcraft.yaml`` to stage it:
+.. warning::
+
+    On Ubuntu 26.04 LTS, the framework extension builds the charm with the ``uv`` plugin,
+    which doesn't copy the ``cos_custom/`` directory into the packed charm. Without the
+    ``dump`` part below, your custom assets are missing from the charm.
+
+Add a ``dump`` part to ``charmcraft.yaml`` to stage the directory:
 
 .. code-block:: yaml
     :caption: charmcraft.yaml
