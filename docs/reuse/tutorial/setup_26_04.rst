@@ -100,7 +100,7 @@ Apply the downloaded ``registry.yaml`` and wait for the registry to be ready:
     :start-after: [docs:deploy-registry]
     :end-before: [docs:deploy-registry-end]
 
-Access the registry at ``localhost:32000`` from within the VM.
+You can access the registry at ``localhost:32000`` from within the VM.
 It uses a persistent volume so its images survive pod restarts.
 The NodePort service also exposes port 32000 on the VM's network interfaces.
 

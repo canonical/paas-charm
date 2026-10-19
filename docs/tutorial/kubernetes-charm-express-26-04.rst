@@ -111,6 +111,10 @@ Install the necessary packages for the app so it can run:
     :start-after: [docs:build-expressjs]
     :end-before: [docs:build-expressjs-end]
     :dedent: 2
+    
+.. note::
+   During the ``npm install`` step, npm performs a security scan of downloaded dependencies, and it warns about any known vulnerabilities in installed packages.
+   This warning is expected for this tutorial and should not affect the remaining steps. For production use, review and address dependency vulnerabilities before deployment.
 
 With the packages installed, let's run the Express app to verify
 that it works:
@@ -497,7 +501,7 @@ from the ``GREETING_VAR`` environment variable. Go to the
 
 .. literalinclude:: code-26-04/expressjs/greeting_index.js
     :caption: ~/expressjs-hello-world/app/routes/index.js
-    :emphasize-lines: 3-7
+    :emphasize-lines: 4-8
     :language: javascript
 
 Update the rock
@@ -883,6 +887,8 @@ development process, including:
 - Exposing the app using an ingress
 - Configuring the app
 - Integrating the app with a database
+
+Please provide feedback about your experience with this tutorial by completing the following Google form: `26.04 tutorial feedback <https://forms.gle/ogaoc6q1roBxPmEi8>`_
 
 By the end of this tutorial, you built a charm and evolved it
 in a number of typical ways. But there is a lot more to explore:

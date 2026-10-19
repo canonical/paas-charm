@@ -3,8 +3,8 @@
 .. meta::
     :description: Learn to build, configure, and deploy a FastAPI Kubernetes charm on Ubuntu 26.04, then integrate it with PostgreSQL.
 
-Write your first Kubernetes charm for a FastAPI app on Ubuntu 26.04
-===================================================================
+Write your first Kubernetes charm for a FastAPI app on Ubuntu 26.04 LTS
+=======================================================================
 
 Imagine you have a FastAPI app backed up by a database
 such as PostgreSQL and need to deploy it. In a traditional setup,
@@ -477,14 +477,16 @@ Let's expose the app using ingress so that we can access it. Deploy the
     :dedent: 2
 
 Configure the Gateway API integrator to use Canonical Kubernetes' ``ck-gateway``
-class and the hostname ``fastapi-hello-world.internal``. We'll disable HTTPS enforcement
-for this isolated development VM. Use TLS in production:
+class and the hostname ``fastapi-hello-world.internal``:
 
 .. literalinclude:: code-26-04/fastapi/task.yaml
     :language: bash
     :start-after: [docs:config-gateway]
     :end-before: [docs:config-gateway-end]
     :dedent: 2
+
+We'll disable HTTPS enforcement
+for this isolated development VM. Use TLS in production.
 
 The app is exposed at ``http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world``.
 The ``/fastapi-hello-world-fastapi-hello-world`` prefix combines the Juju model
@@ -522,7 +524,7 @@ Provide a configuration
 To demonstrate how to provide a configuration to the FastAPI app,
 we will make the greeting configurable. The app will read this configuration
 from the ``GREETING_VAR`` environment variable. Return to the
-``~/fastapi-hello-world`` directory and copy the following code into ``app.py``:
+``~/fastapi-hello-world`` directory and replace the contents of ``app.py`` with:
 
 .. literalinclude:: code-26-04/fastapi/greeting_app.py
     :caption: ~/fastapi-hello-world/app.py

@@ -46,8 +46,11 @@ execute: |
   retry -n 5 --wait 5 curl --fail localhost:8080
 
   # [docs:curl-fastapi]
-  curl localhost:8080 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
+  curl localhost:8080
   # [docs:curl-fastapi-end]
+  
+  # curl and verify the response is "Hello world!"
+  curl localhost:8080 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   kill $!
 

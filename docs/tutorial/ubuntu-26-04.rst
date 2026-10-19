@@ -21,3 +21,5 @@ Choose the tutorial for your framework:
     Flask <kubernetes-charm-flask-26-04>
     Go <kubernetes-charm-go-26-04>
     Spring Boot <kubernetes-charm-spring-boot-26-04>
+    
+Once you've tried a tutorial, please leave your feedback in the following Google form: `26.04 tutorial feedback <https://forms.gle/ogaoc6q1roBxPmEi8>`_

@@ -67,9 +67,9 @@ execute: |
   curl localhost:3000 | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   kill "$app_pid"
-  cd ..
 
   # [docs:create-rockcraft-yaml]
+  cd ..
   rockcraft init --profile expressjs-framework --base ubuntu@26.04
   # [docs:create-rockcraft-yaml-end]
 
