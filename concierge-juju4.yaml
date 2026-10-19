@@ -16,7 +16,7 @@ providers:
   k8s:
     enable: true
     bootstrap: true
-    channel: 1.35-classic/stable
+    channel: latest/stable
     features:
       load-balancer:
         l2-mode: "true"
