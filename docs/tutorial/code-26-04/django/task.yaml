@@ -17,9 +17,6 @@ restore: |
 environment:
 
 execute: |
-  NODE_IP=$(sudo k8s kubectl get nodes \
-    -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-
   # [docs:export-experimental-env-vars]
   export ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
   export CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
@@ -172,10 +169,10 @@ execute: |
   juju status --relations
 
   # wait until the endpoint works
-  retry -n 5 --wait 5 curl --fail http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP
+  retry -n 5 --wait 5 curl --fail http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP
 
   # curl the Django app
-  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
+  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   cd ..
   cd django_hello_world
@@ -218,7 +215,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   # Update django_hello_world/greeting/views.py
@@ -258,7 +255,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is still Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config django-hello-world greeting='Hi!'
@@ -268,7 +265,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:clean-environment]
   charmcraft clean

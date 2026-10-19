@@ -74,9 +74,12 @@ the address range for the load balancer:
     export VM_IP=$(sudo k8s kubectl get nodes \
       -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
     sudo k8s set load-balancer.cidrs="${VM_IP}/32"
+    printf 'VM address: %s\n' "$VM_IP"
 
-The later ``curl`` commands use ``VM_IP`` in the same terminal. If you open a
-new terminal in the VM, run the ``export`` command again.
+Keep the printed VM address for any browser checks on your host machine.
+The later ``curl`` commands use ``VM_IP`` in this VM terminal. If you open a
+new terminal in the VM, run the same ``export`` command again. The variable
+is not available in terminals on your host machine.
 
 Create a local image registry
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -174,20 +174,13 @@ Now, run the Django app to verify that it works:
     migrations. We can ignore this warning for now, as we aren't
     currently performing any database operations. We'll set up the database later.
 
-Now we need the private IP address of the Multipass VM. Outside of the
-Multipass VM, run:
-
-.. code-block:: bash
-
-    multipass info charm-dev | grep IP
-
 Verify the app
 ~~~~~~~~~~~~~~
 
-With the Multipass IP address, we can visit the Django app in a web
-browser. Open a new tab and visit
-``http://<Multipass private IP>:8000``, replacing
-``<Multipass private IP>`` with your VM's private IP address.
+On your host machine, open a browser tab and visit
+``http://<VM address>:8000``, replacing ``<VM address>`` with the address
+printed during setup. This is the same address saved in ``VM_IP`` inside
+the VM; that environment variable is not set on your host machine.
 
 The Django app should respond in the browser with
 exactly ``Hello world!``, with no trailing newline.
@@ -619,10 +612,10 @@ and add a line like the following:
 
 .. code-block:: bash
 
-    <Multipass private IP> django-hello-world.internal
+    <VM address> django-hello-world.internal
 
-Here, replace ``<Multipass private IP>`` with the same Multipass VM
-private IP address you previously used.
+Here, replace ``<VM address>`` with the address printed during setup,
+which you used for the local browser check.
 
 Now you can open a new tab and visit http://django-hello-world.internal/django-hello-world-django-hello-world. The
 Django app should respond in the browser with

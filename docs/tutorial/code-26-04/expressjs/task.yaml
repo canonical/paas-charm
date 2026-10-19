@@ -17,9 +17,6 @@ restore: |
 environment:
 
 execute: |
-  NODE_IP=$(sudo k8s kubectl get nodes \
-    -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-
   # [docs:export-experimental-env-vars]
   export ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
   export CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
@@ -150,10 +147,10 @@ execute: |
   --query='status=="active"' --timeout 10m
 
   # [docs:curl-init-deployment]
-  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP
+  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$VM_IP
   # [docs:curl-init-deployment-end]
 
-  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
+  curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   # [docs:return-to-rock-dir]
   cd ~/expressjs-hello-world
@@ -193,7 +190,7 @@ execute: |
 
   # curl and check that the response is Hello
   retry -n 5 --wait 2 sh -c "curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config expressjs-hello-world greeting='Hi!'
@@ -205,7 +202,7 @@ execute: |
 
   # curl and check that the response is now Hi
   retry -n 5 --wait 2 sh -c "curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   cat visitors_migrate.sh >> app/migrate.sh
@@ -265,13 +262,13 @@ execute: |
   juju status --relations
 
   curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
   curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
   curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
   curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors \
-  --resolve expressjs-hello-world.internal:80:$NODE_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
+  --resolve expressjs-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
 
   # [docs:clean-environment]
   charmcraft clean
