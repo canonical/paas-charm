@@ -112,7 +112,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         integration_requirers: "IntegrationRequirers",
         custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
-        excluded_peer_unit_name: str | None = None,
         config_options: ConfigOptions | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -127,7 +126,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integration_requirers: The collection of integration requirers.
             custom_relations: Custom relations.
             base_url: Base URL for the service.
-            excluded_peer_unit_name: Peer unit to exclude from the state.
             config_options: Settings for existing charm configuration options.
 
         Return:
@@ -234,9 +232,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             ) from exc
 
         peer_fqdns = None
-        if peers.is_related and (
-            peer_unit_fqdns := peers.get_peer_unit_fqdns(excluded_peer_unit_name)
-        ):
+        if peers.is_related and (peer_unit_fqdns := peers.get_peer_unit_fqdns()):
             peer_fqdns = ",".join(peer_unit_fqdns)
 
         return cls(

@@ -121,7 +121,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
         self._secret_key = SecretKeyStorage(charm=self, label="app-secret-key")
         self._peers = Peers(charm=self)
-        self._departing_peer_unit_name: str | None = None
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
@@ -794,7 +793,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             ),
             custom_relations=self._custom_relations,
             base_url=self._base_url,
-            excluded_peer_unit_name=self._departing_peer_unit_name,
         )
 
     @property
@@ -824,16 +822,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._reconcile(rerun_migrations=True)
 
     def _on_peers_relation_departed(self, event: ops.RelationDepartedEvent) -> None:
-        """Reconcile without the departing peer unit."""
+        """Mark this unit as departing for the remaining peers."""
         if event.departing_unit == self.unit:
             event.relation.data[self.unit]["departing"] = "true"
-        self._departing_peer_unit_name = (
-            event.departing_unit.name if event.departing_unit is not None else None
-        )
-        try:
-            self._reconcile()
-        finally:
-            self._departing_peer_unit_name = None
 
     def _reconcile_without_migrations(self, _: ops.EventBase) -> None:
         """Handle a lifecycle or relation event without explicitly re-running migrations."""
