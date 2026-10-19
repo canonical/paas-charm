@@ -38,7 +38,7 @@ and the ``requirements.txt`` file isn't required. On Ubuntu 22.04 LTS and Ubuntu
 Rockcraft ignores ``pyproject.toml`` and ``uv.lock``, and ``requirements.txt`` is always required. There must also be a ``project-name/project_name/project_name/wsgi.py`` file
 in the project.
 
-When the rock is built (with ``rockcraft pack`` or ``rockcraft expand-extensions``),
+When the rock is built (with ``rockcraft pack`` or expanded with ``rockcraft expand-extensions``),
 Rockcraft searches for these two files
 and expects to find a global variable named ``application`` in the ``wsgi.py`` file. 
 
