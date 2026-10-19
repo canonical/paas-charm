@@ -113,7 +113,7 @@ Install the necessary packages for the app so it can run:
     :dedent: 2
     
 .. note::
-   During the ``npm install`` step, npm performs a security scan of downloaded dependencies, and it warns about any known vulnerabilities in installed packages.
+   During the ``npm install`` step, ``npm`` performs a security scan of downloaded dependencies, and it warns about any known vulnerabilities in installed packages.
    This warning is expected for this tutorial and should not affect the remaining steps. For production use, review and address dependency vulnerabilities before deployment.
 
 With the packages installed, let's run the Express app to verify
@@ -450,8 +450,9 @@ Let's expose the app using ingress so that we can access it. Deploy the
     :dedent: 2
 
 Configure the Gateway API integrator to use Canonical Kubernetes' ``ck-gateway``
-class and the hostname ``expressjs-hello-world.internal``. We'll disable HTTPS enforcement
-for this isolated development VM. Use TLS in production:
+class and serve HTTP on its load-balancer IP address. Leave ``external-hostname``
+unset and do not add a certificates relation for this isolated development VM.
+Use a domain and TLS in production:
 
 .. literalinclude:: code-26-04/expressjs/task.yaml
     :language: bash
@@ -459,29 +460,34 @@ for this isolated development VM. Use TLS in production:
     :end-before: [docs:config-gateway-end]
     :dedent: 2
 
-The app is exposed at ``http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world``.
-The ``/expressjs-hello-world-expressjs-hello-world`` prefix combines the Juju model
-and application names. The gateway strips it before forwarding requests,
-so the app's existing routes don't need to change. The load balancer
-uses the VM address saved in ``VM_IP`` during setup.
-
 The port in ``paas-config.yaml`` is 8080. The charm passes it to the app as
 ``PORT``.
 
 Monitor ``juju status`` until everything has a status of ``active``.
+In the VM terminal, ask the gateway for the published endpoints:
 
-Send a request via the ingress:
+.. literalinclude:: code-26-04/expressjs/task.yaml
+    :language: bash
+    :start-after: [docs:get-proxied-endpoints]
+    :end-before: [docs:get-proxied-endpoints-end]
+    :dedent: 2
+
+The ``proxied-endpoints`` result contains a JSON object, for example:
+
+.. code-block:: text
+
+    proxied-endpoints: '{"gateway-api-integrator": {"url": "http://10.115.29.100"}, "expressjs-hello-world": {"url": "http://10.115.29.100/expressjs-hello-world-expressjs-hello-world"}}'
+
+.. include:: /reuse/tutorial/gateway_26_04.rst
+
+Open the returned app URL in your host's browser or send a request in the VM
+terminal:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 It should return ``Hello world!``.
-
-.. note::
-
-    The ``--resolve`` option maps ``expressjs-hello-world.internal`` to the VM's
-    address (``$VM_IP``) without setting a DNS record.
 
 The development cycle
 ---------------------
@@ -611,7 +617,7 @@ Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 Now let's change the greeting:
 
@@ -625,7 +631,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 The response should now return the updated ``Hi!`` greeting.
 
@@ -812,7 +818,7 @@ Once the Express app is ``active``, send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 It should still return the ``Hi!`` greeting.
 
@@ -820,7 +826,7 @@ Check the local visitors:
 
 .. code-block:: bash
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "${APP_URL%/}/visitors"
 
 This request should return ``Number of visitors 1`` after the
 previous request to the root endpoint.
@@ -832,7 +838,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/expressjs-hello-world/charm
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
     Hi!
 
@@ -841,7 +847,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/expressjs-hello-world/charm
 
-    curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world/visitors --resolve expressjs-hello-world.internal:80:"$VM_IP"
+    curl "${APP_URL%/}/visitors"
 
     Number of visitors 2
 

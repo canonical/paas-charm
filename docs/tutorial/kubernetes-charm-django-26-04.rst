@@ -587,8 +587,9 @@ Let's expose the app using ingress so that we can access it. Deploy the
     :dedent: 2
 
 Configure the Gateway API integrator to use Canonical Kubernetes' ``ck-gateway``
-class and the hostname ``django-hello-world.internal``. We'll disable HTTPS enforcement
-for this isolated development VM. Use TLS in production:
+class and serve HTTP on its load-balancer IP address. Leave ``external-hostname``
+unset and do not add a certificates relation for this isolated development VM.
+Use a domain and TLS in production:
 
 .. literalinclude:: code-26-04/django/task.yaml
     :language: bash
@@ -596,27 +597,25 @@ for this isolated development VM. Use TLS in production:
     :end-before: [docs:config-gateway-end]
     :dedent: 2
 
-The app is exposed at ``http://django-hello-world.internal/django-hello-world-django-hello-world``.
-The ``/django-hello-world-django-hello-world`` prefix combines the Juju model
-and application names. The gateway strips it before forwarding requests,
-so the app's existing routes don't need to change. The load balancer
-uses the VM address saved in ``VM_IP`` during setup.
-
 Monitor ``juju status`` until everything has a status of ``active``.
+In the VM terminal, ask the gateway for the published endpoints:
 
-Now we will visit the Django app in a web browser. Outside of the
-Multipass VM, open your machine's ``/etc/hosts`` file in a text editor
-and add a line like the following:
+.. literalinclude:: code-26-04/django/task.yaml
+    :language: bash
+    :start-after: [docs:get-proxied-endpoints]
+    :end-before: [docs:get-proxied-endpoints-end]
+    :dedent: 2
 
-.. code-block:: bash
+The ``proxied-endpoints`` result contains a JSON object, for example:
 
-    <VM address> django-hello-world.internal
+.. code-block:: text
 
-Here, replace ``<VM address>`` with the address printed during setup,
-which you used for the local browser check.
+    proxied-endpoints: '{"gateway-api-integrator": {"url": "http://10.115.29.100"}, "django-hello-world": {"url": "http://10.115.29.100/django-hello-world-django-hello-world"}}'
 
-Now you can open a new tab and visit http://django-hello-world.internal/django-hello-world-django-hello-world. The
-Django app should respond in the browser with
+.. include:: /reuse/tutorial/gateway_26_04.rst
+
+Open the returned Django app URL in a browser on your host machine, or run
+``curl "$APP_URL"`` in the VM terminal. The Django app should respond with
 ``Hello world!``.
 
 
@@ -740,12 +739,11 @@ Now that we've checked the greeting app, disable debug mode:
     :dedent: 2
 
 Use ``juju status --watch 2s`` again to wait until the App is active
-again. You may visit http://django-hello-world.internal/django-hello-world-django-hello-world from a web browser, or
-inside the Multipass VM run:
+again. Open the same app URL in a web browser, or inside the Multipass VM run:
 
 .. code-block:: bash
 
-    curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 Either way, the Django app should respond with ``Hello, world!``.
 
@@ -850,12 +848,12 @@ refresh``:
     :dedent: 2
 
 Monitor ``juju status`` until the app goes
-back to ``active`` again. Visit http://django-hello-world.internal/django-hello-world-django-hello-world in a
-web browser or send a request to the root endpoint using:
+back to ``active`` again. Open the same app URL in a web browser or send a
+request to the root endpoint using:
 
 .. code-block:: bash
 
-    curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 Either action should result in the Django app responding with
 ``Hello, world!`` again.
@@ -868,11 +866,11 @@ Now let's change the greeting:
     :end-before: [docs:change-config-end]
     :dedent: 2
 
-Wait for the app to restart, and then visit http://django-hello-world.internal/django-hello-world-django-hello-world or use:
+Wait for the app to restart, and then open the same app URL or use:
 
 .. code-block:: bash
 
-    curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 The web app should now respond with ``Hi!``.
 
@@ -918,6 +916,10 @@ development process, including:
 - Integrating the app with PostgreSQL to be production ready
 - Exposing the app using an ingress
 - Adding an initial app and configuring the app
+
+Please provide feedback about your experience with this tutorial by completing
+the following Google form:
+`26.04 tutorial feedback <https://forms.gle/ogaoc6q1roBxPmEi8>`_
 
 By the end of this tutorial you built a charm and evolved it
 in a number of typical ways. But there is a lot more to explore:

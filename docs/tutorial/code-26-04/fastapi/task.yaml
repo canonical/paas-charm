@@ -122,18 +122,32 @@ execute: |
 
   # [docs:config-gateway]
   juju config gateway-api-integrator \
-    gateway-class=ck-gateway external-hostname=fastapi-hello-world.internal enforce-https=false
+    gateway-class=ck-gateway enforce-https=false
   # [docs:config-gateway-end]
 
   # give Juju some time to deploy the apps
   juju wait-for application fastapi-hello-world --query='status=="active"' --timeout 10m
   juju wait-for application gateway-api-integrator --query='status=="active"' --timeout 10m
 
+  # [docs:get-proxied-endpoints]
+  juju run gateway-api-integrator/leader get-proxied-endpoints
+  # [docs:get-proxied-endpoints-end]
+
+  APP_URL=$(juju run gateway-api-integrator/leader get-proxied-endpoints --format=json |
+    python3 -c 'import json, sys
+  result, = json.load(sys.stdin).values()
+  assert result["status"] == "completed", result
+  url = json.loads(result["results"]["proxied-endpoints"])[sys.argv[1]]["url"]
+  assert url.startswith("http://") and not any(c.isspace() for c in url), url
+  print(url)
+  ' fastapi-hello-world) || exit 1
+  export APP_URL
+
   # wait until the endpoint works
-  retry -n 5 --wait 5 curl --fail http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP
+  retry -n 5 --wait 5 curl --fail "$APP_URL"
 
   # [docs:curl-init-deployment]
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
+  curl "$APP_URL" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
   # [docs:curl-init-deployment-end]
 
   cd ..
@@ -170,7 +184,7 @@ execute: |
   juju wait-for application fastapi-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello
-  retry -n 5 --wait 5 sh -c "curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl \"$APP_URL\" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config fastapi-hello-world greeting='Hi!'
@@ -180,7 +194,7 @@ execute: |
   juju wait-for application fastapi-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 5 --wait 5 sh -c "curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl \"$APP_URL\" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   cat visitors_migrate.py >> migrate.py
@@ -219,13 +233,10 @@ execute: |
 
   juju status --relations
 
-  # wait until the endpoint works
-  retry -n 5 --wait 5 curl --fail http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:$VM_IP
-
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
-  curl http://fastapi-hello-world.internal/fastapi-hello-world-fastapi-hello-world/visitors --resolve fastapi-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
+  curl "$APP_URL" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl "${APP_URL%/}/visitors" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 1"; sys.stdout.buffer.write(body)'
+  curl "$APP_URL" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hi!"; sys.stdout.buffer.write(body)'
+  curl "${APP_URL%/}/visitors" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Number of visitors 2"; sys.stdout.buffer.write(body)'
 
   # [docs:clean-environment]
   charmcraft clean

@@ -159,7 +159,7 @@ execute: |
 
   # [docs:config-gateway]
   juju config gateway-api-integrator \
-    gateway-class=ck-gateway external-hostname=django-hello-world.internal enforce-https=false
+    gateway-class=ck-gateway enforce-https=false
   # [docs:config-gateway-end]
 
   # give Juju some time to deploy the apps
@@ -168,11 +168,25 @@ execute: |
 
   juju status --relations
 
+  # [docs:get-proxied-endpoints]
+  juju run gateway-api-integrator/leader get-proxied-endpoints
+  # [docs:get-proxied-endpoints-end]
+
+  APP_URL=$(juju run gateway-api-integrator/leader get-proxied-endpoints --format=json |
+    python3 -c 'import json, sys
+  result, = json.load(sys.stdin).values()
+  assert result["status"] == "completed", result
+  url = json.loads(result["results"]["proxied-endpoints"])[sys.argv[1]]["url"]
+  assert url.startswith("http://") and not any(c.isspace() for c in url), url
+  print(url)
+  ' django-hello-world) || exit 1
+  export APP_URL
+
   # wait until the endpoint works
-  retry -n 5 --wait 5 curl --fail http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP
+  retry -n 5 --wait 5 curl --fail "$APP_URL"
 
   # curl the Django app
-  curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
+  curl "$APP_URL" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b"Hello world!"; sys.stdout.buffer.write(body)'
 
   cd ..
   cd django_hello_world
@@ -215,7 +229,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl \"$APP_URL\" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   cd ..
   # Update django_hello_world/greeting/views.py
@@ -255,7 +269,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is still Hello, world!
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl \"$APP_URL\" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hello, world!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:change-config]
   juju config django-hello-world greeting='Hi!'
@@ -265,7 +279,7 @@ execute: |
   juju wait-for application django-hello-world --query='status=="active"' --timeout 10m
 
   # curl and check that the response is now Hi
-  retry -n 5 --wait 5 sh -c "curl http://django-hello-world.internal/django-hello-world-django-hello-world --resolve django-hello-world.internal:80:$VM_IP | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
+  retry -n 5 --wait 5 sh -c "curl \"$APP_URL\" | python3 -c 'import sys; body = sys.stdin.buffer.read(); assert body == b\"Hi!\"; sys.stdout.buffer.write(body)'"
 
   # [docs:clean-environment]
   charmcraft clean

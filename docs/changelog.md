@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Use Gateway IP-mode endpoints returned by its action in all six
+  Ubuntu 26.04 tutorials instead of development hostnames and DNS overrides.
+* docs: Link the feedback form at the end of every Ubuntu 26.04 tutorial.
 * docs: Reuse the setup VM address throughout the Ubuntu 26.04 tutorials
   and distinguish host browser checks from guest shell variables.
 * docs: Align initial, configurable greeting, and visitor responses across the

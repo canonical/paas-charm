@@ -77,9 +77,9 @@ the address range for the load balancer:
     printf 'VM address: %s\n' "$VM_IP"
 
 Keep the printed VM address for any browser checks on your host machine.
-The later ``curl`` commands use ``VM_IP`` in this VM terminal. If you open a
-new terminal in the VM, run the same ``export`` command again. The variable
-is not available in terminals on your host machine.
+Later, the gateway action will return the full deployed app URL for browser
+and ``curl`` checks. The ``VM_IP`` variable is local to this VM terminal;
+it is not available in terminals on your host machine.
 
 Create a local image registry
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

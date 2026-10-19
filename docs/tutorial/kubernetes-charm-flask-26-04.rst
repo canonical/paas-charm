@@ -427,8 +427,9 @@ Let's expose the app using ingress so that we can access it. Deploy the
     :dedent: 2
 
 Configure the Gateway API integrator to use Canonical Kubernetes' ``ck-gateway``
-class and the hostname ``flask-hello-world.internal``. We'll disable HTTPS enforcement
-for this isolated development VM. Use TLS in production:
+class and serve HTTP on its load-balancer IP address. Leave ``external-hostname``
+unset and do not add a certificates relation for this isolated development VM.
+Use a domain and TLS in production:
 
 .. literalinclude:: code-26-04/flask/task.yaml
     :language: bash
@@ -436,26 +437,31 @@ for this isolated development VM. Use TLS in production:
     :end-before: [docs:config-gateway-end]
     :dedent: 2
 
-The app is exposed at ``http://flask-hello-world.internal/flask-hello-world-flask-hello-world``.
-The ``/flask-hello-world-flask-hello-world`` prefix combines the Juju model
-and application names. The gateway strips it before forwarding requests,
-so the app's existing routes don't need to change. The load balancer
-uses the VM address saved in ``VM_IP`` during setup.
-
 Monitor ``juju status`` until everything has a status of ``active``.
+In the VM terminal, ask the gateway for the published endpoints:
 
-Test the deployment by sending a request via the ingress:
+.. literalinclude:: code-26-04/flask/task.yaml
+    :language: bash
+    :start-after: [docs:get-proxied-endpoints]
+    :end-before: [docs:get-proxied-endpoints-end]
+    :dedent: 2
+
+The ``proxied-endpoints`` result contains a JSON object, for example:
+
+.. code-block:: text
+
+    proxied-endpoints: '{"gateway-api-integrator": {"url": "http://10.115.29.100"}, "flask-hello-world": {"url": "http://10.115.29.100/flask-hello-world-flask-hello-world"}}'
+
+.. include:: /reuse/tutorial/gateway_26_04.rst
+
+Test the deployment by opening the returned app URL in your host's browser
+or sending a request in the VM terminal:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 The request should return ``Hello world!``.
-
-.. note::
-
-    The ``--resolve`` option maps ``flask-hello-world.internal`` to the VM's
-    address (``$VM_IP``) without setting a DNS record.
 
 
 The development cycle
@@ -571,7 +577,7 @@ Check that the response is now ``Hello, world!`` using:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 Now let's change the greeting:
 
@@ -585,7 +591,7 @@ Wait for the app to restart, then check the response:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 The response should now return the updated ``Hi!`` greeting.
 
@@ -717,7 +723,7 @@ Send a request to the endpoint:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
 It should still return the ``Hi!`` greeting.
 
@@ -725,7 +731,7 @@ Check the total number of visitors:
 
 .. code-block:: bash
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "${APP_URL%/}/visitors"
 
 This request should return ``Number of visitors 1`` after the previous request to the root endpoint.
 This should be incremented each time the root endpoint is requested. If we
@@ -736,7 +742,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/flask-hello-world/charm
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "$APP_URL"
 
     Hi!
 
@@ -745,7 +751,7 @@ repeat this process, the output should be as follows:
     :host: charm-dev
     :dir: ~/flask-hello-world/charm
 
-    curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world/visitors --resolve flask-hello-world.internal:80:"$VM_IP"
+    curl "${APP_URL%/}/visitors"
 
     Number of visitors 2
 
@@ -791,6 +797,10 @@ development process, including:
 - Exposing the app using an ingress
 - Configuring the app
 - Integrating the app with a database
+
+Please provide feedback about your experience with this tutorial by completing
+the following Google form:
+`26.04 tutorial feedback <https://forms.gle/ogaoc6q1roBxPmEi8>`_
 
 By the end of this tutorial you built a charm and evolved it
 in a number of typical ways. But there is a lot more to explore:
