@@ -48,6 +48,14 @@ def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App)
         and jubilant.all_active(status, flask_app.name, valkey_app.name),
         timeout=10 * 60,
     )
+    yield
+    if relation_exists(juju.status()):
+        juju.remove_relation(flask_app.name, valkey_app.name)
+        juju.wait(
+            lambda status: not relation_exists(status)
+            and jubilant.all_active(status, flask_app.name, valkey_app.name),
+            timeout=10 * 60,
+        )
 
 
 @pytest.mark.parametrize(
