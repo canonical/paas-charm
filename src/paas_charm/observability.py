@@ -19,7 +19,7 @@ from paas_charm.utils import build_k8s_unit_fqdn
 logger = logging.getLogger(__name__)
 
 
-class Observability(ops.Object):
+class Observability(ops.Object):  # pylint: disable=too-few-public-methods
     """A class representing the observability stack for charm managed application."""
 
     def __init__(  # pylint: disable=too-many-arguments
