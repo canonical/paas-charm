@@ -15,10 +15,18 @@ from typing import Generator
 
 import requests
 import yaml
-from jubilant import Juju
+from jubilant import Juju, Status
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 logger = logging.getLogger(__name__)
+
+
+def relation_exists(status: Status, app_name: str, endpoint: str, related_app_name: str) -> bool:
+    """Return whether an application endpoint is related to another application."""
+    return any(
+        relation.related_app == related_app_name
+        for relation in status.apps[app_name].relations.get(endpoint, [])
+    )
 
 
 def fetch_container_json_logs(pod_name: str, model_name: str, container_name: str) -> list[dict]:

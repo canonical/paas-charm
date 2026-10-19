@@ -13,6 +13,7 @@ import requests
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import expect, sync_playwright
 
+from tests.integration.helpers import relation_exists
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -51,28 +52,22 @@ def test_oauth_integrations(
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
 
-    def relation_exists(status: jubilant.Status, endpoint: str, related_app: str) -> bool:
-        return any(
-            relation.related_app == related_app
-            for relation in status.apps[app.name].relations.get(endpoint, [])
-        )
-
-    if not relation_exists(status, "ingress", "traefik-public"):
+    if not relation_exists(status, app.name, "ingress", "traefik-public"):
         juju.integrate(f"{app.name}", "traefik-public")
 
     juju.wait(
-        lambda status: relation_exists(status, "ingress", "traefik-public")
+        lambda status: relation_exists(status, app.name, "ingress", "traefik-public")
         and jubilant.all_active(status, app.name, "traefik-public"),
         timeout=10 * 60,
         delay=5,
     )
 
     status = juju.status()
-    if not relation_exists(status, "oidc", "hydra"):
+    if not relation_exists(status, app.name, "oidc", "hydra"):
         juju.integrate(f"{app.name}", "hydra")
 
     juju.wait(
-        lambda status: relation_exists(status, "oidc", "hydra")
+        lambda status: relation_exists(status, app.name, "oidc", "hydra")
         and jubilant.all_active(status, app.name, "hydra"),
         timeout=10 * 60,
         delay=5,

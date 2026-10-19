@@ -9,15 +9,8 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.helpers import relation_exists
 from tests.integration.types import App
-
-
-def _relation_exists(status: jubilant.Status, app_name: str, related_app_name: str) -> bool:
-    """Check whether the application is related to RabbitMQ."""
-    return any(
-        relation.related_app == related_app_name
-        for relation in status.apps[app_name].relations.get("rabbitmq", [])
-    )
 
 
 @pytest.mark.parametrize(
@@ -44,7 +37,7 @@ def test_rabbitmq_server_integration(
     try:
         juju.integrate(app.name, rabbitmq_server_app.name)
         juju.wait(
-            lambda status: _relation_exists(status, app.name, rabbitmq_server_app.name)
+            lambda status: relation_exists(status, app.name, "rabbitmq", rabbitmq_server_app.name)
             and jubilant.all_active(status, app.name),
             timeout=(10 * 60),
             delay=30,

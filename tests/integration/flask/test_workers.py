@@ -12,6 +12,7 @@ import jubilant
 import pytest
 import requests
 
+from tests.integration.helpers import relation_exists
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -31,28 +32,21 @@ def valkey_app_fixture(juju: jubilant.Juju):
 def integrate_valkey_flask(juju: jubilant.Juju, flask_app: App, valkey_app: App):
     """Integrate Valkey with Flask apps."""
 
-    def relation_exists(status: jubilant.Status) -> bool:
-        """Check whether Flask is related to Valkey."""
-        return any(
-            relation.related_app == valkey_app.name
-            for relation in status.apps[flask_app.name].relations.get("valkey", [])
-        )
-
     try:
         juju.integrate(flask_app.name, valkey_app.name)
     except jubilant.CLIError as err:
         if "already exists" not in err.stderr:
             raise err
     juju.wait(
-        lambda status: relation_exists(status)
+        lambda status: relation_exists(status, flask_app.name, "valkey", valkey_app.name)
         and jubilant.all_active(status, flask_app.name, valkey_app.name),
         timeout=10 * 60,
     )
     yield
-    if relation_exists(juju.status()):
+    if relation_exists(juju.status(), flask_app.name, "valkey", valkey_app.name):
         juju.remove_relation(flask_app.name, valkey_app.name)
         juju.wait(
-            lambda status: not relation_exists(status)
+            lambda status: not relation_exists(status, flask_app.name, "valkey", valkey_app.name)
             and jubilant.all_active(status, flask_app.name, valkey_app.name),
             timeout=10 * 60,
         )
