@@ -145,7 +145,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-flask-end]
     :dedent: 2
 
-The Flask app should respond with exactly ``Hello world!``, with no trailing newline.
+The Flask app should respond with ``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -450,7 +450,7 @@ Test the deployment by sending a request via the ingress:
 
     curl http://flask-hello-world.internal/flask-hello-world-flask-hello-world --resolve flask-hello-world.internal:80:"$VM_IP"
 
-The request should return exactly ``Hello world!``, with no trailing newline.
+The request should return ``Hello world!``.
 
 .. note::
 

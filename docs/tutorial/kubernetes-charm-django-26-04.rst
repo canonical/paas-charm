@@ -183,7 +183,7 @@ printed during setup. This is the same address saved in ``VM_IP`` inside
 the VM; that environment variable is not set on your host machine.
 
 The Django app should respond in the browser with
-exactly ``Hello world!``, with no trailing newline.
+``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -617,7 +617,7 @@ which you used for the local browser check.
 
 Now you can open a new tab and visit http://django-hello-world.internal/django-hello-world-django-hello-world. The
 Django app should respond in the browser with
-exactly ``Hello world!``, with no trailing newline.
+``Hello world!``.
 
 
 The development cycle

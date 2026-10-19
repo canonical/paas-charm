@@ -132,7 +132,7 @@ endpoint. You will need a new terminal for this; use
     :end-before: [docs:curl-expressjs-end]
     :dedent: 2
 
-The app should respond with exactly ``Hello world!``, with no trailing newline.
+The app should respond with ``Hello world!``.
 
 Close the app
 ~~~~~~~~~~~~~
@@ -472,7 +472,7 @@ Send a request via the ingress:
 
     curl http://expressjs-hello-world.internal/expressjs-hello-world-expressjs-hello-world --resolve expressjs-hello-world.internal:80:"$VM_IP"
 
-It should return exactly ``Hello world!``, with no trailing newline.
+It should return ``Hello world!``.
 
 .. note::
 
