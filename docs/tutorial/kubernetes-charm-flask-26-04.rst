@@ -427,15 +427,17 @@ Let's expose the app using ingress so that we can access it. Deploy the
     :dedent: 2
 
 Configure the Gateway API integrator to use Canonical Kubernetes' ``ck-gateway``
-class and serve HTTP on its load-balancer IP address. Leave ``external-hostname``
-unset and do not add a certificates relation for this isolated development VM.
-Use a domain and TLS in production:
+class and serve HTTP on its load-balancer IP address:
 
 .. literalinclude:: code-26-04/flask/task.yaml
     :language: bash
     :start-after: [docs:config-gateway]
     :end-before: [docs:config-gateway-end]
     :dedent: 2
+    
+We'll leave ``external-hostname``
+unset, and we won't add a certificates relation for this isolated development VM.
+Use a domain and TLS in production.
 
 Monitor ``juju status`` until everything has a status of ``active``.
 In the VM terminal, ask the gateway for the published endpoints:
