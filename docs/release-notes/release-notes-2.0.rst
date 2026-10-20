@@ -47,6 +47,10 @@ Charmcraft profiles for Ubuntu 22.04 LTS and Ubuntu 24.04 LTS retain the earlier
 generated contract and pin ``paas-charm`` 1.x. They are not a supported path to
 ``paas-charm`` 2.0.
 
+For a complete new-app walkthrough, follow the
+:ref:`Ubuntu 26.04 LTS tutorials <tutorial-ubuntu-26-04>` for Django, Express,
+FastAPI, Flask, Go, or Spring Boot.
+
 Upgrade instructions
 --------------------
 

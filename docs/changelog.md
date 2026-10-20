@@ -27,6 +27,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   services) in `/tmp/paas-charm` instead of per-framework paths (`/tmp/<framework>/state`,
   `/app/state`). The directory is created by the charm, so rocks no longer need to provide
   `/app/state`.
+* docs: Use Gateway IP-mode endpoints returned by its action in all six
+  Ubuntu 26.04 tutorials instead of development hostnames and DNS overrides.
+* docs: Link the feedback form at the end of every Ubuntu 26.04 tutorial.
+* docs: Reuse the setup VM address throughout the Ubuntu 26.04 tutorials
+  and distinguish host browser checks from guest shell variables.
+* docs: Align initial, configurable greeting, and visitor responses across the
+  Ubuntu 26.04 tutorials as plain text with no trailing newline.
+* docs: Make all six Ubuntu 26.04 tutorial apps initially return the identical
+  12-byte body `Hello world!`, without a trailing newline or JSON wrapper.
+* docs: Align Ubuntu 26.04 tutorial snippets with generated configuration, fix
+  version highlights, and return to the Express rock directory before repacking.
+* docs: Document the Maven incremental-pack bug and clean the build environment
+  before subsequent rock packs in the Ubuntu 26.04 Spring Boot tutorial.
+* docs: Use Java 25 for the Spring Boot tutorial app.
+* docs: Allocate 75 GB for the Django and Express tutorial VMs and deploy
+  stable PostgreSQL charms in all framework tutorials.
+* docs: Keep Ubuntu 26.04 tutorial rocks on the bare base, install uv during
+  shared setup, and clarify packaged application configuration.
+* docs: Consolidate identical Ubuntu 26.04 tutorial fixtures while preserving
+  framework-specific examples.
+  Generate the small packaged port and greeting configurations directly in
+  each tutorial's task rather than maintaining separate YAML fixtures.
+* docs: Move the six Ubuntu 26.04 framework tutorials from Charmcraft into
+  the 12-Factor app support documentation, including their example apps and
+  task files used as documentation snippet sources.
 * refactor: Declare Spring Boot's built-in Valkey relation directly instead of using
   a relation replacement hook.
 * fix: Use compatible stable Temporal charms in the Flask integration test.

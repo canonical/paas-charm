@@ -173,6 +173,10 @@ linkcheck_ignore = [
     "https://github.com",
     r"https://matrix\.to/.*",
     "https://example.com",
+    # Tutorial-only gateway hostnames are resolved inside the development VM.
+    r"http://[a-z-]+-hello-world\.internal/.*",
+    # These valid package pages reject automated requests with HTTP 403.
+    r"https://www\.npmjs\.com/package/(knex|prisma)/?$",
     # SourceForge domains often block linkcheck
     r"https://.*\.sourceforge\.(net|io)/.*",
 ]
@@ -228,6 +232,7 @@ myst_fence_as_directive = {"mermaid"}
 exclude_patterns = [
     "doc-cheat-sheet*",
     "reuse/release-notes-template.rst",
+    "reuse/tutorial/*.rst",
     ".venv*",
 ]
 
@@ -267,6 +272,7 @@ intersphinx_mapping = {
     "pebble": ("https://documentation.ubuntu.com/pebble/", None),
     "cos": ("https://documentation.ubuntu.com/observability/latest/", None),
     "ops": ("https://documentation.ubuntu.com/ops/latest/", None),
+    "multipass": ("https://documentation.ubuntu.com/multipass/latest/", None),
     "open-documentation-academy": ("https://documentation.academy/", None),
 }
 
