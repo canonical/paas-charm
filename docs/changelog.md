@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Standardize all six Ubuntu 26.04 framework tutorial VMs on 60 GB disks
+  and clarify that the packaged `port` key replaces the Juju `app-port` option.
+
 ## 2.0.0b1 - 2026-10-20
 
 * breaking: The application port of the FastAPI, Go, ExpressJS, and Spring Boot charms is no

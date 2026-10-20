@@ -31,7 +31,7 @@ What you'll need
 
 - A local system, e.g., a laptop, with AMD64 or ARM64 architecture which
   has sufficient resources to launch a virtual machine with 4 CPUs,
-  8 GB RAM, and a 75 GB disk.
+  8 GB RAM, and a 60 GB disk.
 - Familiarity with Linux.
 
 The RAM and disk space are necessary to set up all the required software and
@@ -60,7 +60,7 @@ Set things up
 
 .. include:: /reuse/tutorial/setup_26_04.rst
 .. |12FactorApp| replace:: Express
-.. |tutorial-vm-disk| replace:: 75G
+.. |tutorial-vm-disk| replace:: 60G
 
 The Ubuntu 26.04 extensions are experimental. Enable them for both tools
 in the terminal where you'll build the rock and charm:
@@ -306,8 +306,7 @@ to set the app's runtime port:
     :end-before: BASE_PAAS_CONFIG
     :dedent: 2
 
-The ``port`` key takes precedence over the Juju ``app-port`` option. For other
-packaged settings, see the :ref:`paas-config.yaml reference <ref_paas_config>`.
+The ``port`` key replaces the Juju ``app-port`` option.
 
 Check out the contents of ``charmcraft.yaml``:
 
