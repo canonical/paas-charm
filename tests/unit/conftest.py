@@ -574,7 +574,9 @@ def spring_boot_framework_state_fixture(tmp_path: Path) -> dict:
             testing.Container(
                 name="app",
                 can_connect=True,
-                mounts={"data": testing.Mount(location="/app/saml.cert", source=certificate)},
+                mounts={
+                    "data": testing.Mount(location="/tmp/paas-charm/saml.cert", source=certificate)
+                },
                 _base_plan=SPRINGBOOT_DEFAULT_LAYER,
             )
         },
@@ -621,7 +623,7 @@ def framework_state_factory_fixture(tmp_path: Path) -> typing.Callable[..., dict
             certificate = state_dir / "saml.cert"
             certificate.touch()
             mounts["certificate"] = testing.Mount(
-                location="/app/saml.cert",
+                location="/tmp/paas-charm/saml.cert",
                 source=certificate,
             )
 

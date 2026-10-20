@@ -245,7 +245,7 @@ def generate_saml_env(
     if relation_data.signing_certificate:
         env[
             "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
-        ] = "file:/app/saml.cert"
+        ] = "file:/tmp/paas-charm/saml.cert"
 
     return env
 
@@ -443,7 +443,7 @@ class Charm(PaasCharm):
             cert = charm_state.integrations.saml.signing_certificate
             if not cert.startswith("-----BEGIN CERTIFICATE-----"):
                 cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
-            self._container.push(self._workload_config.app_dir / "saml.cert", cert)
+            self._container.push(self._state_dir / "saml.cert", cert, make_dirs=True)
 
         return SpringBootApp(
             container=self._container,
