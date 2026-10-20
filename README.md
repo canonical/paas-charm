@@ -61,6 +61,10 @@ integrate it with ingress, and start serving traffic to your users.
 
 Read the framework-specific tutorials for a complete walkthrough:
 
+For Ubuntu 26.04 and `paas-charm` 2.0, follow the
+[Ubuntu 26.04 tutorials](https://canonical.com/juju/docs/12-factor/latest/tutorial/ubuntu-26-04/).
+The tutorials below cover the earlier Ubuntu bases.
+
 - [Django](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-django/)
 - [Express](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-express/)
 - [FastAPI](https://documentation.ubuntu.com/charmcraft/stable/tutorial/kubernetes-charm-fastapi/)
