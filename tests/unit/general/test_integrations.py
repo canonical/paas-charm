@@ -465,7 +465,7 @@ def test_integrations_env(
     workload_config = create_workload_config(
         framework_name=framework,
         unit_name=f"{framework}/0",
-        state_dir=pathlib.Path(f"/tmp/{framework}/state"),
+        state_dir=pathlib.Path("/tmp/paas-charm"),
     )
     if framework == ("flask" or "django"):
         webserver = GunicornWebserver(

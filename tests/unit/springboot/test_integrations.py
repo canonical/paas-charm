@@ -176,7 +176,7 @@ def test_saml_integration(
         environment[
             "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
         ]
-        == "file:/app/saml.cert"
+        == "file:/tmp/paas-charm/saml.cert"
     )
 
 
