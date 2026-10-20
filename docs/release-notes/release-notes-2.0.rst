@@ -6,10 +6,13 @@
 ``paas-charm`` 2.0 release notes
 ================================
 
-Unreleased
+20 October 2026
 
 These release notes cover new features and changes in ``paas-charm``
 version 2.0 and its extended support into Charmcraft and Rockcraft.
+
+``paas-charm`` 2.0b1 is the first beta of 2.0. Features and interfaces may still change
+before the stable release.
 
 This is a major release that introduces backwards-incompatible changes.
 See :ref:`how_to_upgrade_paas_charm_2` for migration instructions.
@@ -86,6 +89,26 @@ workload listener; you must ensure each target is actually served. See
 :ref:`Prometheus configuration <ref_paas_config_prometheus>` for details.
 
 * `Pull request #316 <https://github.com/canonical/paas-charm/pull/316>`_
+
+Environment variable names for config options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Config options and secret entries can be renamed in the workload environment
+through ``config.options`` in ``paas-config.yaml``, including framework outputs
+and generated secret keys.
+
+* `Pull request #379 <https://github.com/canonical/paas-charm/pull/379>`_
+
+Custom relations
+~~~~~~~~~~~~~~~~
+
+The public ``paas_charm.relations.CustomRelation`` API lets charm authors add
+their own Juju relations to a 12-factor charm, covering environment variables,
+readiness and blocking, and reconcile. The built-in Valkey relation is
+declared directly with this framework.
+
+* `Pull request #359 <https://github.com/canonical/paas-charm/pull/359>`_
+* `Pull request #381 <https://github.com/canonical/paas-charm/pull/381>`_
 
 Application secret key stored in a Juju secret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,6 +187,8 @@ for framework-specific configuration.
   (`Pull request #1303 <https://github.com/canonical/rockcraft/pull/1303>`_)
 * Extension part names may use the ``'.'`` separator on bases that disallow ``/``.
   (`Pull request #1345 <https://github.com/canonical/rockcraft/pull/1345>`_)
+* Bare-base framework rocks stage ``/tmp`` from the ``base-files_tmp`` slice.
+  (`Pull request #1387 <https://github.com/canonical/rockcraft/pull/1387>`_)
 
 Charmcraft
 ~~~~~~~~~~
@@ -185,6 +210,9 @@ dependency management.
   (`Pull request #2884 <https://github.com/canonical/charmcraft/pull/2884>`_)
 * Support for Ubuntu 24.04 LTS in supported bases.
   (`Pull request #2766 <https://github.com/canonical/charmcraft/pull/2766>`_)
+* The 26.04 FastAPI, Go, ExpressJS, and Spring Boot extensions no longer generate
+  the ``app-port``, ``webserver-port``, ``metrics-port``, and ``metrics-path`` options.
+  (`Pull request #2946 <https://github.com/canonical/charmcraft/pull/2946>`_)
 
 Until Ubuntu 26.04 LTS framework support is promoted from experimental in the
 current tools, set ``ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1`` when invoking
@@ -262,6 +290,23 @@ to use the newly expanded names, such as
 ``flask-framework/dependencies``. Entries in the ``prime`` key of the
 ``install-app`` part must also start with ``app`` on Ubuntu 26.04 LTS, for
 example ``app/app.py`` instead of ``flask/app/app.py``.
+
+Application port configured only through ``paas-config.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The application port of the FastAPI, Go, ExpressJS, and Spring Boot charms is
+read only from ``port`` in ``paas-config.yaml``, and the framework default
+applies otherwise. The ``webserver-port``, ``app-port``, and ``port`` charm
+configuration options are ignored. Workload environment variables are unchanged.
+(`Pull request #388 <https://github.com/canonical/paas-charm/pull/388>`_)
+
+Charm state directory
+~~~~~~~~~~~~~~~~~~~~~
+
+All frameworks store charm state, such as the database migration status, in
+``/tmp/paas-charm`` instead of ``/tmp/<framework>/state`` or ``/app/state``.
+Rocks no longer need to provide ``/app/state``.
+(`Pull request #388 <https://github.com/canonical/paas-charm/pull/388>`_)
 
 Redis replaced with Valkey
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
