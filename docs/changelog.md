@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2.0.0b1 - 2026-10-20
+
+* breaking: The application port of the FastAPI, Go, ExpressJS, and Spring Boot charms is no
+  longer read from the `webserver-port`, `app-port`, or `port` charm configuration options. Set
+  `port` in `paas-config.yaml`; the framework default applies otherwise. Workload environment
+  variables (`UVICORN_PORT`, `PORT`, `SERVER_PORT`) are unchanged.
+* breaking: All frameworks now store charm state (database migration status, original Pebble
+  services) in `/tmp/paas-charm` instead of per-framework paths (`/tmp/<framework>/state`,
+  `/app/state`). The directory is created by the charm, so rocks no longer need to provide
+  `/app/state`.
 * docs: Use Gateway IP-mode endpoints returned by its action in all six
   Ubuntu 26.04 tutorials instead of development hostnames and DNS overrides.
 * docs: Link the feedback form at the end of every Ubuntu 26.04 tutorial.

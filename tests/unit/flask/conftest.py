@@ -23,7 +23,7 @@ def webserver_fixture(flask_container_mock):
     workload_config = create_workload_config(
         framework_name="flask",
         unit_name="flask/0",
-        state_dir=pathlib.Path("/tmp/flask/state"),
+        state_dir=pathlib.Path("/tmp/paas-charm"),
     )
     return GunicornWebserver(
         webserver_config=WebserverConfig(),
