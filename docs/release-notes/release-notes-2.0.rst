@@ -14,7 +14,7 @@ version 2.0 and its extended support into Charmcraft and Rockcraft.
 ``paas-charm`` 2.0b1 is the first beta of 2.0. Features and interfaces may still change
 before the stable release.
 
-This is a major release that introduces backwards-incompatible changes.
+This is a beta of a major release that introduces backwards-incompatible changes.
 See :ref:`how_to_upgrade_paas_charm_2` for migration instructions.
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
@@ -27,7 +27,17 @@ See our :ref:`Release policy and schedule <release_policy_schedule>`.
 Requirements and compatibility
 ------------------------------
 
-``paas-charm`` 2.0 requires Python 3.12 or greater.
+``paas-charm`` 2.0 requires Python 3.12 or greater, and the following software:
+
+* ``charmlibs-interfaces-oauth`` 1.2.0
+* ``charmlibs-interfaces-openfga`` 1.0.0
+* ``charmlibs-interfaces-tracing`` 1.0.0
+* ``cosl`` 1.11.3
+* ``dpcharmlibs-interfaces`` 1.2.2
+* ``Jinja2`` 3.1.6
+* ``jsonschema`` 4.26.0
+* ``ops`` 3.9.0
+* ``pydantic`` 2.14.1
 
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
@@ -331,7 +341,6 @@ Bug fixes
 
 * Use OpenTelemetry auto-instrumentation for metrics in the FastAPI example.
 * Serve ExpressJS Prometheus metrics on the configured ``METRICS_PORT``.
-* Activate the Spring Boot Valkey example only when a Valkey relation is available.
 
 Charmcraft
 ~~~~~~~~~~

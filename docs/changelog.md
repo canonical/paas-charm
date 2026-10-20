@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2.0.0b1 - 2026-10-20
+
 * breaking: The application port of the FastAPI, Go, ExpressJS, and Spring Boot charms is no
   longer read from the `webserver-port`, `app-port`, or `port` charm configuration options. Set
   `port` in `paas-config.yaml`; the framework default applies otherwise. Workload environment
