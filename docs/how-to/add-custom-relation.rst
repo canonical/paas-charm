@@ -52,7 +52,9 @@ that you register on the charm via the ``custom_relations`` class attribute:
     import paas_charm.flask
     from paas_charm.relations import (
         CustomRelation,
+        InvalidRelationDataError,
         OnChange,
+        RelationDataError,
     )
 
 
@@ -84,7 +86,7 @@ that you register on the charm via the ``custom_relations`` class attribute:
             host, port = connection_info
             return {"TEMPORAL_HOST": host, "TEMPORAL_PORT": str(port)}
 
-        def _connection_info(self) -> tuple[str, int]:
+        def _connection_info(self) -> tuple[str, int] | None:
             if self._requirer is None or self._requirer.relation is None:
                 return None
             try:

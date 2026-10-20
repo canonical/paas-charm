@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
+  `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0
+  release notes pages, and the `app-secret-key` guidance. Document packaging `cos_custom/` on
+  Ubuntu 26.04 LTS and the Charmcraft `latest/edge` requirement. Fix typos, resource names
+  per base and extension part names in the examples.
 * docs: Standardize all six Ubuntu 26.04 framework tutorial VMs on 60 GB disks
   and clarify that the packaged `port` key replaces the Juju `app-port` option.
 * docs: Install Rockcraft from `latest/candidate` in all Ubuntu 26.04 framework tutorials.

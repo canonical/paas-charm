@@ -11,7 +11,12 @@ import ops
 from charms.temporal_k8s.v0.temporal_host_info import TemporalHostInfoRequirer
 
 import paas_charm.flask
-from paas_charm.relations import CustomRelation, InvalidRelationDataError, OnChange
+from paas_charm.relations import (
+    CustomRelation,
+    InvalidRelationDataError,
+    OnChange,
+    RelationDataError,
+)
 
 logger = logging.getLogger(__name__)
 
