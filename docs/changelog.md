@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 * fix: Support Juju 4 in integration tests and exclude departing units from peer addresses.
+* docs: Standardize all six Ubuntu 26.04 framework tutorial VMs on 60 GB disks
+  and clarify that the packaged `port` key replaces the Juju `app-port` option.
+* docs: Install Rockcraft from `latest/candidate` in all Ubuntu 26.04 framework tutorials.
 
 ## 2.0.0b1 - 2026-10-20
 
