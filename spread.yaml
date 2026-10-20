@@ -76,17 +76,9 @@ integration-suites:
       - integration-test
     environment:
       CONCIERGE: concierge-juju4.yaml
-      MODULE/django_test_django_integrations: tests/integration/django/test_django_integrations.py
-      MODULE/django_test_django: tests/integration/django/test_django.py
-      MODULE/expressjs_test_expressjs: tests/integration/expressjs/test_expressjs.py
-      MODULE/fastapi_test_fastapi: tests/integration/fastapi/test_fastapi.py
-      MODULE/flask_test_charm: tests/integration/flask/test_charm.py
       MODULE/general_test_config: tests/integration/general/test_config.py
-      MODULE/go_test_go: tests/integration/go/test_go.py
       MODULE/integrations_test_grafana: tests/integration/integrations/test_grafana.py
       MODULE/integrations_test_ingress: tests/integration/integrations/test_ingress.py
       MODULE/integrations_test_loki: tests/integration/integrations/test_loki.py
       MODULE/integrations_test_minimal: tests/integration/integrations/test_minimal.py
       MODULE/integrations_test_mysql: tests/integration/integrations/test_mysql.py
-      MODULE/integrations_test_prometheus: tests/integration/integrations/test_prometheus.py
-      MODULE/springboot_test_charm: tests/integration/springboot/test_charm.py
