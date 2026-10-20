@@ -11,7 +11,7 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: canonical/charm-ci/.github/workflows/integration-test.yml@21b3d9ac9ddb5feccb4fe81f6fa64bdc63f5e821 # fix/paginate-build-job-query
+    uses: canonical/charm-ci/.github/workflows/integration-test.yml@14b1cf49d48b9d5b96192d9bca2890c98b7295cf # v1.0.2
     secrets: inherit
     with:
       charmcraft-channel: latest/edge
