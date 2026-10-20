@@ -23,7 +23,7 @@ class GoConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    port: int = Field(alias="port", default=8080, gt=0)
+    port: int = Field(default=8080, gt=0)
     app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
