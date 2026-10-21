@@ -670,32 +670,6 @@ def deploy_identity_bundle_fixture(juju: jubilant.Juju):
 
     juju.config("kratos", {"enforce_mfa": False})
 
-    for app in ("hydra", "kratos"):
-        juju.wait(
-            lambda status, app=app: status.apps["postgresql-k8s"].is_active
-            and (
-                status.apps[app].is_active
-                or "migration" in (status.apps[app].app_status.message or "").lower()
-            ),
-            timeout=10 * 60,
-        )
-        if not juju.status().apps[app].is_active:
-            juju.run(f"{app}/0", "run-migration")
-
-    juju.wait(
-        lambda status: jubilant.all_active(
-            status,
-            "hydra",
-            "identity-platform-login-ui-operator",
-            "kratos",
-            "postgresql-k8s",
-            "self-signed-certificates",
-            "traefik-admin",
-            "traefik-public",
-        ),
-        timeout=10 * 60,
-    )
-
 
 @pytest.fixture(scope="module", name="http_proxy_app")
 def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_model):
