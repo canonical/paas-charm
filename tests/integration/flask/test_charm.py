@@ -253,6 +253,7 @@ def test_with_ingress(
     assert response.json() == f"https://{INGRESS_HOSTNAME}/"
 
 
+# Juju 4 does not emit relation-departed on the surviving unit after scale-down.
 @pytest.mark.juju4_incompatible
 def test_app_peer_address(
     juju: jubilant.Juju,
