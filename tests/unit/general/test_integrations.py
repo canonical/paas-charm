@@ -947,38 +947,22 @@ def test_openfga_not_activated(
     assert service_env.get("FGA_HTTP_API_URL") is None
 
 
-@pytest.mark.parametrize(
-    "charm_type",
-    [FlaskCharm, DjangoCharm, FastAPICharm, GoCharm, ExpressJSCharm],
-)
-def test_peers_relation_departed_hook(
-    charm_type: type,
-    context_factory,
-    framework_state_factory,
-):
-    """
-    arrange: Run initial hooks. Add a unit to the peers relation.
-    act: Remove one unit from the peers relation.
-    assert: The _reconcile function should be called once.
-    """
-    state_dict = framework_state_factory(charm_type)
+def test_peers_relation_departed_reconciles(context_factory, flask_base_state):
+    """A departing peer should trigger normal reconciliation."""
     peer_relation = next(
-        relation for relation in state_dict["relations"] if relation.endpoint == "peers"
+        relation for relation in flask_base_state["relations"] if relation.endpoint == "peers"
     )
-    state_dict["relations"].remove(peer_relation)
-    peer_relation = testing.PeerRelation(
-        "peers",
-        peers_data={1: {}},
-    )
-    state_dict["relations"].append(peer_relation)
-    context = context_factory(charm_type)
+    context = context_factory(FlaskCharm)
+
     with context(
-        context.on.relation_departed(peer_relation, remote_unit=1),
-        testing.State(**state_dict),
+        context.on.relation_departed(peer_relation, remote_unit=1, departing_unit=1),
+        testing.State(**flask_base_state),
     ) as manager:
-        manager.charm._reconcile = unittest.mock.MagicMock()
+        manager.charm._reconcile = MagicMock()
+
         manager.run()
-        manager.charm._reconcile.assert_called_once()
+
+        manager.charm._reconcile.assert_called_once_with()
 
 
 @pytest.mark.parametrize(

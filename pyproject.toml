@@ -56,6 +56,9 @@ show_missing = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 log_cli_level = "INFO"
+markers = [
+    "juju4_incompatible: tests blocked by known Juju 4 issues",
+]
 pythonpath = [
   "examples/flask/charm/lib",
   "examples/django/charm/lib",
@@ -180,5 +183,5 @@ integration-tests = [
     "playwright==1.64.0",
     "lightkube==1.0.1",
     "pytest-jubilant>=2,<3",
-    "opcli"
+    "opcli",
 ]

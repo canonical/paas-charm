@@ -13,6 +13,7 @@ import requests
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import expect, sync_playwright
 
+from tests.integration.helpers import relation_exists
 from tests.integration.types import App
 
 logger = logging.getLogger(__name__)
@@ -51,20 +52,23 @@ def test_oauth_integrations(
     app = request.getfixturevalue(app_fixture)
     status = juju.status()
 
-    if not status.apps.get(app.name).relations.get("ingress"):
+    if not relation_exists(status, app.name, "ingress", "traefik-public"):
         juju.integrate(f"{app.name}", "traefik-public")
 
     juju.wait(
-        jubilant.all_active,
+        lambda status: relation_exists(status, app.name, "ingress", "traefik-public")
+        and jubilant.all_active(status, app.name, "traefik-public"),
         timeout=10 * 60,
         delay=5,
     )
 
-    if not status.apps.get(app.name).relations.get("oidc"):
+    status = juju.status()
+    if not relation_exists(status, app.name, "oidc", "hydra"):
         juju.integrate(f"{app.name}", "hydra")
 
     juju.wait(
-        jubilant.all_active,
+        lambda status: relation_exists(status, app.name, "oidc", "hydra")
+        and jubilant.all_active(status, app.name, "hydra"),
         timeout=10 * 60,
         delay=5,
     )
@@ -73,7 +77,7 @@ def test_oauth_integrations(
         juju.run(
             "kratos/0",
             "create-admin-account",
-            {"email": test_email, "password": test_password, "username": test_username},
+            {"email": test_email, "username": test_username},
         )
 
     try:

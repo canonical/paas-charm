@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Support Juju 4 in integration tests.
 * docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
   `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0
   release notes pages, and the `app-secret-key` guidance. Document packaging `cos_custom/` on

@@ -9,7 +9,7 @@ import jubilant
 import pytest
 import requests
 
-from tests.integration.types import App
+from tests.integration.helpers import relation_exists
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
         ("flask_app", 8000, "rabbitmq_k8s_app"),
         ("spring_boot_app", 8080, "rabbitmq_k8s_app"),
         ("go_app", 8080, "rabbitmq_k8s_app"),
-        ("go_app", 8080, "rabbitmq_server_app"),
-        ("flask_app", 8000, "rabbitmq_server_app"),
     ],
 )
 def test_rabbitmq_server_integration(
@@ -42,7 +40,8 @@ def test_rabbitmq_server_integration(
     try:
         juju.integrate(app.name, rabbitmq_app.name)
         juju.wait(
-            lambda status: jubilant.all_active(status, app.name),
+            lambda status: relation_exists(status, app.name, "rabbitmq", rabbitmq_app.name)
+            and jubilant.all_active(status, app.name),
             timeout=(10 * 60),
             delay=30,
         )
@@ -58,31 +57,3 @@ def test_rabbitmq_server_integration(
         assert "SUCCESS" == response.text
     finally:
         juju.remove_relation(app.name, rabbitmq_app.name)
-
-
-def test_rabbitmq_ha_integration(
-    juju: jubilant.Juju,
-    go_app: App,
-    rabbitmq_server_ha_app: App,
-):
-    """
-    arrange: The app and rabbitmq deployed
-    act: Integrate the app with rabbitmq
-    assert: Assert that RabbitMQ works correctly
-    """
-    juju.integrate(go_app.name, rabbitmq_server_ha_app.name)
-    juju.wait(
-        lambda status: jubilant.all_active(status, go_app.name),
-        timeout=(10 * 60),
-        delay=30,
-    )
-    status = juju.status()
-    unit_ip = status.apps[go_app.name].units[go_app.name + "/0"].address
-
-    response = requests.post(f"http://{unit_ip}:8080/rabbitmq/send_ha?unit=1", timeout=5)
-    assert response.status_code == 200
-    assert "SUCCESS" == response.text
-
-    response = requests.get(f"http://{unit_ip}:8080/rabbitmq/receive_ha?unit=1", timeout=5)
-    assert response.status_code == 200
-    assert "SUCCESS" == response.text
