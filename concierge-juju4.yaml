@@ -8,6 +8,7 @@ juju:
   model-defaults:
     test-mode: "true"
     automatically-retry-hooks: "true"
+    update-status-hook-interval: "2m"
 
 providers:
   lxd:
