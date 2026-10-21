@@ -11,9 +11,19 @@ In ``paas-charm`` 2.0 and charms using the Ubuntu 26.04 LTS base, the
 plugin is the default. Charms using ``paas-charm`` 1.x use the ``charm`` plugin
 by default, and converting such a charm is considered a breaking change.
 This guide walks you
-through manually converting a V1 12-factor charm that uses
+through manually converting a 12-factor charm that uses
 the legacy ``charm`` plugin to the modern
 ``uv`` plugin backed by uv.
+
+.. important::
+
+    If your charm uses a framework extension on Ubuntu 26.04 LTS, Charmcraft generates the
+    ``charm`` part for you. Only the ``pyproject.toml`` and ``uv.lock`` steps apply, and you
+    must not add the ``charm`` part from the ``parts`` blocks below: Charmcraft rejects
+    ``parts.charm`` together with an extension ("incompatible with customized charm part").
+
+    On Ubuntu 24.04 LTS, extension charms still read ``requirements.txt``. Keep that file
+    and upgrade the base first, following :ref:`how_to_upgrade_paas_charm_2`.
 
 .. admonition:: Why migrate?
 
@@ -31,19 +41,19 @@ dependencies with pinned versions.
 
 For example, if your ``requirements.txt`` looks like:
 
-.. code-block:: bash
+.. code-block:: text
    :caption: requirements.txt
 
    cosl
    dpcharmlibs-interfaces==1.0.2
-   jsonschema >=4.19,&lt;4.20
+   jsonschema >=4.19,<4.20
    ops >= 2.6
    pydantic==2.13.3
    paas-charm==1.11.3
 
 Then replace the file with its equivalent ``pyproject.toml``:
 
-.. code-block:: bash
+.. code-block:: toml
    :caption: pyproject.toml
 
    [project]
@@ -61,6 +71,19 @@ Then replace the file with its equivalent ``pyproject.toml``:
        "pydantic==2.13.3",
        "paas-charm==1.11.3",
    ]
+
+   [dependency-groups]
+   charmlibs-pydeps = []
+
+.. note::
+
+    Keep the empty ``charmlibs-pydeps`` dependency group. The build fails without it.
+
+    The pins above are for a ``paas-charm`` 1.x charm. ``paas-charm`` 2.0 requires
+    Python 3.12 or greater and pins its own versions of ``ops``, ``pydantic``,
+    ``jsonschema``, ``cosl`` and ``dpcharmlibs-interfaces``, so pinning older versions of
+    these makes ``uv lock`` fail. For ``paas-charm`` 2.0, set ``requires-python = ">=3.12"``
+    and list ``paas-charm>=2.0.dev1,<3`` with only the extra dependencies your own code needs.
 
 .. tip::
 
@@ -97,7 +120,7 @@ The key differences are:
 
 For example, if your ``charmcraft.yaml`` contains the following snippet:
 
-.. code-block:: bash
+.. code-block:: yaml
    :caption: charmcraft.yaml
 
    parts:
@@ -112,7 +135,7 @@ For example, if your ``charmcraft.yaml`` contains the following snippet:
 
 Then update your file to use:
 
-.. code-block:: bash
+.. code-block:: yaml
    :caption: charmcraft.yaml
 
    parts:
@@ -129,12 +152,16 @@ Then update your file to use:
 (If applicable) Add a config part for ``paas-config.yaml``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This applies only to charms that don't use a framework extension. Extension
+charms on Ubuntu 26.04 LTS don't need a ``config`` part: the extension stages
+``paas-config.yaml`` automatically.
+
 If your charm ships a ``paas-config.yaml`` file, you need a dedicated
 ``dump`` part to stage it into the packed charm. Without this part,
 the file will not be included in your charm because the ``uv`` plugin
 only stages Python artifacts.
 
-.. code:: bash
+.. code-block:: yaml
 
    parts:
      charm:
@@ -183,35 +210,35 @@ Complete ``parts`` example
 
     .. group-tab:: without ``paas-config.yaml``
 
-        .. code-block:: bash
+        .. code-block:: yaml
 
             parts:
-            charm:
+              charm:
                 source: .
                 plugin: uv
                 build-snaps:
-                - astral-uv
-                - rustup
+                  - astral-uv
+                  - rustup
                 override-build: |-
-                rustup default stable
-                craftctl default
+                  rustup default stable
+                  craftctl default
 
     .. group-tab:: with ``paas-config.yaml``
 
-        .. code-block:: bash
+        .. code-block:: yaml
 
             parts:
-            charm:
+              charm:
                 source: .
                 plugin: uv
                 build-snaps:
-                - astral-uv
-                - rustup
+                  - astral-uv
+                  - rustup
                 override-build: |-
-                rustup default stable
-                craftctl default
-            config:
+                  rustup default stable
+                  craftctl default
+              config:
                 plugin: dump
                 source: .
                 stage:
-                - paas-config.yaml
+                  - paas-config.yaml
