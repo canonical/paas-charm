@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* refactor: Move the built-in S3 relation to the custom relations framework.
+* refactor: Move the built-in S3 relation to the custom relations framework, fixing
+  `S3_TLS_CA_CHAIN` being tied to `attributes` instead of `tls_ca_chain`.
 * fix: Support Juju 4 in integration tests.
 * docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
   `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0

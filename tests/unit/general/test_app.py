@@ -228,6 +228,21 @@ def test_rabbitmq_environ_mapper_generate_env(relation_data, expected_env):
             },
             id="All relation data",
         ),
+        pytest.param(
+            PaaSS3RelationData.model_construct(
+                access_key="access_key",
+                secret_key="secret_key",
+                bucket="bucket",
+                tls_ca_chain=["---first---", "---second---"],
+            ),
+            {
+                "S3_ACCESS_KEY": "access_key",
+                "S3_SECRET_KEY": "secret_key",
+                "S3_BUCKET": "bucket",
+                "S3_TLS_CA_CHAIN": '["---first---", "---second---"]',
+            },
+            id="TLS CA chain without attributes",
+        ),
     ],
 )
 def test_s3_environ_mapper_generate_env(relation_data, expected_env):

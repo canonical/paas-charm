@@ -419,6 +419,23 @@ def test_generate_integration_environments(
             },
             id="S3",
         ),
+        pytest.param(
+            S3Relation._generate_s3_env(
+                PaaSS3RelationData.model_construct(
+                    access_key="TESTINGACCESSKEY",
+                    secret_key="TESTINGSECRETKEY",
+                    bucket="my-example-bucket",
+                    tls_ca_chain=S3_CA_CHAIN,
+                )
+            ),
+            {
+                "S3_ACCESS_KEY": "TESTINGACCESSKEY",
+                "S3_BUCKET": "my-example-bucket",
+                "S3_SECRET_KEY": "TESTINGSECRETKEY",
+                "S3_TLS_CA_CHAIN": json.dumps(S3_CA_CHAIN),
+            },
+            id="S3 TLS CA chain without attributes",
+        ),
     ],
 )
 def test_custom_relation_environments(relation_env, expected_env):

@@ -188,7 +188,7 @@ class S3Relation(CustomRelation):
                 ),
                 (
                     "S3_TLS_CA_CHAIN",
-                    json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
+                    json.dumps(relation_data.tls_ca_chain) if relation_data.tls_ca_chain else None,
                 ),
             )
             if v is not None
