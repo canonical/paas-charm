@@ -28,7 +28,7 @@ def test_blocking_and_restarting_on_required_integration(juju: jubilant.Juju, dj
     # remove integration and check that the service is stopped
     juju.remove_relation(django_app.name, "postgresql-k8s:database")
 
-    juju.wait(lambda status: jubilant.all_blocked(status, django_app.name))
+    juju.wait(lambda status: jubilant.all_blocked(status, django_app.name), successes=5, delay=5)
 
     status = juju.status()
     unit = list(status.apps[django_app.name].units.values())[0]
@@ -41,6 +41,10 @@ def test_blocking_and_restarting_on_required_integration(juju: jubilant.Juju, dj
     assert "postgresql" in unit.workload_status.message
 
     # add integration again and check that the service is running
+    juju.wait(
+        lambda status: not status.apps[django_app.name].relations.get("postgresql"),
+        timeout=5 * 60,
+    )
     juju.integrate(django_app.name, "postgresql-k8s:database")
     juju.wait(lambda status: jubilant.all_active(status, django_app.name, "postgresql-k8s"))
 

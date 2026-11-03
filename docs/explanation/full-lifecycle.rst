@@ -4,7 +4,7 @@ How everything connects (source to production)
 ==============================================
 
 The 12-Factor app support in Charmcraft and Rockcraft is an opinionated
-framework based on the 12-Factor methodology. If you web app uses one of the
+framework based on the 12-Factor methodology. If your web app uses one of the
 supported framework and follows the conventions of the tool, you can
 easily containerize, charm, and deploy it with Juju.
 

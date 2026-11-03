@@ -986,3 +986,69 @@ def modify_paas_config_fixture():
         return PaasConfig.model_validate(config)
 
     return _modify
+
+
+@pytest.mark.parametrize(
+    "charm, state_fixture, service, option, port_var, default_port",
+    [
+        pytest.param(
+            FastAPICharm,
+            "fastapi_base_state",
+            "fastapi",
+            "webserver-port",
+            "UVICORN_PORT",
+            "8000",
+            id="fastapi",
+        ),
+        pytest.param(
+            SpringBootCharm,
+            "spring_boot_base_state",
+            "spring-boot",
+            "app-port",
+            "SERVER_PORT",
+            "8080",
+            id="springboot",
+        ),
+        pytest.param(GoCharm, "go_base_state", "go", "port", "PORT", "8080", id="go"),
+        pytest.param(
+            ExpressJSCharm,
+            "expressjs_base_state",
+            "expressjs",
+            "port",
+            "PORT",
+            "8080",
+            id="expressjs",
+        ),
+    ],
+)
+def test_application_port_ignores_charm_config_option(
+    request, context_factory, charm, state_fixture, service, option, port_var, default_port
+):
+    """Test that the application port is only configured through paas-config.yaml."""
+    base_state = request.getfixturevalue(state_fixture)
+    ctx = context_factory(
+        charm,
+        paas_config=PaasConfig(),
+        config_options={option: {"type": "int", "default": 7777}},
+    )
+    out = ctx.run(ctx.on.config_changed(), testing.State(**base_state))
+
+    environment = list(out.containers)[0].plan.services[service].environment
+    assert environment[port_var] == default_port
+
+
+@pytest.mark.parametrize(
+    "charm, state_fixture",
+    [
+        pytest.param(FastAPICharm, "fastapi_base_state", id="fastapi"),
+        pytest.param(SpringBootCharm, "spring_boot_base_state", id="springboot"),
+        pytest.param(GoCharm, "go_base_state", id="go"),
+        pytest.param(ExpressJSCharm, "expressjs_base_state", id="expressjs"),
+    ],
+)
+def test_state_dir_is_unified(request, context_factory, charm, state_fixture):
+    """Test that all frameworks store charm state in /tmp/paas-charm."""
+    base_state = request.getfixturevalue(state_fixture)
+    ctx = context_factory(charm)
+    with ctx(ctx.on.config_changed(), testing.State(**base_state)) as manager:
+        assert str(manager.charm._workload_config.state_dir) == "/tmp/paas-charm"

@@ -24,7 +24,7 @@ For a web app charm, the following events are observed:
       needed, and restart the workload without explicitly re-running migrations.
   * - ``peers_relation_created``
     - Fired when the peer relation is first created.
-    - Make peer coordination data (such as peer unit FQDNs) available.
+    - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``peers_relation_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
     - Validate the charm configuration, run pending migrations and restart the workload.
@@ -33,18 +33,19 @@ For a web app charm, the following events are observed:
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``update_status``
     - Fired at regular intervals.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Restart the workload if the last database migration failed, and refresh the ingress
+      relation data.
   * - ``secret_changed``
     - Fired when the secret owner publishes a new secret revision.
     - Validate the configuration, run pending migrations and restart the workload.
   * - ``database_created``
     - Fired when a new database is created.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - ``endpoints_changed``
     - Fired when the database endpoints change.
-    - Validate the configuration, run pending migrations and restart the workload.
-  * - ``database_relation_broken``
-    - Fired when a unit participating in a non-peer relation is removed.
+    - Validate the configuration, re-run migrations and restart the workload.
+  * - ``<database relation name>_relation_broken``
+    - Fired when a database relation is removed.
     - Validate the configuration, run pending migrations and restart the workload.
   * - ``ingress_ready``
     - Fired when the ingress for the web app is ready.
@@ -52,38 +53,35 @@ For a web app charm, the following events are observed:
   * - ``ingress_revoked``
     - Fired when the ingress for the web app is not ready anymore.
     - Validate the configuration, run pending migrations and restart the workload.
-  * - ``redis_relation_updated``
-    - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
-    - Validate the configuration, run pending migrations and restart the workload.
   * - ``valkey_resource_created``
     - Fired when the Valkey relation data is available.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - `s3_credentials_changed <https://github.com/canonical/data-platform-libs>`_
     - Fired when the S3 credentials are changed.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - `s3_credentials_gone <https://github.com/canonical/data-platform-libs>`_
     - Fired when the S3 credentials are removed.
     - Validate the configuration, run pending migrations and restart the workload.
   * - ``saml_data_available``
     - Fired when new SAML data is present in the relation.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - ``rabbitmq_ready``
-    - Fired after a ``rabbitmq_cjoined`` event.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Emitted by the RabbitMQ requirer on relation changed or departed, when relation data is available.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - ``rabbitmq_connected``
-    - Fired after a ``rabbitmq_changed`` or ``rabbitmq_broken`` event.
-    - Validate the configuration, run pending migrations and restart the workload.
+    - Emitted by the RabbitMQ requirer when the relation is joined.
+    - Validate the configuration, re-run migrations and restart the workload.
   * - ``rabbitmq_joined``
     - Fired when a new unit joins in an existing relation.
-    - Request access to the RabbitMQ server and emit a connected event.
+    - Emit a connected event and request access to the RabbitMQ server.
   * - ``rabbitmq_changed``
     - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
-    - Request access to the RabbitMQ server and emit a ready event.
+    - Emit a ready event if the RabbitMQ relation data is available.
   * - ``rabbitmq_broken``
-    - Fired when a unit participating in a non-peer relation is removed. 
-    - Emit a ready event.
+    - Fired when the RabbitMQ relation is removed.
+    - Emit a departed event.
   * - ``rabbitmq_departed``
-    - Fired when a related unit is no longer related.
+    - Emitted by the RabbitMQ requirer when the relation is broken.
     - Validate the charm configuration, run pending migrations and restart the workload.
   * - ``tracing_endpoint_changed``
     - Fired when one of the receiver endpoints changes.
@@ -94,9 +92,25 @@ For a web app charm, the following events are observed:
   * - ``smtp_data_available``
     - Fired when new SMTP data is present in the relation.
     - Validate the charm configuration, run pending migrations and restart the workload.
-  * - ``rotate_secret_key``
-    - Fired when ``secret-rotate`` is executed.
-    - Generate a new secret token for the application.
+  * - ``oauth_info_changed``
+    - Fired when the OAuth provider information changes.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``oauth_info_removed``
+    - Fired when the OAuth provider information is removed.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``http_proxy_relation_changed``
+    - Fired when a new unit joins in an existing relation and whenever the related unit changes its settings.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``openfga_store_created``
+    - Fired when the OpenFGA store is created.
+    - Validate the configuration, run pending migrations and restart the workload.
+  * - ``create_superuser_action``
+    - Fired when the ``create-superuser`` action is run. Django charms only.
+    - Create a Django superuser in the workload container. The workload isn't restarted.
+  * - ``rotate_secret_key_action``
+    - Fired when the ``rotate-secret-key`` action is run. The action fails on non-leader units.
+    - Generate a new secret token for the application and restart the workload. The action
+      also fails if the charm is still initializing.
 
 .. seealso::
 

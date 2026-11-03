@@ -89,7 +89,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """Directory used for storing application related state. Ex: db migration state."""
         # It is  fine to use the tmp directory here as it is only used for storing the state
         # of the application. State only supposed to live within the lifecycle of the container.
-        return pathlib.Path(f"/tmp/{self._framework_name}/state")  # nosec: B108
+        return pathlib.Path("/tmp/paas-charm")  # nosec: B108
 
     def __init__(self, framework: ops.Framework, framework_name: str) -> None:
         """Initialize the instance.
@@ -455,12 +455,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         framework_config_class = self.framework_config_class
         config = self._resolve_charm_config()
         for framework_field, paas_config_field in self.paas_config_framework_fields.items():
-            if paas_config_field not in self._paas_config.model_fields_set:
-                continue
             model_field = framework_config_class.model_fields[framework_field]
-            config[model_field.alias or framework_field] = getattr(
-                self._paas_config, paas_config_field
-            )
+            key = model_field.alias or framework_field
+            # These values are only configurable through paas-config.yaml.
+            config.pop(key, None)
+            if paas_config_field in self._paas_config.model_fields_set:
+                config[key] = getattr(self._paas_config, paas_config_field)
 
         try:
             return framework_config_class.model_validate(config)

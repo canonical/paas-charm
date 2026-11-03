@@ -13,7 +13,7 @@ from paas_charm.database_migration import DatabaseMigrationStatus
 
 from .constants import INTEGRATIONS_RELATION_DATA
 
-MIGRATION_STATUS_PATH = pathlib.Path("tmp/flask/state/database-migration-status")
+MIGRATION_STATUS_PATH = pathlib.Path("tmp/paas-charm/database-migration-status")
 
 
 def _container_mount(base_state: dict) -> pathlib.Path:

@@ -61,7 +61,7 @@ In this documentation
      - :ref:`12-factor principles <explanation_12_factor_principles_applied>` |
        :ref:`Juju, charms, and rocks <explanation_foundations>` |
        :ref:`Supported web app frameworks <explanation_web_app_frameworks>` |
-       :ref:`Tooling conventions <explanation_opinionated_nature>`
+       :ref:`Tooling conventions <explanation_opinionated_nature>` |
        :ref:`Charm architecture <ref_charm_architecture>`
    * - **Maintenance and extension**
      - :ref:`Upgrade an application <how_to_upgrade>` |

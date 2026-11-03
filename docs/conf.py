@@ -159,6 +159,11 @@ llms_txt_description = textwrap.dedent(
     """
 )
 
+# sphinx-markdown-builder (run by sphinx_llm.txt) has no visitor for these nodes.
+# "meta" may be removable once liran-funaro/sphinx-markdown-builder#70 / NVIDIA/sphinx-llm#172 land;
+# "mermaid" is unaddressed upstream and will still need suppressing.
+llms_txt_suppress_unknown_node_warnings = ["meta", "mermaid"]
+
 # The base URL for references built by sphinx-markdown-builder.
 if os.environ.get("READTHEDOCS"):
     markdown_http_base = html_baseurl
@@ -173,6 +178,10 @@ linkcheck_ignore = [
     "https://github.com",
     r"https://matrix\.to/.*",
     "https://example.com",
+    # Tutorial-only gateway hostnames are resolved inside the development VM.
+    r"http://[a-z-]+-hello-world\.internal/.*",
+    # These valid package pages reject automated requests with HTTP 403.
+    r"https://www\.npmjs\.com/package/(knex|prisma)/?$",
     # SourceForge domains often block linkcheck
     r"https://.*\.sourceforge\.(net|io)/.*",
 ]
@@ -228,6 +237,7 @@ myst_fence_as_directive = {"mermaid"}
 exclude_patterns = [
     "doc-cheat-sheet*",
     "reuse/release-notes-template.rst",
+    "reuse/tutorial/*.rst",
     ".venv*",
 ]
 
@@ -267,6 +277,7 @@ intersphinx_mapping = {
     "pebble": ("https://documentation.ubuntu.com/pebble/", None),
     "cos": ("https://documentation.ubuntu.com/observability/latest/", None),
     "ops": ("https://documentation.ubuntu.com/ops/latest/", None),
+    "multipass": ("https://documentation.ubuntu.com/multipass/latest/", None),
     "open-documentation-academy": ("https://documentation.academy/", None),
 }
 

@@ -51,7 +51,7 @@ def test_flask_env(
         user_defined_config=user_defined_config,
     )
     workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")
+        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/paas-charm")
     )
     flask_app = WsgiApp(
         container=flask_container_mock,
@@ -135,7 +135,7 @@ def test_http_proxy(
         is_secret_key_ready=True,
     )
     workload_config = create_workload_config(
-        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/flask/state")
+        framework_name="flask", unit_name="flask/0", state_dir=pathlib.Path("/tmp/paas-charm")
     )
     flask_app = WsgiApp(
         container=flask_container_mock,

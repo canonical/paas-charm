@@ -52,7 +52,7 @@ refreshing the application:
 .. code-block:: bash
     
     juju refresh myapp --resource app-image=localhost:32000/myapp:0.1 \
-    --path ./myapp-22.04-amd64.charm
+    --path ./<charm file>.charm
 
 Upgrading the charm itself
 --------------------------
@@ -63,11 +63,12 @@ If you've made changes to the charm source code, you need to repack the charm:
 
     charmcraft pack
 
-This generates a ``.charm`` file in the current directory. You can then refresh it in Juju:
+This generates a ``.charm`` file in the current directory. Its name depends on the
+charm name, base and architecture. You can then refresh it in Juju:
 
 .. code-block:: bash
 
-    juju refresh myapp --path ./myapp-22.04-amd64.charm
+    juju refresh myapp --path ./<charm file>.charm
 
 We pin major versions of ``paas-charm`` and do not introduce breaking changes in
 minor or patch releases. To upgrade to a new version of the ``paas-charm``
@@ -85,6 +86,12 @@ See the :ref:`2.0 release notes <release_notes_2_0>` for the full list.
 Charmcraft project that retains an Ubuntu 22.04 LTS or Ubuntu 24.04 LTS base
 continues to use and pin ``paas-charm`` 1.x; repacking such a project is not a
 supported upgrade path to ``paas-charm`` 2.0.
+
+The ``paas-charm`` 2.0 charm contract (the ``peers`` relation, the secret-typed
+``app-secret-key`` option, and the ``--base`` option of ``charmcraft init``) is generated
+by the ``latest/edge`` channel of the Charmcraft snap. Charmcraft 4.4.2 (``latest/stable``) doesn't accept
+``charmcraft init --base``, and for Ubuntu 26.04 LTS it still generates the earlier
+contract, with the ``secret-storage`` relation and ``flask-secret-key`` options.
 
 Before refreshing a deployment, manually migrate and rebuild **every** rock and
 charm:
@@ -200,8 +207,8 @@ dependency change:
    uv lock
 
 When carrying over custom relation handling or application code, replace
-obsolete Redis integration with the generated ``valkey`` relation and
-``/valkey/*`` endpoints.
+obsolete Redis integration with the generated ``valkey`` relation. The library no longer
+provides the ``REDIS_DB_*`` environment variables; use the ``VALKEY_DB_*`` variables.
 
 For more details about the generated contract and dependency migration, see
 the :ref:`Charmcraft framework extension reference <charmcraft:extensions>`
@@ -240,8 +247,11 @@ variables when packing:
 
    ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 rockcraft pack
    CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 charmcraft pack
-   juju refresh myapp --path ./myapp_amd64.charm \
+   juju refresh myapp --path ./myapp_amd64.charm --base ubuntu@26.04 \
      --resource app-image=<registry>/<rock name>:<version>
+
+Pass ``--base ubuntu@26.04`` explicitly so that Juju selects the charm built for that base. For more details on changing bases, see
+:ref:`Change to the Ubuntu 26.04 LTS base <charmcraft:howto-change-to-ubuntu-26-04>`.
 
 After the refresh completes, verify the application with ``juju status`` and
 confirm that the workload is active and the ingress and observability relations

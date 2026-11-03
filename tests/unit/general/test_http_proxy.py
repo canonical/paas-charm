@@ -108,7 +108,7 @@ def test_http_proxy(
         port=8080,
         base_dir=base_dir,
         app_dir=base_dir,
-        state_dir=base_dir / "state",
+        state_dir=pathlib.Path("/tmp/paas-charm"),
         service_name=framework_name,
         unit_name=f"{framework_name}/0",
     )

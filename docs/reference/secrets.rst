@@ -49,18 +49,10 @@ rotate that user secret instead.
 User-provided secret key
 ------------------------
 
-To use your own secret key instead of the generated one, configure the
-``app-secret-key`` option of type ``secret`` in ``charmcraft.yaml`` and set it
-to a Juju user secret ID:
-
-.. code-block:: yaml
-   :caption: charmcraft.yaml
-
-   config:
-     options:
-       app-secret-key:
-         type: secret
-         description: Secret key used for session signing.
+To use your own secret key instead of the generated one, set the ``app-secret-key``
+option, which has type ``secret``, to a Juju user secret ID. The Charmcraft framework
+extension for Ubuntu 26.04 LTS declares this option for you, so don't declare it in
+``charmcraft.yaml``: Charmcraft fails with an "overlapping keys" error if you do.
 
 Then create the Juju secret, grant it to the application, and set the
 configuration option to the secret ID:

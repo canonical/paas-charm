@@ -168,7 +168,9 @@ For faster iteration you can run pytest directly against the current host:
 - `opcli artifacts build`: Builds charms/rocks -> artifacts.build.yaml.
 - `opcli env provision`: Provisions the environment using [Concierge](https://github.com/canonical/concierge).
 - `opcli artifacts push-images --missing-registry deploy`: Pushes rocks to the local registry.
-- `opcli pytest run -- -k "test_name"`: Runs a single test.
+- `opcli pytest run --suite tests/integration-juju3/ -- -k "test_name"`: Runs a single test with Juju 3.
+
+To run the test with Juju 4 instead, use `--suite tests/integration-juju4/`.
 
 See the [charm-ci README](https://github.com/canonical/charm-ci) for the full reference.
 

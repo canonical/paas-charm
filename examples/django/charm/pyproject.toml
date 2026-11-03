@@ -8,12 +8,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "charmlibs-interfaces-tracing==1.0.0",
-    "charmlibs-interfaces-oauth==1.1.0",
+    "charmlibs-interfaces-oauth==1.2.0",
     "charmlibs-interfaces-openfga==1.0.0",
-    "cosl==1.10.3",
-    "dpcharmlibs-interfaces==1.2.0",
+    "cosl==1.11.3",
+    "dpcharmlibs-interfaces==1.2.2",
     "Jinja2==3.1.6",
     "jsonschema==4.26.0",
-    "ops==3.8.2",
-    "pydantic[email]==2.13.5",
+    "ops==3.9.0",
+    "pydantic[email]==2.14.1",
 ]

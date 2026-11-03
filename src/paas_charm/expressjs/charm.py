@@ -27,7 +27,7 @@ class ExpressJSConfig(FrameworkConfig):
     """
 
     node_env: str = Field(alias="node-env", default="production", min_length=1)
-    port: int = Field(alias="port", default=8080, gt=0)
+    port: int = Field(default=8080, gt=0)
     app_secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
     model_config = ConfigDict(extra="ignore")
@@ -67,7 +67,7 @@ class Charm(PaasCharm):
             port=framework_config.port,
             base_dir=base_dir,
             app_dir=base_dir,
-            state_dir=base_dir / "state",
+            state_dir=self._state_dir,
             service_name=self._framework_name,
             metrics_path=metrics_path,
             metrics_port=metrics_port,

@@ -6,12 +6,15 @@
 ``paas-charm`` 2.0 release notes
 ================================
 
-Unreleased
+20 October 2026
 
 These release notes cover new features and changes in ``paas-charm``
 version 2.0 and its extended support into Charmcraft and Rockcraft.
 
-This is a major release that introduces backwards-incompatible changes.
+``paas-charm`` 2.0b1 is the first beta of 2.0. Features and interfaces may still change
+before the stable release.
+
+This is a beta of a major release that introduces backwards-incompatible changes.
 See :ref:`how_to_upgrade_paas_charm_2` for migration instructions.
 
 For more detailed information on Charmcraft and Rockcraft, see their dedicated release notes:
@@ -24,15 +27,32 @@ See our :ref:`Release policy and schedule <release_policy_schedule>`.
 Requirements and compatibility
 ------------------------------
 
-``paas-charm`` 2.0 requires Python 3.12 or greater.
+``paas-charm`` 2.0 requires Python 3.12 or greater, and the following software:
+
+* ``charmlibs-interfaces-oauth`` 1.2.0
+* ``charmlibs-interfaces-openfga`` 1.0.0
+* ``charmlibs-interfaces-tracing`` 1.0.0
+* ``cosl`` 1.11.3
+* ``dpcharmlibs-interfaces`` 1.2.2
+* ``Jinja2`` 3.1.6
+* ``jsonschema`` 4.26.0
+* ``ops`` 3.9.0
+* ``pydantic`` 2.14.1
+
+Building Ubuntu 26.04 LTS rocks requires Rockcraft 1.21 or later. Building Ubuntu 26.04 LTS
+charms requires a Charmcraft release that includes the updated 12-factor
+extension contract. Until then, use the ``latest/edge`` channel of the Charmcraft snap.
 
 All charms and rocks must be rebuilt for Ubuntu 26.04 LTS. Rocks use either
 ``base: ubuntu@26.04`` or ``base: bare`` with
 ``build-base: ubuntu@26.04``. Charms use ``base: ubuntu@26.04``.
 
-Charmcraft profiles for Ubuntu 22.04 LTS and Ubuntu 24.04 LTS retain the earlier
-generated contract and pin ``paas-charm`` 1.x. They are not a supported path to
-``paas-charm`` 2.0.
+Charmcraft's Ubuntu 24.04 LTS profiles keep the earlier generated contract and pin
+``paas-charm`` 1.x. They are not a supported path to ``paas-charm`` 2.0.
+
+For a complete new-app walkthrough, follow the
+:ref:`Ubuntu 26.04 LTS tutorials <tutorial-ubuntu-26-04>` for Django, Express,
+FastAPI, Flask, Go, or Spring Boot.
 
 Upgrade instructions
 --------------------
@@ -46,9 +66,11 @@ Before refreshing a deployment:
 2. Migrate and rebuild every charm with ``base: ubuntu@26.04``, the ``uv``
    plugin, ``pyproject.toml``, a ``uv.lock`` file that you generate with
    ``uv lock``, and a compatible dependency such as ``paas-charm>=2.0.dev1,<3``.
-3. Ensure each charm defines the ``app`` container, ``app-image`` resource,
-   ``peers`` relation, and a single secret-typed ``app-secret-key`` option. If
-   used, stage the charm-owned ``paas-config.yaml`` into the packed charm.
+3. Check that the packed charm has the ``app`` container, the ``app-image`` resource,
+   the ``peers`` relation and a secret-typed ``app-secret-key`` option. The framework
+   extension provides them, so don't redeclare ``app-secret-key`` in ``charmcraft.yaml``.
+   Keep ``paas-config.yaml``, if you use one, in the charm project directory: the
+   extension packs it automatically.
 4. Review the :ref:`Backwards-incompatible changes <paas_charm_2_breaking_changes>`
    before refreshing the deployment.
 
@@ -86,6 +108,26 @@ workload listener; you must ensure each target is actually served. See
 :ref:`Prometheus configuration <ref_paas_config_prometheus>` for details.
 
 * `Pull request #316 <https://github.com/canonical/paas-charm/pull/316>`_
+
+Environment variable names for config options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Config options and secret entries can be renamed in the workload environment
+through ``config.options`` in ``paas-config.yaml``, including framework outputs
+and generated secret keys.
+
+* `Pull request #379 <https://github.com/canonical/paas-charm/pull/379>`_
+
+Custom relations
+~~~~~~~~~~~~~~~~
+
+The public ``paas_charm.relations.CustomRelation`` API lets charm authors add
+their own Juju relations to a 12-factor charm, covering environment variables,
+readiness and blocking, and reconcile. The built-in Valkey relation is
+declared directly with this framework.
+
+* `Pull request #359 <https://github.com/canonical/paas-charm/pull/359>`_
+* `Pull request #381 <https://github.com/canonical/paas-charm/pull/381>`_
 
 Application secret key stored in a Juju secret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,6 +178,32 @@ for details.
 * `Pull request #372 <https://github.com/canonical/paas-charm/pull/372>`_
 * `Pull request #373 <https://github.com/canonical/paas-charm/pull/373>`_
 
+Custom relations API
+~~~~~~~~~~~~~~~~~~~~
+
+The public ``paas_charm.relations.CustomRelation`` API lets charm authors add their
+own Juju relations to a 12-factor charm, including environment variables, readiness,
+and reconcile behavior. See :ref:`Add a custom relation <how_to_add_custom_relation>`
+and :ref:`Custom relations <ref_custom_relations>` for details.
+
+* `Pull request #359 <https://github.com/canonical/paas-charm/pull/359>`_
+
+Environment variable names for config options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Environment variables generated from charm configuration options and secrets can be
+renamed with ``config.options`` in ``paas-config.yaml``. See
+:ref:`paas-config.yaml <ref_paas_config>` for details.
+
+* `Pull request #379 <https://github.com/canonical/paas-charm/pull/379>`_
+
+Valkey integration uses the custom relations framework
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Valkey integration is migrated to the custom relations framework.
+
+* `Pull request #381 <https://github.com/canonical/paas-charm/pull/381>`_
+
 OpenFGA store uses the charm application name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -164,6 +232,8 @@ for framework-specific configuration.
   (`Pull request #1303 <https://github.com/canonical/rockcraft/pull/1303>`_)
 * Extension part names may use the ``'.'`` separator on bases that disallow ``/``.
   (`Pull request #1345 <https://github.com/canonical/rockcraft/pull/1345>`_)
+* Bare-base framework rocks stage ``/tmp`` from the ``base-files_tmp`` slice.
+  (`Pull request #1387 <https://github.com/canonical/rockcraft/pull/1387>`_)
 
 Charmcraft
 ~~~~~~~~~~
@@ -185,6 +255,9 @@ dependency management.
   (`Pull request #2884 <https://github.com/canonical/charmcraft/pull/2884>`_)
 * Support for Ubuntu 24.04 LTS in supported bases.
   (`Pull request #2766 <https://github.com/canonical/charmcraft/pull/2766>`_)
+* The 26.04 FastAPI, Go, ExpressJS, and Spring Boot extensions no longer generate
+  the ``app-port``, ``webserver-port``, ``metrics-port``, and ``metrics-path`` options.
+  (`Pull request #2946 <https://github.com/canonical/charmcraft/pull/2946>`_)
 
 Until Ubuntu 26.04 LTS framework support is promoted from experimental in the
 current tools, set ``ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1`` when invoking
@@ -208,8 +281,8 @@ Application secret key regeneration
 On upgrade, a fresh application secret key is generated because existing values
 are not migrated from the former peer databag. Applications that use this key
 for session signing (including Flask, Django, FastAPI, ExpressJS, and Spring
-Boot) may invalidate existing sessions. Use a ``type: secret`` config option for
-user-provided secret material.
+Boot) may invalidate existing sessions. To provide your own key, set the
+``app-secret-key`` option to a Juju secret ID.
 (`Pull request #345 <https://github.com/canonical/paas-charm/pull/345>`_)
 
 ``secret-storage`` relation renamed to ``peers``
@@ -263,12 +336,30 @@ to use the newly expanded names, such as
 ``install-app`` part must also start with ``app`` on Ubuntu 26.04 LTS, for
 example ``app/app.py`` instead of ``flask/app/app.py``.
 
+Application port configured only through ``paas-config.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The application port of the FastAPI, Go, ExpressJS, and Spring Boot charms is
+read only from ``port`` in ``paas-config.yaml``, and the framework default
+applies otherwise. The ``webserver-port``, ``app-port``, and ``port`` charm
+configuration options are ignored. Workload environment variables are unchanged.
+(`Pull request #388 <https://github.com/canonical/paas-charm/pull/388>`_)
+
+Charm state directory
+~~~~~~~~~~~~~~~~~~~~~
+
+All frameworks store charm state, such as the database migration status, in
+``/tmp/paas-charm`` instead of ``/tmp/<framework>/state`` or ``/app/state``.
+Rocks no longer need to provide ``/app/state``.
+(`Pull request #388 <https://github.com/canonical/paas-charm/pull/388>`_)
+
 Redis replaced with Valkey
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Redis examples and tests are replaced with Valkey. Consumers that still relate
 through the ``redis`` endpoint or call ``/redis/*`` must move to the ``valkey``
-relation and ``/valkey/*`` endpoints.
+relation and ``/valkey/*`` endpoints. The ``REDIS_DB_*`` environment variables are no
+longer set; use ``VALKEY_DB_*`` instead.
 (`Pull request #347 <https://github.com/canonical/paas-charm/pull/347>`_)
 
 Loki ``loki_push_api`` v0 removal
@@ -286,7 +377,6 @@ Bug fixes
 
 * Use OpenTelemetry auto-instrumentation for metrics in the FastAPI example.
 * Serve ExpressJS Prometheus metrics on the configured ``METRICS_PORT``.
-* Activate the Spring Boot Valkey example only when a Valkey relation is available.
 
 Charmcraft
 ~~~~~~~~~~

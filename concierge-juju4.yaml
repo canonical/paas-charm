@@ -1,0 +1,36 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+version: 1
+
+juju:
+  channel: 4.0/stable
+  model-defaults:
+    test-mode: "true"
+    automatically-retry-hooks: "true"
+    update-status-hook-interval: "2m"
+
+providers:
+  lxd:
+    enable: true
+    bootstrap: false
+  k8s:
+    enable: true
+    bootstrap: true
+    channel: 1.35-classic/stable
+    features:
+      load-balancer:
+        l2-mode: "true"
+        cidrs: "10.43.45.0/28"
+      local-storage: {}
+      network: {}
+
+host:
+  packages:
+    - gnome-keyring
+    - python3-pip
+    - python3-venv
+  snaps:
+    charmcraft:
+    jq:
+    yq:

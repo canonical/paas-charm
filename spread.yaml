@@ -46,7 +46,7 @@ backends:
       sudo -u ubuntu -H juju models --all
 
 environment:
-  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge.yaml}")'
+  CONCIERGE: '$(HOST: echo "${CONCIERGE:-concierge-juju3.yaml}")'
   OPCLI_GIT_REF: '$(HOST: echo "${OPCLI_GIT_REF:-main}")'
 
 exclude:
@@ -56,13 +56,29 @@ exclude:
   - .*_cache
 
 integration-suites:
-  tests/integration/:
+  tests/integration-juju3/:
     working-dir: ./
-    summary: paas-charm integration tests
+    summary: paas-charm integration tests (Juju 3.6)
+    discover-path: tests/integration/
     auto-discover: true
     backends:
       - integration-test
     environment:
-      CONCIERGE: concierge.yaml
+      CONCIERGE: concierge-juju3.yaml
       PRE_SCRIPT/integrations_test_s3: s3-installation.sh
       PRE_SCRIPT/integrations_test_tracing: s3-installation.sh
+  tests/integration-juju4/:
+    working-dir: ./
+    summary: paas-charm smoke tests (Juju 4)
+    auto-discover: false
+    pytest-arguments-template: '-m "not juju4_incompatible"'
+    backends:
+      - integration-test
+    environment:
+      CONCIERGE: concierge-juju4.yaml
+      MODULE/general_test_config: tests/integration/general/test_config.py
+      MODULE/integrations_test_grafana: tests/integration/integrations/test_grafana.py
+      MODULE/integrations_test_ingress: tests/integration/integrations/test_ingress.py
+      MODULE/integrations_test_loki: tests/integration/integrations/test_loki.py
+      MODULE/integrations_test_minimal: tests/integration/integrations/test_minimal.py
+      MODULE/integrations_test_mysql: tests/integration/integrations/test_mysql.py

@@ -1,4 +1,5 @@
 Analytics
+addon
 args
 async
 booleans
@@ -31,12 +32,14 @@ hostnames
 init
 Jinja
 kubectl
+knex
 lifecycle
 GitOps
 Integrations
 integrations
 ISD
 libs
+lockfile
 js
 md
 natively
@@ -49,6 +52,7 @@ openfga
 PaaS
 PaasCharm
 Postgres
+prisma
 pypi
 rabbitmq
 RabbitMQ
@@ -71,7 +75,11 @@ Terraform
 tox
 Trivy
 umask
+untrusted
 uv
 Uvicorn
 valkey
+VM's
 VMs
+walkthrough
+walkthroughs

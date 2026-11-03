@@ -52,6 +52,7 @@ def fixture_session_with_retry():
     adapter = HTTPAdapter(max_retries=retry_strategy)
     with requests.Session() as session_with_retry:
         session_with_retry.mount("http://", adapter)
+        session_with_retry.mount("https://", adapter)
         yield session_with_retry
 
 
@@ -810,6 +811,7 @@ def deploy_postgresql(
             "plugin_hstore_enable": "true",
             "plugin_pg_trgm_enable": "true",
         },
+        force=True,
     )
 
 

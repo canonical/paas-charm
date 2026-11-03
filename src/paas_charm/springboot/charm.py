@@ -45,7 +45,7 @@ class SpringBootConfig(FrameworkConfig):
         model_config: Pydantic model configuration.
     """
 
-    server_port: int = Field(alias="app-port", default=8080, gt=0)
+    server_port: int = Field(default=8080, gt=0)
     app_profiles: str | None = Field(alias="app-profiles", default=None, min_length=1)
     secret_key: str | None = Field(alias="app-secret-key", default=None, min_length=1)
 
@@ -245,7 +245,7 @@ def generate_saml_env(
     if relation_data.signing_certificate:
         env[
             "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
-        ] = "file:/app/saml.cert"
+        ] = "file:/tmp/paas-charm/saml.cert"
 
     return env
 
@@ -414,7 +414,6 @@ class Charm(PaasCharm):
         """Return an WorkloadConfig instance."""
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
-        state_dir = base_dir / "state"
         framework_config = typing.cast(SpringBootConfig, self.get_framework_config())
         metrics_port, metrics_path = self._paas_config.metrics_endpoint(
             default_port=8080, default_path="/actuator/prometheus"
@@ -426,7 +425,7 @@ class Charm(PaasCharm):
             port=framework_config.server_port,
             base_dir=base_dir,
             app_dir=base_dir,
-            state_dir=state_dir,
+            state_dir=self._state_dir,
             service_name=framework_name,
             unit_name=self.unit.name,
             metrics_path=metrics_path,
@@ -444,7 +443,7 @@ class Charm(PaasCharm):
             cert = charm_state.integrations.saml.signing_certificate
             if not cert.startswith("-----BEGIN CERTIFICATE-----"):
                 cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
-            self._container.push(self._workload_config.app_dir / "saml.cert", cert)
+            self._container.push(self._state_dir / "saml.cert", cert, make_dirs=True)
 
         return SpringBootApp(
             container=self._container,

@@ -403,7 +403,7 @@ def flask_container(
         },
         mounts={
             "flask": testing.Mount(location="/app", source=mount_source),
-            "state": testing.Mount(location="/tmp/flask/state", source=state_source),
+            "state": testing.Mount(location="/tmp/paas-charm", source=state_source),
             "gunicorn-config": testing.Mount(
                 location="/var/lib/gunicorn", source=gunicorn_config_source
             ),
@@ -430,7 +430,7 @@ def django_container(
         can_connect=True,
         mounts={
             "django": testing.Mount(location="/app", source=mount_source),
-            "state": testing.Mount(location="/tmp/django/state", source=state_source),
+            "state": testing.Mount(location="/tmp/paas-charm", source=state_source),
             "gunicorn-config": testing.Mount(
                 location="/var/lib/gunicorn", source=gunicorn_config_source
             ),
@@ -574,7 +574,9 @@ def spring_boot_framework_state_fixture(tmp_path: Path) -> dict:
             testing.Container(
                 name="app",
                 can_connect=True,
-                mounts={"data": testing.Mount(location="/app/saml.cert", source=certificate)},
+                mounts={
+                    "data": testing.Mount(location="/tmp/paas-charm/saml.cert", source=certificate)
+                },
                 _base_plan=SPRINGBOOT_DEFAULT_LAYER,
             )
         },
@@ -621,7 +623,7 @@ def framework_state_factory_fixture(tmp_path: Path) -> typing.Callable[..., dict
             certificate = state_dir / "saml.cert"
             certificate.touch()
             mounts["certificate"] = testing.Mount(
-                location="/app/saml.cert",
+                location="/tmp/paas-charm/saml.cert",
                 source=certificate,
             )
 
