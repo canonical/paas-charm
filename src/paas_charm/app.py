@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
     from paas_charm.tracing import PaaSTracingRelationData
 
@@ -147,44 +146,6 @@ def generate_rabbitmq_env(
     if relation_data.amqp_uris:
         envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
     return envvars
-
-
-def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from S3 relation data.
-
-    Args:
-        relation_data: The charm S3 integration relation data.
-
-    Returns:
-        Default S3 environment mappings if S3RelationData is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return {
-        k: v
-        for k, v in (
-            ("S3_ACCESS_KEY", relation_data.access_key),
-            ("S3_SECRET_KEY", relation_data.secret_key),
-            ("S3_REGION", relation_data.region),
-            ("S3_STORAGE_CLASS", relation_data.storage_class),
-            ("S3_BUCKET", relation_data.bucket),
-            ("S3_ENDPOINT", relation_data.endpoint),
-            ("S3_PATH", relation_data.path),
-            ("S3_API_VERSION", relation_data.s3_api_version),
-            ("S3_URI_STYLE", relation_data.s3_uri_style),
-            ("S3_ADDRESSING_STYLE", relation_data.addressing_style),
-            (
-                "S3_ATTRIBUTES",
-                json.dumps(relation_data.attributes) if relation_data.attributes else None,
-            ),
-            (
-                "S3_TLS_CA_CHAIN",
-                json.dumps(relation_data.tls_ca_chain) if relation_data.attributes else None,
-            ),
-        )
-        if v is not None
-    }
 
 
 def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
@@ -337,7 +298,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps tempo tracing connection information to environment variables.
@@ -348,7 +308,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
@@ -633,7 +592,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         env.update(
             self.generate_rabbitmq_env(relation_data=self._charm_state.integrations.rabbitmq)
         )
-        env.update(self.generate_s3_env(relation_data=self._charm_state.integrations.s3))
         for (
             database_name,
             db_relation_data,

@@ -113,7 +113,6 @@ def test_charm_state_integration_state_build_error(error):
             integration_requirers=IntegrationRequirers(
                 databases=MagicMock(),
                 rabbitmq=MagicMock(),
-                s3=MagicMock(),
                 saml=saml_mock,
             ),
             base_url="http://test-base-url",

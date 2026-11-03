@@ -11,13 +11,12 @@ from paas_charm.app import (
     generate_db_env,
     generate_openfga_env,
     generate_rabbitmq_env,
-    generate_s3_env,
     generate_saml_env,
     generate_tempo_env,
 )
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.s3 import PaaSS3RelationData
+from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
 
@@ -234,10 +233,10 @@ def test_rabbitmq_environ_mapper_generate_env(relation_data, expected_env):
 def test_s3_environ_mapper_generate_env(relation_data, expected_env):
     """
     arrange: given S3 relation data.
-    act: when generate_s3_env method is called.
+    act: when S3Relation._generate_s3_env is called.
     assert: expected environment variables are generated.
     """
-    assert generate_s3_env(relation_data) == expected_env
+    assert S3Relation._generate_s3_env(relation_data) == expected_env
 
 
 @pytest.mark.parametrize(

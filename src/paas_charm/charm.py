@@ -44,7 +44,7 @@ from paas_charm.paas_config import (
 from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.relations import Context, CustomRelation
-from paas_charm.s3 import PaaSS3Requirer
+from paas_charm.s3 import S3Relation
 from paas_charm.saml import PaaSSAMLRequirer
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.tracing import PaaSTracingEndpointRequirer
@@ -73,7 +73,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     framework_config_class: type[BaseModel]
     paas_config_framework_fields: dict[str, str] = {}
     custom_relations: list[type[CustomRelation]] = []
-    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation]
+    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation, S3Relation]
 
     @property
     @abc.abstractmethod
@@ -124,7 +124,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
-        self._s3 = self._init_s3(requires)
         self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
         self._tracing = self._init_tracing(requires)
@@ -229,28 +228,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _http_proxy
-
-    def _init_s3(self, requires: dict[str, RelationMeta]) -> "PaaSS3Requirer | None":
-        """Initialize the S3 relation if its required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the S3 relation or None
-        """
-        _s3 = None
-        if "s3" in requires and requires["s3"].interface_name == "s3":
-            try:
-                _s3 = PaaSS3Requirer(charm=self, relation_name="s3", bucket_name=self.app.name)
-                self.framework.observe(_s3.on.credentials_changed, self._reconcile_with_migrations)
-                self.framework.observe(_s3.on.credentials_gone, self._reconcile_without_migrations)
-            except NameError:
-                logger.exception(
-                    "Missing charm library, "
-                    "please run `charmcraft fetch-lib charms.data_platform_libs.v0.s3`"
-                )
-        return _s3
 
     def _init_saml(self, requires: dict[str, RelationMeta]) -> "PaaSSAMLRequirer | None":
         """Initialize the SAML relation if its required.
@@ -641,10 +618,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._s3 and not charm_state.integrations.s3:
-            if not requires["s3"].optional:
-                yield "s3"
-
         if self._openfga and not charm_state.integrations.openfga:
             if not requires["openfga"].optional:
                 yield "openfga"
@@ -783,7 +756,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 rabbitmq=self._rabbitmq,
-                s3=self._s3,
                 saml=self._saml,
                 tracing=self._tracing,
                 smtp=self._smtp,

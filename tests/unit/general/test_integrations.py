@@ -37,7 +37,7 @@ from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.exceptions import CharmConfigInvalidError, RelationDataError
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.s3 import PaaSS3RelationData
+from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
 from paas_charm.valkey import ValkeyRelation
@@ -266,38 +266,6 @@ def _test_integrations_env_parameters():
         ),
         pytest.param(
             IntegrationsState(
-                s3=PaaSS3RelationData.model_construct(
-                    access_key="TESTINGACCESSKEY",
-                    secret_key="TESTINGSECRETKEY",
-                    region="us-west-1",
-                    storage_class="STANDARD",
-                    bucket="my-example-bucket",
-                    endpoint="https://s3.storagebucket.internal",
-                    path="uploads/",
-                    s3_api_version="2006-03-01",
-                    s3_uri_style="path",
-                    tls_ca_chain=S3_CA_CHAIN,
-                    attributes=S3_ATTRIBUTES,
-                )
-            ),
-            {
-                "S3_ACCESS_KEY": "TESTINGACCESSKEY",
-                "S3_ADDRESSING_STYLE": "path",
-                "S3_API_VERSION": "2006-03-01",
-                "S3_BUCKET": "my-example-bucket",
-                "S3_ENDPOINT": "https://s3.storagebucket.internal",
-                "S3_PATH": "uploads/",
-                "S3_REGION": "us-west-1",
-                "S3_SECRET_KEY": "TESTINGSECRETKEY",
-                "S3_STORAGE_CLASS": "STANDARD",
-                "S3_URI_STYLE": "path",
-                "S3_ATTRIBUTES": json.dumps(S3_ATTRIBUTES),
-                "S3_TLS_CA_CHAIN": json.dumps(S3_CA_CHAIN),
-            },
-            id="S3",
-        ),
-        pytest.param(
-            IntegrationsState(
                 saml=PaaSSAMLRelationData(
                     entity_id="testing-entity-id",
                     metadata_url="https://saml.example.com/metadata.xml",
@@ -389,37 +357,81 @@ def test_generate_integration_environments(
     assert app._generate_integration_environments() == expected_env
 
 
-# TODO: parametrise
-def test_custom_relation_environments():
-    """Test ValkeyRelation environment generation."""
-    expected_env = {
-        "VALKEY_DB_CONNECT_STRING": "valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
-        "VALKEY_DB_FRAGMENT": "",
-        "VALKEY_DB_HOSTNAME": "localhost",
-        "VALKEY_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
-        "VALKEY_DB_PARAMS": "",
-        "VALKEY_DB_PASSWORD": "testingpassword",
-        "VALKEY_DB_PATH": "",
-        "VALKEY_DB_PORT": "6379",
-        "VALKEY_DB_QUERY": "db=0&timeout=5",
-        "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
-        "VALKEY_DB_SCHEME": "valkey",
-        "VALKEY_DB_SENTINEL_ENDPOINTS": "",
-        "VALKEY_DB_USERNAME": "testingusername",
-        "VALKEY_MODE": "",
-        "VALKEY_VERSION": "",
-    }
-    valkey = MagicMock()
-    valkey.gen_environment.return_value = ValkeyRelation._generate_valkey_env(
-        ValkeyResponseModel(
-            endpoints="valkey://localhost:6379?db=0&timeout=5",
-            username="testingusername",
-            password="testingpassword",
-        )
-    )
+@pytest.mark.parametrize(
+    "relation_env, expected_env",
+    [
+        pytest.param(
+            ValkeyRelation._generate_valkey_env(
+                ValkeyResponseModel(
+                    endpoints="valkey://localhost:6379?db=0&timeout=5",
+                    username="testingusername",
+                    password="testingpassword",
+                )
+            ),
+            {
+                "VALKEY_DB_CONNECT_STRING": "valkey://testingusername:testingpassword@localhost:6379?db=0&timeout=5",
+                "VALKEY_DB_FRAGMENT": "",
+                "VALKEY_DB_HOSTNAME": "localhost",
+                "VALKEY_DB_NETLOC": "testingusername:testingpassword@localhost:6379",
+                "VALKEY_DB_PARAMS": "",
+                "VALKEY_DB_PASSWORD": "testingpassword",
+                "VALKEY_DB_PATH": "",
+                "VALKEY_DB_PORT": "6379",
+                "VALKEY_DB_QUERY": "db=0&timeout=5",
+                "VALKEY_DB_READ_ONLY_ENDPOINTS": "",
+                "VALKEY_DB_SCHEME": "valkey",
+                "VALKEY_DB_SENTINEL_ENDPOINTS": "",
+                "VALKEY_DB_USERNAME": "testingusername",
+                "VALKEY_MODE": "",
+                "VALKEY_VERSION": "",
+            },
+            id="Valkey",
+        ),
+        pytest.param(
+            S3Relation._generate_s3_env(
+                PaaSS3RelationData.model_construct(
+                    access_key="TESTINGACCESSKEY",
+                    secret_key="TESTINGSECRETKEY",
+                    region="us-west-1",
+                    storage_class="STANDARD",
+                    bucket="my-example-bucket",
+                    endpoint="https://s3.storagebucket.internal",
+                    path="uploads/",
+                    s3_api_version="2006-03-01",
+                    s3_uri_style="path",
+                    tls_ca_chain=S3_CA_CHAIN,
+                    attributes=S3_ATTRIBUTES,
+                )
+            ),
+            {
+                "S3_ACCESS_KEY": "TESTINGACCESSKEY",
+                "S3_ADDRESSING_STYLE": "path",
+                "S3_API_VERSION": "2006-03-01",
+                "S3_BUCKET": "my-example-bucket",
+                "S3_ENDPOINT": "https://s3.storagebucket.internal",
+                "S3_PATH": "uploads/",
+                "S3_REGION": "us-west-1",
+                "S3_SECRET_KEY": "TESTINGSECRETKEY",
+                "S3_STORAGE_CLASS": "STANDARD",
+                "S3_URI_STYLE": "path",
+                "S3_ATTRIBUTES": json.dumps(S3_ATTRIBUTES),
+                "S3_TLS_CA_CHAIN": json.dumps(S3_CA_CHAIN),
+            },
+            id="S3",
+        ),
+    ],
+)
+def test_custom_relation_environments(relation_env, expected_env):
+    """
+    arrange: a custom relation whose gen_environment returns the generated env.
+    act: generate the integration environments of the app.
+    assert: the relation environment variables are in the app environment.
+    """
+    relation = MagicMock()
+    relation.gen_environment.return_value = relation_env
     charm_state = MagicMock()
     charm_state.integrations = IntegrationsState()
-    charm_state.custom_relations = [valkey]
+    charm_state.custom_relations = [relation]
     app = App(
         container=MagicMock(),
         charm_state=charm_state,
