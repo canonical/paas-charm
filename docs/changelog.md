@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* refactor: Move the built-in S3 relation to the custom relations framework, fixing
+  `S3_TLS_CA_CHAIN` being tied to `attributes` instead of `tls_ca_chain`.
 * fix: Pin `kombu<5.7` in the Flask test rock. kombu 5.7.0 runs the `TIME` command in Lua
   scripts, which the Valkey charm relation user can't run, so Celery workers crash.
 * fix: Support Juju 4 in integration tests.
