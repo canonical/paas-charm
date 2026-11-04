@@ -33,6 +33,7 @@ init
 Jinja
 kubectl
 knex
+kombu
 lifecycle
 GitOps
 Integrations
@@ -40,6 +41,7 @@ integrations
 ISD
 libs
 lockfile
+Lua
 js
 md
 natively
