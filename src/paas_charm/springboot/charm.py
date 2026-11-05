@@ -419,7 +419,7 @@ class Charm(PaasCharm):
         """Return an WorkloadConfig instance."""
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
-        framework_config = typing.cast(SpringBootConfig, self.get_framework_config())
+        framework_config = typing.cast(SpringBootConfig, self._get_framework_config_or_default())
         metrics_port, metrics_path = self._paas_config.metrics_endpoint(
             default_port=8080, default_path="/actuator/prometheus"
         )

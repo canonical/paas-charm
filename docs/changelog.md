@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Block the charm with a clear status message, instead of going into error state, when a
+  secret configuration option is empty, not found, or not granted to the application. The charm
+  logs the `juju grant-secret` command to run, retries on `update-status` while blocked, and no
+  longer fails during initialization (Go, ExpressJS, Spring Boot, FastAPI) on invalid configuration.
 * refactor: Move the built-in S3 relation to the custom relations framework, fixing
   `S3_TLS_CA_CHAIN` being tied to `attributes` instead of `tls_ca_chain`.
 * fix: Pin `kombu<5.7` in the Flask test rock. kombu 5.7.0 runs the `TIME` command in Lua
