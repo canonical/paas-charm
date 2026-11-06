@@ -152,7 +152,8 @@ def config_get_with_secret(
             charm.app.name,
         )
         raise CharmConfigInvalidError(
-            f"secret for config option '{key}' is not accessible, grant it to the application"
+            f"secret for config option '{key}' not granted, run: "
+            f"juju grant-secret {secret_id} {charm.app.name}"
         ) from exc
 
 

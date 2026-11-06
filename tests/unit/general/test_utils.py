@@ -524,6 +524,7 @@ def test_config_get_with_secret_permission_denied(caplog):
         config_get_with_secret(charm, "my-secret")
 
     assert "my-secret" in exc_info.value.msg
+    assert "juju grant-secret secret:abc my-app" in exc_info.value.msg
     assert "juju grant-secret secret:abc my-app" in caplog.text
 
 
