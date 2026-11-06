@@ -131,7 +131,7 @@ def config_get_with_secret(
     if config_type != "secret":
         return charm.config.get(key)
     secret_id = charm.config.get(key)
-    if secret_id is None or secret_id == "":
+    if secret_id is None or secret_id == "":  # nosec B105
         return None
     try:
         return charm.model.get_secret(id=typing.cast(str, secret_id))
