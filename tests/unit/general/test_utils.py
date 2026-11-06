@@ -7,13 +7,14 @@ import pathlib
 from unittest.mock import MagicMock
 
 import pytest
-from ops import RelationMeta, RelationRole
+from ops import ModelError, RelationMeta, RelationRole, SecretNotFoundError
 
 from paas_charm.charm_state import is_user_defined_config
-from paas_charm.exceptions import InvalidCustomCOSDirectoryError
+from paas_charm.exceptions import CharmConfigInvalidError, InvalidCustomCOSDirectoryError
 from paas_charm.utils import (
     build_k8s_unit_fqdn,
     build_validation_error_message,
+    config_get_with_secret,
     get_endpoints_by_interface_name,
     merge_cos_directories,
     validate_cos_custom_dir,
@@ -478,3 +479,64 @@ def test_merge_cos_directories_uses_default_only_when_custom_invalid(
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
     assert not (merged_dir / "grafana_dashboards" / "custom_extra.json").exists()
+
+
+def _secret_charm(config_value, side_effect=None):
+    charm = MagicMock()
+    charm.app.name = "my-app"
+    charm.config = {"my-secret": config_value}
+    if side_effect:
+        charm.model.get_secret.side_effect = side_effect
+    return charm
+
+
+@pytest.fixture(name="secret_metadata", autouse=True)
+def secret_metadata_fixture(monkeypatch):
+    """Mock the config metadata with a single secret option."""
+    monkeypatch.setattr(
+        "paas_charm.utils.config_metadata",
+        lambda _: {"options": {"my-secret": {"type": "secret"}}},
+    )
+
+
+@pytest.mark.parametrize("value", [None, ""])
+def test_config_get_with_secret_unset(value):
+    """
+    arrange: a secret config option that is unset or empty.
+    act: call config_get_with_secret.
+    assert: None is returned and no secret is fetched.
+    """
+    charm = _secret_charm(value)
+
+    assert config_get_with_secret(charm, "my-secret") is None
+    charm.model.get_secret.assert_not_called()
+
+
+def test_config_get_with_secret_permission_denied(caplog):
+    """
+    arrange: a secret config option whose secret has not been granted.
+    act: call config_get_with_secret.
+    assert: CharmConfigInvalidError mentioning the option is raised and the grant command logged.
+    """
+    charm = _secret_charm("secret:abc", ModelError("ERROR permission denied"))
+
+    with pytest.raises(CharmConfigInvalidError) as exc_info:
+        config_get_with_secret(charm, "my-secret")
+
+    assert "my-secret" in exc_info.value.msg
+    assert "juju grant-secret secret:abc my-app" in exc_info.value.msg
+    assert "juju grant-secret secret:abc my-app" in caplog.text
+
+
+def test_config_get_with_secret_not_found():
+    """
+    arrange: a secret config option whose secret does not exist.
+    act: call config_get_with_secret.
+    assert: CharmConfigInvalidError mentioning the option is raised.
+    """
+    charm = _secret_charm("secret:abc", SecretNotFoundError("not found"))
+
+    with pytest.raises(CharmConfigInvalidError) as exc_info:
+        config_get_with_secret(charm, "my-secret")
+
+    assert "my-secret" in exc_info.value.msg

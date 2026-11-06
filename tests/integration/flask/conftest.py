@@ -74,3 +74,48 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, fl
 
     for secret_id in secret_ids:
         juju.remove_secret(secret_id)
+
+
+@pytest.fixture(scope="function")
+def fast_update_status(juju: jubilant.Juju):
+    """Temporarily shorten the update-status hook interval of the model."""
+    orig_interval = juju.model_config()["update-status-hook-interval"]
+    juju.model_config({"update-status-hook-interval": "10s"})
+    yield
+    juju.model_config({"update-status-hook-interval": orig_interval})
+
+
+@pytest.fixture(scope="function")
+def ungranted_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app: App):
+    """Set a secret configuration option to a secret the application has not been granted.
+
+    This fixture must be parameterized with a single secret configuration option name.
+    Yields the configuration option name and the secret ID.
+    """
+    app_name = flask_app.name
+    config_option = request.param
+    secret_id = juju.add_secret(f"{config_option}-ungranted", {"value": "foobar"})
+    juju.config(app_name, {config_option: secret_id})
+
+    yield config_option, secret_id
+
+    juju.config(app_name, reset=[config_option])
+    juju.remove_secret(secret_id)
+    juju.wait(lambda status: status.apps[app_name].is_active, successes=5, delay=10)
+
+
+@pytest.fixture(scope="function")
+def empty_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app: App):
+    """Set a secret configuration option to an empty string.
+
+    This fixture must be parameterized with a single secret configuration option name.
+    Yields the configuration option name.
+    """
+    app_name = flask_app.name
+    config_option = request.param
+    juju.config(app_name, {config_option: ""})
+
+    yield config_option
+
+    juju.config(app_name, reset=[config_option])
+    juju.wait(lambda status: status.apps[app_name].is_active, successes=5, delay=10)
