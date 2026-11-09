@@ -19,7 +19,7 @@ from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState
-from paas_charm.exceptions import PaasConfigError
+from paas_charm.exceptions import CharmConfigInvalidError, PaasConfigError
 from paas_charm.fastapi.app import FastAPIApp
 from paas_charm.fastapi.charm import FastAPIConfig
 from paas_charm.paas_config import ConfigOptions, LoggingFormat, PaasConfig
@@ -627,9 +627,9 @@ def test_mapping_preserves_framework_validation(
         charm_class, paas_config=PaasConfig(config={"options": {option: {"env-var": "TARGET"}}})
     )
     state = framework_state_factory(charm_class, config={option: value})
-    out = context.run(context.on.config_changed(), testing.State(**state))
-    assert isinstance(out.unit_status, testing.BlockedStatus)
-    assert option in out.unit_status.message
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**state))
+    assert isinstance(exc_info.value.__cause__, CharmConfigInvalidError)
 
 
 @pytest.mark.parametrize("configured", [False, True])

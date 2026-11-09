@@ -65,7 +65,7 @@ class Charm(PaasCharm):
         """Return an WorkloadConfig instance."""
         framework_name = self._framework_name
         base_dir = pathlib.Path("/app")
-        framework_config = typing.cast(FastAPIConfig, self._get_framework_config_or_default())
+        framework_config = typing.cast(FastAPIConfig, self.get_framework_config())
         metrics_port, metrics_path = self._paas_config.metrics_endpoint(
             default_port=8000, default_path="/metrics"
         )

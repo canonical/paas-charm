@@ -106,18 +106,3 @@ def test_metrics_config(go_context, base_state) -> None:
     scrape_jobs = metrics_endpoint_relations[0].local_app_data["scrape_jobs"]
     assert "/metrics" in scrape_jobs
     assert "*:8080" in scrape_jobs
-
-
-def test_go_invalid_config_does_not_fail_init(go_context, base_state) -> None:
-    """
-    arrange: set app-secret-key-id to a secret that cannot be accessed.
-    act: run config-changed.
-    assert: the charm initializes and is blocked instead of failing.
-    """
-    base_state["config"] = {"app-secret-key": "secret:cvh1v8a3g0bs9e0n0dfg"}
-    state = testing.State(**base_state)
-
-    out = go_context.run(go_context.on.config_changed(), state)
-
-    assert isinstance(out.unit_status, testing.BlockedStatus)
-    assert "app-secret-key" in out.unit_status.message

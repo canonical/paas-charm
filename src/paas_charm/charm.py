@@ -374,7 +374,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             framework_name=self._framework_name,
             port=self._workload_config.port,
             container_name=self._workload_config.container_name,
-            config=self._resolve_charm_config(ignore_invalid_secrets=True),
+            config=self._resolve_charm_config(),
         )
 
     def _init_custom_relations(
@@ -445,20 +445,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             error_messages = build_validation_error_message(exc)
             logger.error(error_messages.long)
             raise CharmConfigInvalidError(error_messages.short) from exc
-
-    def _get_framework_config_or_default(self) -> BaseModel:
-        """Return the framework configuration, or the defaults if the configuration is invalid.
-
-        Meant for code that runs during charm initialization, where raising would make every
-        hook fail. The invalid configuration is reported later, when reconciling.
-
-        Returns:
-            Framework related configurations.
-        """
-        try:
-            return self.get_framework_config()
-        except CharmConfigInvalidError:
-            return self.framework_config_class.model_construct()
 
     def build_cos_dir(self) -> pathlib.Path:
         """Build and return a merged directory with COS files.
@@ -742,33 +728,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         return self._create_app().gen_environment()
 
-    def _resolve_charm_config(self, ignore_invalid_secrets: bool = False) -> dict[str, typing.Any]:
-        """Resolve any secrets in the config.
-
-        Args:
-            ignore_invalid_secrets: whether to resolve inaccessible secrets to None instead of
-                raising. Meant for charm initialization, where raising would make every hook
-                fail. The problem is reported later, when reconciling.
-
-        Returns:
-            The charm configuration with secret contents in place of secret IDs.
-
-        Raises:
-            CharmConfigInvalidError: if a secret cannot be accessed and
-                ``ignore_invalid_secrets`` is not set.
-        """
-        charm_config: dict[str, typing.Any] = {}
-        for key in self.config:
-            try:
-                value = config_get_with_secret(self, key)
-            except CharmConfigInvalidError:
-                if not ignore_invalid_secrets:
-                    raise
-                value = None
-            charm_config[key] = (
-                value.get_content(refresh=True) if isinstance(value, ops.Secret) else value
-            )
-        return charm_config
+    def _resolve_charm_config(self) -> dict[str, typing.Any]:
+        """Resolve any secrets in the config."""
+        charm_config = {k: config_get_with_secret(self, k) for k in self.config}
+        return {
+            k: v.get_content(refresh=True) if isinstance(v, ops.Secret) else v
+            for k, v in charm_config.items()
+        }
 
     def _create_charm_state(self) -> CharmState:
         """Create charm state.
@@ -814,11 +780,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
 
     def _on_update_status(self, _: ops.HookEvent) -> None:
         """Handle the update-status event."""
-        # A blocked unit may have been caused by a secret that has since been granted. Juju does
-        # not emit an event on grant, so retry here.
-        if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED or isinstance(
-            self.unit.status, ops.BlockedStatus
-        ):
+        if self._database_migration.get_status() == DatabaseMigrationStatus.FAILED:
             self._reconcile()
         # Sometimes the ingress library doesn't properly handle pod
         # restarts,which can cause the IP field inside the ingress

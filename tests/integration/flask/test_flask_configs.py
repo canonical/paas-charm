@@ -101,52 +101,6 @@ def test_flask_secret_config(
             )
 
 
-def _assert_blocked_with_message(juju: jubilant.Juju, app_name: str, expected: str):
-    """Wait for the app to be blocked and check the status message mentions ``expected``."""
-    status = juju.wait(
-        lambda status: jubilant.all_blocked(status, app_name),
-        error=lambda status: jubilant.any_error(status, app_name),
-        timeout=5 * 60,
-    )
-    app_status = status.apps[app_name]
-    assert expected in app_status.app_status.message
-    for unit in app_status.units.values():
-        assert expected in unit.workload_status.message
-
-
-@pytest.mark.parametrize(
-    "ungranted_secret_config",
-    [
-        pytest.param("secret-test", id="user-secret"),
-        pytest.param("app-secret-key", id="secret_key"),
-    ],
-    indirect=True,
-)
-@pytest.mark.usefixtures("fast_update_status")
-def test_flask_secret_config_not_granted(
-    flask_app: App,
-    juju: jubilant.Juju,
-    ungranted_secret_config: tuple[str, str],
-):
-    """
-    arrange: build and deploy the flask charm, and set a secret configuration option to a
-        secret that has not been granted to the application.
-    act: grant the secret to the application.
-    assert: the charm should be blocked (not in error) with a status message mentioning the
-        configuration option, and become active once the secret is granted.
-    """
-    config_option, secret_id = ungranted_secret_config
-
-    _assert_blocked_with_message(juju, flask_app.name, config_option)
-
-    juju.grant_secret(secret_id, flask_app.name)
-    juju.wait(
-        lambda status: jubilant.all_active(status, flask_app.name),
-        error=lambda status: jubilant.any_error(status, flask_app.name),
-        timeout=5 * 60,
-    )
-
-
 @pytest.mark.parametrize(
     "empty_secret_config",
     [
@@ -155,19 +109,18 @@ def test_flask_secret_config_not_granted(
     ],
     indirect=True,
 )
-def test_flask_secret_config_empty(
-    flask_app: App,
-    juju: jubilant.Juju,
-    empty_secret_config: str,
-):
+@pytest.mark.usefixtures("empty_secret_config")
+def test_flask_secret_config_empty(flask_app: App, juju: jubilant.Juju):
     """
     arrange: build and deploy the flask charm, and set a secret configuration option to an
         empty string.
     act: none.
-    assert: the charm should be blocked (not in error) with a status message mentioning the
-        configuration option.
+    assert: the charm should behave as if the option was unset and stay active.
     """
-    _assert_blocked_with_message(juju, flask_app.name, empty_secret_config)
+    status = juju.status()
+    assert status.apps[flask_app.name].is_active
+    for unit in status.apps[flask_app.name].units.values():
+        assert unit.is_active
 
 
 @pytest.mark.parametrize(

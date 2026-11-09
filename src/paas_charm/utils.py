@@ -15,7 +15,7 @@ import yaml
 from ops import RelationMeta
 from pydantic import ValidationError
 
-from paas_charm.exceptions import CharmConfigInvalidError, InvalidCustomCOSDirectoryError
+from paas_charm.exceptions import InvalidCustomCOSDirectoryError
 
 COS_SUBDIRS = {"grafana_dashboards", "loki_alert_rules", "prometheus_alert_rules"}
 
@@ -122,9 +122,6 @@ def config_get_with_secret(
 
     Returns:
         The configuration value.
-
-    Raises:
-        CharmConfigInvalidError: if the secret cannot be accessed by the application.
     """
     metadata = config_metadata(pathlib.Path(charm.charm_dir))
     config_type = metadata["options"][key]["type"]
@@ -133,28 +130,7 @@ def config_get_with_secret(
     secret_id = charm.config.get(key)
     if secret_id is None or secret_id == "":  # nosec B105
         return None
-    try:
-        return charm.model.get_secret(id=typing.cast(str, secret_id))
-    except ops.SecretNotFoundError as exc:
-        logger.error(
-            "Secret %s set in config option '%s' was not found.",
-            secret_id,
-            key,
-        )
-        raise CharmConfigInvalidError(f"secret for config option '{key}' not found") from exc
-    except ops.ModelError as exc:
-        logger.error(
-            "Not able to access the secret %s set in config option '%s'. "
-            "The operator should run: juju grant-secret %s %s",
-            secret_id,
-            key,
-            secret_id,
-            charm.app.name,
-        )
-        raise CharmConfigInvalidError(
-            f"secret for config option '{key}' not granted, run: "
-            f"juju grant-secret {secret_id} {charm.app.name}"
-        ) from exc
+    return charm.model.get_secret(id=typing.cast(str, secret_id))
 
 
 def get_endpoints_by_interface_name(
