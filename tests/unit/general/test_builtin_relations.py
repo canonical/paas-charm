@@ -9,6 +9,7 @@ import pytest
 
 from paas_charm.exceptions import RelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError, S3Relation
+from paas_charm.saml import InvalidSAMLRelationDataError, SamlRelation
 from paas_charm.valkey import (
     InvalidValkeyRelationDataError,
     ValkeyMultipleRelationsNotSupportedError,
@@ -156,4 +157,60 @@ def test_s3_relation_ensure_ready_wraps_invalid_data():
         relation.ensure_ready()
     assert type(exc.value) is RelationDataError
     assert exc.value.relation == "s3"
+    assert exc.value.__cause__ is error
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_saml_relation_ensure_ready_with_data(optional):
+    """
+    arrange: A SamlRelation containing SAML data.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), SamlRelation, "saml", optional=optional)
+    relation._requirer = MagicMock()
+    assert relation.ensure_ready() is None
+    relation._requirer.to_relation_data.assert_called_once_with()
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_saml_relation_not_ready_without_data(optional):
+    """
+    arrange: A configured SamlRelation with no SAML data.
+    act: Call ensure_ready.
+    assert: Raises RelationDataError identifying the SAML endpoint.
+    """
+    relation = _make_relation(MagicMock(), SamlRelation, "saml", optional=optional)
+    relation._requirer = MagicMock()
+    relation._requirer.to_relation_data.return_value = None
+    with pytest.raises(RelationDataError, match="SAML relation data is not ready") as exc:
+        relation.ensure_ready()
+    assert exc.value.relation == "saml"
+
+
+def test_saml_relation_ensure_ready_when_not_configured():
+    """
+    arrange: A SamlRelation without a configured requirer.
+    act: Call ensure_ready and gen_environment.
+    assert: ensure_ready returns None and no environment is generated.
+    """
+    relation = _make_relation(MagicMock(), SamlRelation, "saml")
+    assert relation.ensure_ready() is None
+    assert relation.gen_environment() == {}
+
+
+def test_saml_relation_ensure_ready_wraps_invalid_data():
+    """
+    arrange: A SamlRelation whose requirer rejects invalid data.
+    act: Call ensure_ready.
+    assert: RelationDataError preserves the original message, endpoint, and cause.
+    """
+    relation = _make_relation(MagicMock(), SamlRelation, "saml")
+    relation._requirer = MagicMock()
+    error = InvalidSAMLRelationDataError("Invalid SAML data")
+    relation._requirer.to_relation_data.side_effect = error
+    with pytest.raises(RelationDataError, match="Invalid SAML data") as exc:
+        relation.ensure_ready()
+    assert type(exc.value) is RelationDataError
+    assert exc.value.relation == "saml"
     assert exc.value.__cause__ is error

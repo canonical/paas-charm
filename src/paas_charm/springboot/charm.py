@@ -15,8 +15,10 @@ from pydantic import ConfigDict, Field
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.charm import PaasCharm
+from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.framework import FrameworkConfig
 from paas_charm.s3 import S3Relation
+from paas_charm.saml import SamlRelation
 from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
@@ -194,38 +196,6 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_saml_env(
-    relation_data: "PaaSSAMLRelationData | None" = None,
-) -> dict[str, str]:
-    """Generate environment variable from SAML relation data.
-
-    Args:
-        relation_data: The charm SAML integration relation data.
-
-    Returns:
-        SAML environment mappings if SAML relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-
-    env = {
-        "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url.unicode_string(),
-        "spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id,
-    }
-    if relation_data.single_sign_on_redirect_url:
-        env[
-            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
-        ] = relation_data.single_sign_on_redirect_url
-
-    if relation_data.signing_certificate:
-        env[
-            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
-        ] = "file:/tmp/paas-charm/saml.cert"
-
-    return env
-
-
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from SMTP relation data.
 
@@ -345,6 +315,42 @@ class SpringS3Relation(S3Relation):
         return env
 
 
+class SpringSamlRelation(SamlRelation):
+    """Modified `SamlRelation` to produce environment vars for Spring framework."""
+
+    @staticmethod
+    def _generate_saml_env(
+        relation_data: "PaaSSAMLRelationData | None" = None,
+    ) -> dict[str, str]:
+        """Generate Spring Boot environment variables from SAML relation data.
+
+        Args:
+            relation_data: The charm SAML integration relation data.
+
+        Returns:
+            SAML environment mappings if SAML relation data is available, empty
+            dictionary otherwise.
+        """
+        if not relation_data:
+            return {}
+
+        env = {
+            "spring.security.saml2.relyingparty.registration.testentity.assertingparty.metadata-uri": relation_data.metadata_url.unicode_string(),
+            "spring.security.saml2.relyingparty.registration.testentity.entity-id": relation_data.entity_id,
+        }
+        if relation_data.single_sign_on_redirect_url:
+            env[
+                "spring.security.saml2.relyingparty.registration.testentity.assertingparty.singlesignin.url"
+            ] = relation_data.single_sign_on_redirect_url
+
+        if relation_data.signing_certificate:
+            env[
+                "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
+            ] = "file:/tmp/paas-charm/saml.cert"
+
+        return env
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -352,7 +358,6 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
@@ -362,7 +367,6 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
@@ -401,7 +405,7 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = SpringBootConfig
-    builtin_relations = [SpringValkeyRelation, SpringS3Relation]
+    builtin_relations = [SpringValkeyRelation, SpringS3Relation, SpringSamlRelation]
     paas_config_framework_fields = {
         "server_port": "port",
     }
@@ -444,8 +448,16 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        if charm_state.integrations.saml and charm_state.integrations.saml.signing_certificate:
-            cert = charm_state.integrations.saml.signing_certificate
+        saml_data = None
+        for relation in self._custom_relations:
+            if isinstance(relation, SamlRelation):
+                try:
+                    saml_data = relation.get_relation_data()
+                except InvalidRelationDataError:
+                    # Reported as blocked by the relation readiness check.
+                    logger.warning("Invalid SAML relation data, not writing the certificate")
+        if saml_data and saml_data.signing_certificate:
+            cert = saml_data.signing_certificate
             if not cert.startswith("-----BEGIN CERTIFICATE-----"):
                 cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
             self._container.push(self._state_dir / "saml.cert", cert, make_dirs=True)

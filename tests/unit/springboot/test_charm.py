@@ -13,8 +13,9 @@ from ops import testing
 
 from paas_charm.charm import PaasCharm
 from paas_charm.s3 import S3Relation
+from paas_charm.saml import SamlRelation
 from paas_charm.springboot.charm import Charm as SpringBootCharm
-from paas_charm.springboot.charm import SpringS3Relation, SpringValkeyRelation
+from paas_charm.springboot.charm import SpringS3Relation, SpringSamlRelation, SpringValkeyRelation
 from paas_charm.valkey import ValkeyRelation
 
 
@@ -161,8 +162,12 @@ def test_builtin_relations():
     act: inspect their builtin relation declarations.
     assert: Spring Boot uses its Spring relations without changing the base defaults.
     """
-    assert SpringBootCharm.builtin_relations == [SpringValkeyRelation, SpringS3Relation]
-    assert PaasCharm.builtin_relations == [ValkeyRelation, S3Relation]
+    assert SpringBootCharm.builtin_relations == [
+        SpringValkeyRelation,
+        SpringS3Relation,
+        SpringSamlRelation,
+    ]
+    assert PaasCharm.builtin_relations == [ValkeyRelation, S3Relation, SamlRelation]
 
 
 def test_builtin_valkey_relation_is_spring_valkey(springboot_context, base_state) -> None:

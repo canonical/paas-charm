@@ -280,7 +280,7 @@ def test_rabbitmq_remove_integration(
         pytest.param(
             [],
             ["mysql", "postgresql", "mongodb", "s3", "valkey", "saml", "rabbitmq"],
-            "missing integrations: mongodb, mysql, postgresql, rabbitmq, saml, valkey, s3",
+            "missing integrations: mongodb, mysql, postgresql, rabbitmq, valkey, s3, saml",
             id="all fail",
         ),
     ],
