@@ -198,6 +198,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._reconcile_without_migrations,
         )
 
+        self._builtin_relations: dict[str, CustomRelation] = {}
         self._custom_relations: list[CustomRelation] = self._init_custom_relations(
             builtin_relations=self.builtin_relations
         )
@@ -364,7 +365,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         ``optional`` field), and finally set up with the reconcile callback.
 
         Builtin relation classes are only required if declared and
-        non-optional in the metadata.
+        non-optional in the metadata. Their instances are also available by
+        relation name in ``self._builtin_relations``.
 
         Returns:
             The list of instantiated custom relations.
@@ -393,6 +395,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             instance._required = not requires[relation_name].optional
             instance.setup(on_change=self._reconcile)
             relations.append(instance)
+            if relation_class in builtin_set:
+                self._builtin_relations[relation_name] = instance
         return relations
 
     def get_framework_config(self) -> BaseModel:

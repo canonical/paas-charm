@@ -449,13 +449,12 @@ class Charm(PaasCharm):
         """
         charm_state = self._create_charm_state()
         saml_data = None
-        for relation in self._custom_relations:
-            if isinstance(relation, SamlRelation):
-                try:
-                    saml_data = relation.get_relation_data()
-                except InvalidRelationDataError:
-                    # Reported as blocked by the relation readiness check.
-                    logger.warning("Invalid SAML relation data, not writing the certificate")
+        if saml_relation := self._builtin_relations.get(SamlRelation.relation_name):
+            try:
+                saml_data = typing.cast(SamlRelation, saml_relation).get_relation_data()
+            except InvalidRelationDataError:
+                # Reported as blocked by the relation readiness check.
+                logger.warning("Invalid SAML relation data, not writing the certificate")
         if saml_data and saml_data.signing_certificate:
             cert = saml_data.signing_certificate
             if not cert.startswith("-----BEGIN CERTIFICATE-----"):

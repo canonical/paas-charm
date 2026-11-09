@@ -178,6 +178,10 @@ def test_saml_integration(
         ]
         == "file:/tmp/paas-charm/saml.cert"
     )
+    cert_file = out.get_container("app").get_filesystem(springboot_context) / (
+        "tmp/paas-charm/saml.cert"
+    )
+    assert cert_file.read_text() == "-----BEGIN CERTIFICATE-----\ncert1\n-----END CERTIFICATE-----"
 
 
 def test_valkey_integration(
