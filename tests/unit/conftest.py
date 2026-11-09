@@ -34,6 +34,7 @@ from tests.unit.go.constants import DEFAULT_LAYER as GO_DEFAULT_LAYER
 from tests.unit.springboot.constants import DEFAULT_LAYER as SPRINGBOOT_DEFAULT_LAYER
 from tests.unit.test_charm.src.charm import TestCharm
 from tests.unit.test_custom_relations.src.charm import (
+    BuiltinPrecedenceCharm,
     ContextCharm,
     EnvVarCharm,
     InvalidDataCharm,
@@ -48,6 +49,7 @@ CHARM_ROOTS = {
     ContextCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     InvalidDataCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     OverwritingCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
+    BuiltinPrecedenceCharm: PROJECT_ROOT / "tests/unit/test_custom_relations",
     FlaskCharm: PROJECT_ROOT / "examples/flask/charm",
     DjangoCharm: PROJECT_ROOT / "examples/django/charm",
     FastAPICharm: PROJECT_ROOT / "examples/fastapi/charm",

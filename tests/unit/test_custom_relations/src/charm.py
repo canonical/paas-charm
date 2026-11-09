@@ -115,6 +115,20 @@ class OverwritingRelation(CustomRelation):
         return {"APP_SECRET_KEY": "overwritten-by-custom"}
 
 
+class BuiltinRelation(CustomRelation):
+    """Built-in style relation that sets the same variable as ``OverwritingRelation``."""
+
+    relation_name = "nginx-route"
+
+    def setup(self, on_change) -> None:
+        """Record setup."""
+        setup_calls.append(self.relation_name)
+
+    def gen_environment(self) -> dict[str, str]:
+        """Return a mapping that collides with the one from ``OverwritingRelation``."""
+        return {"APP_SECRET_KEY": "overwritten-by-builtin"}
+
+
 class EnvVarCharm(TestCharm):
     """Test charm wiring the env-var custom relation."""
 
@@ -136,6 +150,13 @@ class InvalidDataCharm(TestCharm):
 class OverwritingCharm(TestCharm):
     """Test charm wiring the overwriting custom relation."""
 
+    custom_relations = [OverwritingRelation]
+
+
+class BuiltinPrecedenceCharm(TestCharm):
+    """Test charm with a built-in and a custom relation emitting the same variable."""
+
+    builtin_relations = [BuiltinRelation]
     custom_relations = [OverwritingRelation]
 
 

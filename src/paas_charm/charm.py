@@ -372,7 +372,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             The list of instantiated custom relations.
         """
         builtin_relations = builtin_relations or []
-        relations_list = (self.custom_relations or []) + builtin_relations
+        # Built-in relations come first so that custom relations, merged later, take precedence.
+        relations_list = builtin_relations + (self.custom_relations or [])
         if not relations_list:
             return []
         builtin_set = set(builtin_relations)
