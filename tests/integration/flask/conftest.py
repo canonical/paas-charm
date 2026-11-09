@@ -74,3 +74,20 @@ def update_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, fl
 
     for secret_id in secret_ids:
         juju.remove_secret(secret_id)
+
+
+@pytest.fixture(scope="function")
+def empty_secret_config(juju: jubilant.Juju, request: pytest.FixtureRequest, flask_app: App):
+    """Set a secret configuration option to an empty string.
+
+    This fixture must be parameterized with a single secret configuration option name.
+    """
+    app_name = flask_app.name
+    config_option = request.param
+    juju.config(app_name, {config_option: ""})
+    juju.wait(lambda status: status.apps[app_name].is_active, successes=5, delay=10)
+
+    yield config_option
+
+    juju.config(app_name, reset=[config_option])
+    juju.wait(lambda status: status.apps[app_name].is_active, successes=5, delay=10)
