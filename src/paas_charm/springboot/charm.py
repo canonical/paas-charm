@@ -15,7 +15,6 @@ from pydantic import ConfigDict, Field
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.charm import PaasCharm
-from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.framework import FrameworkConfig
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
@@ -316,7 +315,40 @@ class SpringS3Relation(S3Relation):
 
 
 class SpringSamlRelation(SamlRelation):
-    """Modified `SamlRelation` to produce environment vars for Spring framework."""
+    """Modified `SamlRelation` to produce environment vars for Spring framework.
+
+    Spring Boot reads the signing certificate from a file, so the certificate is
+    also written to the workload container when the environment is generated.
+    """
+
+    SAML_CERT_PATH = pathlib.Path("/tmp/paas-charm/saml.cert")  # nosec: B108
+
+    def gen_environment(self) -> dict[str, str]:
+        """Return the Spring Boot environment and write the signing certificate file.
+
+        Returns:
+            A mapping of environment variable names to values.
+        """
+        relation_data = self.get_relation_data() if self._requirer else None
+        if relation_data and relation_data.signing_certificate:
+            self._write_certificate(relation_data.signing_certificate)
+        return self._generate_saml_env(relation_data)
+
+    def _write_certificate(self, certificate: str) -> None:
+        """Write the signing certificate to the workload container, if it is reachable.
+
+        Args:
+            certificate: The signing certificate, with or without the PEM markers.
+        """
+        container = self.charm.unit.get_container(self.context.container_name)
+        if not container.can_connect():
+            return
+        if not certificate.startswith("-----BEGIN CERTIFICATE-----"):
+            certificate = f"-----BEGIN CERTIFICATE-----\n{certificate}\n-----END CERTIFICATE-----"
+        try:
+            container.push(self.SAML_CERT_PATH, certificate, make_dirs=True)
+        except (ops.pebble.ConnectionError, ops.pebble.APIError, ops.pebble.PathError):
+            logger.exception("Failed to write the SAML signing certificate")
 
     @staticmethod
     def _generate_saml_env(
@@ -346,7 +378,7 @@ class SpringSamlRelation(SamlRelation):
         if relation_data.signing_certificate:
             env[
                 "spring.security.saml2.relyingparty.registration.testentity.assertingparty.verification.credentials[0].certificate-location"
-            ] = "file:/tmp/paas-charm/saml.cert"
+            ] = f"file:{SpringSamlRelation.SAML_CERT_PATH}"
 
         return env
 
@@ -448,19 +480,6 @@ class Charm(PaasCharm):
             A new App instance.
         """
         charm_state = self._create_charm_state()
-        saml_data = None
-        if saml_relation := self._builtin_relations.get(SamlRelation.relation_name):
-            try:
-                saml_data = typing.cast(SamlRelation, saml_relation).get_relation_data()
-            except InvalidRelationDataError:
-                # Reported as blocked by the relation readiness check.
-                logger.warning("Invalid SAML relation data, not writing the certificate")
-        if saml_data and saml_data.signing_certificate:
-            cert = saml_data.signing_certificate
-            if not cert.startswith("-----BEGIN CERTIFICATE-----"):
-                cert = f"-----BEGIN CERTIFICATE-----\n{cert}\n-----END CERTIFICATE-----"
-            self._container.push(self._state_dir / "saml.cert", cert, make_dirs=True)
-
         return SpringBootApp(
             container=self._container,
             charm_state=charm_state,

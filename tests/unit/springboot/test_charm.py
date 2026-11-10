@@ -180,7 +180,7 @@ def test_builtin_valkey_relation_is_spring_valkey(springboot_context, base_state
     with springboot_context(springboot_context.on.config_changed(), state) as manager:
         valkey_relations = [
             relation
-            for relation in manager.charm._builtin_relations.values()
+            for relation in manager.charm._custom_relations
             if relation.relation_name == "valkey"
         ]
         assert [type(relation) for relation in valkey_relations] == [SpringValkeyRelation]
