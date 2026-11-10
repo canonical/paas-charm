@@ -14,6 +14,7 @@ from paas_charm.exceptions import InvalidCustomCOSDirectoryError
 from paas_charm.utils import (
     build_k8s_unit_fqdn,
     build_validation_error_message,
+    config_get_with_secret,
     get_endpoints_by_interface_name,
     merge_cos_directories,
     validate_cos_custom_dir,
@@ -478,3 +479,21 @@ def test_merge_cos_directories_uses_default_only_when_custom_invalid(
 
     assert (merged_dir / "grafana_dashboards" / "default.json").read_text() == "default"
     assert not (merged_dir / "grafana_dashboards" / "custom_extra.json").exists()
+
+
+@pytest.mark.parametrize("value", [None, ""])
+def test_config_get_with_secret_unset(monkeypatch, value):
+    """
+    arrange: a secret config option that is unset or an empty string.
+    act: call config_get_with_secret.
+    assert: None is returned and no secret is fetched.
+    """
+    monkeypatch.setattr(
+        "paas_charm.utils.config_metadata",
+        lambda _: {"options": {"my-secret": {"type": "secret"}}},
+    )
+    charm = MagicMock()
+    charm.config = {"my-secret": value}
+
+    assert config_get_with_secret(charm, "my-secret") is None
+    charm.model.get_secret.assert_not_called()

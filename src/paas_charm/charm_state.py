@@ -32,7 +32,6 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
-    from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
     from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
     from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
 
@@ -184,11 +183,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                s3=(
-                    integration_requirers.s3.to_relation_data()
-                    if integration_requirers.s3
-                    else None
-                ),
                 saml=(
                     integration_requirers.saml.to_relation_data()
                     if integration_requirers.saml
@@ -324,7 +318,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     Attrs:
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
-        s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
         smtp: Smtp requirer object.
@@ -336,7 +329,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     databases: dict[str, "PaaSDatabaseRequires"]
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
-    s3: "PaaSS3Requirer | None" = None
     saml: "PaaSSAMLRequirer | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
     smtp: "SmtpRequires | None" = None
@@ -354,7 +346,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        s3: S3 connection information from relation data.
         saml: SAML parameters.
         smtp: SMTP parameters.
         tracing: Tracing relation data.
@@ -365,7 +356,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None
     tracing: "PaaSTracingRelationData | None" = None

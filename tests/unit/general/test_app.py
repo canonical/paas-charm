@@ -11,13 +11,12 @@ from paas_charm.app import (
     generate_db_env,
     generate_openfga_env,
     generate_rabbitmq_env,
-    generate_s3_env,
     generate_saml_env,
     generate_tempo_env,
 )
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.s3 import PaaSS3RelationData
+from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData
 from paas_charm.tracing import PaaSTracingRelationData
 
@@ -229,15 +228,30 @@ def test_rabbitmq_environ_mapper_generate_env(relation_data, expected_env):
             },
             id="All relation data",
         ),
+        pytest.param(
+            PaaSS3RelationData.model_construct(
+                access_key="access_key",
+                secret_key="secret_key",
+                bucket="bucket",
+                tls_ca_chain=["---first---", "---second---"],
+            ),
+            {
+                "S3_ACCESS_KEY": "access_key",
+                "S3_SECRET_KEY": "secret_key",
+                "S3_BUCKET": "bucket",
+                "S3_TLS_CA_CHAIN": '["---first---", "---second---"]',
+            },
+            id="TLS CA chain without attributes",
+        ),
     ],
 )
 def test_s3_environ_mapper_generate_env(relation_data, expected_env):
     """
     arrange: given S3 relation data.
-    act: when generate_s3_env method is called.
+    act: when S3Relation._generate_s3_env is called.
     assert: expected environment variables are generated.
     """
-    assert generate_s3_env(relation_data) == expected_env
+    assert S3Relation._generate_s3_env(relation_data) == expected_env
 
 
 @pytest.mark.parametrize(

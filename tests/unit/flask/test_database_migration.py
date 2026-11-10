@@ -198,6 +198,40 @@ def test_migrations_run_second_time_optional_integration_integrated(
     assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
 
 
+def test_migrations_run_second_time_s3_integrated(flask_context, base_state) -> None:
+    """
+    arrange: run migrate.sh successfully without integrations.
+    act: add an S3 relation and emit its relation-changed event.
+    assert: migration reruns with the new S3 environment.
+    """
+    command = ["bash", "-eo", "pipefail", "migrate.sh"]
+    _write_migration_file(base_state, "migrate.sh")
+    container = _container_with_exec(base_state, _migration_exec(command))
+    state = testing.State(**{**base_state, "containers": {container}})
+    out = flask_context.run(flask_context.on.config_changed(), state)
+    assert out.unit_status == testing.ActiveStatus()
+
+    relation_data = INTEGRATIONS_RELATION_DATA["s3"]["app_data"]
+    relation = testing.Relation(
+        endpoint="s3",
+        interface="s3",
+        remote_app_data=relation_data,
+    )
+    out = flask_context.run(
+        flask_context.on.relation_changed(relation),
+        dataclasses.replace(out, relations={*out.relations, relation}),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    migration_history = [
+        args for args in flask_context.exec_history["app"] if args.command == command
+    ]
+    assert len(migration_history) == 2
+    assert migration_history[0].environment.get("S3_BUCKET") is None
+    assert migration_history[1].environment["S3_BUCKET"] == relation_data["bucket"]
+    assert _status(out, flask_context) == DatabaseMigrationStatus.COMPLETED
+
+
 def test_missing_required_integration_stops_all_and_sets_migration_to_pending(
     flask_context,
     base_state,

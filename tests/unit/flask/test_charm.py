@@ -280,7 +280,7 @@ def test_rabbitmq_remove_integration(
         pytest.param(
             [],
             ["mysql", "postgresql", "mongodb", "s3", "valkey", "saml", "rabbitmq"],
-            "missing integrations: mongodb, mysql, postgresql, rabbitmq, s3, saml, valkey",
+            "missing integrations: mongodb, mysql, postgresql, rabbitmq, saml, valkey, s3",
             id="all fail",
         ),
     ],
@@ -343,4 +343,7 @@ def test_invalid_integration(flask_context, base_state) -> None:
         testing.State(**base_state),
     )
 
-    assert out.unit_status == testing.BlockedStatus("Invalid s3 relation data.")
+    assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "Invalid PaaSS3RelationData" in out.unit_status.message
+    assert "access-key" in out.unit_status.message
+    assert "secret-key" in out.unit_status.message

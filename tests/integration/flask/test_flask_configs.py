@@ -102,6 +102,28 @@ def test_flask_secret_config(
 
 
 @pytest.mark.parametrize(
+    "empty_secret_config",
+    [
+        pytest.param("secret-test", id="user-secret"),
+        pytest.param("app-secret-key", id="secret_key"),
+    ],
+    indirect=True,
+)
+@pytest.mark.usefixtures("empty_secret_config")
+def test_flask_secret_config_empty(flask_app: App, juju: jubilant.Juju):
+    """
+    arrange: build and deploy the flask charm, and set a secret configuration option to an
+        empty string.
+    act: none.
+    assert: the charm should behave as if the option was unset and stay active.
+    """
+    status = juju.status()
+    assert status.apps[flask_app.name].is_active
+    for unit in status.apps[flask_app.name].units.values():
+        assert unit.is_active
+
+
+@pytest.mark.parametrize(
     "update_config, invalid_configs",
     [
         pytest.param(
