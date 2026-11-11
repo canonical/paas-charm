@@ -333,6 +333,7 @@ class SpringSamlRelation(SamlRelation):
             A mapping of environment variable names to values.
         """
         relation_data = self.get_relation_data()
+        # pylint: disable-next=fixme
         # TODO: This needs to be moved into side effect hooks when they are implemented.
         if relation_data and relation_data.signing_certificate:
             self._write_certificate(relation_data.signing_certificate)
