@@ -336,20 +336,15 @@ class SpringSamlRelation(SamlRelation):
         return self._generate_saml_env(relation_data)
 
     def _write_certificate(self, certificate: str) -> None:
-        """Write the signing certificate to the workload container, if it is reachable.
+        """Write the signing certificate to the workload container.
 
         Args:
             certificate: The signing certificate, with or without the PEM markers.
         """
-        container = self.charm.unit.get_container(self.context.container_name)
-        if not container.can_connect():
-            return
         if not certificate.startswith("-----BEGIN CERTIFICATE-----"):
             certificate = f"-----BEGIN CERTIFICATE-----\n{certificate}\n-----END CERTIFICATE-----"
-        try:
-            container.push(self.SAML_CERT_PATH, certificate, make_dirs=True)
-        except (ops.pebble.ConnectionError, ops.pebble.APIError, ops.pebble.PathError):
-            logger.exception("Failed to write the SAML signing certificate")
+        container = self.charm.unit.get_container(self.context.container_name)
+        container.push(self.SAML_CERT_PATH, certificate, make_dirs=True)
 
     @staticmethod
     def _generate_saml_env(
