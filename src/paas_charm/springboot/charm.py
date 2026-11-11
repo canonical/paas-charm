@@ -319,6 +319,9 @@ class SpringSamlRelation(SamlRelation):
 
     Spring Boot reads the signing certificate from a file, so the certificate is
     also written to the workload container when the environment is generated.
+
+    Attrs:
+        SAML_CERT_PATH: Path in the workload container of the signing certificate file.
     """
 
     SAML_CERT_PATH = pathlib.Path("/tmp/paas-charm/saml.cert")  # nosec: B108
