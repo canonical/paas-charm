@@ -7,7 +7,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from paas_charm.s3 import InvalidS3RelationDataError, PaaSS3RelationData, PaaSS3Requirer
+from paas_charm.exceptions import InvalidRelationInterfaceError
+from paas_charm.s3 import (
+    InvalidS3RelationDataError,
+    PaaSS3RelationData,
+    PaaSS3Requirer,
+    S3Relation,
+)
 
 
 @pytest.mark.parametrize(
@@ -109,3 +115,21 @@ def test_requirer_to_validation_error(monkeypatch, relation_data):
         s3_requirer.to_relation_data()
 
     assert "S3" in str(exc.value)
+
+
+def test_s3_setup_invalid_relation_interface():
+    """
+    arrange: given an S3 relation configured with an invalid interface.
+    act: when the relation is set up.
+    assert: InvalidRelationInterfaceError is raised.
+    """
+    mock_charm = MagicMock()
+    mock_charm.framework.meta.requires["s3"].interface_name = "invalid"
+    relation = S3Relation.__new__(S3Relation)
+    relation._charm = mock_charm
+
+    with pytest.raises(
+        InvalidRelationInterfaceError,
+        match="Built-in S3 relation interface is not 's3'",
+    ):
+        relation.setup(MagicMock())

@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from paas_charm.exceptions import RelationDataError
+from paas_charm.s3 import InvalidS3RelationDataError, S3Relation
 from paas_charm.valkey import (
     InvalidValkeyRelationDataError,
     ValkeyMultipleRelationsNotSupportedError,
@@ -100,4 +101,59 @@ def test_valkey_relation_ensure_ready_wraps_invalid_data(error_type):
     assert type(exc.value) is RelationDataError
     assert str(exc.value) == str(error)
     assert exc.value.relation == "valkey"
+    assert exc.value.__cause__ is error
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_s3_relation_ensure_ready_with_data(optional):
+    """
+    arrange: An S3Relation containing S3 data.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), S3Relation, "s3", optional=optional)
+    relation._requirer = MagicMock()
+    assert relation.ensure_ready() is None
+    relation._requirer.to_relation_data.assert_called_once_with()
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_s3_relation_not_ready_without_data(optional):
+    """
+    arrange: A configured S3Relation with no S3 data.
+    act: Call ensure_ready.
+    assert: Raises RelationDataError identifying the S3 endpoint.
+    """
+    relation = _make_relation(MagicMock(), S3Relation, "s3", optional=optional)
+    relation._requirer = MagicMock()
+    relation._requirer.to_relation_data.return_value = None
+    with pytest.raises(RelationDataError, match="S3 relation data is not ready") as exc:
+        relation.ensure_ready()
+    assert exc.value.relation == "s3"
+
+
+def test_s3_relation_ensure_ready_when_not_configured():
+    """
+    arrange: An S3Relation without a configured requirer.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), S3Relation, "s3")
+    assert relation.ensure_ready() is None
+
+
+def test_s3_relation_ensure_ready_wraps_invalid_data():
+    """
+    arrange: An S3Relation whose requirer rejects invalid data.
+    act: Call ensure_ready.
+    assert: RelationDataError preserves the original message, endpoint, and cause.
+    """
+    relation = _make_relation(MagicMock(), S3Relation, "s3")
+    relation._requirer = MagicMock()
+    error = InvalidS3RelationDataError("Invalid S3 data")
+    relation._requirer.to_relation_data.side_effect = error
+    with pytest.raises(RelationDataError, match="Invalid S3 data") as exc:
+        relation.ensure_ready()
+    assert type(exc.value) is RelationDataError
+    assert exc.value.relation == "s3"
     assert exc.value.__cause__ is error

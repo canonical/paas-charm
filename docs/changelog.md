@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `/v1/traces` path) and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf` instead of the
   generic `OTEL_EXPORTER_OTLP_ENDPOINT`, so metrics and logs are no longer sent to Tempo.
   Spring Boot now always disables the OTEL metrics and logs exporters.
+* fix: Treat an empty string in a secret configuration option as unset, instead of failing
+  with `TypeError: Must provide an id or label` and putting the unit in error state.
+* refactor: Move the built-in S3 relation to the custom relations framework, fixing
+  `S3_TLS_CA_CHAIN` being tied to `attributes` instead of `tls_ca_chain`.
+* fix: Pin `kombu<5.7` in the Flask test rock. kombu 5.7.0 runs the `TIME` command in Lua
+  scripts, which the Valkey charm relation user can't run, so Celery workers crash.
 * fix: Support Juju 4 in integration tests.
 * docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
   `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0

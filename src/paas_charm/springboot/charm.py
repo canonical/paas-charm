@@ -17,6 +17,7 @@ from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.app import generate_traces_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
+from paas_charm.s3 import S3Relation
 from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
@@ -194,31 +195,6 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_s3_env(relation_data: "PaaSS3RelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from S3 relation data.
-
-    Args:
-        relation_data: The charm S3 integration relation data.
-
-    Returns:
-        S3 environment mappings if S3 relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    env = {
-        "spring.cloud.aws.credentials.accessKey": relation_data.access_key,
-        "spring.cloud.aws.credentials.secretKey": relation_data.secret_key,
-        "spring.cloud.aws.s3.bucket": relation_data.bucket,
-    }
-    if relation_data.region:
-        env["spring.cloud.aws.region.static"] = relation_data.region
-    if relation_data.endpoint:
-        env["spring.cloud.aws.s3.endpoint"] = relation_data.endpoint
-
-    return env
-
-
 def generate_saml_env(
     relation_data: "PaaSSAMLRelationData | None" = None,
 ) -> dict[str, str]:
@@ -330,6 +306,37 @@ class SpringValkeyRelation(ValkeyRelation):
         return env
 
 
+class SpringS3Relation(S3Relation):
+    """Modified `S3Relation` to produce environment vars for Spring framework."""
+
+    @staticmethod
+    def _generate_s3_env(
+        relation_data: "PaaSS3RelationData | None" = None,
+    ) -> dict[str, str]:
+        """Generate Spring Boot environment variables from S3 relation data.
+
+        Args:
+            relation_data: The charm S3 integration relation data.
+
+        Returns:
+            S3 environment mappings if S3 relation data is available, empty
+            dictionary otherwise.
+        """
+        if not relation_data:
+            return {}
+        env = {
+            "spring.cloud.aws.credentials.accessKey": relation_data.access_key,
+            "spring.cloud.aws.credentials.secretKey": relation_data.secret_key,
+            "spring.cloud.aws.s3.bucket": relation_data.bucket,
+        }
+        if relation_data.region:
+            env["spring.cloud.aws.region.static"] = relation_data.region
+        if relation_data.endpoint:
+            env["spring.cloud.aws.s3.endpoint"] = relation_data.endpoint
+
+        return env
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -337,7 +344,6 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_s3_env: Maps S3 connection information to environment variables.
         generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps Tracing connection information to environment variables.
@@ -348,7 +354,6 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_s3_env = staticmethod(generate_s3_env)
     generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
@@ -388,7 +393,7 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = SpringBootConfig
-    builtin_relations = [SpringValkeyRelation]
+    builtin_relations = [SpringValkeyRelation, SpringS3Relation]
     paas_config_framework_fields = {
         "server_port": "port",
     }
