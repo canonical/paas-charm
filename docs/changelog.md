@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* fix: Export traces with the signal specific `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` (including
+  the `/v1/traces` path) and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf` instead of the
+  generic `OTEL_EXPORTER_OTLP_ENDPOINT`, so metrics and logs are no longer sent to Tempo.
+  Spring Boot now always disables the OTEL metrics and logs exporters.
 * fix: Support Juju 4 in integration tests.
 * docs: Review the Ubuntu 26.04 LTS documentation. Correct the juju events, custom relations,
   `paas-config.yaml`, `uv` migration, upgrade (`--base`), Rockcraft project-structure and 2.0
