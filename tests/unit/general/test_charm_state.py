@@ -18,7 +18,6 @@ from paas_charm.charm_state import (
 from paas_charm.flask.charm import FlaskConfig
 from paas_charm.rabbitmq import InvalidRabbitMQRelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError
-from paas_charm.saml import InvalidSAMLRelationDataError
 from paas_charm.valkey import InvalidValkeyRelationDataError
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
@@ -92,16 +91,12 @@ def test_framework_alias_choice_priority(names, expected):
             InvalidS3RelationDataError("Invalid S3 relation data"),
             id="Invalid S3 relation data",
         ),
-        pytest.param(
-            InvalidSAMLRelationDataError("Invalid SAML relation data"),
-            id="Invalid SAML relation data",
-        ),
     ],
 )
 def test_charm_state_integration_state_build_error(error):
     """Test invalid relation data errors."""
-    saml_mock = MagicMock()
-    saml_mock.to_relation_data.side_effect = error
+    rabbitmq_mock = MagicMock()
+    rabbitmq_mock.get_relation_data.side_effect = error
     with pytest.raises(RelationDataError):
         CharmState.from_charm(
             charm_dir=f"{PROJECT_ROOT}/examples/flask/charm",
@@ -112,8 +107,7 @@ def test_charm_state_integration_state_build_error(error):
             peers=MagicMock(),
             integration_requirers=IntegrationRequirers(
                 databases=MagicMock(),
-                rabbitmq=MagicMock(),
-                saml=saml_mock,
+                rabbitmq=rabbitmq_mock,
             ),
             base_url="http://test-base-url",
         )

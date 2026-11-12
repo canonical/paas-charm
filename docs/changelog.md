@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* refactor: Move the built-in SAML relation to the custom relations framework.
+* fix: Merge the environment of built-in relations before custom relations, so custom relation
+  variables take precedence over them as documented.
+
 * fix: Treat an empty string in a secret configuration option as unset, instead of failing
   with `TypeError: Must provide an id or label` and putting the unit in error state.
 * refactor: Move the built-in S3 relation to the custom relations framework, fixing
