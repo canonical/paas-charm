@@ -17,10 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-* fix: Export traces with the signal specific `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` (including
-  the `/v1/traces` path) and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf` instead of the
-  generic `OTEL_EXPORTER_OTLP_ENDPOINT`, so metrics and logs are no longer sent to Tempo.
-  Spring Boot now always disables the OTEL metrics and logs exporters.
+* fix: **Breaking:** Export traces with the signal specific `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
+  (including the `/v1/traces` path) and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf` instead
+  of the generic `OTEL_EXPORTER_OTLP_ENDPOINT`, so metrics and logs are no longer sent to Tempo.
+  `OTEL_EXPORTER_OTLP_ENDPOINT` is no longer set: workloads that read it directly, rather than
+  through an OpenTelemetry SDK, must switch to `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`.
+  Spring Boot now always disables the OTEL metrics and logs exporters
+  (`OTEL_METRICS_EXPORTER=none`, `OTEL_LOGS_EXPORTER=none`), including when a tracing
+  integration is present, because metrics are scraped from the actuator endpoint by Prometheus
+  and logs are sent to Loki. Pushing metrics or logs over OTLP is not supported.
 * fix: Treat an empty string in a secret configuration option as unset, instead of failing
   with `TypeError: Must provide an id or label` and putting the unit in error state.
 * refactor: Move the built-in S3 relation to the custom relations framework, fixing

@@ -206,8 +206,8 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
     }
 
 
-def generate_traces_env(relation_data: "PaaSTracingRelationData") -> dict[str, str]:
-    """Generate the OTEL traces-only environment variables.
+def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
+    """Generate environment variable from TempoRelationData.
 
     The tracing integration only provides a traces backend, so the signal specific
     ``OTEL_EXPORTER_OTLP_TRACES_*`` variables are used instead of the generic
@@ -218,33 +218,18 @@ def generate_traces_env(relation_data: "PaaSTracingRelationData") -> dict[str, s
         relation_data: The charm Tempo integration relation data.
 
     Returns:
-        The OTEL environment variables to export traces.
-    """
-    traces_endpoint = f"{str(relation_data.endpoint).rstrip('/')}/v1/traces"
-    return {
-        k: v
-        for k, v in (
-            ("OTEL_SERVICE_NAME", relation_data.service_name),
-            ("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traces_endpoint),
-            ("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", "http/protobuf"),
-        )
-        if v is not None
-    }
-
-
-def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from TempoRelationData.
-
-    Args:
-        relation_data: The charm Tempo integration relation data.
-
-    Returns:
         Default Tempo tracing environment mappings if TempoRelationData is available, empty
         dictionary otherwise.
     """
     if not relation_data:
         return {}
-    return generate_traces_env(relation_data)
+    return {
+        "OTEL_SERVICE_NAME": relation_data.service_name,
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": (
+            f"{str(relation_data.endpoint).rstrip('/')}/v1/traces"
+        ),
+        "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
+    }
 
 
 # No need to create specific environment variables in most of the

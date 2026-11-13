@@ -14,7 +14,7 @@ from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
-from paas_charm.app import generate_traces_env
+from paas_charm.app import generate_tempo_env as base_generate_tempo_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 from paas_charm.s3 import S3Relation
@@ -259,18 +259,20 @@ def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[s
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
+    Metrics are exposed to Prometheus through the actuator endpoint and logs are sent to Loki,
+    so the OTEL metrics and logs exporters are always disabled and only traces are exported.
+
     Args:
         relation_data: The charm Tempo integration relation data.
 
     Returns:
-        Default Tempo tracing environment mappings if TempoRelationData is available, empty
-        dictionary otherwise.
+        Tempo tracing environment mappings if TempoRelationData is available, with the OTEL
+        metrics and logs exporters always disabled.
     """
-    # Metrics are scraped by Prometheus and logs are sent to Loki, so only traces are exported.
     env = {"OTEL_METRICS_EXPORTER": "none", "OTEL_LOGS_EXPORTER": "none"}
     if not relation_data:
         return {**env, "OTEL_TRACES_EXPORTER": "none"}
-    return {**env, "OTEL_TRACES_EXPORTER": "otlp", **generate_traces_env(relation_data)}
+    return {**env, "OTEL_TRACES_EXPORTER": "otlp", **base_generate_tempo_env(relation_data)}
 
 
 class SpringValkeyRelation(ValkeyRelation):
