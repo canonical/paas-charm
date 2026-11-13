@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.saml import PaaSSAMLRelationData
     from paas_charm.tracing import PaaSTracingRelationData
 
 WORKER_SUFFIX = "-worker"
@@ -146,36 +145,6 @@ def generate_rabbitmq_env(
     if relation_data.amqp_uris:
         envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
     return envvars
-
-
-def generate_saml_env(relation_data: "PaaSSAMLRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from SAML relation data.
-
-    Args:
-        relation_data: The charm SAML integration relation data.
-
-    Returns:
-        SAML environment mappings if SAML relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return {
-        k: v
-        for (k, v) in (
-            ("SAML_ENTITY_ID", relation_data.entity_id),
-            (
-                "SAML_METADATA_URL",
-                str(relation_data.metadata_url) if relation_data.metadata_url else None,
-            ),
-            (
-                "SAML_SINGLE_SIGN_ON_REDIRECT_URL",
-                relation_data.single_sign_on_redirect_url,
-            ),
-            ("SAML_SIGNING_CERTIFICATE", relation_data.signing_certificate),
-        )
-        if v is not None
-    }
 
 
 def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
@@ -311,7 +280,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_saml_env: Maps SAML connection information to environment variables.
         generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps tempo tracing connection information to environment variables.
         generate_prometheus_env: Maps prometheus connection information to environment variables.
@@ -321,7 +289,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_saml_env = staticmethod(generate_saml_env)
     generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
@@ -610,7 +577,6 @@ class App:  # pylint: disable=too-many-instance-attributes
             db_relation_data,
         ) in self._charm_state.integrations.databases_relation_data.items():
             env.update(self.generate_db_env(database_name, db_relation_data))
-        env.update(self.generate_saml_env(relation_data=self._charm_state.integrations.saml))
         env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
         env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
         env.update(self.generate_prometheus_env(self._workload_config))

@@ -9,7 +9,13 @@ import pytest
 from charms.saml_integrator.v0.saml import SamlEndpoint, SamlRelationData
 from pydantic import ValidationError
 
-from paas_charm.saml import InvalidSAMLRelationDataError, PaaSSAMLRelationData, PaaSSAMLRequirer
+from paas_charm.exceptions import InvalidRelationInterfaceError
+from paas_charm.saml import (
+    InvalidSAMLRelationDataError,
+    PaaSSAMLRelationData,
+    PaaSSAMLRequirer,
+    SamlRelation,
+)
 
 
 @pytest.mark.parametrize(
@@ -140,3 +146,21 @@ def test_paas_saml_relation_data_invalid():
         saml_requirer.to_relation_data()
 
     assert "Invalid PaaSSAMLRelationData" in str(exc.value)
+
+
+def test_saml_setup_invalid_relation_interface():
+    """
+    arrange: given a SAML relation configured with an invalid interface.
+    act: when the relation is set up.
+    assert: InvalidRelationInterfaceError is raised.
+    """
+    mock_charm = MagicMock()
+    mock_charm.framework.meta.requires["saml"].interface_name = "invalid"
+    relation = SamlRelation.__new__(SamlRelation)
+    relation._charm = mock_charm
+
+    with pytest.raises(
+        InvalidRelationInterfaceError,
+        match="Built-in SAML relation interface is not 'saml'",
+    ):
+        relation.setup(MagicMock())

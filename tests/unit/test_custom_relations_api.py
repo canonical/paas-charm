@@ -10,6 +10,7 @@ import pytest
 from ops import testing
 
 from tests.unit.test_custom_relations.src.charm import (
+    BuiltinPrecedenceCharm,
     ContextCharm,
     EnvVarCharm,
     InvalidDataCharm,
@@ -105,6 +106,30 @@ def invalid_context_fixture(context_factory) -> testing.Context:
 def overwriting_context_fixture(context_factory) -> testing.Context:
     """Return a Context rooted at the overwriting custom relation charm."""
     return context_factory(OverwritingCharm)
+
+
+@pytest.fixture(name="builtin_precedence_context")
+def builtin_precedence_context_fixture(context_factory) -> testing.Context:
+    """Return a Context for a charm with a built-in and a custom relation."""
+    return context_factory(BuiltinPrecedenceCharm)
+
+
+def test_custom_relation_overrides_builtin_relation(
+    builtin_precedence_context, tmp_path, container_name: str
+) -> None:
+    """
+    arrange: a charm whose built-in and custom relations emit the same variable.
+    act: reconcile on config-changed.
+    assert: the custom relation value wins over the built-in relation value.
+    """
+    out = builtin_precedence_context.run(
+        builtin_precedence_context.on.config_changed(),
+        testing.State(**_base_state(tmp_path)),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    environment = out.get_container(container_name).plan.services["test"].environment
+    assert environment["APP_SECRET_KEY"] == "overwritten-by-custom"
 
 
 def test_custom_relation_env_vars(envvar_context, tmp_path, container_name: str) -> None:

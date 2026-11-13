@@ -45,7 +45,7 @@ from paas_charm.peers import Peers
 from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.relations import Context, CustomRelation
 from paas_charm.s3 import S3Relation
-from paas_charm.saml import PaaSSAMLRequirer
+from paas_charm.saml import SamlRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
@@ -73,7 +73,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     framework_config_class: type[BaseModel]
     paas_config_framework_fields: dict[str, str] = {}
     custom_relations: list[type[CustomRelation]] = []
-    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation, S3Relation]
+    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation, S3Relation, SamlRelation]
 
     @property
     @abc.abstractmethod
@@ -124,7 +124,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
-        self._saml = self._init_saml(requires)
         self._rabbitmq = self._init_rabbitmq(requires)
         self._tracing = self._init_tracing(requires)
         self._smtp = self._init_smtp(requires)
@@ -228,29 +227,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 )
 
         return _http_proxy
-
-    def _init_saml(self, requires: dict[str, RelationMeta]) -> "PaaSSAMLRequirer | None":
-        """Initialize the SAML relation if its required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the SAML relation or None
-        """
-        _saml = None
-        if "saml" in requires and requires["saml"].interface_name == "saml":
-            try:
-                _saml = PaaSSAMLRequirer(self)
-                self.framework.observe(
-                    _saml.on.saml_data_available, self._reconcile_with_migrations
-                )
-            except NameError:
-                logger.exception(
-                    "Missing charm library, "
-                    "please run `charmcraft fetch-lib charms.saml_integrator.v0.saml`"
-                )
-        return _saml
 
     def _init_rabbitmq(self, requires: dict[str, RelationMeta]) -> "RabbitMQRequires | None":
         """Initialize the RabbitMQ relation if its required.
@@ -394,7 +370,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             The list of instantiated custom relations.
         """
         builtin_relations = builtin_relations or []
-        relations_list = (self.custom_relations or []) + builtin_relations
+        # Built-in relations come first so that custom relations, merged later, take precedence.
+        relations_list = builtin_relations + (self.custom_relations or [])
         if not relations_list:
             return []
         builtin_set = set(builtin_relations)
@@ -631,9 +608,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if self._saml and not charm_state.integrations.saml and not requires["saml"].optional:
-            yield "saml"
-
         if (
             self._tracing
             and not charm_state.integrations.tracing
@@ -756,7 +730,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 rabbitmq=self._rabbitmq,
-                saml=self._saml,
                 tracing=self._tracing,
                 smtp=self._smtp,
                 openfga=self._openfga,
