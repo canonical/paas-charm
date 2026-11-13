@@ -212,7 +212,8 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
     The tracing integration only provides a traces backend, so the signal specific
     ``OTEL_EXPORTER_OTLP_TRACES_*`` variables are used instead of the generic
     ``OTEL_EXPORTER_OTLP_ENDPOINT``, which would also route metrics and logs to it. Signal
-    specific endpoints are used as-is by the SDKs, so the ``/v1/traces`` path is added here.
+    specific endpoints are used as-is by the SDKs, so the ``/v1/traces`` path is appended to the
+    endpoint path here, preserving any query string and fragment.
 
     Args:
         relation_data: The charm Tempo integration relation data.
@@ -223,11 +224,19 @@ def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -
     """
     if not relation_data:
         return {}
+    endpoint = urllib.parse.urlsplit(str(relation_data.endpoint))
+    traces_endpoint = urllib.parse.urlunsplit(
+        (
+            endpoint.scheme,
+            endpoint.netloc,
+            f"{endpoint.path.rstrip('/')}/v1/traces",
+            endpoint.query,
+            endpoint.fragment,
+        )
+    )
     return {
         "OTEL_SERVICE_NAME": relation_data.service_name,
-        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": (
-            f"{str(relation_data.endpoint).rstrip('/')}/v1/traces"
-        ),
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": traces_endpoint,
         "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
     }
 
