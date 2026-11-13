@@ -298,7 +298,8 @@ def _test_integrations_env_parameters():
                 )
             ),
             {
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318/tracing",
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "http://localhost:4318/tracing/v1/traces",
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
                 "OTEL_SERVICE_NAME": "testing-application-name",
             },
             id="Tracing",

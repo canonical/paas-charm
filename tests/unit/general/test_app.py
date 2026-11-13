@@ -327,9 +327,24 @@ def test_saml_environ_mapper_generate_env(relation_data, expected_env):
             ),
             {
                 "OTEL_SERVICE_NAME": "app-name",
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "http://tempo-endpoint.test",
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "http://tempo-endpoint.test/v1/traces",
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
             },
             id="Relation data",
+        ),
+        pytest.param(
+            PaaSTracingRelationData.model_construct(
+                endpoint="http://tempo-endpoint.test/tracing/?tenant=example#frag",
+                service_name="app-name",
+            ),
+            {
+                "OTEL_SERVICE_NAME": "app-name",
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": (
+                    "http://tempo-endpoint.test/tracing/v1/traces?tenant=example#frag"
+                ),
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
+            },
+            id="Relation data with path, query and fragment",
         ),
     ],
 )
