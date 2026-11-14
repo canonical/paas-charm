@@ -142,7 +142,7 @@ line-length = 99
 unit = [
     "cosl==1.11.3",
     "coverage[toml]==7.17.2",
-    "gunicorn==26.2.0",
+    "gunicorn==27.0.1",
     "opentelemetry-api==1.45.2",
     "opentelemetry-sdk==1.45.2",
     "ops[testing]==3.9.0",
