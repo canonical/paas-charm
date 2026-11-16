@@ -32,7 +32,9 @@ def test_tracing_relation(flask_context, base_state, container_name: str) -> Non
 
     assert out.unit_status == testing.ActiveStatus()
     environment = out.get_container(container_name).plan.services["flask"].environment
-    assert environment["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://test-ip:4318/"
+    assert environment["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] == "http://test-ip:4318/v1/traces"
+    assert environment["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "http/protobuf"
+    assert "OTEL_EXPORTER_OTLP_ENDPOINT" not in environment
     assert environment["OTEL_SERVICE_NAME"] == "flask-k8s"
 
 
@@ -51,5 +53,5 @@ def test_tracing_not_activated(flask_context, base_state, container_name: str) -
 
     assert out.unit_status == testing.ActiveStatus()
     environment = out.get_container(container_name).plan.services["flask"].environment
-    assert "OTEL_EXPORTER_OTLP_ENDPOINT" not in environment
+    assert "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" not in environment
     assert "OTEL_SERVICE_NAME" not in environment
