@@ -131,29 +131,39 @@ def _assert_idp_login_success(
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
         try:
-            page.goto(f"{app_url}/{endpoint}")
-            logger.info("Page content: %s", page.content())
-            expect(page).not_to_have_title(re.compile("Sign in failed"))
             login_identifiers = (test_email, test_username)
             login_succeeded = False
-            for identifier in login_identifiers:
-                page.locator("input[name='identifier']").fill(identifier)
-                page.locator("input[type='password']").first.fill(test_password)
-                page.get_by_role("button", name="Sign in").click()
-                try:
-                    page.wait_for_url(
-                        re.compile(f"^{re.escape(app_url)}/profile.*"), timeout=15000
-                    )
-                    login_succeeded = True
-                    break
-                except PlaywrightTimeoutError:
-                    logger.warning(
-                        "Login attempt failed with identifier %r; current url=%s",
-                        identifier,
-                        page.url,
-                    )
-                    if "Invalid identifier" not in page.content():
+            max_flow_attempts = 3
+            for flow_attempt in range(1, max_flow_attempts + 1):
+                # Start a fresh Kratos login flow on every attempt: a stale flow id
+                # (e.g. from a slow CI environment) can otherwise be rejected by
+                # Kratos with a misleading "invalid password" error.
+                page.goto(f"{app_url}/{endpoint}")
+                logger.info("Page content: %s", page.content())
+                expect(page).not_to_have_title(re.compile("Sign in failed"))
+                for identifier in login_identifiers:
+                    page.locator("input[name='identifier']").fill(identifier)
+                    page.locator("input[type='password']").first.fill(test_password)
+                    page.get_by_role("button", name="Sign in").click()
+                    try:
+                        page.wait_for_url(
+                            re.compile(f"^{re.escape(app_url)}/profile.*"), timeout=15000
+                        )
+                        login_succeeded = True
                         break
+                    except PlaywrightTimeoutError:
+                        logger.warning(
+                            "Login attempt failed with identifier %r"
+                            " (flow attempt %d/%d); current url=%s",
+                            identifier,
+                            flow_attempt,
+                            max_flow_attempts,
+                            page.url,
+                        )
+                        if "Invalid identifier" not in page.content():
+                            break
+                if login_succeeded:
+                    break
 
             if not login_succeeded:
                 logger.error("Page content at error: %s", page.content())
