@@ -257,6 +257,30 @@ class ConfigOptions(BaseModel):
                 )
 
 
+class OpenSearchConfig(BaseModel):
+    """Settings for the built-in opensearch relation.
+
+    Attributes:
+        index: Index that the relation requests.
+        extra_user_roles: Roles that the relation requests. Only ``admin`` is accepted.
+        model_config: Pydantic model configuration.
+    """
+
+    index: str = Field(
+        min_length=1,
+        description=(
+            "Name of the index that the relation requests. It's a placeholder for now, because "
+            "the admin role grants access to every index."
+        ),
+    )
+    extra_user_roles: typing.Literal["admin"] = Field(
+        alias="extra-user-roles",
+        description="Extra user roles that the relation requests. Only 'admin' is accepted.",
+    )
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
 class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
@@ -270,12 +294,14 @@ class PaasConfig(BaseModel):
         metrics_port: Optional override for the port on which the application serves metrics.
         metrics_path: Optional override for the path on which the application serves metrics.
         config: Settings for existing charm configuration options.
+        opensearch: Settings for the built-in opensearch relation.
     """
 
     prometheus: PrometheusConfig | None = Field(
         default=None, description="Prometheus configuration"
     )
     config: ConfigOptions = Field(default_factory=ConfigOptions)
+    opensearch: OpenSearchConfig | None = None
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",

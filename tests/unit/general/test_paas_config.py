@@ -29,6 +29,7 @@ from paas_charm.paas_config import (
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     ConfigOptions,
     LoggingFormat,
+    OpenSearchConfig,
     PaasConfig,
     PrometheusConfig,
     ScrapeConfig,
@@ -47,6 +48,7 @@ class TestPaasConfig:
         config = PaasConfig()
         assert config.model_fields_set == set()
         assert config.prometheus is None
+        assert config.opensearch is None
         assert config.framework_logging_format is LoggingFormat.NONE
         assert config.port == 8080
         assert config.metrics_port == 8080
@@ -68,6 +70,18 @@ class TestPaasConfig:
         assert len(prometheus.scrape_configs) == 1
         assert prometheus.scrape_configs[0].job_name == "test"
         assert config.port == 9090
+
+    def test_valid_config_with_opensearch(self):
+        """
+        arrange: a valid opensearch config.
+        act: PaasConfig() is called.
+        assert: config.opensearch exists with identical value.
+        """
+        config = PaasConfig(opensearch={"index": "test-index", "extra-user-roles": "admin"})
+
+        assert config.opensearch is not None
+        assert config.opensearch.index == "test-index"
+        assert config.opensearch.extra_user_roles == "admin"
 
     def test_metrics_endpoint_uses_framework_defaults_when_omitted(self):
         """Test that omitted metrics fields preserve framework defaults."""
@@ -380,12 +394,14 @@ class TestReadPaasConfig:
                     }
                 ]
             },
+            "opensearch": {"index": "test-index", "extra-user-roles": "admin"},
         }
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config_data, f)
 
         config = read_paas_config(tmp_path)
         assert config.prometheus is not None
+        assert config.opensearch is not None
         assert config.metrics_port == 9090
         assert config.metrics_path == "/custom-metrics"
 
@@ -684,6 +700,55 @@ class TestPrometheusConfig:
 
         prom_config = PrometheusConfig(scrape_configs=[])
         assert prom_config.scrape_configs == []
+
+
+class TestOpenSearchConfig:
+    """Tests for OpenSearchConfig Pydantic model."""
+
+    def test_valid_config(self):
+        """
+        arrange: a valid config of opensearch relation.
+        act: when OpenSearchConfig object is built.
+        assert: it returns an OpenSearchConfig object with identical attributes.
+        """
+        config = OpenSearchConfig.model_validate(
+            {"index": "placeholder", "extra-user-roles": "admin"}
+        )
+
+        assert config.index == "placeholder"
+        assert config.extra_user_roles == "admin"
+
+    @pytest.mark.parametrize(
+        "config, error_locations",
+        [
+            pytest.param(
+                {"index": "", "extra-user-roles": "admin"}, {("index",)}, id="empty index"
+            ),
+            pytest.param(
+                {"index": "placeholder", "extra-user-roles": "default"},
+                {("extra-user-roles",)},
+                id="non admin role",
+            ),
+            pytest.param({"extra-user-roles": "admin"}, {("index",)}, id="no index"),
+            pytest.param({"index": "placeholder"}, {("extra-user-roles",)}, id="no role"),
+            pytest.param({}, {("index",), ("extra-user-roles",)}, id="no config"),
+            pytest.param(
+                {"index": "placeholder", "extra_user_roles": "admin"},
+                {("extra_user_roles",), ("extra-user-roles",)},
+                id="extra_user_roles instead of extra-user-roles",
+            ),
+        ],
+    )
+    def test_invalid_config(self, config, error_locations):
+        """
+        arrange: an invalid config of opensearch relation.
+        act: when OpenSearchConfig object is built.
+        assert: it raises ValidationError for the invalid keys only.
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            OpenSearchConfig.model_validate(config)
+
+        assert {error["loc"] for error in exc_info.value.errors()} == error_locations
 
 
 CHARM_STATE_PAAS_CONFIG_TEST_PARAMS = [
