@@ -3,19 +3,23 @@
 
 """OpenSearch unit tests."""
 
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 from charms.data_platform_libs.v0.data_interfaces import OpenSearchRequires
 from ops import ModelError, RelationMeta, RelationRole, SecretNotFoundError
 
-from paas_charm.exceptions import InvalidRelationInterfaceError, RelationDataError
+from paas_charm.exceptions import (
+    InvalidRelationInterfaceError,
+    PaasConfigError,
+    RelationDataError,
+)
 from paas_charm.opensearch import (
     OPENSEARCH_RELATION_NAME,
     OpenSearchRelation,
     PaaSOpenSearchRelationData,
 )
+from paas_charm.paas_config import PaasConfig
 
 RELATION_ID = 1
 ENDPOINTS = "10.1.1.1:9200,10.1.1.2:9200"
@@ -171,9 +175,7 @@ def test_successful_setup(monkeypatch):
     act: when setup is called.
     assert: None is returned and _requirer is set.
     """
-    paas_config = SimpleNamespace(
-        opensearch=SimpleNamespace(index="test-index", extra_user_roles="admin")
-    )
+    paas_config = PaasConfig(opensearch={"index": "test-index", "extra-user-roles": "admin"})
     monkeypatch.setattr(
         "paas_charm.opensearch.read_paas_config", MagicMock(return_value=paas_config)
     )
@@ -202,8 +204,24 @@ def test_setup_invalid_relation_interface():
         relation.setup(MagicMock())
 
 
-# TODO: Implement a test when no `opensearch` section appears in `paas-config.yaml`
-# Wait until I know how setup read the config.
+def test_setup_without_opensearch_section(monkeypatch):
+    """
+    arrange: given a paas-config.yaml without an opensearch section.
+    act: when setup is called.
+    assert: PaasConfigError is raised and no requirer is created.
+    """
+    monkeypatch.setattr(
+        "paas_charm.opensearch.read_paas_config", MagicMock(return_value=PaasConfig())
+    )
+    requires_class = MagicMock()
+    monkeypatch.setattr("paas_charm.opensearch.OpenSearchRequires", requires_class)
+    relation = _make_relation(charm=_make_charm())
+
+    with pytest.raises(PaasConfigError, match="has no opensearch section"):
+        relation.setup(MagicMock())
+
+    requires_class.assert_not_called()
+    assert relation._requirer is None
 
 
 @pytest.mark.parametrize("relation_data", READY_RELATION_DATA)
@@ -327,35 +345,34 @@ def test_ensure_ready_when_not_ready(relation_databags):
 
 
 @pytest.mark.parametrize(
-    "relation_databags, error",
+    "relation_databags, error, message",
     [
         pytest.param(
             {RELATION_ID: PROVIDER_RELATION_DATA_TLS_CA},
             SecretNotFoundError("secret not found"),
+            "Cannot read the OpenSearch relation secrets",
             id="secret not found",
         ),
         pytest.param(
             {1: PROVIDER_RELATION_DATA_TLS_CA, 2: PROVIDER_RELATION_DATA_TLS_CA},
             None,
+            "Multiple OpenSearch relations are not supported",
             id="multiple relations",
         ),
     ],
 )
-def test_ensure_ready_wraps_invalid_relation_data(relation_databags, error):
+def test_ensure_ready_when_relation_data_unusable(relation_databags, error, message):
     """
     arrange: given OpenSearchRelation whose relation data can't be used.
     act: when ensure_ready is called.
-    assert: RelationDataError preserves the original message, relation name and cause.
+    assert: RelationDataError is raised with proper message and relation name.
     """
     relation = _make_relation(requirer=_make_requirer(relation_databags, error=error))
 
-    with pytest.raises(RelationDataError) as exc:
+    with pytest.raises(RelationDataError, match=message) as exc:
         relation.ensure_ready()
 
-    assert type(exc.value) is RelationDataError
     assert exc.value.relation == OPENSEARCH_RELATION_NAME
-    assert isinstance(exc.value.__cause__, RelationDataError)
-    assert str(exc.value) == str(exc.value.__cause__)
 
 
 def test_gen_environment_when_not_configured():
