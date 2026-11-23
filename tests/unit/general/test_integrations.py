@@ -772,6 +772,41 @@ def test_smtp_relation(
 
 
 @pytest.mark.parametrize(
+    "charm_type",
+    [
+        pytest.param(FlaskCharm, id="flask"),
+        pytest.param(DjangoCharm, id="django"),
+        pytest.param(FastAPICharm, id="fastapi"),
+        pytest.param(GoCharm, id="go"),
+        pytest.param(ExpressJSCharm, id="expressjs"),
+    ],
+)
+def test_smtp_relation_invalid_data(
+    charm_type: type,
+    context_factory,
+    framework_state_factory,
+):
+    """
+    arrange: Integrate the charm with an smtp-integrator sending an invalid port.
+    act: Run a reconciling hook (config changed).
+    assert: The charm is blocked on the SMTP relation instead of failing the hook.
+    """
+    relation = testing.Relation(
+        endpoint="smtp",
+        interface="smtp",
+        remote_app_data={**SMTP_RELATION_DATA_EXAMPLE, "port": "invalid"},
+    )
+    state_dict = framework_state_factory(charm_type)
+    state_dict["relations"].append(relation)
+    context = context_factory(charm_type)
+    out = context.run(context.on.config_changed(), testing.State(**state_dict))
+
+    assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "Invalid SmtpRelationData" in out.unit_status.message
+    assert "port" in out.unit_status.message
+
+
+@pytest.mark.parametrize(
     "charm_type, framework",
     [
         pytest.param(FlaskCharm, "flask", id="flask"),
