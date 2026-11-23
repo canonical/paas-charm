@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2.0.0b2 - 2026-11-23
+
 * refactor: Move the SMTP relation to the custom relations framework and use the
   `charmlibs-interfaces-smtp` PyPI package instead of the `smtp_integrator` Charmhub library.
   A built-in `smtp` endpoint declared with an interface other than `smtp` now raises
