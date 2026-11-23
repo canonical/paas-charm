@@ -21,9 +21,15 @@ import javax.net.ssl.X509TrustManager;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration;
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 
-@SpringBootApplication
+// spring-data-opensearch excludes the Elasticsearch client, which Spring Boot's Elasticsearch
+// auto-configuration needs.
+@SpringBootApplication(exclude = {
+		ElasticsearchDataAutoConfiguration.class,
+		ElasticsearchClientAutoConfiguration.class })
 public class Application {
 
 	public static void disableSslVerification() throws NoSuchAlgorithmException, KeyManagementException {

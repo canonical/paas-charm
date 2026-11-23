@@ -4,6 +4,7 @@
 """Global fixtures and utilities for unit tests."""
 
 import copy
+import functools
 import io
 import json
 import typing
@@ -25,7 +26,7 @@ from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
 from paas_charm.charm import PaasCharm
 from paas_charm.database_migration import DatabaseMigrationStatus
-from paas_charm.paas_config import PaasConfig, read_paas_config
+from paas_charm.paas_config import CONFIG_FILE_NAME, PaasConfig, read_paas_config
 from tests.unit.django.constants import DEFAULT_LAYER as DJANGO_DEFAULT_LAYER
 from tests.unit.expressjs.constants import DEFAULT_LAYER as EXPRESSJS_DEFAULT_LAYER
 from tests.unit.fastapi.constants import DEFAULT_LAYER as FASTAPI_DEFAULT_LAYER
@@ -250,12 +251,51 @@ def _add_oauth_metadata(charmcraft: dict) -> None:
     )
 
 
+def _resolve_paas_config(
+    root: Path, charmcraft: dict[str, typing.Any], paas_config: PaasConfig | None
+) -> PaasConfig:
+    """Return the configuration that the charm reads from paas-config.yaml.
+
+    Without ``paas_config``, it's the example charm's paas-config.yaml. Otherwise, it's
+    ``paas_config``, with one addition: if the charm declares the opensearch relation and
+    ``paas_config`` has no opensearch section, the example's section is added. The charm can't
+    start without that section, so this saves every test that passes its own ``paas_config``
+    from adding it. To test a missing or invalid section, use ``paas_config_yaml`` or
+    ``no_paas_config_file`` instead.
+
+    Args:
+        root: The root directory of the charm.
+        charmcraft: The content of charmcraft.yaml, including the charm metadata.
+        paas_config: The configuration chosen by the test, if any.
+
+    Returns:
+        The configuration that the charm and its relations read.
+    """
+    if paas_config is None:
+        return read_paas_config(root)
+    if paas_config.opensearch is None and "opensearch" in charmcraft.get("requires", {}):
+        return paas_config.model_copy(update={"opensearch": read_paas_config(root).opensearch})
+    return paas_config
+
+
 @pytest.fixture(name="context_factory")
 def context_factory_fixture(
     request: pytest.FixtureRequest,
     tmp_path: Path,
 ) -> typing.Callable[..., testing.Context]:
-    """Create lifecycle-managed Contexts rooted at their example charms."""
+    """Create lifecycle-managed Contexts rooted at their example charms.
+
+    By default, the charm reads the example charm's paas-config.yaml. A test can replace it
+    with one of these arguments:
+
+    * ``paas_config``: a ``PaasConfig`` object. Pydantic has already validated it, so it can't
+      hold invalid settings. If the charm declares the opensearch relation and the object has
+      no opensearch section, the example's section is added.
+    * ``paas_config_yaml``: the text of a paas-config.yaml file. The charm reads and validates
+      it like a real file, so use it to test invalid settings.
+    * ``no_paas_config_file``: the charm has no paas-config.yaml file, as if it was packed
+      without one.
+    """
     stack = ExitStack()
     request.addfinalizer(stack.close)
     context_count = 0
@@ -264,6 +304,8 @@ def context_factory_fixture(
         charm_type: type,
         *,
         paas_config: PaasConfig | None = None,
+        paas_config_yaml: str | None = None,
+        no_paas_config_file: bool = False,
         config_options: dict | None = None,
         additional_oauth: bool = False,
         no_database_metadata: bool = False,
@@ -271,9 +313,12 @@ def context_factory_fixture(
         juju_version: str = "3.6.14",
     ) -> testing.Context:
         nonlocal context_count
+        if sum((paas_config is not None, paas_config_yaml is not None, no_paas_config_file)) > 1:
+            raise ValueError(
+                "Pass only one of paas_config, paas_config_yaml and no_paas_config_file"
+            )
         context_count += 1
         root = CHARM_ROOTS[charm_type]
-        resolved_paas_config = paas_config if paas_config is not None else read_paas_config(root)
         charmcraft = yaml.safe_load((root / "charmcraft.yaml").read_text(encoding="utf-8"))
         for option, settings in (config_options or {}).items():
             if settings is None:
@@ -287,17 +332,24 @@ def context_factory_fixture(
         context_root = tmp_path / "contexts" / f"{root.parent.name}-{context_count}"
         context_root.mkdir(parents=True)
         (context_root / "charmcraft.yaml").write_text(yaml.safe_dump(charmcraft), encoding="utf-8")
+        read_patch: dict[str, object]
+        if paas_config_yaml is None and not no_paas_config_file:
+            read_patch = {"return_value": _resolve_paas_config(root, charmcraft, paas_config)}
+        else:
+            if paas_config_yaml is not None:
+                (context_root / CONFIG_FILE_NAME).write_text(paas_config_yaml, encoding="utf-8")
+            read_patch = {"side_effect": functools.partial(read_paas_config, context_root)}
         context_kwargs: dict[str, object] = {
             "actions": charmcraft.pop("actions", {}),
             "config": charmcraft.pop("config", {}),
             "meta": charmcraft,
         }
-        stack.enter_context(
-            unittest_mock.patch(
-                "paas_charm.charm.read_paas_config",
-                return_value=resolved_paas_config,
-            )
-        )
+        # The opensearch relation reads paas-config.yaml again, after the charm.
+        for target in (
+            "paas_charm.charm.read_paas_config",
+            "paas_charm.opensearch.read_paas_config",
+        ):
+            stack.enter_context(unittest_mock.patch(target, **read_patch))
         return stack.enter_context(
             testing.Context(
                 charm_type,

@@ -3,25 +3,79 @@
 
 """Springboot charm unit tests for integrations."""
 
+import dataclasses
+import json
 from unittest.mock import MagicMock
 
 import pytest
+import yaml
 from ops import testing
 
-from paas_charm.springboot.charm import SpringValkeyRelation, generate_smtp_env
+from examples.springboot.charm.src.charm import SpringBootCharm
+from paas_charm.exceptions import PaasConfigError
+from paas_charm.opensearch import PaaSOpenSearchRelationData
+from paas_charm.springboot.charm import (
+    SpringOpenSearchRelation,
+    SpringValkeyRelation,
+    generate_smtp_env,
+)
 
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
 
+OPENSEARCH_ENDPOINTS = "10.1.1.1:9200,10.1.1.2:9200"
+OPENSEARCH_TLS_CA = (
+    "-----BEGIN CERTIFICATE-----\nTHE INTERMEDIATE CA CERTIFICATE\n-----END CERTIFICATE-----\n"
+    "-----BEGIN CERTIFICATE-----\nTHE ROOT CA CERTIFICATE\n-----END CERTIFICATE-----"
+)
+OPENSEARCH_SPRING_ENVIRONMENT = {
+    "opensearch.uris": "https://10.1.1.1:9200,https://10.1.1.2:9200",
+    "opensearch.username": "opensearch-client_7",
+    "opensearch.password": "test-opensearch-password",
+    "opensearch.restclient.ssl.bundle": "opensearch",
+    "spring.ssl.bundle.pem.opensearch.truststore.certificate": OPENSEARCH_TLS_CA,
+}
+
+
+def _add_opensearch_secrets(base_state: dict) -> dict[str, str]:
+    """Add the secrets that the OpenSearch provider shares to the state.
+
+    Args:
+        base_state: The state to add the secrets to.
+
+    Returns:
+        The provider relation data fields that point to the secrets.
+    """
+    user_secret = testing.Secret(
+        tracked_content={"username": "opensearch-client_7", "password": "test-opensearch-password"}
+    )
+    tls_secret = testing.Secret(tracked_content={"tls": "True", "tls-ca": OPENSEARCH_TLS_CA})
+    base_state["secrets"].extend([user_secret, tls_secret])
+    return {"secret-user": user_secret.id, "secret-tls": tls_secret.id}
+
+
+def _opensearch_properties(out: testing.State) -> dict[str, str]:
+    """Return the OpenSearch properties and variables of the Spring Boot service.
+
+    Args:
+        out: The state after the event.
+
+    Returns:
+        The environment entries of the Spring Boot service that mention OpenSearch.
+    """
+    environment = out.get_container("app").plan.services["spring-boot"].environment
+    return {key: value for key, value in environment.items() if "opensearch" in key.lower()}
+
 
 def test_integration_mappers_without_relation_data() -> None:
     """
-    arrange: no SMTP or Valkey relation data.
+    arrange: no SMTP, Valkey or OpenSearch relation data.
     act: generate the Spring Boot integration environment variables.
     assert: no environment variables are generated.
     """
     assert not generate_smtp_env()
     assert not SpringValkeyRelation._generate_valkey_env()
+    assert not SpringOpenSearchRelation._generate_opensearch_env(None)
 
 
 def test_valkey_environment_with_credentials() -> None:
@@ -399,3 +453,298 @@ def test_rabbitmq_integration(
         environment["spring.rabbitmq.host"] == "rabbitmq-k8s-endpoints.testing.svc.cluster.local"
     )
     assert environment["spring.rabbitmq.port"] == "5672"
+
+
+def test_opensearch_environment() -> None:
+    """
+    arrange: OpenSearch relation data with two endpoints, the optional fields and the CA chain.
+    act: generate the Spring Boot OpenSearch environment variables.
+    assert: every endpoint uses https, the CA chain is trusted through the opensearch SSL bundle,
+        and the index and version have no property.
+    """
+    relation_data = PaaSOpenSearchRelationData.model_validate(
+        {
+            "endpoints": OPENSEARCH_ENDPOINTS,
+            "username": "opensearch-client_7",
+            "password": "test-opensearch-password",
+            "tls-ca": OPENSEARCH_TLS_CA,
+            "index": "spring-boot-k8s",
+            "version": "2.19.0",
+        }
+    )
+
+    assert (
+        SpringOpenSearchRelation._generate_opensearch_env(relation_data)
+        == OPENSEARCH_SPRING_ENVIRONMENT
+    )
+
+
+@pytest.mark.parametrize(
+    "optional_relation_data",
+    [
+        pytest.param(
+            {"index": "spring-boot-k8s", "version": "2.19.0"}, id="with index and version"
+        ),
+        pytest.param({}, id="without index and version"),
+    ],
+)
+def test_opensearch_integration(
+    springboot_context,
+    base_state,
+    optional_relation_data,
+) -> None:
+    """
+    arrange: add an opensearch relation whose provider shares the credentials and the CA chain
+        in Juju secrets, with or without the optional index and version.
+    act: start the springboot charm and set springboot-app container to be ready.
+    assert: the springboot charm should be active with exactly the opensearch related properties.
+    """
+    base_state["relations"].append(
+        testing.Relation(
+            endpoint="opensearch",
+            interface="opensearch_client",
+            remote_app_data={
+                "endpoints": OPENSEARCH_ENDPOINTS,
+                **_add_opensearch_secrets(base_state),
+                **optional_relation_data,
+            },
+        )
+    )
+    state = testing.State(**base_state)
+
+    out = springboot_context.run(springboot_context.on.config_changed(), state)
+    assert out.unit_status == testing.ActiveStatus()
+
+    opensearch_relation = out.get_relations("opensearch")
+    assert len(opensearch_relation) == 1
+
+    assert _opensearch_properties(out) == OPENSEARCH_SPRING_ENVIRONMENT
+
+
+def test_opensearch_integration_requests_paas_config_settings(
+    springboot_context,
+    base_state,
+) -> None:
+    """
+    arrange: add a new opensearch relation to the base state of the leader unit.
+    act: run the relation-created event.
+    assert: the charm requests the index and the roles set in paas-config.yaml, and no entity.
+    """
+    relation = testing.Relation(endpoint="opensearch", interface="opensearch_client")
+    base_state["relations"].append(relation)
+    state = testing.State(**base_state)
+
+    out = springboot_context.run(springboot_context.on.relation_created(relation), state)
+
+    local_app_data = out.get_relation(relation.id).local_app_data
+    assert local_app_data["index"] == "spring-boot-k8s"
+    assert local_app_data["extra-user-roles"] == "admin"
+    assert "entity-type" not in local_app_data
+
+
+def test_opensearch_integration_when_ca_arrives_later(springboot_context, base_state) -> None:
+    """
+    arrange: add an opensearch relation whose provider has shared everything but the CA chain.
+    act: run the config-changed event, then the relation-changed event in which the provider
+        shares the CA chain.
+    assert: the charm is blocked until the CA chain arrives, then active with the opensearch
+        properties.
+    """
+    secret_fields = _add_opensearch_secrets(base_state)
+    shared_before_ca = {
+        "endpoints": OPENSEARCH_ENDPOINTS,
+        "index": "spring-boot-k8s",
+        "version": "2.19.0",
+        "secret-user": secret_fields["secret-user"],
+    }
+    relation = testing.Relation(
+        endpoint="opensearch",
+        interface="opensearch_client",
+        remote_app_data=shared_before_ca,
+        # OpenSearchRequires compares the provider data with the copy that it saved during the
+        # previous relation-changed event, so only the CA chain is new in the next one.
+        local_unit_data={"data": json.dumps(shared_before_ca)},
+    )
+    base_state["relations"].append(relation)
+    out = springboot_context.run(
+        springboot_context.on.config_changed(), testing.State(**base_state)
+    )
+    assert out.unit_status == testing.BlockedStatus(
+        "RelationDataError: OpenSearch relation data is not ready"
+    )
+
+    relation_with_ca = dataclasses.replace(
+        out.get_relation(relation.id),
+        remote_app_data={**shared_before_ca, "secret-tls": secret_fields["secret-tls"]},
+    )
+    other_relations = [other for other in out.relations if other.id != relation.id]
+    out = springboot_context.run(
+        springboot_context.on.relation_changed(relation_with_ca),
+        dataclasses.replace(out, relations=[*other_relations, relation_with_ca]),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    assert _opensearch_properties(out) == OPENSEARCH_SPRING_ENVIRONMENT
+
+
+def test_opensearch_integration_when_relation_broken(springboot_context, base_state) -> None:
+    """
+    arrange: run the config-changed event with a ready opensearch relation.
+    act: run the relation-broken event.
+    assert: the charm stays active and the opensearch properties are removed.
+    """
+    relation = testing.Relation(
+        endpoint="opensearch",
+        interface="opensearch_client",
+        remote_app_data={"endpoints": OPENSEARCH_ENDPOINTS, **_add_opensearch_secrets(base_state)},
+    )
+    base_state["relations"].append(relation)
+    out = springboot_context.run(
+        springboot_context.on.config_changed(), testing.State(**base_state)
+    )
+    assert _opensearch_properties(out) == OPENSEARCH_SPRING_ENVIRONMENT
+
+    out = springboot_context.run(
+        springboot_context.on.relation_broken(out.get_relation(relation.id)), out
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    assert _opensearch_properties(out) == {}
+
+
+def test_opensearch_integration_reruns_migrations_when_index_created(
+    springboot_context,
+    base_state,
+    tmp_path,
+) -> None:
+    """
+    arrange: run migrate.sh successfully without the opensearch relation.
+    act: add an opensearch relation and run the relation-changed event in which the provider
+        shares the credentials, which means that it has created the index.
+    assert: migrate.sh runs again, with the opensearch properties.
+    """
+    command = ["bash", "-eo", "pipefail", "migrate.sh"]
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    (app_dir / "migrate.sh").touch()
+    state_dir = tmp_path / "state"
+    state_dir.mkdir()
+    container = next(iter(base_state["containers"]))
+    base_state["containers"] = {
+        dataclasses.replace(
+            container,
+            # The state directory keeps the migration status between the two events.
+            mounts={
+                "app": testing.Mount(location="/app", source=app_dir),
+                "state": testing.Mount(location="/tmp/paas-charm", source=state_dir),
+            },
+            execs={testing.Exec(command)},
+        )
+    }
+    secret_fields = _add_opensearch_secrets(base_state)
+    out = springboot_context.run(
+        springboot_context.on.config_changed(), testing.State(**base_state)
+    )
+    assert out.unit_status == testing.ActiveStatus()
+
+    relation = testing.Relation(
+        endpoint="opensearch",
+        interface="opensearch_client",
+        remote_app_data={
+            "endpoints": OPENSEARCH_ENDPOINTS,
+            "index": "spring-boot-k8s",
+            **secret_fields,
+        },
+    )
+    out = springboot_context.run(
+        springboot_context.on.relation_changed(relation),
+        dataclasses.replace(out, relations={*out.relations, relation}),
+    )
+
+    assert out.unit_status == testing.ActiveStatus()
+    migrations = [
+        args for args in springboot_context.exec_history["app"] if args.command == command
+    ]
+    assert len(migrations) == 2
+    assert "opensearch.uris" not in migrations[0].environment
+    assert (
+        migrations[1].environment["opensearch.uris"]
+        == OPENSEARCH_SPRING_ENVIRONMENT["opensearch.uris"]
+    )
+
+
+@pytest.mark.parametrize(
+    "paas_config_kwargs",
+    [
+        pytest.param({"no_paas_config_file": True}, id="no paas-config.yaml"),
+        pytest.param(
+            {"paas_config_yaml": "port: 8080\n"},
+            id="paas-config.yaml without an opensearch section",
+        ),
+    ],
+)
+def test_opensearch_integration_without_paas_config_section(
+    context_factory,
+    base_state,
+    paas_config_kwargs,
+) -> None:
+    """
+    arrange: a springboot charm with no paas-config.yaml file, or with one that only sets the
+        port to its default, 8080.
+    act: run the config-changed event.
+    assert: the charm fails to initialize with PaasConfigError.
+    """
+    context = context_factory(SpringBootCharm, **paas_config_kwargs)
+
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**base_state))
+
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert "has no opensearch section" in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "opensearch_settings, invalid_setting",
+    [
+        pytest.param(
+            {"index": "", "extra-user-roles": "admin"}, "opensearch.index", id="empty index"
+        ),
+        pytest.param(
+            {"index": "spring-boot-k8s", "extra-user-roles": "default"},
+            "opensearch.extra-user-roles",
+            id="non admin role",
+        ),
+        pytest.param({"extra-user-roles": "admin"}, "opensearch.index", id="no index"),
+        pytest.param({"index": "spring-boot-k8s"}, "opensearch.extra-user-roles", id="no role"),
+        pytest.param(
+            {"index": "spring-boot-k8s", "extra_user_roles": "admin"},
+            "opensearch.extra_user_roles",
+            id="extra_user_roles instead of extra-user-roles",
+        ),
+        pytest.param(
+            {"index": "spring-boot-k8s", "extra-user-roles": "admin", "entity-type": "USER"},
+            "opensearch.entity-type",
+            id="unsupported setting",
+        ),
+    ],
+)
+def test_opensearch_integration_with_invalid_paas_config_settings(
+    context_factory,
+    base_state,
+    opensearch_settings,
+    invalid_setting,
+) -> None:
+    """
+    arrange: a springboot charm whose paas-config.yaml has invalid opensearch settings.
+    act: run the config-changed event.
+    assert: the charm fails to initialize with a PaasConfigError naming the invalid setting.
+    """
+    context = context_factory(
+        SpringBootCharm, paas_config_yaml=yaml.safe_dump({"opensearch": opensearch_settings})
+    )
+
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**base_state))
+
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert invalid_setting in str(exc_info.value.__cause__)

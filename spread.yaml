@@ -67,6 +67,7 @@ integration-suites:
       CONCIERGE: concierge-juju3.yaml
       PRE_SCRIPT/integrations_test_s3: s3-installation.sh
       PRE_SCRIPT/integrations_test_tracing: s3-installation.sh
+      PRE_SCRIPT/integrations_test_opensearch: opensearch-host-setup.sh
   tests/integration-juju4/:
     working-dir: ./
     summary: paas-charm smoke tests (Juju 4)
