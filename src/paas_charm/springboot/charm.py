@@ -19,11 +19,12 @@ from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
+from paas_charm.smtp import SmtpRelation
 from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
     from charmlibs.interfaces.openfga import OpenfgaProviderAppData
-    from charms.smtp_integrator.v0.smtp import SmtpRelationData
+    from charmlibs.interfaces.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
@@ -196,35 +197,6 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from SMTP relation data.
-
-    Args:
-        relation_data: The charm SMTP integration relation data.
-
-    Returns:
-        SMTP environment mappings if SMTP relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    env = {
-        "spring.mail.host": relation_data.host,
-        "spring.mail.port": str(relation_data.port),
-        "spring.mail.properties.mail.smtp.auth": str(
-            relation_data.auth_type.value != "none"
-        ).lower(),
-        "spring.mail.properties.mail.smtp.starttls.enable": str(
-            relation_data.transport_security.value == "starttls"
-        ).lower(),
-    }
-    if relation_data.user:
-        env["spring.mail.username"] = f"{relation_data.user}@{relation_data.domain}"
-    if relation_data.password:
-        env["spring.mail.password"] = relation_data.password
-    return env
-
-
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
@@ -377,6 +349,39 @@ class SpringSamlRelation(SamlRelation):
         return env
 
 
+class SpringSmtpRelation(SmtpRelation):
+    """Modified `SmtpRelation` to produce environment vars for Spring framework."""
+
+    @staticmethod
+    def _generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
+        """Generate environment variable from SMTP relation data.
+
+        Args:
+            relation_data: The charm SMTP integration relation data.
+
+        Returns:
+            SMTP environment mappings if SMTP relation data is available, empty
+            dictionary otherwise.
+        """
+        if not relation_data:
+            return {}
+        env = {
+            "spring.mail.host": relation_data.host,
+            "spring.mail.port": str(relation_data.port),
+            "spring.mail.properties.mail.smtp.auth": str(
+                relation_data.auth_type.value != "none"
+            ).lower(),
+            "spring.mail.properties.mail.smtp.starttls.enable": str(
+                relation_data.transport_security.value == "starttls"
+            ).lower(),
+        }
+        if relation_data.user:
+            env["spring.mail.username"] = f"{relation_data.user}@{relation_data.domain}"
+        if relation_data.password:
+            env["spring.mail.password"] = relation_data.password
+        return env
+
+
 class SpringBootApp(App):
     """Spring Boot application with custom environment variable mappers.
 
@@ -384,7 +389,6 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
         generate_oauth_env: Maps Oauth connection information to environment variables.
@@ -393,7 +397,6 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
@@ -431,7 +434,12 @@ class Charm(PaasCharm):
     """
 
     framework_config_class = SpringBootConfig
-    builtin_relations = [SpringValkeyRelation, SpringS3Relation, SpringSamlRelation]
+    builtin_relations = [
+        SpringValkeyRelation,
+        SpringS3Relation,
+        SpringSamlRelation,
+        SpringSmtpRelation,
+    ]
     paas_config_framework_fields = {
         "server_port": "port",
     }

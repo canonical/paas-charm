@@ -12,13 +12,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
-from charms.saml_integrator.v0.saml import SamlEndpoint
-from charms.smtp_integrator.v0.smtp import (
+from charmlibs.interfaces.smtp import (
     AuthType,
     SmtpRelationData,
-    SmtpRequires,
     TransportSecurity,
 )
+from charms.saml_integrator.v0.saml import SamlEndpoint
 from dpcharmlibs.interfaces import ValkeyResponseModel
 from ops import ActiveStatus, BlockedStatus, RelationMeta, RelationRole, testing
 
@@ -39,6 +38,7 @@ from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
+from paas_charm.smtp import SmtpRelation
 from paas_charm.tracing import PaaSTracingRelationData
 from paas_charm.valkey import ValkeyRelation
 from tests.unit.flask.constants import (
@@ -266,32 +266,6 @@ def _test_integrations_env_parameters():
         ),
         pytest.param(
             IntegrationsState(
-                smtp=SmtpRelationData(
-                    host="smtp.example.com",
-                    port=587,
-                    user="testingusername",
-                    password="testingpassword",
-                    password_id=None,
-                    auth_type=AuthType.PLAIN,
-                    transport_security=TransportSecurity.STARTTLS,
-                    domain="example.com",
-                    skip_ssl_verify=False,
-                )
-            ),
-            {
-                "SMTP_AUTH_TYPE": "plain",
-                "SMTP_DOMAIN": "example.com",
-                "SMTP_HOST": "smtp.example.com",
-                "SMTP_PASSWORD": "testingpassword",
-                "SMTP_PORT": "587",
-                "SMTP_SKIP_SSL_VERIFY": "False",
-                "SMTP_TRANSPORT_SECURITY": "starttls",
-                "SMTP_USER": "testingusername",
-            },
-            id="SMTP",
-        ),
-        pytest.param(
-            IntegrationsState(
                 tracing=PaaSTracingRelationData(
                     endpoint="http://localhost:4318/tracing",
                     service_name="testing-application-name",
@@ -428,6 +402,32 @@ def test_generate_integration_environments(
             },
             id="SAML",
         ),
+        pytest.param(
+            SmtpRelation._generate_smtp_env(
+                SmtpRelationData(
+                    host="smtp.example.com",
+                    port=587,
+                    user="testingusername",
+                    password="testingpassword",
+                    password_id=None,
+                    auth_type=AuthType.PLAIN,
+                    transport_security=TransportSecurity.STARTTLS,
+                    domain="example.com",
+                    skip_ssl_verify=False,
+                )
+            ),
+            {
+                "SMTP_AUTH_TYPE": "plain",
+                "SMTP_DOMAIN": "example.com",
+                "SMTP_HOST": "smtp.example.com",
+                "SMTP_PASSWORD": "testingpassword",
+                "SMTP_PORT": "587",
+                "SMTP_SKIP_SSL_VERIFY": "False",
+                "SMTP_TRANSPORT_SECURITY": "starttls",
+                "SMTP_USER": "testingusername",
+            },
+            id="SMTP",
+        ),
     ],
 )
 def test_custom_relation_environments(relation_env, expected_env):
@@ -520,34 +520,6 @@ def test_integrations_env(
         pytest.param({}, NoneType, id="empty"),
         pytest.param(
             {
-                "smtp": RelationMeta(
-                    role=RelationRole.requires,
-                    relation_name="smtp",
-                    raw={"interface": "smtp", "limit": 1},
-                )
-            },
-            SmtpRequires,
-            id="smtp",
-        ),
-    ],
-)
-def test_init_smtp(requires, expected_type):
-    """
-    arrange: Get the mock requires.
-    act: Run the _init_smtp function.
-    assert: It should return SmtpRequires when there is smtp integration, none otherwise.
-    """
-    charm = unittest.mock.MagicMock()
-    result = paas_charm.charm.PaasCharm._init_smtp(self=charm, requires=requires)
-    assert isinstance(result, expected_type)
-
-
-@pytest.mark.parametrize(
-    "requires, expected_type",
-    [
-        pytest.param({}, NoneType, id="empty"),
-        pytest.param(
-            {
                 "http-proxy": RelationMeta(
                     role=RelationRole.requires,
                     relation_name="http-proxy",
@@ -626,12 +598,10 @@ def _test_missing_required_other_integrations_parameters():
     charm_without_relation = unittest.mock.MagicMock()
     charm_with_saml = unittest.mock.MagicMock()
     charm_with_tracing = unittest.mock.MagicMock()
-    charm_with_smtp = unittest.mock.MagicMock()
 
     charm_state_without_relation = unittest.mock.MagicMock()
     charm_state_with_saml = unittest.mock.MagicMock()
     charm_state_with_tracing = unittest.mock.MagicMock()
-    charm_state_with_smtp = unittest.mock.MagicMock()
 
     optional_saml_requires = {
         "saml": RelationMeta(
@@ -663,27 +633,11 @@ def _test_missing_required_other_integrations_parameters():
         )
     }
 
-    optional_smtp_requires = {
-        "smtp": RelationMeta(
-            role=RelationRole.requires,
-            relation_name="smtp",
-            raw={"interface": "smtp", "optional": True, "limit": 1},
-        )
-    }
-    not_optional_smtp_requires = {
-        "smtp": RelationMeta(
-            role=RelationRole.requires,
-            relation_name="smtp",
-            raw={"interface": "smtp", "optional": False, "limit": 1},
-        )
-    }
     charm_with_saml._saml.return_value = True
     charm_with_tracing._tracing.return_value = True
-    charm_with_smtp._smtp.return_value = True
 
     charm_state_with_saml.integrations.return_value.saml_parameters.return_value = True
     charm_state_with_tracing.integrations.return_value.tempo_parameters.return_value = True
-    charm_state_with_smtp.integrations.return_value.smtp_parameters.return_value = True
 
     return [
         pytest.param(
@@ -741,34 +695,6 @@ def _test_missing_required_other_integrations_parameters():
             charm_state_with_tracing,
             "",
             id="not missing optional tracing",
-        ),
-        pytest.param(
-            charm_with_smtp,
-            not_optional_smtp_requires,
-            charm_state_without_relation,
-            "smtp",
-            id="missing not optional smtp",
-        ),
-        pytest.param(
-            charm_with_smtp,
-            optional_smtp_requires,
-            charm_state_without_relation,
-            "",
-            id="missing optional smtp",
-        ),
-        pytest.param(
-            charm_with_smtp,
-            not_optional_smtp_requires,
-            charm_state_with_smtp,
-            "",
-            id="not missing not optional smtp",
-        ),
-        pytest.param(
-            charm_with_smtp,
-            optional_smtp_requires,
-            charm_state_with_smtp,
-            "",
-            id="not missing optional smtp",
         ),
         pytest.param(
             charm_without_relation,
@@ -843,6 +769,41 @@ def test_smtp_relation(
     assert service_env["SMTP_PORT"] == SMTP_RELATION_DATA_EXAMPLE["port"]
     assert service_env["SMTP_SKIP_SSL_VERIFY"] == SMTP_RELATION_DATA_EXAMPLE["skip_ssl_verify"]
     assert service_env.get("SMTP_TRANSPORT_SECURITY") is None
+
+
+@pytest.mark.parametrize(
+    "charm_type",
+    [
+        pytest.param(FlaskCharm, id="flask"),
+        pytest.param(DjangoCharm, id="django"),
+        pytest.param(FastAPICharm, id="fastapi"),
+        pytest.param(GoCharm, id="go"),
+        pytest.param(ExpressJSCharm, id="expressjs"),
+    ],
+)
+def test_smtp_relation_invalid_data(
+    charm_type: type,
+    context_factory,
+    framework_state_factory,
+):
+    """
+    arrange: Integrate the charm with an smtp-integrator sending an invalid port.
+    act: Run a reconciling hook (config changed).
+    assert: The charm is blocked on the SMTP relation instead of failing the hook.
+    """
+    relation = testing.Relation(
+        endpoint="smtp",
+        interface="smtp",
+        remote_app_data={**SMTP_RELATION_DATA_EXAMPLE, "port": "invalid"},
+    )
+    state_dict = framework_state_factory(charm_type)
+    state_dict["relations"].append(relation)
+    context = context_factory(charm_type)
+    out = context.run(context.on.config_changed(), testing.State(**state_dict))
+
+    assert isinstance(out.unit_status, testing.BlockedStatus)
+    assert "Invalid SmtpRelationData" in out.unit_status.message
+    assert "port" in out.unit_status.message
 
 
 @pytest.mark.parametrize(
