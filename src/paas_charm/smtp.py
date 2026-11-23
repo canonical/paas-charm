@@ -95,5 +95,5 @@ class SmtpRelation(CustomRelation):
                 ("SMTP_DOMAIN", relation_data.domain),
                 ("SMTP_SKIP_SSL_VERIFY", str(relation_data.skip_ssl_verify)),
             )
-            if v is not None and v not in ("none")
+            if v is not None and v not in ("", "none")
         }
