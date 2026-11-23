@@ -25,7 +25,6 @@ from paas_charm.utils import build_validation_error_message, config_metadata
 # This is just for type checking, no need to cover this code.
 if typing.TYPE_CHECKING:  # pragma: nocover
     from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
-    from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
     from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
@@ -182,14 +181,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                smtp=(
-                    smtp_data
-                    if (
-                        integration_requirers.smtp
-                        and (smtp_data := integration_requirers.smtp.get_relation_data())
-                    )
-                    else None
-                ),
                 tracing=(
                     integration_requirers.tracing.to_relation_data()
                     if integration_requirers.tracing
@@ -313,7 +304,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
         tracing: TracingEndpointRequire object.
-        smtp: Smtp requirer object.
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
         http_proxy: PaaSHttpProxyRequirer object.
@@ -323,7 +313,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
-    smtp: "SmtpRequires | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
     http_proxy: "PaaSHttpProxyRequirer | None" = None
 
@@ -338,7 +327,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        smtp: SMTP parameters.
         tracing: Tracing relation data.
         oauth: OAuth relation data.
         http_proxy: HTTP proxy relation data.
@@ -347,7 +335,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    smtp: "SmtpRelationData | None" = None
     tracing: "PaaSTracingRelationData | None" = None
     oauth: "PaaSOAuthRelationData | None" = None
     http_proxy: "ProxyConfig | None" = None

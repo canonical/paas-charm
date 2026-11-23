@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* refactor: Move the SMTP relation to the custom relations framework and use the
+  `charmlibs-interfaces-smtp` PyPI package instead of the `smtp_integrator` Charmhub library.
+  A built-in `smtp` endpoint declared with an interface other than `smtp` now raises
+  `InvalidRelationInterfaceError`.
+
 * fix: **Breaking:** Export traces with the signal specific `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
   (including the `/v1/traces` path) and `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/protobuf` instead
   of the generic `OTEL_EXPORTER_OTLP_ENDPOINT`, so metrics and logs are no longer sent to Tempo.

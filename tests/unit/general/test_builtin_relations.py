@@ -10,6 +10,7 @@ import pytest
 from paas_charm.exceptions import RelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError, S3Relation
 from paas_charm.saml import InvalidSAMLRelationDataError, SamlRelation
+from paas_charm.smtp import SmtpRelation
 from paas_charm.valkey import (
     InvalidValkeyRelationDataError,
     ValkeyMultipleRelationsNotSupportedError,
@@ -214,3 +215,42 @@ def test_saml_relation_ensure_ready_wraps_invalid_data():
     assert type(exc.value) is RelationDataError
     assert exc.value.relation == "saml"
     assert exc.value.__cause__ is error
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_smtp_relation_ensure_ready_with_data(optional):
+    """
+    arrange: A SmtpRelation containing SMTP data.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), SmtpRelation, "smtp", optional=optional)
+    relation._requirer = MagicMock()
+    assert relation.ensure_ready() is None
+    relation._requirer.get_relation_data.assert_called_once_with()
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_smtp_relation_not_ready_without_data(optional):
+    """
+    arrange: A configured SmtpRelation with no SMTP data.
+    act: Call ensure_ready.
+    assert: Raises RelationDataError identifying the SMTP endpoint.
+    """
+    relation = _make_relation(MagicMock(), SmtpRelation, "smtp", optional=optional)
+    relation._requirer = MagicMock()
+    relation._requirer.get_relation_data.return_value = None
+    with pytest.raises(RelationDataError, match="SMTP relation data is not ready") as exc:
+        relation.ensure_ready()
+    assert exc.value.relation == "smtp"
+
+
+def test_smtp_relation_ensure_ready_when_not_configured():
+    """
+    arrange: A SmtpRelation without a configured requirer.
+    act: Call ensure_ready and gen_environment.
+    assert: ensure_ready returns None and no environment is generated.
+    """
+    relation = _make_relation(MagicMock(), SmtpRelation, "smtp")
+    assert relation.ensure_ready() is None
+    assert relation.gen_environment() == {}
