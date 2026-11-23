@@ -11,6 +11,7 @@ import jubilant
 import pytest
 import requests
 from saml_test_helper import SamlK8sTestHelper
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ def test_saml_integration(
     juju: jubilant.Juju,
     s3_configuration,
     s3_credentials,
+    session_with_retry: requests.Session,
 ):
     """
     arrange: Integrate the Charm with saml-integrator, with a real SP.
@@ -68,15 +70,15 @@ def test_saml_integration(
     juju.integrate(saml_integrator_app_name, app.name)
 
     juju.wait(
-        lambda status: jubilant.all_active(status, saml_integrator_app_name, app.name),
+        lambda status: jubilant.all_active(status, saml_integrator_app_name, app.name)
+        and jubilant.all_agents_idle(status, saml_integrator_app_name, app.name),
         timeout=600,
+        successes=5,
     )
 
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
-    response = requests.get(f"http://{unit_ip}:{port}/env", timeout=5)
-    assert response.status_code == 200
-    env = response.json()
+    env = _get_saml_env_patiently(session_with_retry, unit_ip, port)
     assert env["SAML_ENTITY_ID"] == saml_helper.entity_id
     assert env["SAML_METADATA_URL"] == saml_helper.metadata_url
     entity_id_url = urllib.parse.urlparse(saml_helper.entity_id)
@@ -84,3 +86,32 @@ def test_saml_integration(
         entity_id_url._replace(path="sso")
     )
     assert env["SAML_SIGNING_CERTIFICATE"] in saml_helper.CERTIFICATE.replace("\n", "")
+
+
+@retry(
+    retry=retry_if_exception_type((KeyError, requests.exceptions.ConnectionError)),
+    stop=stop_after_attempt(10),
+    wait=wait_fixed(3),
+    reraise=True,
+)
+def _get_saml_env_patiently(session: requests.Session, unit_ip: str, port: int) -> dict:
+    """Fetch the workload env vars, retrying while the SAML env vars propagate.
+
+    Juju may report the units as active and idle slightly before the workload
+    has finished restarting with the updated SAML environment variables, so
+    the "/env" endpoint is retried until the SAML keys are present.
+
+    Args:
+        session: the requests session to use for the GET request.
+        unit_ip: the IP address of the unit to query.
+        port: the port on which the workload is listening.
+
+    Returns:
+        The decoded JSON body of the "/env" endpoint response.
+    """
+    response = session.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    assert response.status_code == 200
+    env = response.json()
+    if "SAML_ENTITY_ID" not in env:
+        raise KeyError("SAML_ENTITY_ID")
+    return env

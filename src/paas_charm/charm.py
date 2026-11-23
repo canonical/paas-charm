@@ -11,7 +11,6 @@ import typing
 import ops
 from charmlibs.interfaces.openfga import OpenFGARequires
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
-from charms.smtp_integrator.v0.smtp import SmtpRequires
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 from ops import RelationMeta
 from ops.model import Container
@@ -47,6 +46,7 @@ from paas_charm.relations import Context, CustomRelation
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.secret_key import SecretKeyStorage
+from paas_charm.smtp import SmtpRelation
 from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
@@ -73,7 +73,12 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
     framework_config_class: type[BaseModel]
     paas_config_framework_fields: dict[str, str] = {}
     custom_relations: list[type[CustomRelation]] = []
-    builtin_relations: list[type[CustomRelation]] = [ValkeyRelation, S3Relation, SamlRelation]
+    builtin_relations: list[type[CustomRelation]] = [
+        ValkeyRelation,
+        S3Relation,
+        SamlRelation,
+        SmtpRelation,
+    ]
 
     @property
     @abc.abstractmethod
@@ -126,7 +131,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         requires: dict[str, RelationMeta] = self.framework.meta.requires
         self._rabbitmq = self._init_rabbitmq(requires)
         self._tracing = self._init_tracing(requires)
-        self._smtp = self._init_smtp(requires)
         self._openfga = self._init_openfga(requires)
         self._http_proxy = self._init_http_proxy(requires)
 
@@ -274,29 +278,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 _tracing.on.endpoint_removed, self._reconcile_without_migrations
             )
         return _tracing
-
-    def _init_smtp(self, requires: dict[str, RelationMeta]) -> "SmtpRequires | None":
-        """Initialize the Smtp relation if its required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the Smtp relation or None
-        """
-        _smtp = None
-        if "smtp" in requires and requires["smtp"].interface_name == "smtp":
-            try:
-                _smtp = SmtpRequires(self)
-                self.framework.observe(
-                    _smtp.on.smtp_data_available, self._reconcile_without_migrations
-                )
-            except NameError:
-                logger.exception(
-                    "Missing charm library, please run "
-                    "`charmcraft fetch-lib charms.smtp_integrator.v0.smtp`"
-                )
-        return _smtp
 
     def _init_openfga(self, requires: dict[str, RelationMeta]) -> "OpenFGARequires | None":
         """Initialize the OpenFGA relations if its required.
@@ -615,9 +596,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         ):
             yield "tracing"
 
-        if self._smtp and not charm_state.integrations.smtp and not requires["smtp"].optional:
-            yield "smtp"
-
         if self._oauth and not charm_state.integrations.oauth:
             oauth_endpoint_name = get_endpoints_by_interface_name(requires, "oauth")[0][0]
             if not requires[oauth_endpoint_name].optional:
@@ -731,7 +709,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 databases=self._database_requirers,
                 rabbitmq=self._rabbitmq,
                 tracing=self._tracing,
-                smtp=self._smtp,
                 openfga=self._openfga,
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,

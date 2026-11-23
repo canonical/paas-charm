@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -522,6 +522,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0c/fc/213675ddf81ab88b9157c4989ad68f8e840023eac5f0680e7ed228841983/charmlibs_interfaces_openfga-1.0.0.tar.gz", hash = "sha256:e168bd4155c913dd24ecfba8a9e11894301d5b436eff4c4bd6fe368dd5581415", size = 29600, upload-time = "2026-07-16T23:59:09.204Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b0/9c/14a36d11d0719fee063e9c80e3c1d942e8593e3256961fe5c261bf109ea1/charmlibs_interfaces_openfga-1.0.0-py3-none-any.whl", hash = "sha256:4e18861a34c4bda6d3f2a11c05d95633a22ee48f858ebc0475bc6ea076b73282", size = 6086, upload-time = "2026-07-16T23:59:07.844Z" },
+]
+
+[[package]]
+name = "charmlibs-interfaces-smtp"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "email-validator" },
+    { name = "ops" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/d4/ff8479143c4441c66b1d5b6da94a0f97734f8a518450b14fd691a51d24a9/charmlibs_interfaces_smtp-1.0.0.tar.gz", hash = "sha256:fbc7cdc7f5cabec207cfa6287c70a708975dd4e305d83dc41ba9c27ff706cc8c", size = 38969, upload-time = "2026-11-12T22:45:18.577Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/ef/af0fbf7331e8cc04e3b0fd6860413efbfc96ebcbbb80d2512cd95a79fc65/charmlibs_interfaces_smtp-1.0.0-py3-none-any.whl", hash = "sha256:3c66244c93d209eab130108a0fcab450ec99ff7d20497343da61290db2e6e95a", size = 8291, upload-time = "2026-11-12T22:45:17.243Z" },
 ]
 
 [[package]]
@@ -2100,11 +2114,12 @@ wheels = [
 
 [[package]]
 name = "paas-charm"
-version = "2.0b1"
+version = "2.0b2"
 source = { editable = "." }
 dependencies = [
     { name = "charmlibs-interfaces-oauth" },
     { name = "charmlibs-interfaces-openfga" },
+    { name = "charmlibs-interfaces-smtp" },
     { name = "charmlibs-interfaces-tracing" },
     { name = "cosl" },
     { name = "dpcharmlibs-interfaces" },
@@ -2166,6 +2181,7 @@ unit = [
 requires-dist = [
     { name = "charmlibs-interfaces-oauth", specifier = "==1.2.0" },
     { name = "charmlibs-interfaces-openfga", specifier = "==1.0.0" },
+    { name = "charmlibs-interfaces-smtp", specifier = "==1.0.0" },
     { name = "charmlibs-interfaces-tracing", specifier = "==1.0.0" },
     { name = "cosl", specifier = "==1.11.3" },
     { name = "dpcharmlibs-interfaces", specifier = "==1.2.2" },

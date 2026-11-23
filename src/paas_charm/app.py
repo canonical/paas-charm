@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from charmlibs.interfaces.openfga import OpenfgaProviderAppData
-    from charms.smtp_integrator.v0.smtp import SmtpRelationData
 
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
@@ -147,34 +146,6 @@ def generate_rabbitmq_env(
     return envvars
 
 
-def generate_smtp_env(relation_data: "SmtpRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from SMTP relation data.
-
-    Args:
-        relation_data: The charm SMTP integration relation data.
-
-    Returns:
-        SMTP environment mappings if SMTP relation data is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    return {
-        k: v
-        for k, v in (
-            ("SMTP_HOST", relation_data.host),
-            ("SMTP_PORT", str(relation_data.port)),
-            ("SMTP_USER", relation_data.user),
-            ("SMTP_PASSWORD", relation_data.password),
-            ("SMTP_AUTH_TYPE", relation_data.auth_type.value),
-            ("SMTP_TRANSPORT_SECURITY", relation_data.transport_security.value),
-            ("SMTP_DOMAIN", relation_data.domain),
-            ("SMTP_SKIP_SSL_VERIFY", str(relation_data.skip_ssl_verify)),
-        )
-        if v is not None and v not in ("none")
-    }
-
-
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
     """Generate environment variable from TempoRelationData.
 
@@ -279,7 +250,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_smtp_env: Maps STMP connection information to environment variables.
         generate_tempo_env: Maps tempo tracing connection information to environment variables.
         generate_prometheus_env: Maps prometheus connection information to environment variables.
         generate_oauth_env: Maps OAuth connection information to environment variables.
@@ -288,7 +258,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_smtp_env = staticmethod(generate_smtp_env)
     generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
@@ -576,7 +545,6 @@ class App:  # pylint: disable=too-many-instance-attributes
             db_relation_data,
         ) in self._charm_state.integrations.databases_relation_data.items():
             env.update(self.generate_db_env(database_name, db_relation_data))
-        env.update(self.generate_smtp_env(relation_data=self._charm_state.integrations.smtp))
         env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
         env.update(self.generate_prometheus_env(self._workload_config))
         env.update(

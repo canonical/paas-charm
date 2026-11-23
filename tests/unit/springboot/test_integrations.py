@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from ops import testing
 
-from paas_charm.springboot.charm import SpringValkeyRelation, generate_smtp_env
+from paas_charm.springboot.charm import SpringSmtpRelation, SpringValkeyRelation
 
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
@@ -20,7 +20,7 @@ def test_integration_mappers_without_relation_data() -> None:
     act: generate the Spring Boot integration environment variables.
     assert: no environment variables are generated.
     """
-    assert not generate_smtp_env()
+    assert not SpringSmtpRelation._generate_smtp_env()
     assert not SpringValkeyRelation._generate_valkey_env()
 
 
