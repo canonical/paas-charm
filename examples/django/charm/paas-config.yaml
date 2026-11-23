@@ -23,3 +23,7 @@ prometheus:
         role: scheduler
       targets:
       - '@scheduler:8082'
+relations:
+  oidc:
+    redirect-path: /callback
+    scopes: [openid, profile, email]

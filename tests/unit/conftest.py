@@ -231,16 +231,6 @@ def _add_oauth_metadata(charmcraft: dict) -> None:
     }
     charmcraft["config"]["options"].update(
         {
-            "google-redirect-path": {
-                "default": "/callback",
-                "description": "The OAuth redirect path.",
-                "type": "string",
-            },
-            "google-scopes": {
-                "default": "openid profile email",
-                "description": "Space-separated OAuth scopes.",
-                "type": "string",
-            },
             "google-user-name-attribute": {
                 "default": "email",
                 "description": "The OAuth user name attribute.",

@@ -29,15 +29,18 @@ from paas_charm.databases import make_database_requirers
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
     CustomRelationError,
+    PaasConfigError,
     RelationDataError,
 )
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
 from paas_charm.paas_config import (
+    CONFIG_FILE_NAME,
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
     ConfigOptions,
     LoggingFormat,
+    OAuthRelationConfig,
     read_paas_config,
 )
 from paas_charm.peers import Peers
@@ -144,6 +147,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             port=self._workload_config.port,
             strip_prefix=True,
         )
+        self._validate_paas_config_relations(requires)
         self._oauth = self._init_oauth(requires)
 
         if self._paas_config.framework_logging_format != LoggingFormat.NONE:
@@ -296,6 +300,26 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
         return openfga
 
+    def _validate_paas_config_relations(self, requires: dict[str, RelationMeta]) -> None:
+        """Validate that paas-config.yaml relation settings target supported endpoints.
+
+        Args:
+            requires: relation requires dictionary from metadata
+
+        Raises:
+            PaasConfigError: If an endpoint is unknown or doesn't use the oauth interface.
+        """
+        for endpoint in self._paas_config.relations:  # pylint: disable=not-an-iterable
+            if endpoint not in requires:
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: relations references unknown endpoint {endpoint!r}"
+                )
+            if requires[endpoint].interface_name != "oauth":
+                raise PaasConfigError(
+                    f"{CONFIG_FILE_NAME}: relations.{endpoint} is not supported: only endpoints "
+                    "using the 'oauth' interface accept settings"
+                )
+
     def _init_oauth(self, requires: dict[str, RelationMeta]) -> "PaaSOAuthRequirer | None":
         """Initialize the OAuth relation if its required.
 
@@ -315,6 +339,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             base_url=self._base_url,
             relation_name=endpoint_name,
             charm_config=self.config,
+            oauth_config=self._paas_config.relations.get(endpoint_name, OAuthRelationConfig()),
         )
         self.framework.observe(_oauth.on.oauth_info_changed, self._reconcile_without_migrations)
         self.framework.observe(_oauth.on.oauth_info_removed, self._reconcile_without_migrations)
@@ -715,6 +740,9 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             ),
             custom_relations=self._custom_relations,
             base_url=self._base_url,
+            oauth_configs=(
+                {self._oauth.relation_name: self._oauth.oauth_config} if self._oauth else None
+            ),
         )
 
     @property

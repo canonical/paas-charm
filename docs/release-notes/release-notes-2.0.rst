@@ -285,6 +285,16 @@ Boot) may invalidate existing sessions. To provide your own key, set the
 ``app-secret-key`` option to a Juju secret ID.
 (`Pull request #345 <https://github.com/canonical/paas-charm/pull/345>`_)
 
+OAuth redirect path and scopes moved to ``paas-config.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``<endpoint>-redirect-path`` and ``<endpoint>-scopes`` configuration options
+are no longer read. Set ``redirect-path`` and ``scopes`` under
+``relations.<endpoint>`` in ``paas-config.yaml`` instead, and remove the options
+from ``charmcraft.yaml``. ``scopes`` is a YAML list instead of a space-separated
+string. The workload still receives the ``<PREFIX>_<ENDPOINT>_REDIRECT_PATH`` and
+``<PREFIX>_<ENDPOINT>_SCOPES`` environment variables. See :ref:`ref_paas_config`.
+
 ``secret-storage`` relation renamed to ``peers``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

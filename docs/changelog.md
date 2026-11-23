@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* breaking: Move the static OAuth `<endpoint>-redirect-path` and `<endpoint>-scopes` charm
+  configuration options to `relations.<endpoint>.redirect-path` and
+  `relations.<endpoint>.scopes` in `paas-config.yaml`. `scopes` is now a YAML list that must
+  include `openid`, and invalid values are rejected when `paas-config.yaml` is read. The
+  workload still receives the `<PREFIX>_<ENDPOINT>_REDIRECT_PATH` and
+  `<PREFIX>_<ENDPOINT>_SCOPES` environment variables.
+
 ## 2.0.0b2 - 2026-11-23
 
 * refactor: Move the SMTP relation to the custom relations framework and use the

@@ -237,6 +237,24 @@ Update relation endpoints
 The ``secret-storage`` peer relation is renamed to ``peers``. Update any
 tooling that references the old endpoint or interface name.
 
+Move OAuth settings to ``paas-config.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``<endpoint>-redirect-path`` and ``<endpoint>-scopes`` configuration
+options are no longer read. Remove them from ``charmcraft.yaml`` and set the
+values in ``paas-config.yaml`` instead, with scopes as a YAML list:
+
+.. code-block:: yaml
+
+   relations:
+     oidc:
+       redirect-path: /callback
+       scopes: [openid, profile, email]
+
+Remove any ``juju config`` calls, Terraform, or bundle settings that set the
+old options. The workload still receives the same environment variables.
+See :ref:`ref_paas_config` for details.
+
 Build and refresh all artifacts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

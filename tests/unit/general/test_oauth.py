@@ -10,6 +10,7 @@
 from secrets import token_hex
 
 import pytest
+import yaml
 from ops import testing
 
 from examples.django.charm.src.charm import DjangoCharm
@@ -18,7 +19,28 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
+from paas_charm.exceptions import PaasConfigError
+from paas_charm.paas_config import (
+    CONFIG_FILE_NAME,
+    OAuthRelationConfig,
+    PaasConfig,
+    read_paas_config,
+)
 from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
+
+
+def _oauth_paas_config(root) -> PaasConfig:
+    """Return the example paas-config.yaml with custom OAuth settings for the oidc endpoint."""
+    return read_paas_config(root).model_copy(
+        update={
+            "relations": {
+                "oidc": OAuthRelationConfig(
+                    redirect_path="/oauth/callback",
+                    scopes=["openid", "profile", "email", "phone"],
+                )
+            }
+        }
+    )
 
 
 @pytest.mark.parametrize(
@@ -28,10 +50,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             "flask_base_state",
             FlaskCharm,
             "flask",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             {
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -56,10 +75,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             "django_base_state",
             DjangoCharm,
             "django",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
                 "DJANGO_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -97,8 +113,6 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             FastAPICharm,
             "fastapi",
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
             "/bin/python3 -m uvicorn app:app",
@@ -144,8 +158,6 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             SpringBootCharm,
             "spring-boot",
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
             'bash -c "java -jar *.jar"',
@@ -199,10 +211,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             "go_base_state",
             GoCharm,
             "go",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "go-app",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -239,10 +248,7 @@ from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
             "expressjs_base_state",
             ExpressJSCharm,
             "expressjs",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "npm start",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -287,6 +293,7 @@ def test_oauth_config_wrong_relation_order(
     env: dict,
     request,
     context_factory,
+    charm_root,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -305,7 +312,7 @@ def test_oauth_config_wrong_relation_order(
     base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
 
     state = testing.State(**base_state)
-    context = context_factory(charm)
+    context = context_factory(charm, paas_config=_oauth_paas_config(charm_root(charm)))
     out = context.run(context.on.relation_changed(oauth_relation), state)
 
     assert out.unit_status == testing.BlockedStatus(
@@ -337,10 +344,7 @@ def test_oauth_config_wrong_relation_order(
             "flask_base_state",
             FlaskCharm,
             "flask",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py app:app -k [ sync ]",
             {
                 "FLASK_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -366,8 +370,6 @@ def test_oauth_config_wrong_relation_order(
             SpringBootCharm,
             "spring-boot",
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
             'bash -c "java -jar *.jar"',
@@ -421,10 +423,7 @@ def test_oauth_config_wrong_relation_order(
             "django_base_state",
             DjangoCharm,
             "django",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "/bin/python3 -m gunicorn -c /var/lib/gunicorn/gunicorn.conf.py django_app.wsgi:application -k [ sync ]",
             {
                 "DJANGO_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -462,8 +461,6 @@ def test_oauth_config_wrong_relation_order(
             FastAPICharm,
             "fastapi",
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
             "/bin/python3 -m uvicorn app:app",
@@ -508,10 +505,7 @@ def test_oauth_config_wrong_relation_order(
             "go_base_state",
             GoCharm,
             "go",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "go-app",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -548,10 +542,7 @@ def test_oauth_config_wrong_relation_order(
             "expressjs_base_state",
             ExpressJSCharm,
             "expressjs",
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             "npm start",
             {
                 "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
@@ -596,6 +587,7 @@ def test_oauth_config_correct_relation_order(
     env: dict,
     request,
     context_factory,
+    charm_root,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -612,7 +604,7 @@ def test_oauth_config_correct_relation_order(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = context_factory(charm)
+    context = context_factory(charm, paas_config=_oauth_paas_config(charm_root(charm)))
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.ActiveStatus()
 
@@ -641,27 +633,19 @@ def test_oauth_config_correct_relation_order(
         pytest.param(
             "flask_base_state",
             FlaskCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="flask",
         ),
         pytest.param(
             "django_base_state",
             DjangoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="django",
         ),
         pytest.param(
             "fastapi_base_state",
             FastAPICharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
             id="fastapi",
@@ -670,8 +654,6 @@ def test_oauth_config_correct_relation_order(
             "spring_boot_base_state",
             SpringBootCharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
             id="spring-boot",
@@ -679,25 +661,19 @@ def test_oauth_config_correct_relation_order(
         pytest.param(
             "go_base_state",
             GoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="go",
         ),
         pytest.param(
             "expressjs_base_state",
             ExpressJSCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="expressjs",
         ),
     ],
 )
 def test_oauth_config_remove_ingress_integration_should_block(
-    base_state: dict, charm, config: dict, request, context_factory
+    base_state: dict, charm, config: dict, request, context_factory, charm_root
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -714,7 +690,7 @@ def test_oauth_config_remove_ingress_integration_should_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = context_factory(charm)
+    context = context_factory(charm, paas_config=_oauth_paas_config(charm_root(charm)))
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -743,27 +719,19 @@ def test_oauth_config_remove_ingress_integration_should_block(
         pytest.param(
             "flask_base_state",
             FlaskCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="flask",
         ),
         pytest.param(
             "django_base_state",
             DjangoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="django",
         ),
         pytest.param(
             "fastapi_base_state",
             FastAPICharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
             },
             id="fastapi",
@@ -772,8 +740,6 @@ def test_oauth_config_remove_ingress_integration_should_block(
             "spring_boot_base_state",
             SpringBootCharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
             },
             id="spring-boot",
@@ -781,25 +747,19 @@ def test_oauth_config_remove_ingress_integration_should_block(
         pytest.param(
             "go_base_state",
             GoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="go",
         ),
         pytest.param(
             "expressjs_base_state",
             ExpressJSCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="expressjs",
         ),
     ],
 )
 def test_oauth_config_remove_oauth_integration_should_not_block(
-    base_state: dict, charm, config: dict, request, context_factory
+    base_state: dict, charm, config: dict, request, context_factory, charm_root
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -816,7 +776,7 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = context_factory(charm)
+    context = context_factory(charm, paas_config=_oauth_paas_config(charm_root(charm)))
     out = context.run(context.on.relation_changed(ingress_relation), state)
 
     oauth_relation = testing.Relation(
@@ -843,27 +803,19 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         pytest.param(
             "flask_base_state",
             FlaskCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
-            },
+            {},
             id="flask",
         ),
         pytest.param(
             "django_base_state",
             DjangoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
-            },
+            {},
             id="django",
         ),
         pytest.param(
             "fastapi_base_state",
             FastAPICharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
                 "non-optional-string": "test",
             },
             id="fastapi",
@@ -872,8 +824,6 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
             "spring_boot_base_state",
             SpringBootCharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
                 "oidc-user-name-attribute": "email",
             },
             id="spring-boot",
@@ -881,118 +831,19 @@ def test_oauth_config_remove_oauth_integration_should_not_block(
         pytest.param(
             "go_base_state",
             GoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
-            },
+            {},
             id="go",
         ),
         pytest.param(
             "expressjs_base_state",
             ExpressJSCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "profile email phone",
-            },
-            id="expressjs",
-        ),
-    ],
-)
-def test_oauth_config_wrong_scope(
-    base_state: dict, charm, config: dict, request, context_factory
-) -> None:
-    """
-    arrange: set the workload charm config.
-    act: start the workload charm and integrate with oauth and ingress using wrong scope.
-    assert: workload charm should be blocked.
-    """
-    base_state = request.getfixturevalue(base_state)
-    base_state["config"] = config
-    secret_id = token_hex(16)
-    oauth_relation = testing.Relation(
-        endpoint="oidc",
-        interface="oauth",
-        remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
-    )
-    base_state["relations"].append(oauth_relation)
-    base_state["secrets"].append(testing.Secret(id=secret_id, tracked_content={"secret": "abc"}))
-    ingress_relation = testing.Relation(
-        endpoint="ingress",
-        interface="ingress",
-        remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
-    )
-    base_state["relations"].append(ingress_relation)
-    state = testing.State(**base_state)
-    context = context_factory(charm)
-    out = context.run(context.on.relation_changed(ingress_relation), state)
-    assert out.unit_status == testing.BlockedStatus(
-        "The 'openid' scope is required for OAuth integration, please add it to the scopes."
-    )
-
-
-@pytest.mark.parametrize(
-    "base_state, charm, config",
-    [
-        pytest.param(
-            "flask_base_state",
-            FlaskCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
-            id="flask",
-        ),
-        pytest.param(
-            "django_base_state",
-            DjangoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
-            id="django",
-        ),
-        pytest.param(
-            "fastapi_base_state",
-            FastAPICharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "non-optional-string": "test",
-            },
-            id="fastapi",
-        ),
-        pytest.param(
-            "spring_boot_base_state",
-            SpringBootCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "oidc-user-name-attribute": "email",
-            },
-            id="spring-boot",
-        ),
-        pytest.param(
-            "go_base_state",
-            GoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
-            id="go",
-        ),
-        pytest.param(
-            "expressjs_base_state",
-            ExpressJSCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-            },
+            {},
             id="expressjs",
         ),
     ],
 )
 def test_blocked_when_relation_data_empty(
-    base_state: dict, charm, config: dict, request, context_factory
+    base_state: dict, charm, config: dict, request, context_factory, charm_root
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -1014,7 +865,7 @@ def test_blocked_when_relation_data_empty(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = context_factory(charm)
+    context = context_factory(charm, paas_config=_oauth_paas_config(charm_root(charm)))
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus("Please check OIDC_CHARM charm!")
 
@@ -1025,24 +876,14 @@ def test_blocked_when_relation_data_empty(
         pytest.param(
             "flask_base_state",
             FlaskCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
-            },
+            {},
             {"framework": "flask"},
             id="flask",
         ),
         pytest.param(
             "django_base_state",
             DjangoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
-            },
+            {},
             {"framework": "django"},
             id="django",
         ),
@@ -1050,11 +891,7 @@ def test_blocked_when_relation_data_empty(
             "spring_boot_base_state",
             SpringBootCharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "oidc-user-name-attribute": "email",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
                 "google-user-name-attribute": "email",
             },
             {"framework": "springboot"},
@@ -1064,11 +901,7 @@ def test_blocked_when_relation_data_empty(
             "fastapi_base_state",
             FastAPICharm,
             {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
                 "non-optional-string": "test",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
             },
             {"framework": "fastapi"},
             id="fastapi",
@@ -1076,24 +909,14 @@ def test_blocked_when_relation_data_empty(
         pytest.param(
             "go_base_state",
             GoCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
-            },
+            {},
             {"framework": "go"},
             id="go",
         ),
         pytest.param(
             "expressjs_base_state",
             ExpressJSCharm,
-            {
-                "oidc-redirect-path": "/oauth/callback",
-                "oidc-scopes": "openid profile email phone",
-                "google-redirect-path": "/oauth/callback",
-                "google-scopes": "openid profile email phone",
-            },
+            {},
             {"framework": "expressjs"},
             id="expressjs",
         ),
@@ -1106,6 +929,7 @@ def test_oauth_multiple_oauth_integrations(
     config: dict,
     request,
     context_factory,
+    charm_root,
 ) -> None:
     """
     arrange: set the workload charm config.
@@ -1129,8 +953,104 @@ def test_oauth_multiple_oauth_integrations(
     )
     base_state["relations"].append(ingress_relation)
     state = testing.State(**base_state)
-    context = context_factory(charm, additional_oauth=bool(additional_oauth))
+    context = context_factory(
+        charm,
+        paas_config=_oauth_paas_config(charm_root(charm)),
+        additional_oauth=bool(additional_oauth),
+    )
     out = context.run(context.on.relation_changed(ingress_relation), state)
     assert out.unit_status == testing.BlockedStatus(
         "Multiple OAuth relations are not supported at the moment"
     )
+
+
+class TestOAuthRelationConfig:
+    """Tests for the OAuth settings under ``relations``."""
+
+    def test_defaults(self):
+        """Default to the /callback redirect path and the openid, profile and email scopes."""
+        config = PaasConfig(relations={"oidc": {}})
+        assert config.relations["oidc"] == OAuthRelationConfig(
+            redirect_path="/callback", scopes=["openid", "profile", "email"]
+        )
+
+    def test_valid(self):
+        """Parse the hyphenated keys used in paas-config.yaml."""
+        config = PaasConfig(
+            relations={"oidc": {"redirect-path": "/oauth/callback", "scopes": ["openid", "phone"]}}
+        )
+        assert config.relations["oidc"].redirect_path == "/oauth/callback"
+        assert config.relations["oidc"].scopes == ["openid", "phone"]
+
+    @pytest.mark.parametrize(
+        "settings, diagnostic",
+        [
+            pytest.param(
+                {"scopes": ["profile", "email"]}, "include 'openid'", id="missing-openid"
+            ),
+            pytest.param({"scopes": "openid profile"}, "valid list", id="scopes-as-string"),
+            pytest.param({"scopes": ["openid", "a b"]}, "invalid OAuth scope", id="space"),
+            pytest.param({"scopes": ["openid", ""]}, "invalid OAuth scope", id="empty-scope"),
+            pytest.param({"redirect-path": ""}, "at least 1 character", id="empty-path"),
+            pytest.param({"redirect_url": "/callback"}, "Extra inputs", id="unknown-key"),
+        ],
+    )
+    def test_invalid(self, tmp_path, settings, diagnostic):
+        """Reject invalid OAuth settings when reading paas-config.yaml."""
+        (tmp_path / CONFIG_FILE_NAME).write_text(
+            yaml.safe_dump({"relations": {"oidc": settings}}), encoding="utf-8"
+        )
+        with pytest.raises(PaasConfigError) as exc_info:
+            read_paas_config(tmp_path)
+        assert "relations.oidc" in str(exc_info.value)
+        assert diagnostic in str(exc_info.value.__cause__)
+
+    @pytest.mark.parametrize(
+        "endpoint, diagnostic",
+        [
+            pytest.param("missing", "unknown endpoint 'missing'", id="unknown-endpoint"),
+            pytest.param("postgresql", "'oauth' interface", id="non-oauth-endpoint"),
+        ],
+    )
+    def test_invalid_endpoint(self, context_factory, endpoint, diagnostic):
+        """Reject settings for endpoints that are not declared OAuth endpoints."""
+        context = context_factory(FlaskCharm, paas_config=PaasConfig(relations={endpoint: {}}))
+        with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+            context.run(context.on.config_changed(), testing.State())
+        assert isinstance(exc_info.value.__cause__, PaasConfigError)
+        assert diagnostic in str(exc_info.value.__cause__)
+
+    @pytest.mark.parametrize(
+        "base_state, charm, framework, prefix",
+        [
+            pytest.param("flask_base_state", FlaskCharm, "flask", "FLASK_", id="flask"),
+            pytest.param("django_base_state", DjangoCharm, "django", "DJANGO_", id="django"),
+            pytest.param("fastapi_base_state", FastAPICharm, "fastapi", "APP_", id="fastapi"),
+            pytest.param("go_base_state", GoCharm, "go", "APP_", id="go"),
+            pytest.param(
+                "expressjs_base_state", ExpressJSCharm, "expressjs", "APP_", id="expressjs"
+            ),
+            pytest.param(
+                "spring_boot_base_state", SpringBootCharm, "spring-boot", "APP_", id="spring-boot"
+            ),
+        ],
+    )
+    def test_environment_without_relation(  # pylint: disable=too-many-arguments
+        self, request, context_factory, charm_root, base_state, charm, framework, prefix
+    ):
+        """Expose the redirect path and scopes to the workload even without an OAuth relation."""
+        paas_config = read_paas_config(charm_root(charm)).model_copy(
+            update={
+                "relations": {
+                    "oidc": OAuthRelationConfig(redirect_path="/auth", scopes=["openid", "x"])
+                }
+            }
+        )
+        state = request.getfixturevalue(base_state)
+        if charm is FastAPICharm:
+            state["config"] = {**state.get("config", {}), "non-optional-string": "test"}
+        context = context_factory(charm, paas_config=paas_config)
+        out = context.run(context.on.config_changed(), testing.State(**state))
+        env = list(out.containers)[0].plan.services[framework].environment
+        assert env[f"{prefix}OIDC_REDIRECT_PATH"] == "/auth"
+        assert env[f"{prefix}OIDC_SCOPES"] == "openid x"

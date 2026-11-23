@@ -16,7 +16,12 @@ import ops
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
-from paas_charm.paas_config import EnvVarConfig, LoggingFormat, SecretEnvVarsConfig
+from paas_charm.paas_config import (
+    EnvVarConfig,
+    LoggingFormat,
+    OAuthRelationConfig,
+    SecretEnvVarsConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +244,26 @@ def generate_oauth_env(
         )
         if v is not None
     }
+
+
+def generate_oauth_config_env(
+    prefix: str, oauth_configs: dict[str, OAuthRelationConfig]
+) -> dict[str, str]:
+    """Generate environment variables from the static OAuth settings in paas-config.yaml.
+
+    Args:
+        prefix: Prefix for the environment variable names.
+        oauth_configs: Static OAuth settings keyed by endpoint name.
+
+    Returns:
+        The redirect path and space-separated scopes for each OAuth endpoint.
+    """
+    env = {}
+    for endpoint, oauth_config in oauth_configs.items():
+        endpoint_prefix = f"{prefix}{endpoint.replace('-', '_').upper()}"
+        env[f"{endpoint_prefix}_REDIRECT_PATH"] = oauth_config.redirect_path
+        env[f"{endpoint_prefix}_SCOPES"] = " ".join(oauth_config.scopes)
+    return env
 
 
 # too-many-instance-attributes is disabled because this class
@@ -515,6 +540,7 @@ class App:  # pylint: disable=too-many-instance-attributes
 
         if self._charm_state.base_url:
             env[f"{prefix}BASE_URL"] = self._charm_state.base_url
+        env.update(generate_oauth_config_env(prefix, self._charm_state.oauth_configs))
         secret_key_env = f"{prefix}SECRET_KEY"
         if secret_key_env not in env and not {"secret_key", "app_secret_key"} & mapped_fields:
             env[secret_key_env] = self._charm_state.secret_key
