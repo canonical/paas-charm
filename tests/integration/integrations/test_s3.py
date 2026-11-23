@@ -9,6 +9,7 @@ import logging
 import jubilant
 import pytest
 import requests
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from tests.integration.types import App
 
@@ -49,7 +50,7 @@ def test_s3_integration(
     status = juju.status()
     unit_ip = status.apps[app.name].units[app.name + "/0"].address
 
-    response = session_with_retry.get(f"http://{unit_ip}:{port}/env", timeout=5)
+    response = _get_with_retry(session_with_retry, f"http://{unit_ip}:{port}/env")
     assert response.status_code == 200
     env = response.json()
 
@@ -70,6 +71,29 @@ def test_s3_integration(
 
     # Check that it list_objects in the bucket. If the connection
     # is unsuccessful of the bucket does not exist, the code raises.
-    response = session_with_retry.get(f"http://{unit_ip}:{port}/s3/status", timeout=5)
+    response = _get_with_retry(session_with_retry, f"http://{unit_ip}:{port}/s3/status")
     assert response.status_code == 200
     assert "SUCCESS" == response.text
+
+
+@retry(
+    retry=retry_if_exception_type(requests.exceptions.ConnectionError),
+    stop=stop_after_attempt(5),
+    wait=wait_fixed(10),
+    reraise=True,
+)
+def _get_with_retry(session: requests.Session, url: str) -> requests.Response:
+    """Perform a GET request, retrying on transient connection failures.
+
+    Right after ``juju.wait`` reports the application as active, the unit's
+    networking may still take a few seconds to settle, which can result in
+    connection timeouts unrelated to the application itself.
+
+    Args:
+        session: the requests session to use for the GET request.
+        url: the URL to request.
+
+    Returns:
+        The response of the GET request.
+    """
+    return session.get(url, timeout=5)
