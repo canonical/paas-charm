@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 import ops
 
+from paas_charm import env_templates
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
@@ -353,7 +354,86 @@ class App:  # pylint: disable=too-many-instance-attributes
                     name,
                 )
             env[name] = value
+        self._apply_env_templates(env)
         return env
+
+    def _template_namespaces(self) -> dict[str, dict[str, str]]:
+        """Collect the values available to ``env`` templates.
+
+        Returns:
+            Field values keyed by namespace and field name.
+        """
+        integrations = self._charm_state.integrations
+        namespaces: dict[str, dict[str, str]] = {
+            env_templates.APP_NAMESPACE: {
+                k: v
+                for k, v in (
+                    ("name", self._charm_state.app_name),
+                    ("base_url", self._charm_state.base_url),
+                    ("port", str(self._workload_config.port)),
+                )
+                if v
+            },
+            env_templates.CONFIG_NAMESPACE: env_templates.config_fields(
+                self._charm_state.charm_config
+            ),
+        }
+        for endpoint, db_data in integrations.databases_relation_data.items():
+            namespaces[endpoint] = {
+                "uris": db_data.uris,
+                **env_templates.env_fields(
+                    generate_db_env(endpoint, db_data), f"{endpoint.upper()}_DB_"
+                ),
+            }
+        if integrations.rabbitmq:
+            namespaces["rabbitmq"] = {
+                **env_templates.model_fields(integrations.rabbitmq),
+                **env_templates.env_fields(
+                    generate_rabbitmq_env(integrations.rabbitmq), "RABBITMQ_"
+                ),
+            }
+        for endpoint, model in (
+            ("tracing", integrations.tracing),
+            ("openfga", integrations.openfga),
+            ("http-proxy", integrations.http_proxy),
+        ):
+            if model:
+                namespaces[endpoint] = env_templates.model_fields(model)
+        if integrations.oauth:
+            namespaces[integrations.oauth.provider_name] = env_templates.model_fields(
+                integrations.oauth
+            )
+        for relation in self._charm_state.custom_relations:
+            namespaces[relation.relation_name] = relation.template_fields()
+        return namespaces
+
+    def _apply_env_templates(self, env: dict[str, str]) -> None:
+        """Render the ``env`` templates from paas-config.yaml into the environment.
+
+        Templates override any other variable. ``None`` removes a variable. Variables whose
+        templates reference values that are unavailable are omitted.
+
+        Args:
+            env: The environment to update in place.
+        """
+        if not self._charm_state.env_templates:
+            return
+        namespaces = self._template_namespaces()
+        for name, template in self._charm_state.env_templates.items():
+            if template is None:
+                env.pop(name, None)
+                continue
+            value, unresolved = env_templates.render(template, namespaces)
+            if value is None:
+                logger.info(
+                    "Environment variable %r is not set: unresolved references %s",
+                    name,
+                    ", ".join(f"${{{ref.namespace}.{ref.field}}}" for ref in unresolved),
+                )
+                continue
+            if name in env:
+                logger.debug("env template overwrites environment variable %r", name)
+            env[name] = value
 
     def _mapped_framework_config_fields(self) -> set[str]:
         """Get framework fields whose default outputs are explicitly renamed.

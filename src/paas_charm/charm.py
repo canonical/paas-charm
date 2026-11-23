@@ -26,6 +26,7 @@ from paas_charm.charm_state import (
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
+from paas_charm.env_templates import validate_env_templates
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
     CustomRelationError,
@@ -149,6 +150,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         )
         self._validate_paas_config_relations(requires)
         self._oauth = self._init_oauth(requires)
+        validate_env_templates(
+            self._paas_config.env,
+            endpoints=set(requires),
+            config_options=config_metadata(pathlib.Path(self.charm_dir))["options"],
+        )
 
         if self._paas_config.framework_logging_format != LoggingFormat.NONE:
             supported = FRAMEWORKS_SUPPORTING_LOGGING_FORMAT.get(
@@ -740,6 +746,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             ),
             custom_relations=self._custom_relations,
             base_url=self._base_url,
+            env_templates=self._paas_config.env,
+            app_name=self.app.name,
         )
 
     @property

@@ -13,6 +13,7 @@ from dpcharmlibs.interfaces import (
 )
 from pydantic import ValidationError
 
+from paas_charm import env_templates
 from paas_charm.app import _db_url_to_env_variables
 from paas_charm.exceptions import (
     InvalidRelationDataError,
@@ -176,6 +177,22 @@ class ValkeyRelation(CustomRelation):
         if self._requirer:
             return self._generate_valkey_env(self._requirer.to_relation_data())
         return {}
+
+    def template_fields(self) -> dict[str, str]:
+        """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
+
+        Returns:
+            The Valkey relation data fields and the parts of the connection URL.
+        """
+        if not self._requirer:
+            return {}
+        relation_data = self._requirer.to_relation_data()
+        return {
+            **env_templates.model_fields(relation_data),
+            **env_templates.env_fields(
+                self._generate_valkey_env(relation_data), "VALKEY_DB_", "VALKEY_"
+            ),
+        }
 
     @staticmethod
     def _generate_valkey_env(

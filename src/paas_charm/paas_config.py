@@ -19,6 +19,7 @@ from pydantic import (
     model_validator,
 )
 
+from paas_charm import env_templates
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.utils import build_validation_error_message
 
@@ -308,6 +309,8 @@ class PaasConfig(BaseModel):
         metrics_path: Optional override for the path on which the application serves metrics.
         config: Settings for existing charm configuration options.
         relations: Static settings sent to related applications, keyed by endpoint name.
+        env: Workload environment variables rendered from templates over relation data,
+            charm configuration and application settings. ``None`` removes a variable.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -317,6 +320,10 @@ class PaasConfig(BaseModel):
     relations: dict[str, OAuthRelationConfig] = Field(
         default_factory=dict,
         description="Static settings sent to related applications, keyed by endpoint name.",
+    )
+    env: dict[str, str | None] = Field(
+        default_factory=dict,
+        description="Workload environment variables rendered from '${namespace.field}' templates.",
     )
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
@@ -355,6 +362,33 @@ class PaasConfig(BaseModel):
             ``LoggingFormat.NONE`` if *v* is ``None``, otherwise *v* unchanged.
         """
         return LoggingFormat.NONE if v is None else v
+
+    @field_validator("env")
+    @classmethod
+    def _validate_env(cls, env: dict[str, str | None]) -> dict[str, str | None]:
+        """Validate environment variable names and template syntax.
+
+        Args:
+            env: Environment variable names mapped to templates.
+
+        Returns:
+            The validated mapping.
+
+        Raises:
+            ValueError: If a name or template is invalid.
+        """
+        for name, template in env.items():
+            if not name or "\0" in name or "=" in name:
+                raise ValueError(
+                    f"invalid environment variable name {name!r}: "
+                    "names must be non-empty and contain neither '=' nor NUL"
+                )
+            if template is not None:
+                try:
+                    env_templates.parse(template)
+                except ValueError as exc:
+                    raise ValueError(f"{name}: {exc}") from exc
+        return env
 
     def application_port(self, *, default_port: int) -> int:
         """Return the configured application port or the framework default.

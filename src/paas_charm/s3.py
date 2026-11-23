@@ -13,6 +13,7 @@ from typing import Optional
 from charms.data_platform_libs.v0.s3 import S3Requirer
 from pydantic import BaseModel, Field, ValidationError
 
+from paas_charm import env_templates
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
@@ -154,6 +155,16 @@ class S3Relation(CustomRelation):
         """
         if self._requirer:
             return self._generate_s3_env(self._requirer.to_relation_data())
+        return {}
+
+    def template_fields(self) -> dict[str, str]:
+        """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
+
+        Returns:
+            The S3 relation data fields.
+        """
+        if self._requirer:
+            return env_templates.model_fields(self._requirer.to_relation_data())
         return {}
 
     @staticmethod
