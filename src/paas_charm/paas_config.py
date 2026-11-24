@@ -323,7 +323,7 @@ class PaasConfig(BaseModel):
     )
     env: dict[str, str | None] = Field(
         default_factory=dict,
-        description="Workload environment variables rendered from '${namespace.field}' templates.",
+        description="Workload environment variables rendered from Jinja templates.",
     )
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,

@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 * feat: Add an `env` section to `paas-config.yaml` that builds workload environment variables
-  from `${<namespace>.<field>}` templates over relation data, charm configuration and
-  application settings, with `${...:-default}` fallbacks and `null` to remove a variable.
+  from Jinja expressions over `relations`, `config` and `app`, with `default('text')`
+  fallbacks and `null` to remove a variable. Built-in relation fields are checked at startup.
   Custom relations can expose fields to templates by overriding `template_fields()`.
 
 ## 2.0.0b3 - 2026-11-25

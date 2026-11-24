@@ -1,141 +1,180 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Render the ``env`` section of paas-config.yaml.
-
-Each value is a template where ``${<namespace>.<field>}`` is replaced with a value from the
-charm, for example ``${postgresql.hostname}`` or ``${app.base_url}``. ``${<ref>:-<default>}``
-uses ``<default>`` when the reference has no value, and ``$$`` produces a literal ``$``.
-"""
+"""Validate and render static Jinja lookups in the env section of paas-config.yaml."""
 
 import enum
 import json
-import re
 import typing
-from dataclasses import dataclass
+from collections.abc import Collection, Mapping
+from difflib import get_close_matches
+from functools import lru_cache
 
+from jinja2 import ChainableUndefined, Environment, Template, TemplateSyntaxError, nodes
 from pydantic import BaseModel, SecretStr
 from pydantic_core import to_jsonable_python
 
 from paas_charm.exceptions import PaasConfigError
 
-# ``$$``, ``${...}`` or any other ``$``, which is rejected.
-_TOKEN = re.compile(r"\$(?:(\$)|\{([^}]*)\}|)")
-_REFERENCE = re.compile(r"^(?P<namespace>[A-Za-z0-9_-]+)\.(?P<field>[A-Za-z0-9_.-]+)$")
-
-APP_NAMESPACE = "app"
-CONFIG_NAMESPACE = "config"
-APP_FIELDS = frozenset({"name", "base_url", "port"})
+Path = tuple[str, ...]
+Context = Mapping[str, typing.Any]
 
 
-@dataclass(frozen=True)
-class Reference:
-    """A ``${...}`` reference in a template.
+class AppFields(BaseModel):
+    """Application fields shared by template validation and rendering.
 
     Attrs:
-        namespace: The endpoint name, ``app`` or ``config``.
-        field: The field in the namespace, which may contain dots.
-        default: The value used when the reference is unresolved, if any.
+        name: Juju application name.
+        base_url: Public application URL.
+        port: Workload port.
     """
 
-    namespace: str
-    field: str
-    default: str | None
+    name: str | None
+    base_url: str | None
+    port: int
 
 
-def parse(template: str) -> list[str | Reference]:
-    """Split a template into literal text and references.
+class _FieldEnvironment(Environment):
+    """Resolve both dot and bracket notation as data keys, never Python attributes."""
+
+    def getitem(self, obj: typing.Any, argument: typing.Any) -> typing.Any:
+        """Look up a data key, propagating missing values for the default filter.
+
+        Args:
+            obj: Parent mapping or missing parent.
+            argument: Static key in the template.
+
+        Returns:
+            The field value or a Jinja undefined value.
+        """
+        if isinstance(obj, Mapping) and argument in obj:
+            return obj[argument]
+        return self.undefined(name=argument)
+
+    def getattr(self, obj: typing.Any, attribute: str) -> typing.Any:
+        """Resolve dot notation using the same keys as bracket notation.
+
+        Args:
+            obj: Parent mapping or missing parent.
+            attribute: Requested field name.
+
+        Returns:
+            The field value or a Jinja undefined value.
+        """
+        return self.getitem(obj, attribute)
+
+
+_ENV = _FieldEnvironment(
+    undefined=ChainableUndefined, keep_trailing_newline=True, autoescape=False
+)
+
+
+def _path(node: nodes.Expr) -> Path:
+    """Extract a static data path from a Jinja expression.
 
     Args:
-        template: The template to parse.
+        node: Jinja expression to inspect.
 
     Returns:
-        Literal strings and references, in order.
+        Path components from root to leaf.
 
     Raises:
-        ValueError: If the template is malformed.
+        ValueError: If the expression is not a static lookup.
     """
-    parts: list[str | Reference] = []
-    position = 0
-    for match in _TOKEN.finditer(template):
-        start = match.start()
-        parts.append(template[position:start])
-        position = match.end()
-        if match.group(1):
-            parts.append("$")
-            continue
-        expression = match.group(2)
-        if expression is None:
-            raise ValueError(
-                f"unexpected '$' at position {match.start()}: "
-                "use '${<namespace>.<field>}' for a reference or '$$' for a literal '$'"
-            )
-        reference, separator, default = expression.partition(":-")
-        reference_match = _REFERENCE.match(reference)
-        if not reference_match:
-            raise ValueError(
-                f"invalid reference '${{{expression}}}': expected '${{<namespace>.<field>}}'"
-            )
-        parts.append(
-            Reference(
-                namespace=reference_match.group("namespace"),
-                field=reference_match.group("field"),
-                default=default if separator else None,
-            )
+    if isinstance(node, nodes.Name):
+        return (node.name,)
+    if isinstance(node, nodes.Getattr):
+        return (*_path(node.node), node.attr)
+    if isinstance(node, nodes.Getitem) and isinstance(node.arg, nodes.Const):
+        if isinstance(node.arg.value, str):
+            return (*_path(node.node), node.arg.value)
+    raise ValueError("expected a static field lookup using dot notation or quoted keys")
+
+
+def _reference(node: nodes.Expr) -> tuple[Path, bool]:
+    """Read a field reference and whether it has a default.
+
+    Args:
+        node: Output expression.
+
+    Returns:
+        Static path and whether the value is required.
+
+    Raises:
+        ValueError: If the filter is unsupported.
+    """
+    if not isinstance(node, nodes.Filter):
+        return _path(node), True
+    if not (
+        node.name == "default"
+        and node.node is not None
+        and len(node.args) == 1
+        and isinstance(node.args[0], nodes.Const)
+        and isinstance(node.args[0].value, str)
+        and not (node.kwargs or node.dyn_args or node.dyn_kwargs)
+    ):
+        raise ValueError("expected default('literal string') after a field lookup")
+    return _path(node.node), False
+
+
+@lru_cache(maxsize=256)
+def parse(source: str) -> tuple[Template, tuple[tuple[Path, bool], ...]]:
+    """Compile a template and collect its references for validation and missing-value handling.
+
+    Args:
+        source: Jinja template text.
+
+    Returns:
+        Compiled template and its static references.
+
+    Raises:
+        ValueError: If the Jinja syntax or expression is unsupported.
+    """
+    try:
+        tree = _ENV.parse(source)
+    except TemplateSyntaxError as exc:
+        raise ValueError(exc.message) from exc
+    refs: list[tuple[Path, bool]] = []
+    for output in tree.body:
+        if not isinstance(output, nodes.Output):
+            raise ValueError("only Jinja output expressions are supported")
+        refs.extend(
+            _reference(node) for node in output.nodes if not isinstance(node, nodes.TemplateData)
         )
-    parts.append(template[position:])
-    return [part for part in parts if part != ""]
+    return _ENV.from_string(tree), tuple(refs)
 
 
-def references(template: str) -> list[Reference]:
-    """Return the references in a template.
-
-    Args:
-        template: The template to inspect.
-
-    Returns:
-        The references in the template.
-    """
-    return [part for part in parse(template) if isinstance(part, Reference)]
-
-
-def render(
-    template: str, namespaces: typing.Mapping[str, typing.Mapping[str, str]]
-) -> tuple[str | None, list[Reference]]:
-    """Render a template.
+def render(source: str, context: Context) -> tuple[str | None, list[str]]:
+    """Render an assignment only if all references without defaults resolve.
 
     Args:
-        template: The template to render.
-        namespaces: Field values keyed by namespace and field name.
+        source: Jinja template text.
+        context: Nested mappings of available fields.
 
     Returns:
-        The rendered value, or None if a reference without a default is unresolved, and the
-        unresolved references.
+        Rendered text or the unresolved paths, never their values.
     """
-    rendered: list[str] = []
-    unresolved: list[Reference] = []
-    for part in parse(template):
-        if isinstance(part, str):
-            rendered.append(part)
-            continue
-        value = namespaces.get(part.namespace, {}).get(part.field)
-        if value is None:
-            if part.default is None:
-                unresolved.append(part)
-                continue
-            value = part.default
-        rendered.append(value)
-    return (None if unresolved else "".join(rendered)), unresolved
+    template, refs = parse(source)
+    missing = []
+    for path, required in refs:
+        if required:
+            value: typing.Any = context
+            for key in path:
+                if not isinstance(value, Mapping) or key not in value:
+                    missing.append(".".join(path))
+                    break
+                value = value[key]
+    return (None, missing) if missing else (template.render(context), [])
 
 
 def to_template_value(value: typing.Any) -> str | None:
-    """Convert a value to the string used in templates.
+    """Convert a model field to its workload string representation.
 
     Args:
-        value: The value to convert.
+        value: Relation or config value.
 
     Returns:
-        The string value, or None when the value is None.
+        Plain text, JSON for collections, or None for an absent field.
     """
     if isinstance(value, SecretStr):
         value = value.get_secret_value()
@@ -145,153 +184,113 @@ def to_template_value(value: typing.Any) -> str | None:
         value = value.model_dump(mode="json")
     if value is None or isinstance(value, str):
         return value
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (list, tuple, set, dict)):
+    if isinstance(value, (bool, list, tuple, set, dict)):
         return json.dumps(to_jsonable_python(value))
     return str(value)
 
 
 def model_fields(model: BaseModel | None) -> dict[str, str]:
-    """Return the fields of a relation data model as template values.
+    """Return the available template fields of a relation data model.
 
     Args:
-        model: The relation data model.
+        model: Relation data.
 
     Returns:
-        Field names mapped to their template values, without fields that have no value.
+        Field names and string values.
     """
     if model is None:
         return {}
     return {
-        name: value
-        for name in type(model).model_fields
-        if (value := to_template_value(getattr(model, name))) is not None
+        k: text
+        for k in type(model).model_fields
+        if (text := to_template_value(getattr(model, k))) is not None
     }
 
 
-def config_fields(config: typing.Mapping[str, typing.Any]) -> dict[str, str]:
-    """Return charm configuration values as template values.
-
-    Secret options resolve to a mapping, whose keys are exposed as ``<option>.<key>``.
+def config_fields(config: Context) -> dict[str, typing.Any]:
+    """Expose secret content as a nested mapping and scalar config as text.
 
     Args:
-        config: Charm configuration with secrets resolved.
+        config: Charm config with resolved secrets.
 
     Returns:
-        Option names mapped to their template values.
+        Config values keyed by their exact option names.
     """
-    fields: dict[str, str] = {}
-    for option, value in config.items():
-        if isinstance(value, dict):
-            for key, content in value.items():
-                if (converted := to_template_value(content)) is not None:
-                    fields[f"{option}.{key}"] = converted
-        elif (converted := to_template_value(value)) is not None:
-            fields[option] = converted
-    return fields
-
-
-def env_fields(env: typing.Mapping[str, str], *prefixes: str) -> dict[str, str]:
-    """Derive template fields from default environment variables.
-
-    Args:
-        env: Default environment variables of a relation.
-        prefixes: Prefixes to strip, the first match is used.
-
-    Returns:
-        Lower-cased variable names without the prefix mapped to their values.
-    """
-    fields = {}
-    for name, value in env.items():
-        for prefix in prefixes:
-            if name.startswith(prefix):
-                fields[name.removeprefix(prefix).lower()] = value
-                break
-    return fields
+    return {
+        k: v if isinstance(v, dict) else to_template_value(v)
+        for k, v in config.items()
+        if v is not None
+    }
 
 
 def validate_env_templates(
-    env: typing.Mapping[str, str | None],
+    env: Mapping[str, str | None],
     *,
-    endpoints: typing.Collection[str],
-    config_options: typing.Mapping[str, typing.Mapping[str, typing.Any]],
+    endpoints: Mapping[str, Collection[str] | None],
+    config_options: Context,
 ) -> None:
-    """Validate that template references point to known namespaces and fields.
-
-    Relation fields are only known at runtime, so only their endpoint name is validated.
+    """Validate references independently of current config values and relation presence.
 
     Args:
-        env: Environment variable names mapped to templates.
-        endpoints: Endpoint names declared under ``requires``.
-        config_options: Charm configuration option metadata.
+        env: Templates by destination variable.
+        endpoints: Declared endpoint names and their built-in fields, or None for custom fields.
+        config_options: Juju configuration metadata.
 
     Raises:
-        PaasConfigError: If a reference is invalid.
+        PaasConfigError: If a template references an invalid field.
     """
-    for name, template in env.items():
-        if template is None:
+    for name, source in env.items():
+        if source is None:
             continue
-        for reference in references(template):
-            error = _reference_error(reference, endpoints, config_options)
+        for path, _ in parse(source)[1]:
+            error = _reference_error(path, endpoints, config_options)
             if error:
-                raise PaasConfigError(f"paas-config.yaml: env.{name}: {error}")
+                raise PaasConfigError(f"paas-config.yaml: env.{name}: {'.'.join(path)}: {error}")
 
 
 def _reference_error(
-    reference: Reference,
-    endpoints: typing.Collection[str],
-    config_options: typing.Mapping[str, typing.Mapping[str, typing.Any]],
+    path: Path, endpoints: Mapping[str, Collection[str] | None], config: Context
 ) -> str | None:
-    """Return why a reference is invalid.
+    """Check a path against the available namespaces.
 
     Args:
-        reference: The reference to check.
-        endpoints: Endpoint names declared under ``requires``.
-        config_options: Charm configuration option metadata.
+        path: Static reference components.
+        endpoints: Declared endpoints and known fields.
+        config: Charm config option metadata.
 
     Returns:
-        The reason the reference is invalid, or None if it is valid.
+        A diagnostic or None for a valid path.
     """
-    text = f"${{{reference.namespace}.{reference.field}}}"
-    if reference.namespace not in (APP_NAMESPACE, CONFIG_NAMESPACE):
-        if reference.namespace in endpoints:
-            return None
-        return (
-            f"{text} references unknown namespace {reference.namespace!r}; expected a relation "
-            f"endpoint, {APP_NAMESPACE!r} or {CONFIG_NAMESPACE!r}"
-        )
-    if reference.namespace in endpoints:
-        return (
-            f"{text} is ambiguous: {reference.namespace!r} is both a built-in namespace "
-            "and a relation endpoint name"
-        )
-    if reference.namespace == APP_NAMESPACE:
-        if reference.field in APP_FIELDS:
-            return None
-        return f"{text} references unknown field; expected one of {sorted(APP_FIELDS)}"
-    return _config_reference_error(text, reference.field, config_options)
+    match path:
+        case ("app", field):
+            return None if field in set(AppFields.model_fields) else "unknown application field"
+        case ("config", option, *keys):
+            return _config_error(option, keys, config)
+        case ("relations", endpoint, field) if endpoint in endpoints:
+            fields = endpoints[endpoint]
+            return None if fields is None or field in fields else "unknown built-in relation field"
+        case ("relations", _, _):
+            return "unknown relation endpoint"
+        case _:
+            return "unknown namespace, endpoint, option or field"
 
 
-def _config_reference_error(
-    text: str, field: str, config_options: typing.Mapping[str, typing.Mapping[str, typing.Any]]
-) -> str | None:
-    """Return why a ``config`` reference is invalid.
+def _config_error(option: str, keys: list[str], config: Context) -> str | None:
+    """Check an exact option name and whether its type permits the requested lookup.
 
     Args:
-        text: The reference as written in the template.
-        field: The referenced field.
-        config_options: Charm configuration option metadata.
+        option: Referenced option name.
+        keys: Remaining components of the lookup.
+        config: Charm config option metadata.
 
     Returns:
-        The reason the reference is invalid, or None if it is valid.
+        A diagnostic or None for a valid config reference.
     """
-    option, _, key = field.partition(".")
-    if option not in config_options:
-        return f"{text} references unknown charm configuration option {option!r}"
-    is_secret = config_options[option].get("type") == "secret"
-    if is_secret and not key:
-        return f"{text} must reference a secret content key: '${{config.{option}.<key>}}'"
-    if not is_secret and key:
-        return f"{text} references a key of option {option!r}, which isn't a secret"
-    return None
+    if option not in config:
+        message = f"unknown charm configuration option {option!r}"
+        if matches := get_close_matches(option, config, n=1, cutoff=0.8):
+            message += f". Did you mean {matches[0]!r}?"
+        return message
+    if config[option].get("type") == "secret":
+        return None if len(keys) == 1 else f"secret option {option!r} requires one content key"
+    return f"option {option!r} isn't a secret and cannot be indexed" if keys else None

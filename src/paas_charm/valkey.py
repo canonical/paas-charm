@@ -14,7 +14,7 @@ from dpcharmlibs.interfaces import (
 from pydantic import ValidationError
 
 from paas_charm import env_templates
-from paas_charm.app import _db_url_to_env_variables
+from paas_charm.connection import database_fields
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
@@ -187,11 +187,11 @@ class ValkeyRelation(CustomRelation):
         if not self._requirer:
             return {}
         relation_data = self._requirer.to_relation_data()
+        if relation_data is None:
+            return {}
         return {
             **env_templates.model_fields(relation_data),
-            **env_templates.env_fields(
-                self._generate_valkey_env(relation_data), "VALKEY_DB_", "VALKEY_"
-            ),
+            **database_fields(_valkey_url(relation_data)),
         }
 
     @staticmethod
@@ -209,24 +209,32 @@ class ValkeyRelation(CustomRelation):
         """
         if not relation_data:
             return {}
-        endpoint = str(relation_data.endpoints)
-        user_info = (
-            f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
-        )
-        prefix = "VALKEY"
-        # Ensure the scheme in the url so that urllib can properly parse it into components.
-        # Valkey sends the url without the scheme ( valkey_primary:6123 )
-        # This normalizes that URL to become valkey://valkey_primary:6123
-        if "://" not in endpoint:
-            endpoint = f"{prefix.lower()}://{user_info}{endpoint}"
-        else:
-            scheme, netloc = endpoint.split("://", 1)
-            endpoint = f"{scheme}://{user_info}{netloc}"
-
         return {
-            **_db_url_to_env_variables(prefix, endpoint),
-            f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
-            f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
-            f"{prefix}_MODE": relation_data.mode or "",
-            f"{prefix}_VERSION": relation_data.version or "",
+            **{
+                f"VALKEY_DB_{k.upper()}": v
+                for k, v in database_fields(_valkey_url(relation_data)).items()
+            },
+            "VALKEY_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
+            "VALKEY_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
+            "VALKEY_MODE": relation_data.mode or "",
+            "VALKEY_VERSION": relation_data.version or "",
         }
+
+
+def _valkey_url(relation_data: ValkeyResponseModel) -> str:
+    """Build the connection URL for all frameworks.
+
+    Args:
+        relation_data: Valkey connection details with resolved credentials.
+
+    Returns:
+        Connection URL with credentials.
+    """
+    endpoint = str(relation_data.endpoints)
+    scheme, separator, address = endpoint.partition("://")
+    if not separator:
+        scheme, address = "valkey", endpoint
+    user_info = (
+        f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
+    )
+    return f"{scheme}://{user_info}{address}"

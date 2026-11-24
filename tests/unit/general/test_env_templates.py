@@ -10,84 +10,58 @@ from unittest.mock import MagicMock
 
 import pytest
 import yaml
+from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 from dpcharmlibs.interfaces import ValkeyResponseModel
 from ops import testing
 from pydantic import BaseModel, SecretStr
 
 from examples.django.charm.src.charm import DjangoCharm
+from examples.flask.charm.src.charm import FlaskCharm
 from paas_charm import env_templates
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
-from paas_charm.env_templates import Reference
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.oauth import PaaSOAuthRelationData
 from paas_charm.paas_config import CONFIG_FILE_NAME, PaasConfig, read_paas_config
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
+from paas_charm.springboot.charm import SpringValkeyRelation
 from paas_charm.tracing import PaaSTracingRelationData
 from paas_charm.valkey import ValkeyRelation
 from tests.unit.flask.constants import SMTP_RELATION_DATA_EXAMPLE
 
 
 @pytest.mark.parametrize(
-    "template, expected",
+    "template",
     [
-        pytest.param("plain", ["plain"], id="literal"),
-        pytest.param("a$$b", ["a", "$", "b"], id="escaped-dollar"),
-        pytest.param(
-            "x${pg.host}y",
-            ["x", Reference("pg", "host", None), "y"],
-            id="reference",
-        ),
-        pytest.param(
-            "${pg.host:-localhost}", [Reference("pg", "host", "localhost")], id="default"
-        ),
-        pytest.param("${pg.host:-}", [Reference("pg", "host", "")], id="empty-default"),
-        pytest.param(
-            "${config.creds.user}", [Reference("config", "creds.user", None)], id="nested-field"
-        ),
-        pytest.param(
-            "${http-proxy.no_proxy}",
-            [Reference("http-proxy", "no_proxy", None)],
-            id="hyphenated-namespace",
-        ),
+        "{{ config[app.name] }}",
+        "{{ app.name() }}",
+        "{{ app.port + 1 }}",
+        "{{ app.name | upper }}",
+        "{{ app.name | default(config.other) }}",
+        "{% if app.name %}yes{% endif %}",
+        "{{ app.name",
     ],
 )
-def test_parse(template, expected):
-    """Split templates into literals and references."""
-    assert env_templates.parse(template) == expected
-
-
-@pytest.mark.parametrize(
-    "template, diagnostic",
-    [
-        pytest.param("$HOME", "unexpected '$'", id="bare-variable"),
-        pytest.param("cost: 5$", "unexpected '$'", id="trailing-dollar"),
-        pytest.param("${nodot}", "invalid reference", id="no-field"),
-        pytest.param("${}", "invalid reference", id="empty"),
-        pytest.param("${a b.c}", "invalid reference", id="space"),
-        pytest.param("${pg.host", "unexpected '$'", id="unterminated"),
-    ],
-)
-def test_parse_invalid(template, diagnostic):
-    """Reject malformed templates."""
-    with pytest.raises(ValueError) as exc_info:
+def test_parse_invalid(template):
+    """Reject syntax outside the static Jinja subset."""
+    with pytest.raises(ValueError):
         env_templates.parse(template)
-    assert diagnostic in str(exc_info.value)
 
 
 def test_render():
     """Resolve references, apply defaults, and report unresolved references."""
-    namespaces = {"pg": {"user": "u", "host": "h"}}
-    assert env_templates.render("pg://${pg.user}@${pg.host}/$$", namespaces) == (
-        "pg://u@h/$",
+    namespaces = {"relations": {"pg": {"items": "<u&p>", "empty": ""}}}
+    assert env_templates.render("{{ relations.pg.items }} $5\n", namespaces) == ("<u&p> $5\n", [])
+    assert env_templates.render("{{ relations.pg.empty | default('x') }}", namespaces) == ("", [])
+    assert env_templates.render("{{ relations.mq.items | default('$5') }}", namespaces) == (
+        "$5",
         [],
     )
-    assert env_templates.render("${pg.port:-5432}", namespaces) == ("5432", [])
-    assert env_templates.render("${pg.port}-${mq.host}", namespaces) == (
+    assert env_templates.render("{{ relations.pg.port }}-{{ relations.mq.host }}", namespaces) == (
         None,
-        [Reference("pg", "port", None), Reference("mq", "host", None)],
+        ["relations.pg.port", "relations.mq.host"],
     )
 
 
@@ -126,14 +100,7 @@ def test_config_fields():
     """Expose secret content keys as nested fields."""
     assert env_templates.config_fields(
         {"level": "info", "debug": True, "creds": {"user": "u", "pass": "p"}, "unset": None}
-    ) == {"level": "info", "debug": "true", "creds.user": "u", "creds.pass": "p"}
-
-
-def test_env_fields():
-    """Derive fields from default variables, using the first matching prefix."""
-    assert env_templates.env_fields(
-        {"VALKEY_DB_HOSTNAME": "h", "VALKEY_MODE": "m", "OTHER": "x"}, "VALKEY_DB_", "VALKEY_"
-    ) == {"hostname": "h", "mode": "m"}
+    ) == {"level": "info", "debug": "true", "creds": {"user": "u", "pass": "p"}}
 
 
 @pytest.mark.parametrize(
@@ -141,7 +108,7 @@ def test_env_fields():
     [
         pytest.param({"": "x"}, "invalid environment variable name", id="empty-name"),
         pytest.param({"A=B": "x"}, "invalid environment variable name", id="equals-name"),
-        pytest.param({"A": "$x"}, "A: unexpected '$'", id="bad-template"),
+        pytest.param({"A": "{{ config[app.name] }}"}, "A: expected a static", id="bad-template"),
         pytest.param({"A": 1}, "valid string", id="not-a-string"),
     ],
 )
@@ -157,45 +124,74 @@ OPTIONS = {"level": {"type": "string"}, "creds": {"type": "secret"}}
 
 
 @pytest.mark.parametrize(
-    "template, endpoints, diagnostic",
+    "template, diagnostic",
     [
-        pytest.param("${redis.url}", {"pg"}, "unknown namespace 'redis'", id="unknown-namespace"),
-        pytest.param("${app.host}", set(), "unknown field", id="unknown-app-field"),
-        pytest.param("${config.nope}", set(), "unknown charm configuration", id="unknown-option"),
-        pytest.param("${config.creds}", set(), "secret content key", id="secret-without-key"),
-        pytest.param("${config.level.x}", set(), "isn't a secret", id="key-of-non-secret"),
-        pytest.param("${app.name}", {"app"}, "ambiguous", id="ambiguous-app"),
-        pytest.param("${config.level}", {"config"}, "ambiguous", id="ambiguous-config"),
+        ("{{ relations.redis.url }}", "unknown"),
+        ("{{ app.host }}", "unknown"),
+        ("{{ config.creds }}", "secret option 'creds' requires one content key"),
+        ("{{ config.creds.user.extra }}", "secret option 'creds' requires one content key"),
+        ("{{ config.level.x }}", "option 'level' isn't a secret and cannot be indexed"),
+        ("{{ relations }}", "unknown"),
     ],
 )
-def test_validate_env_templates_invalid(template, endpoints, diagnostic):
+def test_validate_env_templates_invalid(template, diagnostic):
     """Reject references to unknown namespaces and fields."""
     with pytest.raises(PaasConfigError, match=diagnostic):
-        env_templates.validate_env_templates(
-            {"A": template}, endpoints=endpoints, config_options=OPTIONS
-        )
+        env_templates.validate_env_templates({"A": template}, endpoints={}, config_options=OPTIONS)
 
 
 def test_validate_env_templates_valid():
     """Accept known namespaces and fields, and ignore removals."""
     env_templates.validate_env_templates(
         {
-            "A": "${pg.anything}${app.name}${app.base_url}${app.port}",
-            "B": "${config.level}${config.creds.user}",
+            "A": "{{ relations.app.anything }}{{ app.name }}{{ app.base_url }}{{ app.port }}",
+            "B": "{{ config.level }}{{ config.creds.user }}",
             "C": None,
         },
-        endpoints={"pg"},
+        endpoints={"app": None},
         config_options=OPTIONS,
     )
 
 
-def test_charm_rejects_invalid_reference(context_factory, django_base_state):
-    """Fail the charm when a template references an unknown namespace."""
-    context = context_factory(DjangoCharm, paas_config=PaasConfig(env={"A": "${redis.url}"}))
+@pytest.mark.parametrize(
+    "option, hint", [("logl-level", ". Did you mean 'log-level'?"), ("unrelated", "")]
+)
+def test_unknown_config_with_default(option, hint):
+    """Report the unknown option and suggest only a close metadata match despite a default."""
+    source = "{{ config['" + option + "'] | default('info') }}"
+    with pytest.raises(PaasConfigError) as exc_info:
+        env_templates.validate_env_templates(
+            {"LOG_LEVEL": source}, endpoints={}, config_options={"log-level": {"type": "string"}}
+        )
+    assert str(exc_info.value) == (
+        f"paas-config.yaml: env.LOG_LEVEL: config.{option}: unknown charm configuration option {option!r}{hint}"
+    )
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "postgresql",
+        "valkey",
+        "s3",
+        "saml",
+        "smtp",
+        "oidc",
+        "openfga",
+        "rabbitmq",
+        "http-proxy",
+        "tracing",
+    ],
+)
+def test_charm_rejects_invalid_reference(context_factory, flask_base_state, endpoint):
+    """A default must not hide a misspelled built-in field, even on an absent relation."""
+    template = "{{ relations['" + endpoint + "'].typo | default('ok') }}"
+    context = context_factory(FlaskCharm, paas_config=PaasConfig(env={"A": template}))
     with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
-        context.run(context.on.config_changed(), testing.State(**django_base_state))
+        context.run(context.on.config_changed(), testing.State(**flask_base_state))
     assert isinstance(exc_info.value.__cause__, PaasConfigError)
     assert "env.A" in str(exc_info.value.__cause__)
+    assert "unknown built-in relation field" in str(exc_info.value.__cause__)
 
 
 def test_charm_environment(context_factory, charm_root, django_base_state):
@@ -204,18 +200,18 @@ def test_charm_environment(context_factory, charm_root, django_base_state):
         update={
             "env": {
                 "DATABASE_URL": (
-                    "postgres://${postgresql.username}:${postgresql.password}"
-                    "@${postgresql.hostname}:${postgresql.port}/${postgresql.name}"
+                    "postgres://{{ relations.postgresql.username }}:{{ relations.postgresql.password }}"
+                    "@{{ relations.postgresql.hostname }}:{{ relations.postgresql.port }}/{{ relations.postgresql.name }}"
                 ),
-                "DB_URIS": "${postgresql.uris}",
-                "APP": "${app.name} ${app.port}",
-                "DEBUG": "${config.django-debug:-off}",
-                "MAIL_HOST": "${smtp.host}:${smtp.port}",
-                "NO_TRACING": "${tracing.endpoint}",
-                "WITH_DEFAULT": "${tracing.endpoint:-none}",
+                "DB_URIS": "{{ relations.postgresql.uris }}",
+                "APP": "{{ app.name }} {{ app.port }}",
+                "DEBUG": "{{ config['django-debug'] | default('off') }}",
+                "MAIL_HOST": "{{ relations.smtp.host }}:{{ relations.smtp.port }}",
+                "NO_TRACING": "{{ relations.tracing.endpoint }}",
+                "WITH_DEFAULT": "{{ relations.tracing.endpoint | default('none') }}",
                 "POSTGRESQL_DB_HOSTNAME": "override",
                 "POSTGRESQL_DB_PASSWORD": None,
-                "DJANGO_BASE_URL": "${tracing.endpoint}",
+                "DJANGO_BASE_URL": "{{ relations.tracing.endpoint }}",
             }
         }
     )
@@ -245,6 +241,23 @@ def test_charm_environment(context_factory, charm_root, django_base_state):
     assert env["POSTGRESQL_DB_USERNAME"] == "test-username"
 
 
+def test_absent_relations(context_factory, flask_base_state):
+    """Allow valid built-in and arbitrary custom fields before a provider is related."""
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(
+            env={
+                "CACHE_HOST": "{{ relations.valkey.hostname | default('localhost') }}",
+                "TEMPORAL": "{{ relations['temporal-host-info'].custom_field | default('offline') }}",
+            }
+        ),
+    )
+    out = context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    env = out.get_container("app").plan.services["flask"].environment
+    assert env["CACHE_HOST"] == "localhost"
+    assert env["TEMPORAL"] == "offline"
+
+
 def test_template_namespaces(tmp_path):
     """Expose every built-in relation and custom relation fields under their endpoint names."""
     custom = MagicMock(relation_name="s3")
@@ -255,6 +268,7 @@ def test_template_namespaces(tmp_path):
         secret_key="key",
         app_name="test-app",
         integrations=IntegrationsState(
+            http_proxy=ProxyConfig(http_proxy="http://p:3128", https_proxy="https://p:443"),
             rabbitmq=PaaSRabbitMQRelationData(
                 vhost="/", port=5672, hostname="mq", username="u", password="p"
             ),
@@ -275,11 +289,12 @@ def test_template_namespaces(tmp_path):
         ),
         custom_relations=[custom],
         env_templates={
-            "MQ": "${rabbitmq.connect_string} ${rabbitmq.hostname}",
-            "TRACES": "${tracing.endpoint}",
-            "OIDC": "${oidc.client_id}:${oidc.issuer_url}",
-            "BUCKET": "${s3.bucket}",
-            "NAME": "${app.name}",
+            "MQ": "{{ relations.rabbitmq.connect_string }} {{ relations.rabbitmq.hostname }}",
+            "TRACES": "{{ relations.tracing.endpoint }}",
+            "OIDC": "{{ relations.oidc.client_id }}:{{ relations.oidc.issuer_url }}",
+            "BUCKET": "{{ relations.s3.bucket }}",
+            "NAME": "{{ app.name }}",
+            "PROXIES": "{{ relations['http-proxy'].http_proxy }} {{ relations['http-proxy'].https_proxy }}",
         },
     )
     workload = WorkloadConfig(
@@ -303,6 +318,7 @@ def test_template_namespaces(tmp_path):
     assert env["OIDC"] == "id:https://issuer"
     assert env["BUCKET"] == "b"
     assert env["NAME"] == "test-app"
+    assert env["PROXIES"] == "http://p:3128 https://p:443"
 
 
 def test_custom_relation_default_template_fields():
@@ -320,9 +336,10 @@ def test_custom_relation_default_template_fields():
     assert not relation.template_fields()
 
 
-def test_valkey_and_s3_template_fields():
-    """Expose relation data fields and, for Valkey, the parts of the connection URL."""
-    valkey = ValkeyRelation.__new__(ValkeyRelation)
+@pytest.mark.parametrize("relation_class", [ValkeyRelation, SpringValkeyRelation])
+def test_valkey_template_fields(relation_class):
+    """Expose the same URL parts and preserve missing fields across frameworks."""
+    valkey = relation_class.__new__(relation_class)
     valkey._requirer = None
     assert valkey.template_fields() == {}
     valkey._requirer = MagicMock()
@@ -333,7 +350,16 @@ def test_valkey_and_s3_template_fields():
     assert fields["connect_string"] == "valkey://u:p@localhost:6379"
     assert fields["hostname"] == "localhost"
     assert fields["password"] == "p"
+    assert env_templates.render(
+        "{{ relations.valkey.mode | default('standalone') }}", {"relations": {"valkey": fields}}
+    ) == (
+        "standalone",
+        [],
+    )
 
+
+def test_s3_template_fields():
+    """Expose the S3 relation data fields."""
     s3 = S3Relation.__new__(S3Relation)
     s3._requirer = None
     assert s3.template_fields() == {}

@@ -215,7 +215,7 @@ class CustomRelation(ops.Object, abc.ABC):
     def template_fields(self) -> dict[str, str]:
         """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
 
-        Templates reference these values as ``${<relation_name>.<field>}``. Like
+        Templates reference these values as ``{{ relations['endpoint-name'].field }}``. Like
         :meth:`gen_environment`, this is called unconditionally and must not raise an
         exception when data is not ready or invalid.
 

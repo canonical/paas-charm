@@ -256,19 +256,23 @@ exactly as written. Each value is a template:
 .. code-block:: yaml
 
     env:
-      DATABASE_URL: postgresql://${postgresql.username}:${postgresql.password}@${postgresql.hostname}:${postgresql.port}/${postgresql.name}
-      AUTH_ISSUER: ${oidc.issuer_url}
-      PUBLIC_URL: ${app.base_url}
-      LOG_LEVEL: ${config.log-level:-info}
-      API_TOKEN: ${config.credentials.token}
-      PRICE_LABEL: costs $$5
+      DATABASE_URL: "{{ relations.postgresql.connect_string }}"
+      MAIL_SERVER: "{{ relations.smtp.host }}:{{ relations.smtp.port }}"
+      AUTH_ISSUER: "{{ relations.oidc.issuer_url }}"
+      PUBLIC_URL: "{{ app.base_url }}"
+      LOG_LEVEL: "{{ config['log-level'] | default('info') }}"
+      API_TOKEN: "{{ config.credentials.token }}"
+      PRICE_LABEL: costs $5
       POSTGRESQL_DB_PASSWORD: null
 
 Template syntax:
 
-* ``${<namespace>.<field>}`` is replaced with the field's value.
-* ``${<namespace>.<field>:-<default>}`` uses ``<default>`` when the field has no value.
-* ``$$`` produces a literal ``$``. Any other ``$`` is an error.
+* Use Jinja output expressions with static dotted paths or quoted keys, such as
+  ``{{ relations['http-proxy'].https_proxy }}``. Quote YAML values that begin with ``{{``.
+* ``default('text')`` supplies a literal string if a field or its parent is absent.
+  An empty string, zero or false is a value and does not trigger the default.
+* Text outside expressions is literal, including dollar signs. Dynamic keys, calls,
+  control statements and filters other than the single-string ``default`` are not supported.
 
 The following namespaces are available:
 
@@ -280,10 +284,10 @@ The following namespaces are available:
    * - ``app``
      - ``name`` (Juju application name), ``base_url``, and ``port``.
    * - ``config``
-     - Charm configuration options by exact name, for example ``${config.log-level}``.
-       Reference content keys of ``secret`` options as ``${config.<option>.<key>}``.
+     - Charm configuration options by exact name, for example ``{{ config['log-level'] }}``.
+       Reference content keys of ``secret`` options as ``{{ config.credentials.token }}``.
        Booleans render as ``true`` or ``false``.
-   * - ``<endpoint>``
+   * - ``relations``
      - Data of the relation with that endpoint name, as listed below.
 
 Relation fields:
@@ -299,7 +303,7 @@ Relation fields:
        and ``name``.
    * - ``rabbitmq``
      - ``hostname``, ``hostnames``, ``port``, ``username``, ``password``, ``vhost``,
-       plus the URL parts listed for databases.
+       ``connect_strings``, and the URL parts listed for databases except ``name``.
    * - ``valkey``
      - The relation data fields, plus the URL parts listed for databases, ``mode``,
        ``version``, ``read_only_endpoints``, and ``sentinel_endpoints``.
@@ -311,7 +315,7 @@ Relation fields:
      - ``endpoint`` and ``service_name``.
    * - ``openfga``, ``s3``, ``saml``, ``smtp``, ``http-proxy``
      - The relation data fields, using their Python attribute names, for example
-       ``${s3.access_key}``.
+       ``{{ relations.s3.access_key }}``.
    * - Custom relations
      - The fields returned by ``template_fields()``.
 
@@ -325,10 +329,10 @@ unresolved references without logging values. The original variables used by a t
 remain set.
 
 When the charm starts, it rejects templates with invalid syntax, unknown namespaces,
-unknown ``app`` fields, or unknown configuration options. A ``secret`` option must be
-referenced with a content key. Relation fields are only known at runtime: an unknown
-relation field is reported as unresolved. If a relation endpoint is named ``app`` or
-``config``, references to that namespace are rejected as ambiguous.
+unknown ``app`` fields, unknown configuration options, or undeclared relation endpoints.
+A ``secret`` option must be referenced with a content key. Built-in relation fields are
+validated even when no provider is related: a default handles missing data but does not
+hide a misspelled field. Custom relation fields are resolved at runtime.
 
 Validation
 ----------

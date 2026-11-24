@@ -8,13 +8,14 @@ import json
 import logging
 import pathlib
 import urllib.parse
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING, Any
 
 import ops
 
 from paas_charm import env_templates
 from paas_charm.charm_state import CharmState
+from paas_charm.connection import RabbitURLFields, database_fields, url_fields
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
@@ -143,13 +144,24 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    envvars = _url_env_vars(prefix="RABBITMQ", url=relation_data.amqp_uri)
-    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
-    if len(parsed_url.path) > 1:
-        envvars["RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
-    if relation_data.amqp_uris:
-        envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
-    return envvars
+    return {f"RABBITMQ_{k.upper()}": v for k, v in _rabbit_fields(relation_data).items()}
+
+
+def _rabbit_fields(data: "PaaSRabbitMQRelationData") -> dict[str, str]:
+    """Get RabbitMQ connection fields for both templates and workload variables.
+
+    Args:
+        data: Broker connection information.
+
+    Returns:
+        Populated URL components and virtual host.
+    """
+    fields = RabbitURLFields(
+        **asdict(url_fields(data.amqp_uri)), connect_strings=",".join(data.amqp_uris) or None
+    ).available()
+    if data.vhost:
+        fields["vhost"] = data.vhost
+    return fields
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
@@ -357,54 +369,49 @@ class App:  # pylint: disable=too-many-instance-attributes
         self._apply_env_templates(env)
         return env
 
-    def _template_namespaces(self) -> dict[str, dict[str, str]]:
+    def _template_namespaces(self) -> dict[str, Any]:
         """Collect the values available to ``env`` templates.
 
         Returns:
             Field values keyed by namespace and field name.
         """
         integrations = self._charm_state.integrations
-        namespaces: dict[str, dict[str, str]] = {
-            env_templates.APP_NAMESPACE: {
-                k: v
-                for k, v in (
-                    ("name", self._charm_state.app_name),
-                    ("base_url", self._charm_state.base_url),
-                    ("port", str(self._workload_config.port)),
+        relations: dict[str, dict[str, str]] = {}
+        namespaces = {
+            "relations": relations,
+            "app": env_templates.model_fields(
+                env_templates.AppFields(
+                    name=self._charm_state.app_name or None,
+                    base_url=self._charm_state.base_url or None,
+                    port=self._workload_config.port,
                 )
-                if v
-            },
-            env_templates.CONFIG_NAMESPACE: env_templates.config_fields(
-                self._charm_state.charm_config
             ),
+            "config": env_templates.config_fields(self._charm_state.charm_config),
         }
         for endpoint, db_data in integrations.databases_relation_data.items():
-            namespaces[endpoint] = {
-                "uris": db_data.uris,
-                **env_templates.env_fields(
-                    generate_db_env(endpoint, db_data), f"{endpoint.upper()}_DB_"
-                ),
+            relations[endpoint] = {
+                **env_templates.model_fields(db_data),
+                **database_fields(db_data.uris),
             }
         if integrations.rabbitmq:
-            namespaces["rabbitmq"] = {
+            relations["rabbitmq"] = {
                 **env_templates.model_fields(integrations.rabbitmq),
-                **env_templates.env_fields(
-                    generate_rabbitmq_env(integrations.rabbitmq), "RABBITMQ_"
-                ),
+                **_rabbit_fields(integrations.rabbitmq),
             }
         for endpoint, model in (
             ("tracing", integrations.tracing),
             ("openfga", integrations.openfga),
-            ("http-proxy", integrations.http_proxy),
         ):
             if model:
-                namespaces[endpoint] = env_templates.model_fields(model)
+                relations[endpoint] = env_templates.model_fields(model)
+        if proxy := integrations.http_proxy:
+            relations["http-proxy"] = asdict(proxy)
         if integrations.oauth:
-            namespaces[integrations.oauth.provider_name] = env_templates.model_fields(
+            relations[integrations.oauth.provider_name] = env_templates.model_fields(
                 integrations.oauth
             )
         for relation in self._charm_state.custom_relations:
-            namespaces[relation.relation_name] = relation.template_fields()
+            relations[relation.relation_name] = relation.template_fields()
         return namespaces
 
     def _apply_env_templates(self, env: dict[str, str]) -> None:
@@ -428,7 +435,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                 logger.info(
                     "Environment variable %r is not set: unresolved references %s",
                     name,
-                    ", ".join(f"${{{ref.namespace}.{ref.field}}}" for ref in unresolved),
+                    ", ".join(unresolved),
                 )
                 continue
             if name in env:
@@ -757,47 +764,4 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
       all components as returned from urllib.parse and the
       database name extracted from the path
     """
-    db_env_prefix = prefix + "_DB"
-    envvars = _url_env_vars(db_env_prefix, url)
-    parsed_url = urllib.parse.urlparse(url)
-
-    # database name is usually parsed this way.
-    db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
-    if db_name is not None:
-        envvars[f"{db_env_prefix}_NAME"] = db_name
-    return envvars
-
-
-def _url_env_vars(prefix: str, url: str) -> dict[str, str]:
-    """Convert a url to environment variables using parts from urllib.parse.urlparse.
-
-    Args:
-      prefix: prefix for the environment variables
-      url: url of the database
-
-    Return:
-      All environment variables, that is, the connection string and
-      all components as returned from urllib.parse
-    """
-    if not url:
-        return {}
-
-    envvars: dict[str, str | None] = {}
-    envvars[f"{prefix}_CONNECT_STRING"] = url
-
-    parsed_url = urllib.parse.urlparse(url)
-
-    # All components of urlparse, using the same convention for default values.
-    # See: https://docs.python.org/3/library/urllib.parse.html#url-parsing
-    envvars[f"{prefix}_SCHEME"] = parsed_url.scheme
-    envvars[f"{prefix}_NETLOC"] = parsed_url.netloc
-    envvars[f"{prefix}_PATH"] = parsed_url.path
-    envvars[f"{prefix}_PARAMS"] = parsed_url.params
-    envvars[f"{prefix}_QUERY"] = parsed_url.query
-    envvars[f"{prefix}_FRAGMENT"] = parsed_url.fragment
-    envvars[f"{prefix}_USERNAME"] = parsed_url.username
-    envvars[f"{prefix}_PASSWORD"] = parsed_url.password
-    envvars[f"{prefix}_HOSTNAME"] = parsed_url.hostname
-    envvars[f"{prefix}_PORT"] = str(parsed_url.port) if parsed_url.port is not None else None
-
-    return {k: v for k, v in envvars.items() if v is not None}
+    return {f"{prefix}_DB_{k.upper()}": v for k, v in database_fields(url).items()}
