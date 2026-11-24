@@ -14,11 +14,15 @@ from ops import testing
 from paas_charm.charm import PaasCharm
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
+from paas_charm.smtp import SmtpRelation
 from paas_charm.springboot.charm import Charm as SpringBootCharm
 from paas_charm.springboot.charm import (
     SpringOpenSearchRelation,
     SpringS3Relation,
     SpringSamlRelation,
+    SpringS3Relation,
+    SpringSamlRelation,
+    SpringSmtpRelation,
     SpringValkeyRelation,
 )
 from paas_charm.valkey import ValkeyRelation
@@ -172,8 +176,14 @@ def test_builtin_relations():
         SpringS3Relation,
         SpringSamlRelation,
         SpringOpenSearchRelation,
+        SpringSmtpRelation,
     ]
-    assert PaasCharm.builtin_relations == [ValkeyRelation, S3Relation, SamlRelation]
+    assert PaasCharm.builtin_relations == [
+        ValkeyRelation,
+        S3Relation,
+        SamlRelation,
+        SmtpRelation,
+    ]
 
 
 def test_builtin_valkey_relation_is_spring_valkey(springboot_context, base_state) -> None:

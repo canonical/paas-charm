@@ -17,6 +17,7 @@ from paas_charm.opensearch import PaaSOpenSearchRelationData
 from paas_charm.springboot.charm import (
     SpringOpenSearchRelation,
     SpringValkeyRelation,
+    SpringSmtpRelation,
     generate_smtp_env,
 )
 
@@ -73,7 +74,7 @@ def test_integration_mappers_without_relation_data() -> None:
     act: generate the Spring Boot integration environment variables.
     assert: no environment variables are generated.
     """
-    assert not generate_smtp_env()
+    assert not SpringSmtpRelation._generate_smtp_env()
     assert not SpringValkeyRelation._generate_valkey_env()
     assert not SpringOpenSearchRelation._generate_opensearch_env(None)
 

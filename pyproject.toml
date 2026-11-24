@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 [project]
 name = "paas-charm"
-version = "2.0b1"
+version = "2.0b2"
 description = "Companion library for 12-factor app support in Charmcraft & Rockcraft."
 readme = "README.md"
 authors = [
@@ -20,12 +20,13 @@ dependencies = [
     "charmlibs-interfaces-tracing==1.0.0",
     "charmlibs-interfaces-oauth==1.2.0",
     "charmlibs-interfaces-openfga==1.0.0",
+    "charmlibs-interfaces-smtp==1.0.0",
     "cosl==1.11.3",
     "dpcharmlibs-interfaces==1.2.2",
     "Jinja2==3.1.6",
     "jsonschema==4.26.0",
-    "ops==3.9.0",
-    "pydantic[email]==2.14.3",
+    "ops==3.10.0",
+    "pydantic[email]==2.14.4",
 ]
 
 [project.urls]
@@ -141,12 +142,12 @@ line-length = 99
 [dependency-groups]
 unit = [
     "cosl==1.11.3",
-    "coverage[toml]==7.17.2",
-    "gunicorn==26.2.0",
+    "coverage[toml]==7.17.4",
+    "gunicorn==27.0.1",
     "opentelemetry-api==1.45.2",
     "opentelemetry-sdk==1.45.2",
-    "ops[testing]==3.9.0",
-    "pydantic[email]==2.14.3",
+    "ops[testing]==3.10.0",
+    "pydantic[email]==2.14.4",
     "pytest==9.2.0",
 ]
 lint = [
@@ -176,11 +177,11 @@ integration-tests = [
     "aiohttp==3.14.5",
     "cosl==1.11.3",
     "saml-test-helper @ git+https://github.com/canonical/saml-test-idp.git",
-    "jubilant==1.14.0",
+    "jubilant==1.15.0",
     "juju==3.6.1.3",
-    "ops==3.9.0",
+    "ops==3.10.0",
     "tenacity==9.2.1",
-    "playwright==1.65.0",
+    "playwright==1.65.2",
     "lightkube==1.0.2",
     "pytest-jubilant>=2,<3",
     "opcli",
