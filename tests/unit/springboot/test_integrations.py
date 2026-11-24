@@ -16,8 +16,8 @@ from paas_charm.exceptions import PaasConfigError
 from paas_charm.opensearch import PaaSOpenSearchRelationData
 from paas_charm.springboot.charm import (
     SpringOpenSearchRelation,
-    SpringValkeyRelation,
     SpringSmtpRelation,
+    SpringValkeyRelation,
 )
 
 # Very similar cases to other frameworks. Disable duplicated checks.

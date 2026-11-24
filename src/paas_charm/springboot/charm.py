@@ -381,6 +381,7 @@ class SpringOpenSearchRelation(OpenSearchRelation):
             "spring.ssl.bundle.pem.opensearch.truststore.certificate": relation_data.tls_ca,
         }
 
+
 class SpringSmtpRelation(SmtpRelation):
     """Modified `SmtpRelation` to produce environment vars for Spring framework."""
 

@@ -20,8 +20,6 @@ from paas_charm.springboot.charm import (
     SpringOpenSearchRelation,
     SpringS3Relation,
     SpringSamlRelation,
-    SpringS3Relation,
-    SpringSamlRelation,
     SpringSmtpRelation,
     SpringValkeyRelation,
 )
