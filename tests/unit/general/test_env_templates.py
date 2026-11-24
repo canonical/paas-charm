@@ -27,7 +27,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
-from paas_charm.springboot.charm import SpringValkeyRelation
+from paas_charm.springboot.charm import SpringBootApp, SpringValkeyRelation
 from paas_charm.tracing import PaaSTracingRelationData
 from paas_charm.valkey import ValkeyRelation
 from tests.unit.flask.constants import SMTP_RELATION_DATA_EXAMPLE
@@ -253,6 +253,35 @@ def test_charm_environment(context_factory, charm_root, django_base_state):
     assert env["POSTGRESQL_DB_USERNAME"] == "test-username"
 
 
+def test_unbound_builtin_has_no_schema(context_factory, flask_base_state):
+    """A built-in endpoint name alone does not bind a template schema."""
+    context = context_factory(
+        FlaskCharm,
+        relation_interfaces={"tracing": "another_interface"},
+        paas_config=PaasConfig(env={"TRACE": "{{ relations.tracing.endpoint | default('off') }}"}),
+    )
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert "relation does not expose template fields" in str(exc_info.value.__cause__)
+
+
+def test_rendered_nul_is_rejected(context_factory, flask_base_state):
+    """Reject invalid process environment values without including the value in the error."""
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(
+            env={"TOKEN": r"{{ relations.tracing.endpoint | default('sensitive\x00text') }}"}
+        ),
+    )
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert (
+        str(exc_info.value.__cause__) == "paas-config.yaml: env.TOKEN: rendered value contains NUL"
+    )
+
+
 def test_absent_relations(context_factory, flask_base_state):
     """Allow valid built-in and arbitrary custom fields before a provider is related."""
     context = context_factory(
@@ -282,7 +311,12 @@ def test_template_namespaces(tmp_path):
         integrations=IntegrationsState(
             http_proxy=ProxyConfig(http_proxy="http://p:3128", https_proxy="https://p:443"),
             rabbitmq=PaaSRabbitMQRelationData(
-                vhost="/", port=5672, hostname="mq", username="u", password="p"
+                vhost="/",
+                port=5672,
+                hostname="mq",
+                username="u@",
+                password="part/rest",
+                hostnames=["mq2"],
             ),
             tracing=PaaSTracingRelationData(endpoint="http://tempo:4318", service_name="svc"),
             oauth=PaaSOAuthRelationData(
@@ -302,6 +336,7 @@ def test_template_namespaces(tmp_path):
         custom_relations=[custom],
         env_templates={
             "MQ": "{{ relations.rabbitmq.connect_string }} {{ relations.rabbitmq.hostname }}",
+            "MQ_PASSWORD": "{{ relations.rabbitmq.password }}",
             "TRACES": "{{ relations.tracing.endpoint }}",
             "OIDC": "{{ relations.oidc.client_id }}:{{ relations.oidc.issuer_url }}",
             "BUCKET": "{{ relations.s3.bucket }}",
@@ -325,12 +360,23 @@ def test_template_namespaces(tmp_path):
         database_migration=MagicMock(),
     )
     env = app.gen_environment()
-    assert env["MQ"] == "amqp://u:p@mq:5672/%2F mq"
+    assert env["MQ"] == "amqp://u%40:part%2Frest@mq:5672/%2F mq"
+    assert env["RABBITMQ_CONNECT_STRINGS"] == "amqp://u%40:part%2Frest@mq2:5672/%2F"
+    assert env["MQ_PASSWORD"] == env["RABBITMQ_PASSWORD"] == "part/rest"
     assert env["TRACES"] == "http://tempo:4318/"
     assert env["OIDC"] == "id:https://issuer"
     assert env["BUCKET"] == "b"
     assert env["NAME"] == "test-app"
     assert env["PROXIES"] == "http://p:3128 https://p:443"
+
+    state.env_templates = {"LABEL": "{{ app.name }}"}
+    spring = SpringBootApp(
+        container=MagicMock(),
+        charm_state=state,
+        workload_config=workload,
+        database_migration=MagicMock(),
+    )
+    assert spring.gen_environment()["LABEL"] == "test-app"
 
 
 def test_custom_relation_default_template_fields():
@@ -356,18 +402,26 @@ def test_valkey_template_fields(relation_class):
     assert valkey.template_fields() == {}
     valkey._requirer = MagicMock()
     valkey._requirer.to_relation_data.return_value = ValkeyResponseModel(
-        endpoints="localhost:6379", username="u", password="p"
+        endpoints="localhost:6379", username="u", password="p/@"
     )
     fields = valkey.template_fields()
-    assert fields["connect_string"] == "valkey://u:p@localhost:6379"
+    assert fields["connect_string"] == "valkey://u:p%2F%40@localhost:6379"
     assert fields["hostname"] == "localhost"
-    assert fields["password"] == "p"
+    assert fields["password"] == "p/@"
     assert env_templates.render(
         "{{ relations.valkey.mode | default('standalone') }}", {"relations": {"valkey": fields}}
     ) == (
         "standalone",
         [],
     )
+    valkey._requirer.to_relation_data.return_value = ValkeyResponseModel(
+        endpoints="localhost:6379", username="u"
+    )
+    fields = valkey.template_fields()
+    assert fields["connect_string"] == "valkey://u@localhost:6379"
+    assert env_templates.render(
+        "{{ relations.valkey.password | default('fallback') }}", {"relations": {"valkey": fields}}
+    ) == ("fallback", [])
 
 
 def test_secret_config_templates(context_factory, flask_base_state):

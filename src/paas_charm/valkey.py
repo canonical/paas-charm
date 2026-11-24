@@ -14,7 +14,7 @@ from dpcharmlibs.interfaces import (
 from pydantic import ValidationError
 
 from paas_charm import env_templates
-from paas_charm.connection import database_fields
+from paas_charm.connection import database_fields, url_userinfo
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
@@ -191,7 +191,7 @@ class ValkeyRelation(CustomRelation):
             return {}
         return {
             **env_templates.model_fields(relation_data),
-            **database_fields(_valkey_url(relation_data)),
+            **_valkey_connection_fields(relation_data),
         }
 
     @staticmethod
@@ -212,7 +212,7 @@ class ValkeyRelation(CustomRelation):
         return {
             **{
                 f"VALKEY_DB_{k.upper()}": v
-                for k, v in database_fields(_valkey_url(relation_data)).items()
+                for k, v in _valkey_connection_fields(relation_data).items()
             },
             "VALKEY_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
             "VALKEY_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
@@ -221,20 +221,25 @@ class ValkeyRelation(CustomRelation):
         }
 
 
-def _valkey_url(relation_data: ValkeyResponseModel) -> str:
-    """Build the connection URL for all frameworks.
+def _valkey_connection_fields(relation_data: ValkeyResponseModel) -> dict[str, str]:
+    """Build the connection URL and raw component fields for all frameworks.
 
     Args:
         relation_data: Valkey connection details with resolved credentials.
 
     Returns:
-        Connection URL with credentials.
+        Connection fields with encoded credentials in URLs only.
     """
     endpoint = str(relation_data.endpoints)
     scheme, separator, address = endpoint.partition("://")
     if not separator:
         scheme, address = "valkey", endpoint
-    user_info = (
-        f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
-    )
-    return f"{scheme}://{user_info}{address}"
+    user_info = url_userinfo(relation_data.username, relation_data.password)
+    parts = database_fields(f"{scheme}://{user_info}{address}")
+    for key in ("username", "password"):
+        value = getattr(relation_data, key)
+        if value is None:
+            parts.pop(key, None)
+        else:
+            parts[key] = value
+    return parts

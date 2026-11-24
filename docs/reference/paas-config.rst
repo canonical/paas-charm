@@ -320,6 +320,9 @@ Relation fields:
      - The fields returned by ``template_fields()``.
 
 Lists and mappings render as JSON. Secret values render in plain text.
+RabbitMQ and Valkey connection URLs percent-encode credentials; their separate
+``username`` and ``password`` fields contain the raw values. Rendered environment values
+cannot contain NUL characters.
 
 Templates are applied after every other source, so they can replace any variable.
 A ``null`` value removes the variable. When a reference without a default has no

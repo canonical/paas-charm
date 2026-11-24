@@ -230,28 +230,28 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         """
         requires = self.framework.meta.requires
         db_fields = {f.name for f in fields(DatabaseURLFields)}
-        known = {
-            "rabbitmq": set(PaaSRabbitMQRelationData.model_fields)
-            | {f.name for f in fields(RabbitURLFields)},
-            "tracing": set(PaaSTracingRelationData.model_fields),
-            "openfga": set(OpenfgaProviderAppData.model_fields),
-            "http-proxy": {f.name for f in fields(ProxyConfig)},
-            **{
-                name: set(PaaSDatabaseRelationData.model_fields) | db_fields
-                for name in self._database_requirers
-            },
-            **{
-                name: set(PaaSOAuthRelationData.model_fields)
-                for name, _ in get_endpoints_by_interface_name(requires, "oauth")
-            },
-        }
+        result: dict[str, set[str] | None] = {name: set() for name in requires}
+        if self._rabbitmq is not None:
+            result["rabbitmq"] = set(PaaSRabbitMQRelationData.model_fields) | {
+                f.name for f in fields(RabbitURLFields)
+            }
+        if self._tracing is not None:
+            result["tracing"] = set(PaaSTracingRelationData.model_fields)
+        if self._openfga is not None:
+            result["openfga"] = set(OpenfgaProviderAppData.model_fields)
+        if self._http_proxy is not None:
+            result["http-proxy"] = {f.name for f in fields(ProxyConfig)}
+        for name in self._database_requirers:
+            result[name] = set(PaaSDatabaseRelationData.model_fields) | db_fields
+        if self._oauth is not None:
+            ((endpoint, _),) = get_endpoints_by_interface_name(requires, "oauth")
+            result[endpoint] = set(PaaSOAuthRelationData.model_fields)
         wrappers = {
             ValkeyRelation: set(ValkeyResponseModel.model_fields) | db_fields,
             S3Relation: set(PaaSS3RelationData.model_fields),
             SamlRelation: set(PaaSSAMLRelationData.model_fields),
             SmtpRelation: set(SmtpRelationData.model_fields),
         }
-        result: dict[str, set[str] | None] = {name: known.get(name, set()) for name in requires}
         for relation in self._custom_relations:
             result[relation.relation_name] = next(
                 (

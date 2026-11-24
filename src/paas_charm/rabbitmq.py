@@ -37,6 +37,7 @@ from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
 from pydantic import BaseModel, Field, ValidationError
 
+from paas_charm.connection import url_userinfo
 from paas_charm.exceptions import InvalidRelationDataError
 from paas_charm.utils import build_validation_error_message
 
@@ -103,21 +104,24 @@ class PaaSRabbitMQRelationData(BaseModel):
     @property
     def amqp_uri(self) -> str:
         """AMQP URI for rabbitmq from parameters."""
-        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
-        # vhost component of a uri should be url encoded
-        vhost = urllib.parse.quote(self.vhost, safe="")
-        return f"amqp://{self.username}:{self.password}@{self.hostname}:{self.port}/{vhost}"
+        return self._uri_for_host(self.hostname)
 
     @property
     def amqp_uris(self) -> list[str]:
         """AMQP URI's for rabbitmq units from parameters."""
-        # following https://www.rabbitmq.com/docs/uri-spec#the-amqp-uri-scheme,
-        # vhost component of a uri should be url encoded
-        uris: list[str] = []
-        for hostname in self.hostnames:
-            vhost = urllib.parse.quote(self.vhost, safe="")
-            uris.append(f"amqp://{self.username}:{self.password}@{hostname}:{self.port}/{vhost}")
-        return uris
+        return [self._uri_for_host(host) for host in self.hostnames]
+
+    def _uri_for_host(self, host: str) -> str:
+        """Build an AMQP URL for one broker.
+
+        Args:
+            host: Broker hostname.
+
+        Returns:
+            URL with encoded credentials and virtual host.
+        """
+        auth = url_userinfo(self.username, self.password)
+        return f"amqp://{auth}{host}:{self.port}/{urllib.parse.quote(self.vhost, safe='')}"
 
 
 class Credentials(NamedTuple):

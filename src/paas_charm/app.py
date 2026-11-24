@@ -159,6 +159,7 @@ def _rabbit_fields(data: "PaaSRabbitMQRelationData") -> dict[str, str]:
     fields = RabbitURLFields(
         **asdict(url_fields(data.amqp_uri)), connect_strings=",".join(data.amqp_uris) or None
     ).available()
+    fields.update(username=data.username, password=data.password)
     if data.vhost:
         fields["vhost"] = data.vhost
     return fields
@@ -438,6 +439,8 @@ class App:  # pylint: disable=too-many-instance-attributes
                     ", ".join(unresolved),
                 )
                 continue
+            if "\0" in value:
+                raise PaasConfigError(f"paas-config.yaml: env.{name}: rendered value contains NUL")
             if name in env:
                 logger.debug("env template overwrites environment variable %r", name)
             env[name] = value

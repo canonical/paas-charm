@@ -4,7 +4,23 @@
 """Connection fields shared by workload environments and relation templates."""
 
 from dataclasses import asdict, dataclass
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
+
+
+def url_userinfo(username: str | None, password: str | None) -> str:
+    """Encode raw credentials for the authority of a connection URL.
+
+    Args:
+        username: User name, if supplied.
+        password: Password, if supplied (distinct from an empty password).
+
+    Returns:
+        Encoded userinfo with a trailing at-sign, or an empty string without credentials.
+    """
+    if username is None and password is None:
+        return ""
+    user = quote(username or "", safe="")
+    return f"{user}@" if password is None else f"{user}:{quote(password, safe='')}@"
 
 
 @dataclass(kw_only=True)
