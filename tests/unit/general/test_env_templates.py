@@ -26,6 +26,7 @@ from paas_charm.paas_config import CONFIG_FILE_NAME, PaasConfig, read_paas_confi
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
+from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
 from paas_charm.springboot.charm import SpringValkeyRelation
 from paas_charm.tracing import PaaSTracingRelationData
 from paas_charm.valkey import ValkeyRelation
@@ -52,14 +53,22 @@ def test_parse_invalid(template):
 
 def test_render():
     """Resolve references, apply defaults, and report unresolved references."""
-    namespaces = {"relations": {"pg": {"items": "<u&p>", "empty": ""}}}
+    namespaces = {"relations": {"pg": {"items": "<u&p>", "empty": "", "unset": None}}}
     assert env_templates.render("{{ relations.pg.items }} $5\n", namespaces) == ("<u&p> $5\n", [])
     assert env_templates.render("{{ relations.pg.empty | default('x') }}", namespaces) == ("", [])
+    assert env_templates.render("{{ relations.pg.unset | default('x') }}", namespaces) == ("x", [])
+    assert env_templates.render("{{ relations.pg.unset }}", namespaces) == (
+        None,
+        ["relations.pg.unset"],
+    )
+    assert env_templates.render("{{ range | default('x') }}", {}) == ("x", [])
     assert env_templates.render("{{ relations.mq.items | default('$5') }}", namespaces) == (
         "$5",
         [],
     )
-    assert env_templates.render("{{ relations.pg.port }}-{{ relations.mq.host }}", namespaces) == (
+    assert env_templates.render(
+        "{{ relations.pg.port }}-{{ relations.mq.host }}-{{ relations.pg.port }}", namespaces
+    ) == (
         None,
         ["relations.pg.port", "relations.mq.host"],
     )
@@ -127,6 +136,7 @@ OPTIONS = {"level": {"type": "string"}, "creds": {"type": "secret"}}
     "template, diagnostic",
     [
         ("{{ relations.redis.url }}", "unknown"),
+        ("{{ relations.ingress.url }}", "relation does not expose template fields"),
         ("{{ app.host }}", "unknown"),
         ("{{ config.creds }}", "secret option 'creds' requires one content key"),
         ("{{ config.creds.user.extra }}", "secret option 'creds' requires one content key"),
@@ -137,7 +147,9 @@ OPTIONS = {"level": {"type": "string"}, "creds": {"type": "secret"}}
 def test_validate_env_templates_invalid(template, diagnostic):
     """Reject references to unknown namespaces and fields."""
     with pytest.raises(PaasConfigError, match=diagnostic):
-        env_templates.validate_env_templates({"A": template}, endpoints={}, config_options=OPTIONS)
+        env_templates.validate_env_templates(
+            {"A": template}, endpoints={"ingress": set()}, config_options=OPTIONS
+        )
 
 
 def test_validate_env_templates_valid():
@@ -358,6 +370,35 @@ def test_valkey_template_fields(relation_class):
     )
 
 
+def test_secret_config_templates(context_factory, flask_base_state):
+    """Resolve secret config content keys when set and handle missing secrets or keys."""
+    paas_config = PaasConfig(
+        env={
+            "API_TOKEN": "{{ config['secret-test'].token }}",
+            "FALLBACK_TOKEN": "{{ config['secret-test'].missing | default('none') }}",
+        }
+    )
+    context = context_factory(FlaskCharm, paas_config=paas_config)
+
+    out_unset = context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    env_unset = out_unset.get_container("app").plan.services["flask"].environment
+    assert "API_TOKEN" not in env_unset
+    assert env_unset["FALLBACK_TOKEN"] == "none"
+
+    secret = testing.Secret(tracked_content={"token": "s3cret-value"})
+    state_with_secret = testing.State(
+        **{
+            **flask_base_state,
+            "secrets": [secret],
+            "config": {**flask_base_state.get("config", {}), "secret-test": secret.id},
+        }
+    )
+    out_set = context.run(context.on.config_changed(), state_with_secret)
+    env_set = out_set.get_container("app").plan.services["flask"].environment
+    assert env_set["API_TOKEN"] == "s3cret-value"
+    assert env_set["FALLBACK_TOKEN"] == "none"
+
+
 def test_s3_template_fields():
     """Expose the S3 relation data fields."""
     s3 = S3Relation.__new__(S3Relation)
@@ -369,3 +410,21 @@ def test_s3_template_fields():
     )
     assert s3.template_fields()["bucket"] == "b"
     assert s3.template_fields()["access_key"] == "ak"
+
+
+def test_saml_template_fields():
+    """Expose the SAML relation data fields."""
+    saml = SamlRelation.__new__(SamlRelation)
+    saml.get_relation_data = MagicMock(return_value=None)
+    assert saml.template_fields() == {}
+    saml.get_relation_data = MagicMock(
+        return_value=PaaSSAMLRelationData(
+            entity_id="https://idp.example.com",
+            metadata_url="https://idp.example.com/metadata",
+            certificates=("cert-data",),
+            endpoints=(),
+        )
+    )
+    fields = saml.template_fields()
+    assert fields["entity_id"] == "https://idp.example.com"
+    assert fields["metadata_url"] == "https://idp.example.com/metadata"

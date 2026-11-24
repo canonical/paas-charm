@@ -305,8 +305,8 @@ Relation fields:
      - ``hostname``, ``hostnames``, ``port``, ``username``, ``password``, ``vhost``,
        ``connect_strings``, and the URL parts listed for databases except ``name``.
    * - ``valkey``
-     - The relation data fields, plus the URL parts listed for databases, ``mode``,
-       ``version``, ``read_only_endpoints``, and ``sentinel_endpoints``.
+     - The relation data fields (such as ``mode``, ``version``, ``read_only_endpoints``,
+       and ``sentinel_endpoints``), plus the URL parts listed for databases.
    * - OAuth endpoints
      - ``client_id``, ``client_secret``, ``issuer_url``, ``authorization_endpoint``,
        ``token_endpoint``, ``userinfo_endpoint``, ``jwks_endpoint``, ``scopes``,

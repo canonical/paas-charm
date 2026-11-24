@@ -47,7 +47,7 @@ class _FieldEnvironment(Environment):
         Returns:
             The field value or a Jinja undefined value.
         """
-        if isinstance(obj, Mapping) and argument in obj:
+        if isinstance(obj, Mapping) and argument in obj and obj[argument] is not None:
             return obj[argument]
         return self.undefined(name=argument)
 
@@ -67,6 +67,7 @@ class _FieldEnvironment(Environment):
 _ENV = _FieldEnvironment(
     undefined=ChainableUndefined, keep_trailing_newline=True, autoescape=False
 )
+_ENV.globals.clear()
 
 
 def _path(node: nodes.Expr) -> Path:
@@ -155,16 +156,16 @@ def render(source: str, context: Context) -> tuple[str | None, list[str]]:
         Rendered text or the unresolved paths, never their values.
     """
     template, refs = parse(source)
-    missing = []
+    missing: list[str] = []
     for path, required in refs:
         if required:
             value: typing.Any = context
             for key in path:
-                if not isinstance(value, Mapping) or key not in value:
+                if not isinstance(value, Mapping) or key not in value or value[key] is None:
                     missing.append(".".join(path))
                     break
                 value = value[key]
-    return (None, missing) if missing else (template.render(context), [])
+    return (None, list(dict.fromkeys(missing))) if missing else (template.render(context), [])
 
 
 def to_template_value(value: typing.Any) -> str | None:
@@ -268,7 +269,13 @@ def _reference_error(
             return _config_error(option, keys, config)
         case ("relations", endpoint, field) if endpoint in endpoints:
             fields = endpoints[endpoint]
-            return None if fields is None or field in fields else "unknown built-in relation field"
+            if fields is None or field in fields:
+                return None
+            return (
+                "unknown built-in relation field"
+                if fields
+                else "relation does not expose template fields"
+            )
         case ("relations", _, _):
             return "unknown relation endpoint"
         case _:
