@@ -18,7 +18,6 @@ from paas_charm.springboot.charm import (
     SpringOpenSearchRelation,
     SpringValkeyRelation,
     SpringSmtpRelation,
-    generate_smtp_env,
 )
 
 # Very similar cases to other frameworks. Disable duplicated checks.
