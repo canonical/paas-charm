@@ -1054,3 +1054,31 @@ class TestOAuthRelationConfig:
         env = list(out.containers)[0].plan.services[framework].environment
         assert env[f"{prefix}OIDC_REDIRECT_PATH"] == "/auth"
         assert env[f"{prefix}OIDC_SCOPES"] == "openid x"
+
+    def test_defaults_when_endpoint_omitted(self, context_factory, flask_base_state):
+        """Fall back to OAuthRelationConfig defaults when relations omits the OAuth endpoint."""
+        secret_id = token_hex(16)
+        ingress_relation = testing.Relation(
+            endpoint="ingress",
+            interface="ingress",
+            remote_app_data={"ingress": '{"url": "http://juju.test/"}'},
+        )
+        oauth_relation = testing.Relation(
+            endpoint="oidc",
+            interface="oauth",
+            remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret_id},
+        )
+        flask_base_state["relations"].extend([ingress_relation, oauth_relation])
+        flask_base_state["secrets"].append(
+            testing.Secret(id=secret_id, tracked_content={"secret": "abc"})
+        )
+        context = context_factory(FlaskCharm, paas_config=PaasConfig())
+        out = context.run(
+            context.on.relation_changed(ingress_relation), testing.State(**flask_base_state)
+        )
+        env = out.get_container("app").plan.services["flask"].environment
+        assert env["FLASK_OIDC_REDIRECT_PATH"] == "/callback"
+        assert env["FLASK_OIDC_SCOPES"] == "openid profile email"
+        oidc_out = out.get_relation(oauth_relation.id)
+        assert oidc_out.local_app_data["redirect_uri"] == "http://juju.test/callback"
+        assert oidc_out.local_app_data["scope"] == "openid profile email"
