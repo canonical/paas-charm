@@ -10,7 +10,8 @@ from collections.abc import Collection, Mapping
 from difflib import get_close_matches
 from functools import lru_cache
 
-from jinja2 import ChainableUndefined, Environment, Template, TemplateSyntaxError, nodes
+from jinja2 import ChainableUndefined, Template, TemplateSyntaxError, nodes
+from jinja2.sandbox import ImmutableSandboxedEnvironment
 from pydantic import BaseModel, SecretStr
 from pydantic_core import to_jsonable_python
 
@@ -34,8 +35,8 @@ class AppFields(BaseModel):
     port: int
 
 
-class _FieldEnvironment(Environment):
-    """Resolve both dot and bracket notation as data keys, never Python attributes."""
+class _FieldEnvironment(ImmutableSandboxedEnvironment):
+    """Resolve both dot and bracket notation as data keys inside Jinja's immutable sandbox."""
 
     def getitem(self, obj: typing.Any, argument: typing.Any) -> typing.Any:
         """Look up a data key, propagating missing values for the default filter.
@@ -68,6 +69,8 @@ _ENV = _FieldEnvironment(
     undefined=ChainableUndefined, keep_trailing_newline=True, autoescape=False
 )
 _ENV.globals.clear()
+_ENV.tests.clear()
+_ENV.filters = {"default": _ENV.filters["default"]}
 
 
 def _path(node: nodes.Expr) -> Path:

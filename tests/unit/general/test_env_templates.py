@@ -12,6 +12,7 @@ import pytest
 import yaml
 from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 from dpcharmlibs.interfaces import ValkeyResponseModel
+from jinja2.sandbox import ImmutableSandboxedEnvironment
 from ops import testing
 from pydantic import BaseModel, SecretStr
 
@@ -53,6 +54,14 @@ def test_parse_invalid(template):
     """Reject syntax outside the static Jinja subset."""
     with pytest.raises(ValueError):
         env_templates.parse(template)
+
+
+def test_environment_sandbox():
+    """Run templates in Jinja's immutable sandbox with no globals, tests, or extra filters."""
+    assert isinstance(env_templates._ENV, ImmutableSandboxedEnvironment)
+    assert not env_templates._ENV.globals
+    assert not env_templates._ENV.tests
+    assert set(env_templates._ENV.filters) == {"default"}
 
 
 def test_render():
