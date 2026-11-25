@@ -310,7 +310,7 @@ Relation fields:
    * - OAuth endpoints
      - ``client_id``, ``client_secret``, ``issuer_url``, ``authorization_endpoint``,
        ``token_endpoint``, ``userinfo_endpoint``, ``jwks_endpoint``, ``scopes``,
-       ``provider_name``, ``redirect_uri``, and ``user_name_attribute``.
+       ``provider_name``, ``redirect_path``, ``redirect_uri``, and ``user_name_attribute``.
    * - ``tracing``
      - ``endpoint`` and ``service_name``.
    * - ``openfga``, ``s3``, ``saml``, ``smtp``, ``http-proxy``

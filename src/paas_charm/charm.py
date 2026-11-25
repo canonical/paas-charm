@@ -245,7 +245,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             result[name] = set(PaaSDatabaseRelationData.model_fields) | db_fields
         if self._oauth is not None:
             ((endpoint, _),) = get_endpoints_by_interface_name(requires, "oauth")
-            result[endpoint] = set(PaaSOAuthRelationData.model_fields)
+            result[endpoint] = set(PaaSOAuthRelationData.model_fields) | {"redirect_path"}
         wrappers = {
             ValkeyRelation: set(ValkeyResponseModel.model_fields) | db_fields,
             S3Relation: set(PaaSS3RelationData.model_fields),

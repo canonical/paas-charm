@@ -408,9 +408,11 @@ class App:  # pylint: disable=too-many-instance-attributes
         if proxy := integrations.http_proxy:
             relations["http-proxy"] = asdict(proxy)
         if integrations.oauth:
-            relations[integrations.oauth.provider_name] = env_templates.model_fields(
-                integrations.oauth
-            )
+            oauth_config = self._charm_state.oauth_config or OAuthRelationConfig()
+            relations[integrations.oauth.provider_name] = {
+                **env_templates.model_fields(integrations.oauth),
+                "redirect_path": oauth_config.redirect_path,
+            }
         for relation in self._charm_state.custom_relations:
             relations[relation.relation_name] = relation.template_fields()
         return namespaces

@@ -22,7 +22,12 @@ from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm_state import CharmState, IntegrationsState
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.oauth import PaaSOAuthRelationData
-from paas_charm.paas_config import CONFIG_FILE_NAME, PaasConfig, read_paas_config
+from paas_charm.paas_config import (
+    CONFIG_FILE_NAME,
+    OAuthRelationConfig,
+    PaasConfig,
+    read_paas_config,
+)
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
@@ -289,6 +294,8 @@ def test_absent_relations(context_factory, flask_base_state):
         paas_config=PaasConfig(
             env={
                 "CACHE_HOST": "{{ relations.valkey.hostname | default('localhost') }}",
+                "OAUTH_REDIRECT": "{{ relations.oidc.redirect_path | default('/default') }}",
+                "OAUTH_REDIRECT_UNSET": "{{ relations.oidc.redirect_path }}",
                 "TEMPORAL": "{{ relations['temporal-host-info'].custom_field | default('offline') }}",
             }
         ),
@@ -296,6 +303,8 @@ def test_absent_relations(context_factory, flask_base_state):
     out = context.run(context.on.config_changed(), testing.State(**flask_base_state))
     env = out.get_container("app").plan.services["flask"].environment
     assert env["CACHE_HOST"] == "localhost"
+    assert env["OAUTH_REDIRECT"] == "/default"
+    assert "OAUTH_REDIRECT_UNSET" not in env
     assert env["TEMPORAL"] == "offline"
 
 
@@ -334,11 +343,14 @@ def test_template_namespaces(tmp_path):
             ),
         ),
         custom_relations=[custom],
+        oauth_config=OAuthRelationConfig(redirect_path="/auth/callback"),
         env_templates={
             "MQ": "{{ relations.rabbitmq.connect_string }} {{ relations.rabbitmq.hostname }}",
             "MQ_PASSWORD": "{{ relations.rabbitmq.password }}",
             "TRACES": "{{ relations.tracing.endpoint }}",
             "OIDC": "{{ relations.oidc.client_id }}:{{ relations.oidc.issuer_url }}",
+            "OIDC_PATH": "{{ relations.oidc.redirect_path }}",
+            "APP_OIDC_REDIRECT_PATH": None,
             "BUCKET": "{{ relations.s3.bucket }}",
             "NAME": "{{ app.name }}",
             "PROXIES": "{{ relations['http-proxy'].http_proxy }} {{ relations['http-proxy'].https_proxy }}",
@@ -365,6 +377,8 @@ def test_template_namespaces(tmp_path):
     assert env["MQ_PASSWORD"] == env["RABBITMQ_PASSWORD"] == "part/rest"
     assert env["TRACES"] == "http://tempo:4318/"
     assert env["OIDC"] == "id:https://issuer"
+    assert env["OIDC_PATH"] == "/auth/callback"
+    assert "APP_OIDC_REDIRECT_PATH" not in env
     assert env["BUCKET"] == "b"
     assert env["NAME"] == "test-app"
     assert env["PROXIES"] == "http://p:3128 https://p:443"
