@@ -6,6 +6,7 @@
 # pylint: disable=protected-access
 
 import enum
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -62,6 +63,106 @@ def test_environment_sandbox():
     assert not env_templates._ENV.globals
     assert not env_templates._ENV.tests
     assert set(env_templates._ENV.filters) == {"default"}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "{{ ''.__class__.__mro__[1].__subclasses__() }}",
+        "{{ ().__class__.__base__.__subclasses__() }}",
+        "{{ cycler.__init__.__globals__.os.popen('id').read() }}",
+        "{{ '{0.__class__}'.format(app.name) }}",
+        "{{ '%s' | format(app.name) }}",
+        "{{ app.name | attr('__class__') }}",
+        "{{ app.name | default('x', true) }}",
+        "{{ app.name | default('x', boolean=true) }}",
+        "{{ app.name | default('a') | default('b') }}",
+        "{{ app.name[0] }}",
+        "{{ config[0] }}",
+        "{% set x = config %}{{ x }}",
+        "{% import 'x' as m %}",
+        "{% include 'x' %}",
+        "{% macro m() %}x{% endmacro %}",
+    ],
+)
+def test_parse_rejects_ssti_and_unsafe_constructs(payload):
+    """Reject SSTI payloads, statements, calls, format escapes, and unsafe filter arguments."""
+    with pytest.raises(ValueError):
+        env_templates.parse(payload)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "config.__class__",
+        "config.__class__.__mro__",
+        "config.__init__.__globals__",
+        "config.items",
+        "config.keys",
+        "app.name.__class__",
+        "self._TemplateReference__context",
+        "range",
+        "dict",
+        "cycler",
+        "joiner",
+        "lipsum",
+        "namespace",
+    ],
+)
+def test_render_blocks_python_attributes_and_globals(path):
+    """Never resolve Python attributes, dunders, or Jinja globals even if render() is called directly."""
+    namespaces = {"app": {"name": "demo"}, "config": {"token": "s3cret"}}
+    assert env_templates.render("{{ " + path + " }}", namespaces) == (None, [path])
+    assert env_templates.render("{{ " + path + " | default('blocked') }}", namespaces) == (
+        "blocked",
+        [],
+    )
+
+
+def test_secret_values_not_logged(context_factory, flask_base_state, caplog):
+    """Never log secret values when overwriting, skipping unresolved templates, or rejecting NUL."""
+    secret_value = "super-sensitive-secret-token"
+    secret = testing.Secret(tracked_content={"token": secret_value})
+    state = testing.State(
+        **{
+            **flask_base_state,
+            "secrets": [secret],
+            "config": {**flask_base_state.get("config", {}), "secret-test": secret.id},
+        }
+    )
+    paas_config = PaasConfig(
+        env={
+            "FLASK_SECRET_KEY": "{{ config['secret-test'].token }}",
+            "UNRESOLVED_WITH_SECRET": (
+                "{{ config['secret-test'].token }}:{{ relations.tracing.endpoint }}"
+            ),
+        }
+    )
+    context = context_factory(FlaskCharm, paas_config=paas_config)
+    with caplog.at_level(logging.DEBUG):
+        out = context.run(context.on.config_changed(), state)
+
+    env = out.get_container("app").plan.services["flask"].environment
+    assert env["FLASK_SECRET_KEY"] == secret_value
+    assert "UNRESOLVED_WITH_SECRET" not in env
+    assert secret_value not in caplog.text
+
+    nul_secret_value = f"{secret_value}\x00tail"
+    nul_secret = testing.Secret(tracked_content={"token": nul_secret_value})
+    nul_state = testing.State(
+        **{
+            **flask_base_state,
+            "secrets": [nul_secret],
+            "config": {**flask_base_state.get("config", {}), "secret-test": nul_secret.id},
+        }
+    )
+    nul_context = context_factory(
+        FlaskCharm, paas_config=PaasConfig(env={"API_TOKEN": "{{ config['secret-test'].token }}"})
+    )
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        nul_context.run(nul_context.on.config_changed(), nul_state)
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert secret_value not in str(exc_info.value.__cause__)
 
 
 def test_render():
