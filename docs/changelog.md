@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## 2.0.0b3 - 2026-11-24
+## 2.0.0b3 - 2026-11-25
 
 * breaking: Move the static OAuth `<endpoint>-redirect-path` and `<endpoint>-scopes` charm
   configuration options to `relations.<endpoint>.redirect-path` and

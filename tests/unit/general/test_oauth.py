@@ -7,6 +7,7 @@
 # pylint: disable=duplicate-code,too-many-lines
 
 
+from dataclasses import replace
 from secrets import token_hex
 
 import pytest
@@ -39,13 +40,14 @@ def test_hyphenated_endpoint_config_environment():
             "provider_name": "company-login",
             "client_secret": "secret",
             "scopes": "openid email",
-            "redirect_uri": "https://app.example/callback",
-            "redirect_path": "/callback",
+            "redirect_uri": "https://app.example/ingress/auth/return",
             "user_name_attribute": "sub",
         }
     )
-    env = generate_oauth_env("go", relation_data)
-    assert env["APP_COMPANY_LOGIN_REDIRECT_PATH"] == "/callback"
+    env = generate_oauth_env(
+        "go", relation_data, OAuthRelationConfig(redirect_path="/auth/return")
+    )
+    assert env["APP_COMPANY_LOGIN_REDIRECT_PATH"] == "/auth/return"
     assert env["APP_COMPANY_LOGIN_SCOPES"] == "openid email"
 
 
@@ -1051,10 +1053,10 @@ class TestOAuthRelationConfig:
             ),
         ],
     )
-    def test_environment_without_relation(  # pylint: disable=too-many-arguments
+    def test_environment_before_and_after_oauth_relation(  # pylint: disable=too-many-arguments
         self, request, context_factory, charm_root, base_state, charm, framework, prefix
     ):
-        """Do not expose OAuth settings before a client is available."""
+        """Update the running workload's redirect and scope settings when OAuth becomes ready."""
         paas_config = read_paas_config(charm_root(charm)).model_copy(
             update={
                 "relations": {
@@ -1066,10 +1068,39 @@ class TestOAuthRelationConfig:
         if charm is FastAPICharm:
             state["config"] = {**state.get("config", {}), "non-optional-string": "test"}
         context = context_factory(charm, paas_config=paas_config)
-        out = context.run(context.on.config_changed(), testing.State(**state))
-        env = list(out.containers)[0].plan.services[framework].environment
+        ingress = testing.Relation(
+            endpoint="ingress",
+            interface="ingress",
+            remote_app_data={"ingress": '{"url":"https://app.test/"}'},
+        )
+        state["relations"].append(ingress)
+        out = context.run(context.on.relation_changed(ingress), testing.State(**state))
+        assert out.unit_status == testing.ActiveStatus()
+        env = out.get_container("app").plan.services[framework].environment
         assert f"{prefix}OIDC_REDIRECT_PATH" not in env
         assert f"{prefix}OIDC_SCOPES" not in env
+
+        secret = testing.Secret(tracked_content={"secret": "client-secret"})
+        oidc = testing.Relation(
+            endpoint="oidc",
+            interface="oauth",
+            remote_app_data={**OAUTH_RELATION_DATA_EXAMPLE, "client_secret_id": secret.id},
+        )
+        connected = context.run(
+            context.on.relation_changed(oidc),
+            replace(out, relations=out.relations | {oidc}, secrets=out.secrets | {secret}),
+        )
+        assert connected.unit_status == testing.ActiveStatus()
+        env = connected.get_container("app").plan.services[framework].environment
+        if charm is SpringBootCharm:
+            assert "APP_OIDC_REDIRECT_PATH" not in env
+            assert "APP_OIDC_SCOPES" not in env
+            registration = "spring.security.oauth2.client.registration.oidc"
+            assert env[f"{registration}.redirect-uri"] == "https://app.test/auth"
+            assert env[f"{registration}.scope"] == "openid,x"
+        else:
+            assert env[f"{prefix}OIDC_REDIRECT_PATH"] == "/auth"
+            assert env[f"{prefix}OIDC_SCOPES"] == "openid x"
 
     def test_defaults_when_endpoint_omitted(self, context_factory, flask_base_state):
         """Fall back to OAuthRelationConfig defaults when relations omits the OAuth endpoint."""

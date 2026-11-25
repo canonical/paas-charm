@@ -16,7 +16,12 @@ import ops
 from paas_charm.charm_state import CharmState
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
-from paas_charm.paas_config import EnvVarConfig, LoggingFormat, SecretEnvVarsConfig
+from paas_charm.paas_config import (
+    EnvVarConfig,
+    LoggingFormat,
+    OAuthRelationConfig,
+    SecretEnvVarsConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -196,13 +201,16 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
 
 
 def generate_oauth_env(
-    framework: str, relation_data: "PaaSOAuthRelationData | None" = None
+    framework: str,
+    relation_data: "PaaSOAuthRelationData | None" = None,
+    oauth_config: OAuthRelationConfig | None = None,
 ) -> dict[str, str]:
     """Generate environment variable from PaaSOAuthRelationData.
 
     Args:
         framework: The charm framework name.
         relation_data: The charm Oauth integration relation data.
+        oauth_config: Static endpoint settings from paas-config.yaml.
 
     Returns:
         Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
@@ -217,7 +225,10 @@ def generate_oauth_env(
     return {
         k: v
         for k, v in (
-            (f"{config_prefix}_REDIRECT_PATH", relation_data.redirect_path),
+            (
+                f"{config_prefix}_REDIRECT_PATH",
+                (oauth_config or OAuthRelationConfig()).redirect_path,
+            ),
             (f"{config_prefix}_SCOPES", relation_data.scopes),
             (f"{framework.upper()}_{provider_name}_CLIENT_ID", relation_data.client_id),
             (f"{framework.upper()}_{provider_name}_CLIENT_SECRET", relation_data.client_secret),
@@ -554,6 +565,7 @@ class App:  # pylint: disable=too-many-instance-attributes
             self.generate_oauth_env(
                 framework=self._workload_config.framework,
                 relation_data=self._charm_state.integrations.oauth,
+                oauth_config=self._charm_state.oauth_config,
             )
         )
 
