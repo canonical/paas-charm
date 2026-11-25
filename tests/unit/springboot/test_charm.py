@@ -32,8 +32,6 @@ from paas_charm.valkey import ValkeyRelation
             {},
             {
                 "SERVER_PORT": "8080",
-                "APP_OIDC_REDIRECT_PATH": "/login/oauth2/code/oidc",
-                "APP_OIDC_SCOPES": "openid profile email",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "sub",
                 "management.endpoints.web.exposure.include": "prometheus",
                 "management.server.port": "8080",
@@ -71,8 +69,6 @@ from paas_charm.valkey import ValkeyRelation
             {
                 "SERVER_PORT": "8080",
                 "APP_BASE_URL": "http://spring-boot-k8s.test-model:8080",
-                "APP_OIDC_REDIRECT_PATH": "/login/oauth2/code/oidc",
-                "APP_OIDC_SCOPES": "openid profile email",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "sub",
                 "management.endpoints.web.exposure.include": "prometheus",
                 "management.server.port": "8080",

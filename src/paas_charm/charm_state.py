@@ -16,7 +16,7 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
-from paas_charm.paas_config import ConfigOptions, OAuthRelationConfig
+from paas_charm.paas_config import ConfigOptions
 from paas_charm.peers import Peers
 from paas_charm.relations import CustomRelation
 from paas_charm.secret_key import SecretKeyStorage
@@ -49,7 +49,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         config_options: Settings for existing charm configuration options.
         framework_config_fields: Accepted framework config input names mapped to model fields.
         framework_config_field_names: Framework fields protected from implicit user config outputs.
-        oauth_configs: Static OAuth settings from paas-config.yaml, keyed by endpoint name.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -67,7 +66,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
         framework_config_field_names: set[str] | None = None,
-        oauth_configs: dict[str, OAuthRelationConfig] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -84,7 +82,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
             framework_config_field_names: Framework fields protected from implicit user outputs.
-            oauth_configs: Static OAuth settings from paas-config.yaml, keyed by endpoint name.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -98,7 +95,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.framework_config_fields = framework_config_fields or {}
         self.framework_config_field_names = framework_config_field_names or set()
         self.custom_relations = custom_relations or []
-        self.oauth_configs = oauth_configs or {}
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -114,7 +110,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
         config_options: ConfigOptions | None = None,
-        oauth_configs: dict[str, OAuthRelationConfig] | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
@@ -129,7 +124,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             custom_relations: Custom relations.
             base_url: Base URL for the service.
             config_options: Settings for existing charm configuration options.
-            oauth_configs: Static OAuth settings from paas-config.yaml, keyed by endpoint name.
 
         Return:
             The CharmState instance created by the provided charm.
@@ -235,7 +229,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integrations=integrations,
             base_url=base_url,
             custom_relations=custom_relations,
-            oauth_configs=oauth_configs,
         )
 
     @property

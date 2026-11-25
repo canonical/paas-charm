@@ -740,9 +740,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             ),
             custom_relations=self._custom_relations,
             base_url=self._base_url,
-            oauth_configs=(
-                {self._oauth.relation_name: self._oauth.oauth_config} if self._oauth else None
-            ),
         )
 
     @property

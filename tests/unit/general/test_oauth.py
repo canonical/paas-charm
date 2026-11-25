@@ -19,7 +19,9 @@ from examples.fastapi.charm.src.charm import FastAPICharm
 from examples.flask.charm.src.charm import FlaskCharm
 from examples.go.charm.src.charm import GoCharm
 from examples.springboot.charm.src.charm import SpringBootCharm
+from paas_charm.app import generate_oauth_env
 from paas_charm.exceptions import PaasConfigError
+from paas_charm.oauth import PaaSOAuthRelationData
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
     OAuthRelationConfig,
@@ -27,6 +29,24 @@ from paas_charm.paas_config import (
     read_paas_config,
 )
 from tests.unit.general.constants import OAUTH_RELATION_DATA_EXAMPLE
+
+
+def test_hyphenated_endpoint_config_environment():
+    """Keep normalized names for the redirect path and scope of a hyphenated endpoint."""
+    relation_data = PaaSOAuthRelationData.model_validate(
+        {
+            **OAUTH_RELATION_DATA_EXAMPLE,
+            "provider_name": "company-login",
+            "client_secret": "secret",
+            "scopes": "openid email",
+            "redirect_uri": "https://app.example/callback",
+            "redirect_path": "/callback",
+            "user_name_attribute": "sub",
+        }
+    )
+    env = generate_oauth_env("go", relation_data)
+    assert env["APP_COMPANY_LOGIN_REDIRECT_PATH"] == "/callback"
+    assert env["APP_COMPANY_LOGIN_SCOPES"] == "openid email"
 
 
 def _oauth_paas_config(root) -> PaasConfig:
@@ -163,8 +183,6 @@ def _oauth_paas_config(root) -> PaasConfig:
             'bash -c "java -jar *.jar"',
             {
                 "APP_BASE_URL": "http://juju.test/",
-                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
-                "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "email",
                 "APP_SECRET_KEY": "test",
                 "OTEL_LOGS_EXPORTER": "none",
@@ -375,8 +393,6 @@ def test_oauth_config_wrong_relation_order(
             'bash -c "java -jar *.jar"',
             {
                 "APP_BASE_URL": "http://juju.test/",
-                "APP_OIDC_REDIRECT_PATH": "/oauth/callback",
-                "APP_OIDC_SCOPES": "openid profile email phone",
                 "APP_OIDC_USER_NAME_ATTRIBUTE": "email",
                 "APP_SECRET_KEY": "test",
                 "OTEL_LOGS_EXPORTER": "none",
@@ -1038,7 +1054,7 @@ class TestOAuthRelationConfig:
     def test_environment_without_relation(  # pylint: disable=too-many-arguments
         self, request, context_factory, charm_root, base_state, charm, framework, prefix
     ):
-        """Expose the redirect path and scopes to the workload even without an OAuth relation."""
+        """Do not expose OAuth settings before a client is available."""
         paas_config = read_paas_config(charm_root(charm)).model_copy(
             update={
                 "relations": {
@@ -1052,8 +1068,8 @@ class TestOAuthRelationConfig:
         context = context_factory(charm, paas_config=paas_config)
         out = context.run(context.on.config_changed(), testing.State(**state))
         env = list(out.containers)[0].plan.services[framework].environment
-        assert env[f"{prefix}OIDC_REDIRECT_PATH"] == "/auth"
-        assert env[f"{prefix}OIDC_SCOPES"] == "openid x"
+        assert f"{prefix}OIDC_REDIRECT_PATH" not in env
+        assert f"{prefix}OIDC_SCOPES" not in env
 
     def test_defaults_when_endpoint_omitted(self, context_factory, flask_base_state):
         """Fall back to OAuthRelationConfig defaults when relations omits the OAuth endpoint."""

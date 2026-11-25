@@ -128,11 +128,16 @@ Endpoints using the ``oauth`` interface that aren't listed use the defaults.
 The charm rejects unknown keys, endpoints that aren't declared, and endpoints that
 use another interface.
 
-The charm passes the values to the workload as ``<PREFIX>_<ENDPOINT>_REDIRECT_PATH``
-and ``<PREFIX>_<ENDPOINT>_SCOPES``, with scopes separated by spaces. ``<PREFIX>`` is
-``FLASK``, ``DJANGO``, or ``APP`` for the other frameworks, and ``<ENDPOINT>`` is the
-upper-cased endpoint name with hyphens replaced by underscores, for example
-``FLASK_OIDC_REDIRECT_PATH``. These variables are set even when the relation is absent.
+Once the OAuth client is available, the charm passes the redirect path and space-separated
+scopes to the workload as ``<PREFIX>_<ENDPOINT>_REDIRECT_PATH`` and
+``<PREFIX>_<ENDPOINT>_SCOPES``. The prefix is ``FLASK`` for Flask, ``DJANGO`` for Django,
+and ``APP`` for ExpressJS, FastAPI, and Go. The endpoint name is upper-cased with hyphens
+replaced by underscores, for example ``FLASK_OIDC_REDIRECT_PATH``. Without an OAuth client,
+these variables are absent.
+
+Spring Boot receives the full redirect URI and comma-separated scopes as
+``spring.security.oauth2.client.registration.<endpoint>.redirect-uri`` and ``.scope``
+instead of the two environment variables above.
 
 Environment variable name mappings
 ----------------------------------

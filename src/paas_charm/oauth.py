@@ -30,6 +30,7 @@ class PaaSOAuthRelationData(BaseModel):
         jwks_endpoint: The URL for the JSON Web Key Set (JWKS) endpoint.
         scopes: List of scopes to request during the OAuth flow.
         provider_name: The name of the OAuth identity provider.
+        redirect_path: Configured workload callback path.
         redirect_uri: Redirection URI to which the response will be sent.
         user_name_attribute: Claim that identifies the user in the workload system.
     """
@@ -43,6 +44,7 @@ class PaaSOAuthRelationData(BaseModel):
     jwks_endpoint: str
     scopes: str
     provider_name: str
+    redirect_path: str
     redirect_uri: str
     user_name_attribute: str
 
@@ -58,12 +60,7 @@ class InvalidOAuthRelationDataError(InvalidRelationDataError):
 
 
 class PaaSOAuthRequirer(OAuthRequirer):
-    """Wrapper around OAuthRequirer.
-
-    Attributes:
-        relation_name: The OAuth endpoint name.
-        oauth_config: Static OAuth settings from paas-config.yaml.
-    """
+    """Wrapper around OAuthRequirer."""
 
     def __init__(
         self,
@@ -90,16 +87,6 @@ class PaaSOAuthRequirer(OAuthRequirer):
             client_config=self._get_oauth_client_config(),
             relation_name=relation_name,
         )
-
-    @property
-    def relation_name(self) -> str:
-        """Return the OAuth endpoint name."""
-        return self._relation_name
-
-    @property
-    def oauth_config(self) -> OAuthRelationConfig:
-        """Return the static OAuth settings from paas-config.yaml."""
-        return self._oauth_config
 
     def to_relation_data(self) -> "PaaSOAuthRelationData | None":
         """Get OAuth relation data object.
@@ -133,6 +120,7 @@ class PaaSOAuthRequirer(OAuthRequirer):
                     "jwks_endpoint": prod_info.jwks_endpoint,
                     "scopes": client_config.scope,
                     "provider_name": self._relation_name,
+                    "redirect_path": self._oauth_config.redirect_path,
                     "redirect_uri": client_config.redirect_uri,
                     "user_name_attribute": user_name_attribute,
                 }

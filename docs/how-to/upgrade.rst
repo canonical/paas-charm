@@ -240,9 +240,10 @@ tooling that references the old endpoint or interface name.
 Move OAuth settings to ``paas-config.yaml``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``<endpoint>-redirect-path`` and ``<endpoint>-scopes`` configuration
-options are no longer read. Remove them from ``charmcraft.yaml`` and set the
-values in ``paas-config.yaml`` instead, with scopes as a YAML list:
+Starting with ``paas-charm`` 2.0b3, the charm reads the OAuth redirect path and
+scopes from ``paas-config.yaml``. Move your application's values there and remove
+the ``<endpoint>-redirect-path`` and ``<endpoint>-scopes`` options from
+``charmcraft.yaml``. Specify scopes as a YAML list:
 
 .. code-block:: yaml
 
@@ -252,7 +253,16 @@ values in ``paas-config.yaml`` instead, with scopes as a YAML list:
        scopes: [openid, profile, email]
 
 Remove any ``juju config`` calls, Terraform, or bundle settings that set the
-old options. The workload still receives the same environment variables.
+old options. The redirect path and scopes are now sent to the workload only when an OAuth
+client is available. If OAuth is optional, let the workload start without those variables.
+For Spring Boot, read the native OAuth client registration properties ``redirect-uri``
+and ``scope`` instead of ``APP_OIDC_REDIRECT_PATH`` and ``APP_OIDC_SCOPES``.
+
+If you renamed either variable using ``config.options`` in ``paas-config.yaml``,
+remove that mapping too: it references a charm option that no longer exists and
+will fail validation at startup. Update the workload to read the default name.
+For example, if a Flask charm mapped ``oidc-redirect-path`` to ``REDIRECT_PATH``,
+read ``FLASK_OIDC_REDIRECT_PATH`` instead. For ``oidc-scopes``, read ``FLASK_OIDC_SCOPES``.
 See :ref:`ref_paas_config` for details.
 
 Build and refresh all artifacts
