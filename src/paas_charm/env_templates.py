@@ -227,14 +227,14 @@ def config_fields(config: Context) -> dict[str, typing.Any]:
 def validate_env_templates(
     env: Mapping[str, str | None],
     *,
-    endpoints: Mapping[str, Collection[str] | None],
+    endpoints: Mapping[str, Collection[str]],
     config_options: Context,
 ) -> None:
     """Validate references independently of current config values and relation presence.
 
     Args:
         env: Templates by destination variable.
-        endpoints: Declared endpoint names and their built-in fields, or None for custom fields.
+        endpoints: Declared endpoint names and their built-in template fields.
         config_options: Juju configuration metadata.
 
     Raises:
@@ -250,7 +250,7 @@ def validate_env_templates(
 
 
 def _reference_error(
-    path: Path, endpoints: Mapping[str, Collection[str] | None], config: Context
+    path: Path, endpoints: Mapping[str, Collection[str]], config: Context
 ) -> str | None:
     """Check a path against the available namespaces.
 
@@ -269,7 +269,7 @@ def _reference_error(
             return _config_error(option, keys, config)
         case ("relations", endpoint, field) if endpoint in endpoints:
             fields = endpoints[endpoint]
-            if fields is None or field in fields:
+            if field in fields:
                 return None
             return (
                 "unknown built-in relation field"

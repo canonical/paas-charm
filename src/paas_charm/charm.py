@@ -222,15 +222,15 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 config_options=config_metadata(pathlib.Path(self.charm_dir))["options"],
             )
 
-    def _template_endpoints(self) -> dict[str, set[str] | None]:
+    def _template_endpoints(self) -> dict[str, set[str]]:
         """Describe endpoint fields independently of whether a provider is related.
 
         Returns:
-            Declared endpoints mapped to their fields, or None for author-defined relations.
+            Declared endpoints mapped to their built-in template fields.
         """
         requires = self.framework.meta.requires
         db_fields = {f.name for f in fields(DatabaseURLFields)}
-        result: dict[str, set[str] | None] = {name: set() for name in requires}
+        result: dict[str, set[str]] = {name: set() for name in requires}
         if self._rabbitmq is not None:
             result["rabbitmq"] = set(PaaSRabbitMQRelationData.model_fields) | {
                 f.name for f in fields(RabbitURLFields)
@@ -259,7 +259,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                     for cls, names in wrappers.items()
                     if type(relation) in self.builtin_relations and isinstance(relation, cls)
                 ),
-                None,
+                set(),
             )
         return result
 

@@ -316,8 +316,6 @@ Relation fields:
    * - ``openfga``, ``s3``, ``saml``, ``smtp``, ``http-proxy``
      - The relation data fields, using their Python attribute names, for example
        ``{{ relations.s3.access_key }}``.
-   * - Custom relations
-     - The fields returned by ``template_fields()``.
 
 Lists and mappings render as JSON. Secret values render in plain text.
 RabbitMQ and Valkey connection URLs percent-encode credentials; their separate
@@ -335,7 +333,7 @@ When the charm starts, it rejects templates with invalid syntax, unknown namespa
 unknown ``app`` fields, unknown configuration options, or undeclared relation endpoints.
 A ``secret`` option must be referenced with a content key. Built-in relation fields are
 validated even when no provider is related: a default handles missing data but does not
-hide a misspelled field. Custom relation fields are resolved at runtime.
+hide a misspelled field. Custom relations are not exposed to ``env`` templates.
 
 Validation
 ----------

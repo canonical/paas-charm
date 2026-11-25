@@ -24,6 +24,10 @@ from paas_charm.paas_config import (
     OAuthRelationConfig,
     SecretEnvVarsConfig,
 )
+from paas_charm.s3 import S3Relation
+from paas_charm.saml import SamlRelation
+from paas_charm.smtp import SmtpRelation
+from paas_charm.valkey import ValkeyRelation
 
 logger = logging.getLogger(__name__)
 
@@ -414,7 +418,8 @@ class App:  # pylint: disable=too-many-instance-attributes
                 "redirect_path": oauth_config.redirect_path,
             }
         for relation in self._charm_state.custom_relations:
-            relations[relation.relation_name] = relation.template_fields()
+            if isinstance(relation, (S3Relation, SamlRelation, SmtpRelation, ValkeyRelation)):
+                relations[relation.relation_name] = relation.template_fields()
         return namespaces
 
     def _apply_env_templates(self, env: dict[str, str]) -> None:

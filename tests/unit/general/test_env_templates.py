@@ -29,7 +29,6 @@ from paas_charm.paas_config import (
     read_paas_config,
 )
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
 from paas_charm.springboot.charm import SpringBootApp, SpringValkeyRelation
@@ -161,11 +160,11 @@ def test_validate_env_templates_valid():
     """Accept known namespaces and fields, and ignore removals."""
     env_templates.validate_env_templates(
         {
-            "A": "{{ relations.app.anything }}{{ app.name }}{{ app.base_url }}{{ app.port }}",
+            "A": "{{ relations.app.host }}{{ app.name }}{{ app.base_url }}{{ app.port }}",
             "B": "{{ config.level }}{{ config.creds.user }}",
             "C": None,
         },
-        endpoints={"app": None},
+        endpoints={"app": {"host"}},
         config_options=OPTIONS,
     )
 
@@ -288,7 +287,7 @@ def test_rendered_nul_is_rejected(context_factory, flask_base_state):
 
 
 def test_absent_relations(context_factory, flask_base_state):
-    """Allow valid built-in and arbitrary custom fields before a provider is related."""
+    """Allow valid built-in fields before a provider is related."""
     context = context_factory(
         FlaskCharm,
         paas_config=PaasConfig(
@@ -296,7 +295,6 @@ def test_absent_relations(context_factory, flask_base_state):
                 "CACHE_HOST": "{{ relations.valkey.hostname | default('localhost') }}",
                 "OAUTH_REDIRECT": "{{ relations.oidc.redirect_path | default('/default') }}",
                 "OAUTH_REDIRECT_UNSET": "{{ relations.oidc.redirect_path }}",
-                "TEMPORAL": "{{ relations['temporal-host-info'].custom_field | default('offline') }}",
             }
         ),
     )
@@ -305,13 +303,29 @@ def test_absent_relations(context_factory, flask_base_state):
     assert env["CACHE_HOST"] == "localhost"
     assert env["OAUTH_REDIRECT"] == "/default"
     assert "OAUTH_REDIRECT_UNSET" not in env
-    assert env["TEMPORAL"] == "offline"
+
+
+def test_custom_relation_rejected_in_templates(context_factory, flask_base_state):
+    """Reject templates referencing author-defined custom relations."""
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(
+            env={
+                "TEMPORAL": "{{ relations['temporal-host-info'].custom_field | default('offline') }}"
+            }
+        ),
+    )
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert "relation does not expose template fields" in str(exc_info.value.__cause__)
 
 
 def test_template_namespaces(tmp_path):
-    """Expose every built-in relation and custom relation fields under their endpoint names."""
-    custom = MagicMock(relation_name="s3")
-    custom.template_fields.return_value = {"bucket": "b"}
+    """Expose built-in relation fields under their endpoint names."""
+    s3 = MagicMock(spec=S3Relation, relation_name="s3")
+    s3.template_fields.return_value = {"bucket": "b"}
+    s3.gen_environment.return_value = {}
     state = CharmState(
         framework="test",
         is_secret_key_ready=True,
@@ -342,7 +356,7 @@ def test_template_namespaces(tmp_path):
                 user_name_attribute="sub",
             ),
         ),
-        custom_relations=[custom],
+        custom_relations=[s3],
         oauth_config=OAuthRelationConfig(redirect_path="/auth/callback"),
         env_templates={
             "MQ": "{{ relations.rabbitmq.connect_string }} {{ relations.rabbitmq.hostname }}",
@@ -391,21 +405,6 @@ def test_template_namespaces(tmp_path):
         database_migration=MagicMock(),
     )
     assert spring.gen_environment()["LABEL"] == "test-app"
-
-
-def test_custom_relation_default_template_fields():
-    """Custom relations expose no template fields unless they override the method."""
-
-    class _Relation(CustomRelation):
-        """Test relation."""
-
-        relation_name = "test"
-
-        def setup(self, on_change):
-            """Do nothing."""
-
-    relation = _Relation.__new__(_Relation)
-    assert not relation.template_fields()
 
 
 @pytest.mark.parametrize("relation_class", [ValkeyRelation, SpringValkeyRelation])

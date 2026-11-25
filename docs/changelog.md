@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from Jinja expressions over `relations`, `config` and `app`, with `default('text')`
   fallbacks and `null` to remove a variable. Built-in relation fields are checked at startup.
   RabbitMQ and Valkey URLs encode reserved characters in credentials.
-  Custom relations can expose fields to templates by overriding `template_fields()`.
 
 ## 2.0.0b3 - 2026-11-25
 

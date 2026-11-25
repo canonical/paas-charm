@@ -39,10 +39,6 @@ helper methods. The main API consists of the following methods:
   or invalid data.
 - ``gen_environment`` — Called unconditionally. Provides a way for the relation
   to add workload environment variables. Must not raise an exception.
-- ``template_fields`` — Optional. Called unconditionally. Returns the values that
-  ``env`` templates in ``paas-config.yaml`` can reference as
-  ``{{ relations['endpoint-name'].field }}``. Custom field names resolve at runtime and
-  do not require a schema. Defaults to no fields. Must not raise an exception.
 
 API methods can use ``self.context`` (a read-only
 :class:`~paas_charm.relations.Context` injected by the framework) to access
