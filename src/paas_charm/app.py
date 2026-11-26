@@ -425,19 +425,19 @@ class App:  # pylint: disable=too-many-instance-attributes
     def _apply_env_templates(self, env: dict[str, str]) -> None:
         """Render the ``env`` templates from paas-config.yaml into the environment.
 
-        Templates override any other variable. ``None`` removes a variable. Variables whose
-        templates reference values that are unavailable are omitted.
+        Templates override any other variable. Variables whose templates reference values
+        that are unavailable are omitted.
 
         Args:
             env: The environment to update in place.
+
+        Raises:
+            PaasConfigError: If a rendered value contains a NUL character.
         """
         if not self._charm_state.env_templates:
             return
         namespaces = self._template_namespaces()
         for name, template in self._charm_state.env_templates.items():
-            if template is None:
-                env.pop(name, None)
-                continue
             value, unresolved = env_templates.render(template, namespaces)
             if value is None:
                 logger.info(

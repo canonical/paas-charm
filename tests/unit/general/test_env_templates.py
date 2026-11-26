@@ -233,6 +233,7 @@ def test_config_fields():
         pytest.param({"A=B": "x"}, "invalid environment variable name", id="equals-name"),
         pytest.param({"A": "{{ config[app.name] }}"}, "A: expected a static", id="bad-template"),
         pytest.param({"A": 1}, "valid string", id="not-a-string"),
+        pytest.param({"A": None}, "valid string", id="null-value"),
     ],
 )
 def test_paas_config_invalid(tmp_path, env, diagnostic):
@@ -267,12 +268,11 @@ def test_validate_env_templates_invalid(template, diagnostic):
 
 
 def test_validate_env_templates_valid():
-    """Accept known namespaces and fields, and ignore removals."""
+    """Accept known namespaces and fields."""
     env_templates.validate_env_templates(
         {
             "A": "{{ relations.app.host }}{{ app.name }}{{ app.base_url }}{{ app.port }}",
             "B": "{{ config.level }}{{ config.creds.user }}",
-            "C": None,
         },
         endpoints={"app": {"host"}},
         config_options=OPTIONS,
@@ -336,7 +336,6 @@ def test_charm_environment(context_factory, charm_root, django_base_state):
                 "NO_TRACING": "{{ relations.tracing.endpoint }}",
                 "WITH_DEFAULT": "{{ relations.tracing.endpoint | default('none') }}",
                 "POSTGRESQL_DB_HOSTNAME": "override",
-                "POSTGRESQL_DB_PASSWORD": None,
                 "DJANGO_BASE_URL": "{{ relations.tracing.endpoint }}",
             }
         }
@@ -361,7 +360,6 @@ def test_charm_environment(context_factory, charm_root, django_base_state):
     assert "NO_TRACING" not in env
     assert env["WITH_DEFAULT"] == "none"
     assert env["POSTGRESQL_DB_HOSTNAME"] == "override"
-    assert "POSTGRESQL_DB_PASSWORD" not in env
     # Unresolved templates keep the default variable.
     assert env["DJANGO_BASE_URL"] == "http://django-k8s.test-model:8000"
     assert env["POSTGRESQL_DB_USERNAME"] == "test-username"
@@ -474,7 +472,6 @@ def test_template_namespaces(tmp_path):
             "TRACES": "{{ relations.tracing.endpoint }}",
             "OIDC": "{{ relations.oidc.client_id }}:{{ relations.oidc.issuer_url }}",
             "OIDC_PATH": "{{ relations.oidc.redirect_path }}",
-            "APP_OIDC_REDIRECT_PATH": None,
             "BUCKET": "{{ relations.s3.bucket }}",
             "NAME": "{{ app.name }}",
             "PROXIES": "{{ relations['http-proxy'].http_proxy }} {{ relations['http-proxy'].https_proxy }}",
@@ -502,7 +499,6 @@ def test_template_namespaces(tmp_path):
     assert env["TRACES"] == "http://tempo:4318/"
     assert env["OIDC"] == "id:https://issuer"
     assert env["OIDC_PATH"] == "/auth/callback"
-    assert "APP_OIDC_REDIRECT_PATH" not in env
     assert env["BUCKET"] == "b"
     assert env["NAME"] == "test-app"
     assert env["PROXIES"] == "http://p:3128 https://p:443"

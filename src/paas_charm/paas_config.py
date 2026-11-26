@@ -310,7 +310,7 @@ class PaasConfig(BaseModel):
         config: Settings for existing charm configuration options.
         relations: Static settings sent to related applications, keyed by endpoint name.
         env: Workload environment variables rendered from templates over relation data,
-            charm configuration and application settings. ``None`` removes a variable.
+            charm configuration and application settings.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -321,7 +321,7 @@ class PaasConfig(BaseModel):
         default_factory=dict,
         description="Static settings sent to related applications, keyed by endpoint name.",
     )
-    env: dict[str, str | None] = Field(
+    env: dict[str, str] = Field(
         default_factory=dict,
         description="Workload environment variables rendered from Jinja templates.",
     )
@@ -365,7 +365,7 @@ class PaasConfig(BaseModel):
 
     @field_validator("env")
     @classmethod
-    def _validate_env(cls, env: dict[str, str | None]) -> dict[str, str | None]:
+    def _validate_env(cls, env: dict[str, str]) -> dict[str, str]:
         """Validate environment variable names and template syntax.
 
         Args:
@@ -383,11 +383,10 @@ class PaasConfig(BaseModel):
                     f"invalid environment variable name {name!r}: "
                     "names must be non-empty and contain neither '=' nor NUL"
                 )
-            if template is not None:
-                try:
-                    env_templates.parse(template)
-                except ValueError as exc:
-                    raise ValueError(f"{name}: {exc}") from exc
+            try:
+                env_templates.parse(template)
+            except ValueError as exc:
+                raise ValueError(f"{name}: {exc}") from exc
         return env
 
     def application_port(self, *, default_port: int) -> int:

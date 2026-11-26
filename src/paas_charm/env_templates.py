@@ -228,7 +228,7 @@ def config_fields(config: Context) -> dict[str, typing.Any]:
 
 
 def validate_env_templates(
-    env: Mapping[str, str | None],
+    env: Mapping[str, str],
     *,
     endpoints: Mapping[str, Collection[str]],
     config_options: Context,
@@ -244,8 +244,6 @@ def validate_env_templates(
         PaasConfigError: If a template references an invalid field.
     """
     for name, source in env.items():
-        if source is None:
-            continue
         for path, _ in parse(source)[1]:
             error = _reference_error(path, endpoints, config_options)
             if error:

@@ -263,7 +263,6 @@ exactly as written. Each value is a template:
       LOG_LEVEL: "{{ config['log-level'] | default('info') }}"
       API_TOKEN: "{{ config.credentials.token }}"
       PRICE_LABEL: costs $5
-      POSTGRESQL_DB_PASSWORD: null
 
 Template syntax:
 
@@ -323,11 +322,10 @@ RabbitMQ and Valkey connection URLs percent-encode credentials; their separate
 cannot contain NUL characters.
 
 Templates are applied after every other source, so they can replace any variable.
-A ``null`` value removes the variable. When a reference without a default has no
-value, for example because the relation is absent, the variable is not set by the
-template and any existing variable with that name is kept. The charm logs the
-unresolved references without logging values. The original variables used by a template
-remain set.
+When a reference without a default has no value, for example because the relation is
+absent, the variable is not set by the template and any existing variable with that name
+is kept. The charm logs the unresolved references without logging values. The original
+variables used by a template remain set.
 
 When the charm starts, it rejects templates with invalid syntax, unknown namespaces,
 unknown ``app`` fields, unknown configuration options, or undeclared relation endpoints.

@@ -71,7 +71,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
         framework_config_field_names: set[str] | None = None,
-        env_templates: dict[str, str | None] | None = None,
+        env_templates: dict[str, str] | None = None,
         app_name: str = "",
         charm_config: dict[str, typing.Any] | None = None,
     ):
@@ -126,7 +126,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
         config_options: ConfigOptions | None = None,
-        env_templates: dict[str, str | None] | None = None,
+        env_templates: dict[str, str] | None = None,
         app_name: str = "",
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
