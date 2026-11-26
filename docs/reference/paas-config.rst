@@ -102,7 +102,7 @@ Only endpoints that use the ``oauth`` interface accept settings:
 .. code-block:: yaml
 
     relations:
-      oidc:
+      oidc:  # Use your OAuth endpoint name from the requires section of charmcraft.yaml.
         redirect-path: /callback
         scopes: [openid, profile, email]
 

@@ -248,7 +248,7 @@ the ``<endpoint>-redirect-path`` and ``<endpoint>-scopes`` options from
 .. code-block:: yaml
 
    relations:
-     oidc:
+     oidc:  # Use your OAuth endpoint name from the requires section of charmcraft.yaml.
        redirect-path: /callback
        scopes: [openid, profile, email]
 
