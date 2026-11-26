@@ -71,14 +71,6 @@ config:
       description: Example of a non-optional string configuration option.
       type: string
       optional: False
-    oidc-redirect-path:
-      type: string
-      description: The path that the user will be redirected upon completing login.
-      default: /callback
-    oidc-scopes:
-      type: string
-      description: A list of scopes with spaces in between.
-      default: "openid profile email"
 
 containers:
   app:

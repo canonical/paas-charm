@@ -22,7 +22,7 @@ File structure
 
 The ``paas-config.yaml`` file uses YAML format and follows a structured schema.
 It supports generic application settings in addition to the
-``prometheus``, ``framework_logging_format``, and ``config`` top-level keys.
+``prometheus``, ``framework_logging_format``, ``config``, and ``relations`` top-level keys.
 
 Application settings
 --------------------
@@ -89,6 +89,55 @@ targets must match endpoints that the workload actually serves.
 
 See :ref:`ref_paas_config_prometheus` for detailed Prometheus configuration options.
 See :ref:`ref_paas_config_structured_logging` for detailed structured logging options.
+
+Relation settings
+-----------------
+
+Use ``relations`` to set static values that the charm sends to related applications.
+Keys are endpoint names declared under ``requires`` in ``charmcraft.yaml``. These values
+are packaged with the charm and cannot be changed with ``juju config``.
+
+Only endpoints that use the ``oauth`` interface accept settings:
+
+.. code-block:: yaml
+
+    relations:
+      oidc:  # Use your OAuth endpoint name from the requires section of charmcraft.yaml.
+        redirect-path: /callback
+        scopes: [openid, profile, email]
+
+.. list-table::
+   :header-rows: 1
+
+   * - Key
+     - Type
+     - Default
+     - Description
+   * - ``redirect-path``
+     - String
+     - ``/callback``
+     - Path component of the redirect URI. The charm appends it to the application
+       base URL and registers the result with the OAuth provider.
+   * - ``scopes``
+     - List of strings
+     - ``[openid, profile, email]``
+     - Scopes requested from the OAuth provider. Must include ``openid``. Scopes must
+       be non-empty and must not contain whitespace.
+
+Endpoints using the ``oauth`` interface that aren't listed use the defaults.
+The charm rejects unknown keys, endpoints that aren't declared, and endpoints that
+use another interface.
+
+Once the OAuth client is available, the charm passes the redirect path and space-separated
+scopes to the workload as ``<PREFIX>_<ENDPOINT>_REDIRECT_PATH`` and
+``<PREFIX>_<ENDPOINT>_SCOPES``. The prefix is ``FLASK`` for Flask, ``DJANGO`` for Django,
+and ``APP`` for ExpressJS, FastAPI, and Go. The endpoint name is upper-cased with hyphens
+replaced by underscores, for example ``FLASK_OIDC_REDIRECT_PATH``. Without an OAuth client,
+these variables are absent.
+
+Spring Boot receives the full redirect URI and comma-separated scopes as
+``spring.security.oauth2.client.registration.<endpoint>.redirect-uri`` and ``.scope``
+instead of the two environment variables above.
 
 Environment variable name mappings
 ----------------------------------

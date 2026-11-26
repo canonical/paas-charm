@@ -16,7 +16,7 @@ from paas_charm.exceptions import (
     InvalidRelationDataError,
     RelationDataError,
 )
-from paas_charm.paas_config import ConfigOptions
+from paas_charm.paas_config import ConfigOptions, OAuthRelationConfig
 from paas_charm.peers import Peers
 from paas_charm.relations import CustomRelation
 from paas_charm.secret_key import SecretKeyStorage
@@ -47,6 +47,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
         config_options: Settings for existing charm configuration options.
+        oauth_config: Static settings for the OAuth endpoint, if declared.
         framework_config_fields: Accepted framework config input names mapped to model fields.
         framework_config_field_names: Framework fields protected from implicit user config outputs.
     """
@@ -63,6 +64,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
         config_options: ConfigOptions | None = None,
+        oauth_config: OAuthRelationConfig | None = None,
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
         framework_config_field_names: set[str] | None = None,
@@ -79,6 +81,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integrations: Information about the integrations.
             base_url: Base URL for the service.
             config_options: Settings for existing charm configuration options.
+            oauth_config: Static settings for the OAuth endpoint, if declared.
             framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
             framework_config_field_names: Framework fields protected from implicit user outputs.
@@ -91,6 +94,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.oauth_config = oauth_config
         self.config_options = config_options if config_options is not None else ConfigOptions()
         self.framework_config_fields = framework_config_fields or {}
         self.framework_config_field_names = framework_config_field_names or set()
@@ -224,6 +228,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             is_secret_key_ready=secret_key.is_ready,
             peer_fqdns=peer_fqdns,
             config_options=config_options,
+            oauth_config=(
+                integration_requirers.oauth.oauth_config if integration_requirers.oauth else None
+            ),
             framework_config_fields=framework_fields,
             framework_config_field_names=set(type(framework_config).model_fields),
             integrations=integrations,

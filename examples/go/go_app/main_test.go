@@ -3,7 +3,23 @@
 
 package main
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+func TestNoOIDCRoutesWithoutClient(t *testing.T) {
+	t.Setenv("APP_OIDC_REDIRECT_PATH", "")
+	mux := http.NewServeMux()
+	h := mainHandler{}
+	h.registerOIDC(mux)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/login/openid-connect", nil))
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("login without OIDC returned %d, want 404", response.Code)
+	}
+}
 
 func TestNewConfigUsesFrameworkEndpointEnvironment(t *testing.T) {
 	t.Setenv("APP_BASE_URL", "http://example.com")

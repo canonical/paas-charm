@@ -58,14 +58,6 @@ config:
         To create the secret, run the following command:
         `juju add-secret my-secret-key value=<secret-string> && juju grant-secret my-secret-key spring-boot-k8s`,
         and use the outputted secret ID to configure this option.
-    oidc-redirect-path:
-      type: string
-      description: The path that the user will be redirected upon completing login.
-      default: /login/oauth2/code/oidc
-    oidc-scopes:
-      type: string
-      description: A list of scopes with spaces in between.
-      default: "openid profile email"
     oidc-user-name-attribute:
       type: string
       description: The name of the attribute returned in the UserInfo Response that references the Name
@@ -155,3 +147,8 @@ parts:
     override-build: |-
       rustup default stable
       craftctl default
+  config:
+    plugin: dump
+    source: .
+    stage:
+      - paas-config.yaml

@@ -12,8 +12,6 @@ import pytest
 from ops import testing
 
 BASE_DJANGO_ENV = {
-    "DJANGO_OIDC_REDIRECT_PATH": "/callback",
-    "DJANGO_OIDC_SCOPES": "openid profile email",
     "DJANGO_SECRET_KEY": "test",
     "DJANGO_ALLOWED_HOSTS": '["django-k8s.test-model"]',
     "DJANGO_METRICS_PORT": "9102",

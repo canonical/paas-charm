@@ -468,11 +468,10 @@ func (h *mainHandler) RabbitMQReceiveHA(w http.ResponseWriter, r *http.Request) 
 	fmt.Fprint(w, result)
 }
 
-func main() {
-	// Load all configuration from environment variables at startup.
-	config, err := NewConfig()
-	if err != nil {
-		log.Fatalf("Configuration error: %v", err)
+func (h *mainHandler) registerOIDC(mux *http.ServeMux) {
+	redirectPath := os.Getenv("APP_OIDC_REDIRECT_PATH")
+	if redirectPath == "" {
+		return
 	}
 
 	// OIDC-specific: setup gothic session store
@@ -482,9 +481,10 @@ func main() {
 	}
 	store := sessions.NewCookieStore([]byte(key))
 	store.MaxAge(maxAge)
-	store.Options.Path = config.BasePath
+	store.Options.Path = h.config.BasePath
 	store.Options.HttpOnly = true
 	gothic.Store = store
+	h.store = store
 
 	log.Printf("Session cookie configured with Path: %s and Secure: %t and SameSite: %d", store.Options.Path, store.Options.Secure, store.Options.SameSite)
 
@@ -493,11 +493,7 @@ func main() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// Construct the full redirect URL.
-	redirectPath := os.Getenv("APP_OIDC_REDIRECT_PATH")
-	if redirectPath == "" {
-		log.Fatal("APP_OIDC_REDIRECT_PATH environment variable must be set")
-	}
-	redirectURL := config.BaseURL + redirectPath
+	redirectURL := h.config.BaseURL + redirectPath
 	log.Println("Using Redirect URL:", redirectURL)
 
 	// OIDC-specific: setup the openid-connect provider
@@ -518,6 +514,17 @@ func main() {
 
 	goth.UseProviders(oidcProvider)
 	log.Println("Registered OIDC provider:", oidcProvider.Name())
+	mux.HandleFunc("/auth/{provider}/callback", h.serveAuthCallback)
+	mux.HandleFunc("/logout/{provider}", h.serveLogout)
+	mux.HandleFunc("/login/{provider}", gothic.BeginAuthHandler)
+	mux.HandleFunc("/profile", h.serveProfile)
+}
+
+func main() {
+	config, err := NewConfig()
+	if err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
 
 	ctx := context.Background()
 	// initialize trace provider.
@@ -554,7 +561,6 @@ func main() {
 			RabbitMQURLS:  rabbitmqURLS,
 		},
 		config: config,
-		store:  store,
 	}
 	mux.HandleFunc("/{$}", mainHandler.serveHelloWorld)
 	mux.HandleFunc("/send_mail", mainHandler.serveMail)
@@ -567,13 +573,7 @@ func main() {
 	mux.HandleFunc("/rabbitmq/send_ha", mainHandler.RabbitMQSendHA)
 	mux.HandleFunc("/rabbitmq/receive_ha", mainHandler.RabbitMQReceiveHA)
 
-	// OIDC-specific: Add OIDC routes
-	mux.HandleFunc("/auth/{provider}/callback", mainHandler.serveAuthCallback)
-	mux.HandleFunc("/logout/{provider}", mainHandler.serveLogout)
-	mux.HandleFunc("/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
-		gothic.BeginAuthHandler(w, r)
-	})
-	mux.HandleFunc("/profile", mainHandler.serveProfile)
+	mainHandler.registerOIDC(mux)
 
 	if config.MetricsPort != config.Port {
 		prometheus.MustRegister(requestCounter)

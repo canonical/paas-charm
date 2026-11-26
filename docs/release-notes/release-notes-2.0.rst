@@ -285,6 +285,18 @@ Boot) may invalidate existing sessions. To provide your own key, set the
 ``app-secret-key`` option to a Juju secret ID.
 (`Pull request #345 <https://github.com/canonical/paas-charm/pull/345>`_)
 
+OAuth redirect path and scopes moved to ``paas-config.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting with ``paas-charm`` 2.0b3, the ``<endpoint>-redirect-path`` and
+``<endpoint>-scopes`` configuration options are no longer read. Set ``redirect-path`` and ``scopes`` under
+``relations.<endpoint>`` in ``paas-config.yaml`` instead, and remove the options
+from ``charmcraft.yaml``. ``scopes`` is a YAML list instead of a space-separated
+string. The workload receives ``<PREFIX>_<ENDPOINT>_REDIRECT_PATH`` and
+``<PREFIX>_<ENDPOINT>_SCOPES`` only when the OAuth client is available. Spring Boot
+receives the native ``redirect-uri`` and ``scope`` properties instead. If you renamed the
+old variables, follow the :doc:`upgrade guide </how-to/upgrade>` to migrate those mappings.
+
 ``secret-storage`` relation renamed to ``peers``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
