@@ -8,14 +8,13 @@ import json
 import logging
 import pathlib
 import urllib.parse
-from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import ops
 
-from paas_charm import env_templates
 from paas_charm.charm_state import CharmState
-from paas_charm.connection import RabbitURLFields, database_fields, url_fields
+from paas_charm.connection import database_fields, rabbit_fields
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
@@ -24,10 +23,7 @@ from paas_charm.paas_config import (
     OAuthRelationConfig,
     SecretEnvVarsConfig,
 )
-from paas_charm.s3 import S3Relation
-from paas_charm.saml import SamlRelation
-from paas_charm.smtp import SmtpRelation
-from paas_charm.valkey import ValkeyRelation
+from paas_charm.template_context import apply_env_templates
 
 logger = logging.getLogger(__name__)
 
@@ -148,25 +144,7 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    return {f"RABBITMQ_{k.upper()}": v for k, v in _rabbit_fields(relation_data).items()}
-
-
-def _rabbit_fields(data: "PaaSRabbitMQRelationData") -> dict[str, str]:
-    """Get RabbitMQ connection fields for both templates and workload variables.
-
-    Args:
-        data: Broker connection information.
-
-    Returns:
-        Populated URL components and virtual host.
-    """
-    fields = RabbitURLFields(
-        **asdict(url_fields(data.amqp_uri)), connect_strings=",".join(data.amqp_uris) or None
-    ).available()
-    fields.update(username=data.username, password=data.password)
-    if data.vhost:
-        fields["vhost"] = data.vhost
-    return fields
+    return {f"RABBITMQ_{k.upper()}": v for k, v in rabbit_fields(relation_data).items()}
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
@@ -371,97 +349,8 @@ class App:  # pylint: disable=too-many-instance-attributes
                     name,
                 )
             env[name] = value
-        self._apply_env_templates(env)
+        apply_env_templates(env, self._charm_state, self._workload_config.port)
         return env
-
-    def _template_namespaces(self) -> dict[str, Any]:
-        """Collect the values available to ``env`` templates.
-
-        Returns:
-            Field values keyed by namespace and field name.
-        """
-        return {
-            "relations": self._relation_template_fields(),
-            "app": env_templates.model_fields(
-                env_templates.AppFields(
-                    name=self._charm_state.app_name or None,
-                    base_url=self._charm_state.base_url or None,
-                    port=self._workload_config.port,
-                )
-            ),
-            "config": env_templates.config_fields(self._charm_state.charm_config),
-        }
-
-    def _relation_template_fields(self) -> dict[str, dict[str, str]]:
-        """Collect built-in relation fields available to ``env`` templates.
-
-        Returns:
-            Relation field values keyed by endpoint name.
-        """
-        integrations = self._charm_state.integrations
-        relations: dict[str, dict[str, str]] = {
-            endpoint: {**env_templates.model_fields(db_data), **database_fields(db_data.uris)}
-            for endpoint, db_data in integrations.databases_relation_data.items()
-        }
-        if integrations.rabbitmq:
-            relations["rabbitmq"] = {
-                **env_templates.model_fields(integrations.rabbitmq),
-                **_rabbit_fields(integrations.rabbitmq),
-            }
-        for endpoint, model in (
-            ("tracing", integrations.tracing),
-            ("openfga", integrations.openfga),
-        ):
-            if model:
-                relations[endpoint] = env_templates.model_fields(model)
-        if proxy := integrations.http_proxy:
-            relations["http-proxy"] = asdict(proxy)
-        for endpoint, key, value in (
-            ("ingress", "url", self._charm_state.ingress_url),
-            ("peers", "fqdns", self._charm_state.peer_fqdns),
-        ):
-            if value:
-                relations[endpoint] = {key: value}
-        if integrations.oauth:
-            oauth_config = self._charm_state.oauth_config or OAuthRelationConfig()
-            relations[integrations.oauth.provider_name] = {
-                **env_templates.model_fields(integrations.oauth),
-                "redirect_path": oauth_config.redirect_path,
-            }
-        for relation in self._charm_state.custom_relations:
-            if isinstance(relation, (S3Relation, SamlRelation, SmtpRelation, ValkeyRelation)):
-                relations[relation.relation_name] = relation.template_fields()
-        return relations
-
-    def _apply_env_templates(self, env: dict[str, str]) -> None:
-        """Render the ``env`` templates from paas-config.yaml into the environment.
-
-        Templates override any other variable. Variables whose templates reference values
-        that are unavailable are omitted.
-
-        Args:
-            env: The environment to update in place.
-
-        Raises:
-            PaasConfigError: If a rendered value contains a NUL character.
-        """
-        if not self._charm_state.env_templates:
-            return
-        namespaces = self._template_namespaces()
-        for name, template in self._charm_state.env_templates.items():
-            value, unresolved = env_templates.render(template, namespaces)
-            if value is None:
-                logger.info(
-                    "Environment variable %r is not set: unresolved references %s",
-                    name,
-                    ", ".join(unresolved),
-                )
-                continue
-            if "\0" in value:
-                raise PaasConfigError(f"paas-config.yaml: env.{name}: rendered value contains NUL")
-            if name in env:
-                logger.debug("env template overwrites environment variable %r", name)
-            env[name] = value
 
     def _mapped_framework_config_fields(self) -> set[str]:
         """Get framework fields whose default outputs are explicitly renamed.

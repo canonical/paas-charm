@@ -7,15 +7,11 @@ import abc
 import logging
 import pathlib
 import typing
-from dataclasses import fields
 
 import ops
-from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
-from charmlibs.interfaces.smtp import SmtpRelationData
+from charmlibs.interfaces.openfga import OpenFGARequires
 from charms.data_platform_libs.v0.data_interfaces import DatabaseRequiresEvent
-from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
 from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
-from dpcharmlibs.interfaces import ValkeyResponseModel
 from ops import RelationMeta
 from ops.model import Container
 from pydantic import BaseModel, ValidationError
@@ -28,9 +24,8 @@ from paas_charm.charm_state import (
     is_user_defined_config,
 )
 from paas_charm.charm_utils import block_if_invalid_data
-from paas_charm.connection import DatabaseURLFields, RabbitURLFields
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
-from paas_charm.databases import PaaSDatabaseRelationData, make_database_requirers
+from paas_charm.databases import make_database_requirers
 from paas_charm.env_templates import validate_env_templates
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
@@ -39,7 +34,7 @@ from paas_charm.exceptions import (
     RelationDataError,
 )
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
-from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
+from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
@@ -50,13 +45,14 @@ from paas_charm.paas_config import (
     read_paas_config,
 )
 from paas_charm.peers import Peers
-from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
+from paas_charm.rabbitmq import RabbitMQRequires
 from paas_charm.relations import Context, CustomRelation
-from paas_charm.s3 import PaaSS3RelationData, S3Relation
-from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
+from paas_charm.s3 import S3Relation
+from paas_charm.saml import SamlRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.smtp import SmtpRelation
-from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
+from paas_charm.template_context import template_endpoints
+from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
@@ -218,54 +214,20 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         if self._paas_config.env:
             validate_env_templates(
                 self._paas_config.env,
-                endpoints=self._template_endpoints(),
+                endpoints=template_endpoints(
+                    requires=requires,
+                    peers=self.framework.meta.peers,
+                    has_rabbitmq=self._rabbitmq is not None,
+                    has_tracing=self._tracing is not None,
+                    has_openfga=self._openfga is not None,
+                    has_http_proxy=self._http_proxy is not None,
+                    has_oauth=self._oauth is not None,
+                    database_endpoints=self._database_requirers,
+                    custom_relations=self._custom_relations,
+                    builtin_relations=self.builtin_relations,
+                ),
                 config_options=config_metadata(pathlib.Path(self.charm_dir))["options"],
             )
-
-    def _template_endpoints(self) -> dict[str, set[str]]:
-        """Describe endpoint fields independently of whether a provider is related.
-
-        Returns:
-            Declared endpoints mapped to their built-in template fields.
-        """
-        requires = self.framework.meta.requires
-        db_fields = {f.name for f in fields(DatabaseURLFields)}
-        result: dict[str, set[str]] = {name: set() for name in requires}
-        if self._rabbitmq is not None:
-            result["rabbitmq"] = set(PaaSRabbitMQRelationData.model_fields) | {
-                f.name for f in fields(RabbitURLFields)
-            }
-        if self._tracing is not None:
-            result["tracing"] = set(PaaSTracingRelationData.model_fields)
-        if self._openfga is not None:
-            result["openfga"] = set(OpenfgaProviderAppData.model_fields)
-        if self._http_proxy is not None:
-            result["http-proxy"] = {f.name for f in fields(ProxyConfig)}
-        if "ingress" in requires and requires["ingress"].interface_name == "ingress":
-            result["ingress"] = {"url"}
-        if "peers" in self.framework.meta.peers:
-            result["peers"] = {"fqdns"}
-        for name in self._database_requirers:
-            result[name] = set(PaaSDatabaseRelationData.model_fields) | db_fields
-        if self._oauth is not None:
-            ((endpoint, _),) = get_endpoints_by_interface_name(requires, "oauth")
-            result[endpoint] = set(PaaSOAuthRelationData.model_fields) | {"redirect_path"}
-        wrappers = {
-            ValkeyRelation: set(ValkeyResponseModel.model_fields) | db_fields,
-            S3Relation: set(PaaSS3RelationData.model_fields),
-            SamlRelation: set(PaaSSAMLRelationData.model_fields),
-            SmtpRelation: set(SmtpRelationData.model_fields),
-        }
-        for relation in self._custom_relations:
-            result[relation.relation_name] = next(
-                (
-                    names
-                    for cls, names in wrappers.items()
-                    if type(relation) in self.builtin_relations and isinstance(relation, cls)
-                ),
-                set(),
-            )
-        return result
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]

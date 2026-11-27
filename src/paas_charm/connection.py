@@ -4,7 +4,11 @@
 """Connection fields shared by workload environments and relation templates."""
 
 from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING
 from urllib.parse import quote, urlparse
+
+if TYPE_CHECKING:
+    from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 
 
 def url_userinfo(username: str | None, password: str | None) -> str:
@@ -119,3 +123,21 @@ def database_fields(url: str) -> dict[str, str]:
     return DatabaseURLFields(
         **asdict(parts), name=parts.path.removeprefix("/") if parts.path else None
     ).available()
+
+
+def rabbit_fields(data: "PaaSRabbitMQRelationData") -> dict[str, str]:
+    """Get RabbitMQ connection fields for both templates and workload variables.
+
+    Args:
+        data: Broker connection information.
+
+    Returns:
+        Populated URL components and virtual host.
+    """
+    fields = RabbitURLFields(
+        **asdict(url_fields(data.amqp_uri)), connect_strings=",".join(data.amqp_uris) or None
+    ).available()
+    fields.update(username=data.username, password=data.password)
+    if data.vhost:
+        fields["vhost"] = data.vhost
+    return fields
