@@ -11,6 +11,7 @@ from ops import ConfigData
 from pydantic import BaseModel, ValidationError
 
 from paas_charm.exceptions import CharmConfigInvalidError, InvalidRelationDataError
+from paas_charm.paas_config import OAuthRelationConfig
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,11 @@ class InvalidOAuthRelationDataError(InvalidRelationDataError):
 
 
 class PaaSOAuthRequirer(OAuthRequirer):
-    """Wrapper around OAuthRequirer."""
+    """Wrapper around OAuthRequirer.
+
+    Attributes:
+        oauth_config: Static endpoint settings read from paas-config.yaml.
+    """
 
     def __init__(
         self,
@@ -65,6 +70,7 @@ class PaaSOAuthRequirer(OAuthRequirer):
         base_url: str,
         charm_config: ConfigData,
         relation_name: str,
+        oauth_config: OAuthRelationConfig,
     ):
         """Initialize the OAuthRequirer.
 
@@ -73,12 +79,14 @@ class PaaSOAuthRequirer(OAuthRequirer):
             base_url: The base URL for the workload app.
             relation_name: The name of the relation.
             charm_config: The charm configuration.
+            oauth_config: Static OAuth settings from paas-config.yaml.
         """
         self._base_url = base_url
         self._charm_config = charm_config
+        self.oauth_config = oauth_config
         super().__init__(
             charm=charm,
-            client_config=self._get_oauth_client_config(relation_name),
+            client_config=self._get_oauth_client_config(),
             relation_name=relation_name,
         )
 
@@ -125,18 +133,16 @@ class PaaSOAuthRequirer(OAuthRequirer):
                 f"Invalid {PaaSOAuthRelationData.__name__}: {error_messages.short}"
             ) from exc
 
-    def _get_oauth_client_config(self, relation_name: str) -> ClientConfig:
-        """Get the OAuth client configuration for a given endpoint name.
+    def _get_oauth_client_config(self) -> ClientConfig:
+        """Get the OAuth client configuration.
 
         Returns:
-            A ClientConfig instance with the configuration for the given endpoint.
+            A ClientConfig instance built from the base URL and the paas-config.yaml settings.
         """
-        redirect_path = str(self._charm_config.get(f"{relation_name}-redirect-path", "/callback"))
-        scopes = str(self._charm_config.get(f"{relation_name}-scopes"))
-
+        redirect_path = self.oauth_config.redirect_path
         return ClientConfig(
             redirect_uri=f"{self._base_url.rstrip('/')}/{redirect_path.lstrip('/')}",
-            scope=scopes,
+            scope=" ".join(self.oauth_config.scopes),
             grant_types=["authorization_code"],
         )
 
@@ -146,12 +152,10 @@ class PaaSOAuthRequirer(OAuthRequirer):
         Raises:
             CharmConfigInvalidError: If the scope doesn't include `openid`.
         """
-        config = self._get_oauth_client_config(self._relation_name)
-
+        config = self._get_oauth_client_config()
         if "openid" not in config.scope:
             msg = "The 'openid' scope is required for OAuth integration, please add it to the scopes."
             raise CharmConfigInvalidError(msg)
-
         self.update_client_config(config)
 
     def is_related(self) -> bool:

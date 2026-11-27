@@ -7,3 +7,7 @@ metrics-path: /actuator/prometheus
 opensearch:
   index: spring-boot-k8s
   extra-user-roles: admin
+relations:
+  oidc:
+    redirect-path: /login/oauth2/code/oidc
+    scopes: [openid, profile, email]

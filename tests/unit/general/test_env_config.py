@@ -667,10 +667,10 @@ def test_declared_config_default_is_mapped(context_factory, flask_framework_stat
     context = context_factory(
         FlaskCharm,
         paas_config=PaasConfig(
-            config={"options": {"oidc-redirect-path": {"env-var": "REDIRECT_PATH"}}}
+            config={"options": {"flask-preferred-url-scheme": {"env-var": "URL_SCHEME"}}}
         ),
     )
     out = context.run(context.on.config_changed(), testing.State(**flask_framework_state))
     env = out.get_container("app").plan.services["flask"].environment
-    assert env["REDIRECT_PATH"] == "/callback"
-    assert "FLASK_OIDC_REDIRECT_PATH" not in env
+    assert env["URL_SCHEME"] == "HTTPS"
+    assert "FLASK_PREFERRED_URL_SCHEME" not in env

@@ -281,6 +281,43 @@ class OpenSearchConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
+class OAuthRelationConfig(BaseModel):
+    """Static settings that the charm sends to an OAuth provider.
+
+    Attributes:
+        redirect_path: Path component of the redirect URI, appended to the application base URL.
+        scopes: Scopes requested from the provider. Must include ``openid``.
+        model_config: Pydantic model configuration.
+    """
+
+    redirect_path: str = Field(default="/callback", alias="redirect-path", min_length=1)
+    scopes: list[str] = Field(default_factory=lambda: ["openid", "profile", "email"])
+    model_config = ConfigDict(extra="forbid", strict=True, populate_by_name=True)
+
+    @field_validator("scopes")
+    @classmethod
+    def _validate_scopes(cls, scopes: list[str]) -> list[str]:
+        """Validate the requested scopes.
+
+        Args:
+            scopes: The requested scopes.
+
+        Returns:
+            The validated scopes.
+
+        Raises:
+            ValueError: If a scope is empty or contains whitespace, or ``openid`` is missing.
+        """
+        for scope in scopes:
+            if not scope or any(char.isspace() for char in scope):
+                raise ValueError(
+                    f"invalid OAuth scope {scope!r}: must be non-empty without spaces"
+                )
+        if "openid" not in scopes:
+            raise ValueError("scopes must include 'openid'")
+        return scopes
+
+
 class PaasConfig(BaseModel):
     """Configuration from paas-config.yaml file.
 
@@ -295,6 +332,7 @@ class PaasConfig(BaseModel):
         metrics_path: Optional override for the path on which the application serves metrics.
         config: Settings for existing charm configuration options.
         opensearch: Settings for the built-in opensearch relation.
+        relations: Static settings sent to related applications, keyed by endpoint name.
     """
 
     prometheus: PrometheusConfig | None = Field(
@@ -302,6 +340,10 @@ class PaasConfig(BaseModel):
     )
     config: ConfigOptions = Field(default_factory=ConfigOptions)
     opensearch: OpenSearchConfig | None = None
+    relations: dict[str, OAuthRelationConfig] = Field(
+        default_factory=dict,
+        description="Static settings sent to related applications, keyed by endpoint name.",
+    )
     framework_logging_format: LoggingFormat = Field(
         default=LoggingFormat.NONE,
         description="Structured logging format for the framework server (e.g. 'json').",
