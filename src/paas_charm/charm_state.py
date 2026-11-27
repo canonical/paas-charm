@@ -31,7 +31,6 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
     from paas_charm.oauth import PaaSOAuthRelationData, PaaSOAuthRequirer
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData, RabbitMQRequires
-    from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
 
 logger = logging.getLogger(__name__)
 
@@ -185,11 +184,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                tracing=(
-                    integration_requirers.tracing.to_relation_data()
-                    if integration_requirers.tracing
-                    else None
-                ),
                 oauth=(
                     integration_requirers.oauth.to_relation_data()
                     if integration_requirers.oauth
@@ -310,7 +304,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     Attrs:
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
-        tracing: TracingEndpointRequire object.
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
         http_proxy: PaaSHttpProxyRequirer object.
@@ -319,7 +312,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     databases: dict[str, "PaaSDatabaseRequires"]
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
-    tracing: "PaaSTracingEndpointRequirer | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
     http_proxy: "PaaSHttpProxyRequirer | None" = None
 
@@ -334,7 +326,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        tracing: Tracing relation data.
         oauth: OAuth relation data.
         http_proxy: HTTP proxy relation data.
     """
@@ -342,7 +333,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    tracing: "PaaSTracingRelationData | None" = None
     oauth: "PaaSOAuthRelationData | None" = None
     http_proxy: "ProxyConfig | None" = None
 

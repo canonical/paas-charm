@@ -39,7 +39,7 @@ from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
 from paas_charm.smtp import SmtpRelation
-from paas_charm.tracing import PaaSTracingRelationData
+from paas_charm.tracing import PaaSTracingRelationData, TracingRelation
 from paas_charm.valkey import ValkeyRelation
 from tests.unit.flask.constants import (
     INTEGRATIONS_RELATION_DATA,
@@ -264,20 +264,6 @@ def _test_integrations_env_parameters():
             },
             id="RabbitMQ",
         ),
-        pytest.param(
-            IntegrationsState(
-                tracing=PaaSTracingRelationData(
-                    endpoint="http://localhost:4318/tracing",
-                    service_name="testing-application-name",
-                )
-            ),
-            {
-                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "http://localhost:4318/tracing/v1/traces",
-                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
-                "OTEL_SERVICE_NAME": "testing-application-name",
-            },
-            id="Tracing",
-        ),
     ],
 )
 def test_generate_integration_environments(
@@ -427,6 +413,20 @@ def test_generate_integration_environments(
                 "SMTP_USER": "testingusername",
             },
             id="SMTP",
+        ),
+        pytest.param(
+            TracingRelation._generate_tracing_env(
+                PaaSTracingRelationData(
+                    endpoint="http://localhost:4318/tracing",
+                    service_name="testing-application-name",
+                )
+            ),
+            {
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "http://localhost:4318/tracing/v1/traces",
+                "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
+                "OTEL_SERVICE_NAME": "testing-application-name",
+            },
+            id="Tracing",
         ),
     ],
 )

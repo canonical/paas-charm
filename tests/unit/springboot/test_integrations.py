@@ -8,7 +8,11 @@ from unittest.mock import MagicMock
 import pytest
 from ops import testing
 
-from paas_charm.springboot.charm import SpringSmtpRelation, SpringValkeyRelation
+from paas_charm.springboot.charm import (
+    SpringSmtpRelation,
+    SpringTracingRelation,
+    SpringValkeyRelation,
+)
 
 # Very similar cases to other frameworks. Disable duplicated checks.
 # pylint: disable=R0801
@@ -16,12 +20,17 @@ from paas_charm.springboot.charm import SpringSmtpRelation, SpringValkeyRelation
 
 def test_integration_mappers_without_relation_data() -> None:
     """
-    arrange: no SMTP or Valkey relation data.
+    arrange: no SMTP, Tracing or Valkey relation data.
     act: generate the Spring Boot integration environment variables.
-    assert: no environment variables are generated.
+    assert: SMTP and Valkey return empty dicts, and Tracing disables all OTEL exporters.
     """
     assert not SpringSmtpRelation._generate_smtp_env()
     assert not SpringValkeyRelation._generate_valkey_env()
+    assert SpringTracingRelation._generate_tracing_env() == {
+        "OTEL_METRICS_EXPORTER": "none",
+        "OTEL_LOGS_EXPORTER": "none",
+        "OTEL_TRACES_EXPORTER": "none",
+    }
 
 
 def test_valkey_environment_with_credentials() -> None:

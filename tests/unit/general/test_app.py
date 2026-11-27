@@ -11,13 +11,12 @@ from paas_charm.app import (
     generate_db_env,
     generate_openfga_env,
     generate_rabbitmq_env,
-    generate_tempo_env,
 )
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
-from paas_charm.tracing import PaaSTracingRelationData
+from paas_charm.tracing import PaaSTracingRelationData, TracingRelation
 
 
 @pytest.mark.parametrize(
@@ -351,7 +350,7 @@ def test_saml_environ_mapper_generate_env(relation_data, expected_env):
 def test_tempo_environ_mapper_generate_env(relation_data, expected_env):
     """
     arrange: given Tempo relation data.
-    act: when generate_tempo_env method is called.
+    act: when TracingRelation._generate_tracing_env method is called.
     assert: expected environment variables are generated.
     """
-    assert generate_tempo_env(relation_data) == expected_env
+    assert TracingRelation._generate_tracing_env(relation_data) == expected_env

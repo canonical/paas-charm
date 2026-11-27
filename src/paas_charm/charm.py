@@ -50,7 +50,7 @@ from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.smtp import SmtpRelation
-from paas_charm.tracing import PaaSTracingEndpointRequirer
+from paas_charm.tracing import TracingRelation
 from paas_charm.utils import (
     build_validation_error_message,
     config_get_with_secret,
@@ -81,6 +81,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         S3Relation,
         SamlRelation,
         SmtpRelation,
+        TracingRelation,
     ]
 
     @property
@@ -132,8 +133,8 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._database_requirers = make_database_requirers(self, self.app.name)
 
         requires: dict[str, RelationMeta] = self.framework.meta.requires
+        self._custom_relations: list[CustomRelation] = []
         self._rabbitmq = self._init_rabbitmq(requires)
-        self._tracing = self._init_tracing(requires)
         self._openfga = self._init_openfga(requires)
         self._http_proxy = self._init_http_proxy(requires)
 
@@ -206,7 +207,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self._reconcile_without_migrations,
         )
 
-        self._custom_relations: list[CustomRelation] = self._init_custom_relations(
+        self._custom_relations = self._init_custom_relations(
             builtin_relations=self.builtin_relations
         )
 
@@ -258,30 +259,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             self.framework.observe(_rabbitmq.on.departed, self._reconcile_without_migrations)
 
         return _rabbitmq
-
-    def _init_tracing(
-        self, requires: dict[str, RelationMeta]
-    ) -> "PaaSTracingEndpointRequirer | None":
-        """Initialize the Tracing relation if its required.
-
-        Args:
-            requires: relation requires dictionary from metadata
-
-        Returns:
-            Returns the Tracing relation or None
-        """
-        _tracing = None
-        if "tracing" in requires and requires["tracing"].interface_name == "tracing":
-            _tracing = PaaSTracingEndpointRequirer(
-                self, relation_name="tracing", protocols=["otlp_http"]
-            )
-            self.framework.observe(
-                _tracing.on.endpoint_changed, self._reconcile_without_migrations
-            )
-            self.framework.observe(
-                _tracing.on.endpoint_removed, self._reconcile_without_migrations
-            )
-        return _tracing
 
     def _init_openfga(self, requires: dict[str, RelationMeta]) -> "OpenFGARequires | None":
         """Initialize the OpenFGA relations if its required.
@@ -614,13 +591,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             requires: relation requires dictionary from metadata
             charm_state: current charm state
         """
-        if (
-            self._tracing
-            and not charm_state.integrations.tracing
-            and not requires["tracing"].optional
-        ):
-            yield "tracing"
-
         if self._oauth and not charm_state.integrations.oauth:
             oauth_endpoint_name = get_endpoints_by_interface_name(requires, "oauth")[0][0]
             if not requires[oauth_endpoint_name].optional:
@@ -733,7 +703,6 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             integration_requirers=IntegrationRequirers(
                 databases=self._database_requirers,
                 rabbitmq=self._rabbitmq,
-                tracing=self._tracing,
                 openfga=self._openfga,
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,
