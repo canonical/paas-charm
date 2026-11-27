@@ -10,14 +10,6 @@ import requests
 from tests.integration.helpers import relation_exists
 from tests.integration.types import App
 
-SPRING_BOOT_OPENSEARCH_PROPERTIES = {
-    "opensearch.uris",
-    "opensearch.username",
-    "opensearch.password",
-    "opensearch.restclient.ssl.bundle",
-    "spring.ssl.bundle.pem.opensearch.truststore.certificate",
-}
-
 
 @pytest.mark.parametrize(
     "app_fixture, port",
