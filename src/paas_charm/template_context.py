@@ -48,8 +48,7 @@ def template_endpoints(  # pylint: disable=too-many-arguments
     has_http_proxy: bool,
     has_oauth: bool,
     database_endpoints: Collection[str],
-    custom_relations: Collection[CustomRelation],
-    builtin_relations: Collection[type[CustomRelation]],
+    builtin_relations: Collection[CustomRelation],
 ) -> dict[str, set[str]]:
     """Describe endpoint fields independently of whether a provider is related.
 
@@ -62,8 +61,7 @@ def template_endpoints(  # pylint: disable=too-many-arguments
         has_http_proxy: Whether the built-in http-proxy requirer is bound.
         has_oauth: Whether the built-in OAuth requirer is bound.
         database_endpoints: Bound built-in database endpoint names.
-        custom_relations: Instantiated custom and built-in wrapper relations.
-        builtin_relations: Built-in relation classes for the active framework.
+        builtin_relations: Active built-in wrapper relations eligible for templates.
 
     Returns:
         Declared endpoints mapped to their built-in template fields.
@@ -95,13 +93,9 @@ def template_endpoints(  # pylint: disable=too-many-arguments
         SamlRelation: set(PaaSSAMLRelationData.model_fields),
         SmtpRelation: set(SmtpRelationData.model_fields),
     }
-    for relation in custom_relations:
+    for relation in builtin_relations:
         result[relation.relation_name] = next(
-            (
-                names
-                for cls, names in wrappers.items()
-                if type(relation) in builtin_relations and isinstance(relation, cls)
-            ),
+            (names for cls, names in wrappers.items() if isinstance(relation, cls)),
             set(),
         )
     return result
@@ -202,7 +196,7 @@ def _relation_template_fields(charm_state: CharmState) -> dict[str, dict[str, st
             **env_templates.model_fields(integrations.oauth),
             "redirect_path": oauth_config.redirect_path,
         }
-    for relation in charm_state.custom_relations:
+    for relation in charm_state.template_relations:
         if isinstance(relation, (S3Relation, SamlRelation, SmtpRelation, ValkeyRelation)):
             relations[relation.relation_name] = relation.template_fields()
     return relations

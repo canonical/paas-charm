@@ -492,6 +492,44 @@ def test_custom_relation_rejected_in_templates(context_factory, flask_base_state
     assert "relation does not expose template fields" in str(exc_info.value.__cause__)
 
 
+def test_custom_subclass_of_builtin_excluded_from_templates(
+    context_factory, flask_base_state, monkeypatch
+):
+    """An author subclass of a built-in relation is excluded from both validation and rendering."""
+    called = False
+
+    class _CustomS3(S3Relation):
+        """Author-defined S3 override."""
+
+        def setup(self, on_change) -> None:
+            """Do nothing."""
+
+        def template_fields(self) -> dict[str, str]:
+            """Track whether template_fields is invoked."""
+            nonlocal called
+            called = True
+            return {"bucket": "override"}
+
+    monkeypatch.setattr(FlaskCharm, "custom_relations", [*FlaskCharm.custom_relations, _CustomS3])
+
+    rejected = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(env={"BUCKET": "{{ relations.s3.bucket | default('none') }}"}),
+    )
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        rejected.run(rejected.on.config_changed(), testing.State(**flask_base_state))
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert "relation does not expose template fields" in str(exc_info.value.__cause__)
+
+    rendering = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(env={"LABEL": "{{ app.name }}"}),
+    )
+    out = rendering.run(rendering.on.config_changed(), testing.State(**flask_base_state))
+    assert out.get_container("app").plan.services["flask"].environment["LABEL"] == "flask-k8s"
+    assert not called
+
+
 def test_template_namespaces(tmp_path):
     """Expose built-in relation fields under their endpoint names."""
     s3 = MagicMock(spec=S3Relation, relation_name="s3")
@@ -527,7 +565,7 @@ def test_template_namespaces(tmp_path):
                 user_name_attribute="sub",
             ),
         ),
-        custom_relations=[s3],
+        template_relations=[s3],
         oauth_config=OAuthRelationConfig(redirect_path="/auth/callback"),
         env_templates={
             "MQ": "{{ relations.rabbitmq.connect_string }} {{ relations.rabbitmq.hostname }}",

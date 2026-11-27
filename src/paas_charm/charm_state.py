@@ -52,6 +52,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         framework_config_fields: Accepted framework config input names mapped to model fields.
         framework_config_field_names: Framework fields protected from implicit user config outputs.
         env_templates: ``env`` templates from paas-config.yaml.
+        template_relations: Active built-in wrapper relations eligible for ``env`` templates.
         app_name: The Juju application name.
         charm_config: Charm configuration with secrets resolved, keyed by option name.
     """
@@ -72,6 +73,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         oauth_config: OAuthRelationConfig | None = None,
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
+        template_relations: list[CustomRelation] | None = None,
         framework_config_field_names: set[str] | None = None,
         env_templates: dict[str, str] | None = None,
         app_name: str = "",
@@ -93,6 +95,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             oauth_config: Static settings for the OAuth endpoint, if declared.
             framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
+            template_relations: Active built-in wrapper relations eligible for ``env`` templates.
             framework_config_field_names: Framework fields protected from implicit user outputs.
             env_templates: ``env`` templates from paas-config.yaml.
             app_name: The Juju application name.
@@ -112,6 +115,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.framework_config_fields = framework_config_fields or {}
         self.framework_config_field_names = framework_config_field_names or set()
         self.custom_relations = custom_relations or []
+        self.template_relations = template_relations or []
         self.env_templates = env_templates or {}
         self.app_name = app_name
         self.charm_config = charm_config or {}
@@ -128,6 +132,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
         custom_relations: list[CustomRelation] | None = None,
+        template_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
         ingress_url: str | None = None,
         config_options: ConfigOptions | None = None,
@@ -145,6 +150,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
             custom_relations: Custom relations.
+            template_relations: Active built-in wrapper relations eligible for ``env`` templates.
             base_url: Base URL for the service.
             ingress_url: Public URL published by the ingress relation, if available.
             config_options: Settings for existing charm configuration options.
@@ -259,6 +265,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             base_url=base_url,
             ingress_url=ingress_url,
             custom_relations=custom_relations,
+            template_relations=template_relations,
             env_templates=env_templates,
             app_name=app_name,
             charm_config=dict(config),

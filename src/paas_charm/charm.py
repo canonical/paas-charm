@@ -211,6 +211,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._custom_relations: list[CustomRelation] = self._init_custom_relations(
             builtin_relations=self.builtin_relations
         )
+        self._template_relations: list[CustomRelation] = self._active_builtin_template_relations()
         if self._paas_config.env:
             validate_env_templates(
                 self._paas_config.env,
@@ -223,11 +224,24 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                     has_http_proxy=self._http_proxy is not None,
                     has_oauth=self._oauth is not None,
                     database_endpoints=self._database_requirers,
-                    custom_relations=self._custom_relations,
-                    builtin_relations=self.builtin_relations,
+                    builtin_relations=self._template_relations,
                 ),
                 config_options=config_metadata(pathlib.Path(self.charm_dir))["options"],
             )
+
+    def _active_builtin_template_relations(self) -> list[CustomRelation]:
+        """Return active built-in wrapper relations not shadowed by author custom relations.
+
+        Returns:
+            Built-in wrapper relation instances eligible for ``env`` templates.
+        """
+        active: dict[str, CustomRelation] = {}
+        for relation in self._custom_relations:
+            if type(relation) in self.builtin_relations:
+                active[relation.relation_name] = relation
+            else:
+                active.pop(relation.relation_name, None)
+        return list(active.values())
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
@@ -758,6 +772,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 http_proxy=self._http_proxy,
             ),
             custom_relations=self._custom_relations,
+            template_relations=self._template_relations,
             base_url=self._base_url,
             ingress_url=self._ingress.url,
             env_templates=self._paas_config.env,
