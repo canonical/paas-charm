@@ -49,8 +49,6 @@ def test_flask_pebble_layer(flask_context, base_state, container_name: str) -> N
             "FLASK_BASE_URL": "http://flask-k8s.test-model:8000",
             "FLASK_METRICS_PATH": "/metrics",
             "FLASK_METRICS_PORT": "9102",
-            "FLASK_OIDC_REDIRECT_PATH": "/callback",
-            "FLASK_OIDC_SCOPES": "openid profile email",
             "FLASK_PREFERRED_URL_SCHEME": "HTTPS",
             "FLASK_SECRET_KEY": app_secret,
         },

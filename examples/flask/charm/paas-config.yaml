@@ -31,3 +31,7 @@ prometheus:
             - "@scheduler:8082"  # Only scrapes scheduler unit (unit 0)
           labels:
             role: "scheduler"
+relations:
+  oidc:
+    redirect-path: /callback
+    scopes: [openid, profile, email]

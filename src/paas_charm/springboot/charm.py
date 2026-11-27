@@ -28,6 +28,7 @@ if typing.TYPE_CHECKING:
 
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
+    from paas_charm.paas_config import OAuthRelationConfig
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
     from paas_charm.s3 import PaaSS3RelationData
     from paas_charm.saml import PaaSSAMLRelationData
@@ -79,12 +80,14 @@ def generate_prometheus_env(workload_config: WorkloadConfig) -> dict[str, str]:
 def generate_oauth_env(
     framework: str,  # pylint: disable=unused-argument
     relation_data: "PaaSOAuthRelationData | None" = None,
+    oauth_config: "OAuthRelationConfig | None" = None,  # pylint: disable=unused-argument
 ) -> dict[str, str]:
     """Generate environment variable from PaaSOAuthRelationData.
 
     Args:
         framework: The charm framework name.
         relation_data: The charm Oauth integration relation data.
+        oauth_config: Static settings; Spring uses the registered redirect URI instead.
 
     Returns:
         Default Oauth environment mappings if PaaSOAuthRelationData is available, empty
