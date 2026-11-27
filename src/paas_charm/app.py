@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 import ops
 
 from paas_charm.charm_state import CharmState
-from paas_charm.connection import database_fields, rabbit_fields
 from paas_charm.database_migration import DatabaseMigration
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.paas_config import (
@@ -23,6 +22,7 @@ from paas_charm.paas_config import (
     OAuthRelationConfig,
     SecretEnvVarsConfig,
 )
+from paas_charm.relation_fields import database_fields, rabbit_fields
 from paas_charm.template_context import apply_env_templates
 
 logger = logging.getLogger(__name__)

@@ -16,17 +16,17 @@ from ops import RelationMeta
 
 from paas_charm import env_templates
 from paas_charm.charm_state import CharmState
-from paas_charm.connection import (
-    DatabaseURLFields,
-    RabbitURLFields,
-    database_fields,
-    rabbit_fields,
-)
 from paas_charm.databases import PaaSDatabaseRelationData
 from paas_charm.exceptions import PaasConfigError
 from paas_charm.oauth import PaaSOAuthRelationData
 from paas_charm.paas_config import OAuthRelationConfig
 from paas_charm.rabbitmq import PaaSRabbitMQRelationData
+from paas_charm.relation_fields import (
+    DatabaseURLFields,
+    RabbitURLFields,
+    database_fields,
+    rabbit_fields,
+)
 from paas_charm.relations import CustomRelation
 from paas_charm.s3 import PaaSS3RelationData, S3Relation
 from paas_charm.saml import PaaSSAMLRelationData, SamlRelation
@@ -185,7 +185,7 @@ def _relation_template_fields(charm_state: CharmState) -> dict[str, dict[str, st
     if proxy := integrations.http_proxy:
         relations["http-proxy"] = asdict(proxy)
     for endpoint, key, value in (
-        ("ingress", "url", charm_state.ingress_url),
+        ("ingress", "url", integrations.ingress_url),
         ("peers", "fqdns", charm_state.peer_fqdns),
     ):
         if value:

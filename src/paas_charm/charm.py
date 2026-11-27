@@ -770,11 +770,11 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 openfga=self._openfga,
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,
+                ingress=self._ingress,
             ),
             custom_relations=self._custom_relations,
             template_relations=self._template_relations,
             base_url=self._base_url,
-            ingress_url=self._ingress.url,
             env_templates=self._paas_config.env,
             app_name=self.app.name,
         )

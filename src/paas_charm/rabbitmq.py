@@ -37,8 +37,8 @@ from ops.framework import EventBase, EventSource, Object, ObjectEvents
 from ops.model import Relation
 from pydantic import BaseModel, Field, ValidationError
 
-from paas_charm.connection import url_userinfo
 from paas_charm.exceptions import InvalidRelationDataError
+from paas_charm.relation_fields import url_userinfo
 from paas_charm.utils import build_validation_error_message
 
 logger = logging.getLogger(__name__)

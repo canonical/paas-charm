@@ -14,12 +14,12 @@ from dpcharmlibs.interfaces import (
 from pydantic import ValidationError
 
 from paas_charm import env_templates
-from paas_charm.connection import database_fields, url_userinfo
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
     RelationDataError,
 )
+from paas_charm.relation_fields import database_fields, url_userinfo
 from paas_charm.relations import CustomRelation, OnChange
 from paas_charm.utils import build_validation_error_message
 
@@ -168,15 +168,23 @@ class ValkeyRelation(CustomRelation):
         if relation_data is None:
             raise RelationDataError("Valkey relation data is not ready", self.relation_name)
 
+    def get_relation_data(self) -> ValkeyResponseModel | None:
+        """Get the Valkey relation data.
+
+        Returns:
+            The Valkey relation data, or None if not configured or not available.
+        """
+        if not self._requirer:
+            return None
+        return self._requirer.to_relation_data()
+
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
 
         Returns:
             A mapping of environment variable names to values (default ``{}``).
         """
-        if self._requirer:
-            return self._generate_valkey_env(self._requirer.to_relation_data())
-        return {}
+        return self._generate_valkey_env(self.get_relation_data())
 
     def template_fields(self) -> dict[str, str]:
         """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
@@ -184,9 +192,7 @@ class ValkeyRelation(CustomRelation):
         Returns:
             The Valkey relation data fields and the parts of the connection URL.
         """
-        if not self._requirer:
-            return {}
-        relation_data = self._requirer.to_relation_data()
+        relation_data = self.get_relation_data()
         if relation_data is None:
             return {}
         return {
