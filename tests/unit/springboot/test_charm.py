@@ -12,6 +12,7 @@ import pytest
 from ops import testing
 
 from paas_charm.charm import PaasCharm
+from paas_charm.opensearch import OpenSearchRelation
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.smtp import SmtpRelation
@@ -177,6 +178,7 @@ def test_builtin_relations():
         S3Relation,
         SamlRelation,
         SmtpRelation,
+        OpenSearchRelation,
     ]
 
 
