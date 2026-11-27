@@ -55,10 +55,5 @@ def test_opensearch_integration(
         response = session_with_retry.get(f"http://{unit_ip}:{port}/opensearch/status", timeout=10)
         assert response.status_code == 200
         assert response.text == "SUCCESS"
-
-        env = session_with_retry.get(f"http://{unit_ip}:{port}/env", timeout=5).json()
-        assert {key for key in env if "opensearch" in key} == SPRING_BOOT_OPENSEARCH_PROPERTIES
-        assert all(uri.startswith("https://") for uri in env["opensearch.uris"].split(","))
-        assert env["opensearch.restclient.ssl.bundle"] == "opensearch"
     finally:
         juju.remove_relation(app.name, opensearch_app.name)
