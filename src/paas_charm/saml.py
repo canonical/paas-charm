@@ -11,6 +11,7 @@ import logging
 from charms.saml_integrator.v0.saml import SamlRelationData, SamlRequires
 from pydantic import ValidationError, ValidationInfo, field_validator
 
+from paas_charm import env_templates
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
@@ -173,6 +174,14 @@ class SamlRelation(CustomRelation):
             A mapping of environment variable names to values (default ``{}``).
         """
         return self._generate_saml_env(self.get_relation_data())
+
+    def template_fields(self) -> dict[str, str]:
+        """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
+
+        Returns:
+            The SAML relation data fields.
+        """
+        return env_templates.model_fields(self.get_relation_data())
 
     @staticmethod
     def _generate_saml_env(relation_data: PaaSSAMLRelationData | None = None) -> dict[str, str]:

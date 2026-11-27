@@ -13,6 +13,7 @@ from typing import Optional
 from charms.data_platform_libs.v0.s3 import S3Requirer
 from pydantic import BaseModel, Field, ValidationError
 
+from paas_charm import env_templates
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
@@ -146,15 +147,31 @@ class S3Relation(CustomRelation):
         if relation_data is None:
             raise RelationDataError("S3 relation data is not ready", self.relation_name)
 
+    def get_relation_data(self) -> PaaSS3RelationData | None:
+        """Get the S3 relation data.
+
+        Returns:
+            The S3 relation data, or None if not configured or not available.
+        """
+        if not self._requirer:
+            return None
+        return self._requirer.to_relation_data()
+
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
 
         Returns:
             A mapping of environment variable names to values (default ``{}``).
         """
-        if self._requirer:
-            return self._generate_s3_env(self._requirer.to_relation_data())
-        return {}
+        return self._generate_s3_env(self.get_relation_data())
+
+    def template_fields(self) -> dict[str, str]:
+        """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
+
+        Returns:
+            The S3 relation data fields.
+        """
+        return env_templates.model_fields(self.get_relation_data())
 
     @staticmethod
     def _generate_s3_env(relation_data: PaaSS3RelationData | None = None) -> dict[str, str]:

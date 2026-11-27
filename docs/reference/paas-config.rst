@@ -22,7 +22,7 @@ File structure
 
 The ``paas-config.yaml`` file uses YAML format and follows a structured schema.
 It supports generic application settings in addition to the
-``prometheus``, ``framework_logging_format``, ``config``, and ``relations`` top-level keys.
+``prometheus``, ``framework_logging_format``, ``config``, ``relations``, and ``env`` top-level keys.
 
 Application settings
 --------------------
@@ -235,6 +235,8 @@ Environment variables are applied in this order, from lowest to highest priority
      - Custom relations, in registration order.
    * - 4
      - Explicit ``config.options`` mappings whose sources have values.
+   * - 5
+     - ``env`` templates whose references resolve.
 
 The charm logs a warning when a relation replaces a configuration or framework variable,
 or when a mapping replaces an existing variable. Warnings name the destination variable
@@ -243,6 +245,97 @@ without logging its value. Mapping warnings also name the source option.
 Each mapping reads its own option's value, so two options can swap environment variable names.
 Mappings can also replace framework variables. Charm authors must ensure that the workload
 still works with the chosen names.
+
+Environment variable templates
+------------------------------
+
+Use ``env`` to build workload environment variables from relation data, charm
+configuration, and application settings. Each key is an environment variable name, used
+exactly as written. Each value is a template:
+
+.. code-block:: yaml
+
+    env:
+      DATABASE_URL: "{{ relations.postgresql.connect_string }}"
+      MAIL_SERVER: "{{ relations.smtp.host }}:{{ relations.smtp.port }}"
+      AUTH_ISSUER: "{{ relations.oidc.issuer_url }}"
+      PUBLIC_URL: "{{ app.base_url }}"
+      LOG_LEVEL: "{{ config['log-level'] | default('info') }}"
+      API_TOKEN: "{{ config.credentials.token }}"
+      PRICE_LABEL: costs $5
+
+Template syntax:
+
+* Use Jinja output expressions with static dotted paths or quoted keys, such as
+  ``{{ relations['http-proxy'].https_proxy }}``. Quote YAML values that begin with ``{{``.
+* ``default('text')`` supplies a literal string if a field or its parent is absent.
+  An empty string, zero or false is a value and does not trigger the default.
+* Text outside expressions is literal, including dollar signs. Dynamic keys, calls,
+  control statements and filters other than the single-string ``default`` are not supported.
+
+The following namespaces are available:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Namespace
+     - Fields
+   * - ``app``
+     - ``name`` (Juju application name), ``base_url``, and ``port``.
+   * - ``config``
+     - Charm configuration options by exact name, for example ``{{ config['log-level'] }}``.
+       Reference content keys of ``secret`` options as ``{{ config.credentials.token }}``.
+       Booleans render as ``true`` or ``false``.
+   * - ``relations``
+     - Data of the relation with that endpoint name, as listed below.
+
+Relation fields:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Relation
+     - Fields
+   * - Databases (``postgresql``, ``mysql``, ``mongodb``)
+     - ``uris``, ``connect_string``, ``scheme``, ``netloc``, ``path``, ``params``,
+       ``query``, ``fragment``, ``username``, ``password``, ``hostname``, ``port``,
+       and ``name``.
+   * - ``rabbitmq``
+     - ``hostname``, ``hostnames``, ``port``, ``username``, ``password``, ``vhost``,
+       ``connect_strings``, and the URL parts listed for databases except ``name``.
+   * - ``valkey``
+     - The relation data fields (such as ``mode``, ``version``, ``read_only_endpoints``,
+       and ``sentinel_endpoints``), plus the URL parts listed for databases.
+   * - OAuth endpoints
+     - ``client_id``, ``client_secret``, ``issuer_url``, ``authorization_endpoint``,
+       ``token_endpoint``, ``userinfo_endpoint``, ``jwks_endpoint``, ``scopes``,
+       ``provider_name``, ``redirect_path``, ``redirect_uri``, and ``user_name_attribute``.
+   * - ``tracing``
+     - ``endpoint`` and ``service_name``.
+   * - ``ingress``
+     - ``url`` (published ingress URL; absent until ingress is ready).
+   * - ``peers``
+     - ``fqdns`` (comma-separated FQDNs of remote peer units; absent when no peer units exist).
+   * - ``openfga``, ``s3``, ``saml``, ``smtp``, ``http-proxy``
+     - The relation data fields, using their Python attribute names, for example
+       ``{{ relations.s3.access_key }}``.
+
+Lists and mappings render as JSON. Secret values render in plain text.
+RabbitMQ and Valkey connection URLs percent-encode credentials; their separate
+``username`` and ``password`` fields contain the raw values. Rendered environment values
+cannot contain NUL characters.
+
+Templates are applied after every other source, so they can replace any variable.
+When a reference without a default has no value, for example because the relation is
+absent, the variable is not set by the template and any existing variable with that name
+is kept. The charm logs the unresolved references without logging values. The original
+variables used by a template remain set.
+
+When the charm starts, it rejects templates with invalid syntax, unknown namespaces,
+unknown ``app`` fields, unknown configuration options, or undeclared relation endpoints.
+A ``secret`` option must be referenced with a content key. Built-in relation fields are
+validated even when no provider is related: a default handles missing data but does not
+hide a misspelled field. Custom relations are not exposed to ``env`` templates.
 
 Validation
 ----------
@@ -275,6 +368,7 @@ The file ``paas-config.yaml`` allows you to:
 * Define custom Prometheus scrape targets for metrics collection
 * Enable structured framework logs in JSON format
 * Rename environment variables generated from config options and secrets
+* Build environment variables from relation data with ``env`` templates
 
 For the detailed configuration schema and detailed examples, see:
 

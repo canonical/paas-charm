@@ -26,6 +26,7 @@ from paas_charm.utils import build_validation_error_message, config_metadata
 if typing.TYPE_CHECKING:  # pragma: nocover
     from charmlibs.interfaces.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
+    from charms.traefik_k8s.v2.ingress import IngressPerAppRequirer
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
@@ -50,6 +51,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         oauth_config: Static settings for the OAuth endpoint, if declared.
         framework_config_fields: Accepted framework config input names mapped to model fields.
         framework_config_field_names: Framework fields protected from implicit user config outputs.
+        env_templates: ``env`` templates from paas-config.yaml.
+        template_relations: Active built-in wrapper relations eligible for ``env`` templates.
+        app_name: The Juju application name.
+        charm_config: Charm configuration with secrets resolved, keyed by option name.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -67,7 +72,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         oauth_config: OAuthRelationConfig | None = None,
         framework_config_fields: dict[str, str] | None = None,
         custom_relations: list[CustomRelation] | None = None,
+        template_relations: list[CustomRelation] | None = None,
         framework_config_field_names: set[str] | None = None,
+        env_templates: dict[str, str] | None = None,
+        app_name: str = "",
+        charm_config: dict[str, typing.Any] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -84,7 +93,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             oauth_config: Static settings for the OAuth endpoint, if declared.
             framework_config_fields: Accepted framework config input names mapped to model fields.
             custom_relations: Custom relations.
+            template_relations: Active built-in wrapper relations eligible for ``env`` templates.
             framework_config_field_names: Framework fields protected from implicit user outputs.
+            env_templates: ``env`` templates from paas-config.yaml.
+            app_name: The Juju application name.
+            charm_config: Charm configuration with secrets resolved, keyed by option name.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -99,6 +112,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.framework_config_fields = framework_config_fields or {}
         self.framework_config_field_names = framework_config_field_names or set()
         self.custom_relations = custom_relations or []
+        self.template_relations = template_relations or []
+        self.env_templates = env_templates or {}
+        self.app_name = app_name
+        self.charm_config = charm_config or {}
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -112,8 +129,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
         custom_relations: list[CustomRelation] | None = None,
+        template_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
         config_options: ConfigOptions | None = None,
+        env_templates: dict[str, str] | None = None,
+        app_name: str = "",
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
 
@@ -126,8 +146,11 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
             custom_relations: Custom relations.
+            template_relations: Active built-in wrapper relations eligible for ``env`` templates.
             base_url: Base URL for the service.
             config_options: Settings for existing charm configuration options.
+            env_templates: ``env`` templates from paas-config.yaml.
+            app_name: The Juju application name.
 
         Return:
             The CharmState instance created by the provided charm.
@@ -203,6 +226,9 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     )
                     else None
                 ),
+                ingress_url=(
+                    integration_requirers.ingress.url if integration_requirers.ingress else None
+                ),
             )
         except InvalidRelationDataError as exc:
             raise RelationDataError(
@@ -236,6 +262,10 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integrations=integrations,
             base_url=base_url,
             custom_relations=custom_relations,
+            template_relations=template_relations,
+            env_templates=env_templates,
+            app_name=app_name,
+            charm_config=dict(config),
         )
 
     @property
@@ -314,6 +344,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
         http_proxy: PaaSHttpProxyRequirer object.
+        ingress: IngressPerAppRequirer object.
     """
 
     databases: dict[str, "PaaSDatabaseRequires"]
@@ -322,6 +353,7 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     tracing: "PaaSTracingEndpointRequirer | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
     http_proxy: "PaaSHttpProxyRequirer | None" = None
+    ingress: "IngressPerAppRequirer | None" = None
 
 
 @dataclass
@@ -337,6 +369,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         tracing: Tracing relation data.
         oauth: OAuth relation data.
         http_proxy: HTTP proxy relation data.
+        ingress_url: Public URL published by the ingress relation.
     """
 
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
@@ -345,6 +378,7 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     tracing: "PaaSTracingRelationData | None" = None
     oauth: "PaaSOAuthRelationData | None" = None
     http_proxy: "ProxyConfig | None" = None
+    ingress_url: str | None = None
 
 
 class PaasProxyConfig(BaseModel):

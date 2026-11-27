@@ -26,6 +26,7 @@ from paas_charm.charm_state import (
 from paas_charm.charm_utils import block_if_invalid_data
 from paas_charm.database_migration import DatabaseMigration, DatabaseMigrationStatus
 from paas_charm.databases import make_database_requirers
+from paas_charm.env_templates import validate_env_templates
 from paas_charm.exceptions import (
     CharmConfigInvalidError,
     CustomRelationError,
@@ -50,6 +51,7 @@ from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.smtp import SmtpRelation
+from paas_charm.template_context import template_endpoints
 from paas_charm.tracing import PaaSTracingEndpointRequirer
 from paas_charm.utils import (
     build_validation_error_message,
@@ -209,6 +211,35 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         self._custom_relations: list[CustomRelation] = self._init_custom_relations(
             builtin_relations=self.builtin_relations
         )
+        self._template_relations: list[CustomRelation] = self._active_builtin_template_relations()
+        if self._paas_config.env:
+            validate_env_templates(
+                self._paas_config.env,
+                endpoints=template_endpoints(
+                    requires=requires,
+                    peers=self.framework.meta.peers,
+                    has_rabbitmq=self._rabbitmq is not None,
+                    has_tracing=self._tracing is not None,
+                    has_openfga=self._openfga is not None,
+                    has_http_proxy=self._http_proxy is not None,
+                    has_oauth=self._oauth is not None,
+                    database_endpoints=self._database_requirers,
+                    builtin_relations=self._template_relations,
+                ),
+                config_options=config_metadata(pathlib.Path(self.charm_dir))["options"],
+            )
+
+    def _active_builtin_template_relations(self) -> list[CustomRelation]:
+        """Return active built-in wrapper relations eligible for ``env`` templates.
+
+        Returns:
+            Built-in wrapper relation instances eligible for ``env`` templates.
+        """
+        return [
+            relation
+            for relation in self._custom_relations
+            if type(relation) in self.builtin_relations
+        ]
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
@@ -737,9 +768,13 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
                 openfga=self._openfga,
                 oauth=self._oauth,
                 http_proxy=self._http_proxy,
+                ingress=self._ingress,
             ),
             custom_relations=self._custom_relations,
+            template_relations=self._template_relations,
             base_url=self._base_url,
+            env_templates=self._paas_config.env,
+            app_name=self.app.name,
         )
 
     @property

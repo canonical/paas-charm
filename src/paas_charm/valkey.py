@@ -13,12 +13,13 @@ from dpcharmlibs.interfaces import (
 )
 from pydantic import ValidationError
 
-from paas_charm.app import _db_url_to_env_variables
+from paas_charm import env_templates
 from paas_charm.exceptions import (
     InvalidRelationDataError,
     InvalidRelationInterfaceError,
     RelationDataError,
 )
+from paas_charm.relation_fields import database_fields, url_userinfo
 from paas_charm.relations import CustomRelation, OnChange
 from paas_charm.utils import build_validation_error_message
 
@@ -167,15 +168,37 @@ class ValkeyRelation(CustomRelation):
         if relation_data is None:
             raise RelationDataError("Valkey relation data is not ready", self.relation_name)
 
+    def get_relation_data(self) -> ValkeyResponseModel | None:
+        """Get the Valkey relation data.
+
+        Returns:
+            The Valkey relation data, or None if not configured or not available.
+        """
+        if not self._requirer:
+            return None
+        return self._requirer.to_relation_data()
+
     def gen_environment(self) -> dict[str, str]:
         """Return workload environment variables for this relation.
 
         Returns:
             A mapping of environment variable names to values (default ``{}``).
         """
-        if self._requirer:
-            return self._generate_valkey_env(self._requirer.to_relation_data())
-        return {}
+        return self._generate_valkey_env(self.get_relation_data())
+
+    def template_fields(self) -> dict[str, str]:
+        """Return the values exposed to ``env`` templates in ``paas-config.yaml``.
+
+        Returns:
+            The Valkey relation data fields and the parts of the connection URL.
+        """
+        relation_data = self.get_relation_data()
+        if relation_data is None:
+            return {}
+        return {
+            **env_templates.model_fields(relation_data),
+            **_valkey_connection_fields(relation_data),
+        }
 
     @staticmethod
     def _generate_valkey_env(
@@ -192,24 +215,37 @@ class ValkeyRelation(CustomRelation):
         """
         if not relation_data:
             return {}
-        endpoint = str(relation_data.endpoints)
-        user_info = (
-            f"{relation_data.username}:{relation_data.password}@" if relation_data.username else ""
-        )
-        prefix = "VALKEY"
-        # Ensure the scheme in the url so that urllib can properly parse it into components.
-        # Valkey sends the url without the scheme ( valkey_primary:6123 )
-        # This normalizes that URL to become valkey://valkey_primary:6123
-        if "://" not in endpoint:
-            endpoint = f"{prefix.lower()}://{user_info}{endpoint}"
-        else:
-            scheme, netloc = endpoint.split("://", 1)
-            endpoint = f"{scheme}://{user_info}{netloc}"
-
         return {
-            **_db_url_to_env_variables(prefix, endpoint),
-            f"{prefix}_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
-            f"{prefix}_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
-            f"{prefix}_MODE": relation_data.mode or "",
-            f"{prefix}_VERSION": relation_data.version or "",
+            **{
+                f"VALKEY_DB_{k.upper()}": v
+                for k, v in _valkey_connection_fields(relation_data).items()
+            },
+            "VALKEY_DB_READ_ONLY_ENDPOINTS": relation_data.read_only_endpoints or "",
+            "VALKEY_DB_SENTINEL_ENDPOINTS": relation_data.sentinel_endpoints or "",
+            "VALKEY_MODE": relation_data.mode or "",
+            "VALKEY_VERSION": relation_data.version or "",
         }
+
+
+def _valkey_connection_fields(relation_data: ValkeyResponseModel) -> dict[str, str]:
+    """Build the connection URL and raw component fields for all frameworks.
+
+    Args:
+        relation_data: Valkey connection details with resolved credentials.
+
+    Returns:
+        Connection fields with encoded credentials in URLs only.
+    """
+    endpoint = str(relation_data.endpoints)
+    scheme, separator, address = endpoint.partition("://")
+    if not separator:
+        scheme, address = "valkey", endpoint
+    user_info = url_userinfo(relation_data.username, relation_data.password)
+    parts = database_fields(f"{scheme}://{user_info}{address}")
+    for key in ("username", "password"):
+        value = getattr(relation_data, key)
+        if value is None:
+            parts.pop(key, None)
+        else:
+            parts[key] = value
+    return parts

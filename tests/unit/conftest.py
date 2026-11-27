@@ -256,6 +256,7 @@ def context_factory_fixture(
         paas_config: PaasConfig | None = None,
         config_options: dict | None = None,
         additional_oauth: bool = False,
+        relation_interfaces: dict[str, str] | None = None,
         no_database_metadata: bool = False,
         unit_id: int = 0,
         juju_version: str = "3.6.14",
@@ -272,6 +273,8 @@ def context_factory_fixture(
                 charmcraft["config"]["options"][option] = settings
         if additional_oauth:
             _add_oauth_metadata(charmcraft)
+        for endpoint, interface in (relation_interfaces or {}).items():
+            charmcraft["requires"][endpoint]["interface"] = interface
         if no_database_metadata:
             charmcraft["requires"].pop("postgresql")
         context_root = tmp_path / "contexts" / f"{root.parent.name}-{context_count}"

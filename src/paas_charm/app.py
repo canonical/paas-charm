@@ -22,6 +22,8 @@ from paas_charm.paas_config import (
     OAuthRelationConfig,
     SecretEnvVarsConfig,
 )
+from paas_charm.relation_fields import database_fields, rabbit_fields
+from paas_charm.template_context import apply_env_templates
 
 logger = logging.getLogger(__name__)
 
@@ -142,13 +144,7 @@ def generate_rabbitmq_env(
     """
     if not relation_data:
         return {}
-    envvars = _url_env_vars(prefix="RABBITMQ", url=relation_data.amqp_uri)
-    parsed_url = urllib.parse.urlparse(relation_data.amqp_uri)
-    if len(parsed_url.path) > 1:
-        envvars["RABBITMQ_VHOST"] = urllib.parse.unquote(parsed_url.path.split("/")[1])
-    if relation_data.amqp_uris:
-        envvars["RABBITMQ_CONNECT_STRINGS"] = ",".join(relation_data.amqp_uris)
-    return envvars
+    return {f"RABBITMQ_{k.upper()}": v for k, v in rabbit_fields(relation_data).items()}
 
 
 def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
@@ -353,6 +349,7 @@ class App:  # pylint: disable=too-many-instance-attributes
                     name,
                 )
             env[name] = value
+        apply_env_templates(env, self._charm_state, self._workload_config.port)
         return env
 
     def _mapped_framework_config_fields(self) -> set[str]:
@@ -677,47 +674,4 @@ def _db_url_to_env_variables(prefix: str, url: str) -> dict[str, str]:
       all components as returned from urllib.parse and the
       database name extracted from the path
     """
-    db_env_prefix = prefix + "_DB"
-    envvars = _url_env_vars(db_env_prefix, url)
-    parsed_url = urllib.parse.urlparse(url)
-
-    # database name is usually parsed this way.
-    db_name = parsed_url.path.removeprefix("/") if parsed_url.path else None
-    if db_name is not None:
-        envvars[f"{db_env_prefix}_NAME"] = db_name
-    return envvars
-
-
-def _url_env_vars(prefix: str, url: str) -> dict[str, str]:
-    """Convert a url to environment variables using parts from urllib.parse.urlparse.
-
-    Args:
-      prefix: prefix for the environment variables
-      url: url of the database
-
-    Return:
-      All environment variables, that is, the connection string and
-      all components as returned from urllib.parse
-    """
-    if not url:
-        return {}
-
-    envvars: dict[str, str | None] = {}
-    envvars[f"{prefix}_CONNECT_STRING"] = url
-
-    parsed_url = urllib.parse.urlparse(url)
-
-    # All components of urlparse, using the same convention for default values.
-    # See: https://docs.python.org/3/library/urllib.parse.html#url-parsing
-    envvars[f"{prefix}_SCHEME"] = parsed_url.scheme
-    envvars[f"{prefix}_NETLOC"] = parsed_url.netloc
-    envvars[f"{prefix}_PATH"] = parsed_url.path
-    envvars[f"{prefix}_PARAMS"] = parsed_url.params
-    envvars[f"{prefix}_QUERY"] = parsed_url.query
-    envvars[f"{prefix}_FRAGMENT"] = parsed_url.fragment
-    envvars[f"{prefix}_USERNAME"] = parsed_url.username
-    envvars[f"{prefix}_PASSWORD"] = parsed_url.password
-    envvars[f"{prefix}_HOSTNAME"] = parsed_url.hostname
-    envvars[f"{prefix}_PORT"] = str(parsed_url.port) if parsed_url.port is not None else None
-
-    return {k: v for k, v in envvars.items() if v is not None}
+    return {f"{prefix}_DB_{k.upper()}": v for k, v in database_fields(url).items()}
