@@ -17,6 +17,7 @@ from paas_charm.app import generate_db_env as base_generate_db_env
 from paas_charm.app import generate_tempo_env as base_generate_tempo_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
+from paas_charm.opensearch import OpenSearchRelation, PaaSOpenSearchRelationData
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.smtp import SmtpRelation
@@ -352,6 +353,38 @@ class SpringSamlRelation(SamlRelation):
         return env
 
 
+class SpringOpenSearchRelation(OpenSearchRelation):
+    """Modified `OpenSearchRelation` to produce properties for spring-data-opensearch-starter."""
+
+    @staticmethod
+    def _generate_opensearch_env(
+        relation_data: PaaSOpenSearchRelationData | None,
+    ) -> dict[str, str]:
+        """Generate spring-data-opensearch-starter properties from OpenSearch relation data.
+
+        OpenSearch only serves HTTPS, so every endpoint uses the https scheme, and the
+        application trusts the provider's CA chain through the ``opensearch`` SSL bundle.
+
+        Args:
+            relation_data: The provider's connection details.
+
+        Returns:
+            Spring Boot OpenSearch properties if relation data is available, empty dictionary
+            otherwise.
+        """
+        if not relation_data:
+            return {}
+        return {
+            "opensearch.uris": ",".join(
+                f"https://{endpoint}" for endpoint in relation_data.endpoints.split(",")
+            ),
+            "opensearch.username": relation_data.username,
+            "opensearch.password": relation_data.password,
+            "opensearch.restclient.ssl.bundle": "opensearch",
+            "spring.ssl.bundle.pem.opensearch.truststore.certificate": relation_data.tls_ca,
+        }
+
+
 class SpringSmtpRelation(SmtpRelation):
     """Modified `SmtpRelation` to produce environment vars for Spring framework."""
 
@@ -441,6 +474,7 @@ class Charm(PaasCharm):
         SpringValkeyRelation,
         SpringS3Relation,
         SpringSamlRelation,
+        SpringOpenSearchRelation,
         SpringSmtpRelation,
     ]
     paas_config_framework_fields = {

@@ -12,11 +12,13 @@ import pytest
 from ops import testing
 
 from paas_charm.charm import PaasCharm
+from paas_charm.opensearch import OpenSearchRelation
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.smtp import SmtpRelation
 from paas_charm.springboot.charm import Charm as SpringBootCharm
 from paas_charm.springboot.charm import (
+    SpringOpenSearchRelation,
     SpringS3Relation,
     SpringSamlRelation,
     SpringSmtpRelation,
@@ -168,6 +170,7 @@ def test_builtin_relations():
         SpringValkeyRelation,
         SpringS3Relation,
         SpringSamlRelation,
+        SpringOpenSearchRelation,
         SpringSmtpRelation,
     ]
     assert PaasCharm.builtin_relations == [
@@ -175,6 +178,7 @@ def test_builtin_relations():
         S3Relation,
         SamlRelation,
         SmtpRelation,
+        OpenSearchRelation,
     ]
 
 

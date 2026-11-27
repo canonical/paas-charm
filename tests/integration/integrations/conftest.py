@@ -718,6 +718,29 @@ def http_proxy_configurator_fixture(juju: jubilant.Juju, lxd_controller, lxd_mod
     return App(http_proxy_configurator)
 
 
+@pytest.fixture(scope="module", name="opensearch_app")
+def deploy_opensearch_fixture(juju: jubilant.Juju, lxd_controller, lxd_model) -> App:
+    """Deploy the OpenSearch machine charm with TLS, and consume its client endpoint."""
+    opensearch = "opensearch"
+    with jubilant_temp_controller(juju, lxd_controller, lxd_model):
+        if juju.status().apps.get(opensearch):
+            logger.info("opensearch already deployed")
+        else:
+            juju.deploy("self-signed-certificates", channel="1/stable")
+            juju.deploy(opensearch, channel="2/stable", base="ubuntu@22.04")
+            juju.integrate(opensearch, "self-signed-certificates")
+            juju.cli("offer", f"{opensearch}:opensearch-client", include_model=False)
+            juju.wait(
+                lambda status: jubilant.all_active(status, opensearch, "self-signed-certificates"),
+                timeout=20 * 60,
+                delay=10,
+            )
+    if opensearch not in juju.status().app_endpoints:
+        offer_name = f"{lxd_controller}:admin/{lxd_model}.{opensearch}"
+        juju.cli("consume", offer_name, include_model=False)
+    return App(opensearch)
+
+
 @pytest.fixture(scope="session")
 def browser_context_manager():
     """

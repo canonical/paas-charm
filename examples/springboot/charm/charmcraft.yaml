@@ -99,6 +99,10 @@ requires:
     interface: oauth
     optional: True
     limit: 1
+  opensearch:
+    interface: opensearch_client
+    optional: True
+    limit: 1
   postgresql:
     interface: postgresql_client
     optional: True

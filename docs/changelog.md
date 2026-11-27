@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* feat: Add a built-in `opensearch` relation with the `opensearch_client` interface to Spring
+  Boot charms. Set the `index` and `extra-user-roles` (only `admin`) to request in an
+  `opensearch` section of `paas-config.yaml`: a charm that declares the endpoint without that
+  section fails to start. The charm passes the `spring-data-opensearch-starter` properties
+  `opensearch.uris` (one `https://` URI per endpoint), `opensearch.username`,
+  `opensearch.password` and `opensearch.restclient.ssl.bundle=opensearch`, with the provider's
+  certificate authority chain in `spring.ssl.bundle.pem.opensearch.truststore.certificate`.
+  While the relation exists, the charm stays blocked until the provider has shared them, and it
+  runs database migrations again when the provider creates the index.
+* fix: Pack `paas-config.yaml` in the Spring Boot example charm, which used to leave it out.
+* chore: Add an integration test for the `opensearch` relation of the Spring Boot example, and an
+  `/opensearch/status` endpoint to the example application.
+
 ## 2.0.0b3 - 2026-11-25
 
 * breaking: Move the static OAuth `<endpoint>-redirect-path` and `<endpoint>-scopes` charm

@@ -35,6 +35,7 @@ from paas_charm.exceptions import (
 from paas_charm.http_proxy import PaaSHttpProxyRequirer
 from paas_charm.oauth import PaaSOAuthRequirer
 from paas_charm.observability import Observability
+from paas_charm.opensearch import OpenSearchRelation
 from paas_charm.paas_config import (
     CONFIG_FILE_NAME,
     FRAMEWORKS_SUPPORTING_LOGGING_FORMAT,
@@ -81,6 +82,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
         S3Relation,
         SamlRelation,
         SmtpRelation,
+        OpenSearchRelation,
     ]
 
     @property
