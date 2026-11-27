@@ -495,11 +495,11 @@ def test_custom_relation_rejected_in_templates(context_factory, flask_base_state
 def test_custom_subclass_of_builtin_excluded_from_templates(
     context_factory, flask_base_state, monkeypatch
 ):
-    """An author subclass of a built-in relation is excluded from both validation and rendering."""
+    """When a custom subclass shares a built-in endpoint, templates use only the built-in."""
     called = False
 
     class _CustomS3(S3Relation):
-        """Author-defined S3 override."""
+        """Author-defined S3 handler."""
 
         def setup(self, on_change) -> None:
             """Do nothing."""
@@ -508,25 +508,30 @@ def test_custom_subclass_of_builtin_excluded_from_templates(
             """Track whether template_fields is invoked."""
             nonlocal called
             called = True
-            return {"bucket": "override"}
+            return {"bucket": "custom-override"}
 
     monkeypatch.setattr(FlaskCharm, "custom_relations", [*FlaskCharm.custom_relations, _CustomS3])
 
-    rejected = context_factory(
-        FlaskCharm,
-        paas_config=PaasConfig(env={"BUCKET": "{{ relations.s3.bucket | default('none') }}"}),
+    s3_relation = testing.Relation(
+        endpoint="s3",
+        interface="s3",
+        remote_app_data={
+            "access-key": "ak",
+            "secret-key": "sk",
+            "bucket": "builtin-bucket",
+        },
     )
-    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
-        rejected.run(rejected.on.config_changed(), testing.State(**flask_base_state))
-    assert isinstance(exc_info.value.__cause__, PaasConfigError)
-    assert "relation does not expose template fields" in str(exc_info.value.__cause__)
-
-    rendering = context_factory(
-        FlaskCharm,
-        paas_config=PaasConfig(env={"LABEL": "{{ app.name }}"}),
+    state = testing.State(
+        **{**flask_base_state, "relations": [*flask_base_state["relations"], s3_relation]}
     )
-    out = rendering.run(rendering.on.config_changed(), testing.State(**flask_base_state))
-    assert out.get_container("app").plan.services["flask"].environment["LABEL"] == "flask-k8s"
+    context = context_factory(
+        FlaskCharm,
+        paas_config=PaasConfig(env={"BUCKET": "{{ relations.s3.bucket }}"}),
+    )
+    out = context.run(context.on.config_changed(), state)
+    assert (
+        out.get_container("app").plan.services["flask"].environment["BUCKET"] == "builtin-bucket"
+    )
     assert not called
 
 

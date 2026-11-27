@@ -230,18 +230,16 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             )
 
     def _active_builtin_template_relations(self) -> list[CustomRelation]:
-        """Return active built-in wrapper relations not shadowed by author custom relations.
+        """Return active built-in wrapper relations eligible for ``env`` templates.
 
         Returns:
             Built-in wrapper relation instances eligible for ``env`` templates.
         """
-        active: dict[str, CustomRelation] = {}
-        for relation in self._custom_relations:
-            if type(relation) in self.builtin_relations:
-                active[relation.relation_name] = relation
-            else:
-                active.pop(relation.relation_name, None)
-        return list(active.values())
+        return [
+            relation
+            for relation in self._custom_relations
+            if type(relation) in self.builtin_relations
+        ]
 
     def _init_http_proxy(
         self, requires: dict[str, RelationMeta]
