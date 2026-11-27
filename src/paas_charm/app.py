@@ -380,10 +380,8 @@ class App:  # pylint: disable=too-many-instance-attributes
         Returns:
             Field values keyed by namespace and field name.
         """
-        integrations = self._charm_state.integrations
-        relations: dict[str, dict[str, str]] = {}
-        namespaces = {
-            "relations": relations,
+        return {
+            "relations": self._relation_template_fields(),
             "app": env_templates.model_fields(
                 env_templates.AppFields(
                     name=self._charm_state.app_name or None,
@@ -393,11 +391,18 @@ class App:  # pylint: disable=too-many-instance-attributes
             ),
             "config": env_templates.config_fields(self._charm_state.charm_config),
         }
-        for endpoint, db_data in integrations.databases_relation_data.items():
-            relations[endpoint] = {
-                **env_templates.model_fields(db_data),
-                **database_fields(db_data.uris),
-            }
+
+    def _relation_template_fields(self) -> dict[str, dict[str, str]]:
+        """Collect built-in relation fields available to ``env`` templates.
+
+        Returns:
+            Relation field values keyed by endpoint name.
+        """
+        integrations = self._charm_state.integrations
+        relations: dict[str, dict[str, str]] = {
+            endpoint: {**env_templates.model_fields(db_data), **database_fields(db_data.uris)}
+            for endpoint, db_data in integrations.databases_relation_data.items()
+        }
         if integrations.rabbitmq:
             relations["rabbitmq"] = {
                 **env_templates.model_fields(integrations.rabbitmq),
@@ -411,6 +416,12 @@ class App:  # pylint: disable=too-many-instance-attributes
                 relations[endpoint] = env_templates.model_fields(model)
         if proxy := integrations.http_proxy:
             relations["http-proxy"] = asdict(proxy)
+        for endpoint, key, value in (
+            ("ingress", "url", self._charm_state.ingress_url),
+            ("peers", "fqdns", self._charm_state.peer_fqdns),
+        ):
+            if value:
+                relations[endpoint] = {key: value}
         if integrations.oauth:
             oauth_config = self._charm_state.oauth_config or OAuthRelationConfig()
             relations[integrations.oauth.provider_name] = {
@@ -420,7 +431,7 @@ class App:  # pylint: disable=too-many-instance-attributes
         for relation in self._charm_state.custom_relations:
             if isinstance(relation, (S3Relation, SamlRelation, SmtpRelation, ValkeyRelation)):
                 relations[relation.relation_name] = relation.template_fields()
-        return namespaces
+        return relations
 
     def _apply_env_templates(self, env: dict[str, str]) -> None:
         """Render the ``env`` templates from paas-config.yaml into the environment.

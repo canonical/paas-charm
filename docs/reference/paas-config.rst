@@ -312,6 +312,10 @@ Relation fields:
        ``provider_name``, ``redirect_path``, ``redirect_uri``, and ``user_name_attribute``.
    * - ``tracing``
      - ``endpoint`` and ``service_name``.
+   * - ``ingress``
+     - ``url`` (published ingress URL; absent until ingress is ready).
+   * - ``peers``
+     - ``fqdns`` (comma-separated FQDNs of remote peer units; absent when no peer units exist).
    * - ``openfga``, ``s3``, ``saml``, ``smtp``, ``http-proxy``
      - The relation data fields, using their Python attribute names, for example
        ``{{ relations.s3.access_key }}``.

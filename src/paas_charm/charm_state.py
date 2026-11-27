@@ -46,6 +46,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: the charm managed application secret key.
         is_secret_key_ready: whether the application secret key is ready.
         proxy: proxy information.
+        ingress_url: Public URL published by the ingress relation, if available.
         config_options: Settings for existing charm configuration options.
         oauth_config: Static settings for the OAuth endpoint, if declared.
         framework_config_fields: Accepted framework config input names mapped to model fields.
@@ -66,6 +67,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
+        ingress_url: str | None = None,
         config_options: ConfigOptions | None = None,
         oauth_config: OAuthRelationConfig | None = None,
         framework_config_fields: dict[str, str] | None = None,
@@ -86,6 +88,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
+            ingress_url: Public URL published by the ingress relation, if available.
             config_options: Settings for existing charm configuration options.
             oauth_config: Static settings for the OAuth endpoint, if declared.
             framework_config_fields: Accepted framework config input names mapped to model fields.
@@ -103,6 +106,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.ingress_url = ingress_url
         self.oauth_config = oauth_config
         self.config_options = config_options if config_options is not None else ConfigOptions()
         self.framework_config_fields = framework_config_fields or {}
@@ -125,6 +129,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         integration_requirers: "IntegrationRequirers",
         custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
+        ingress_url: str | None = None,
         config_options: ConfigOptions | None = None,
         env_templates: dict[str, str] | None = None,
         app_name: str = "",
@@ -141,6 +146,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             integration_requirers: The collection of integration requirers.
             custom_relations: Custom relations.
             base_url: Base URL for the service.
+            ingress_url: Public URL published by the ingress relation, if available.
             config_options: Settings for existing charm configuration options.
             env_templates: ``env`` templates from paas-config.yaml.
             app_name: The Juju application name.
@@ -251,6 +257,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             framework_config_field_names=set(type(framework_config).model_fields),
             integrations=integrations,
             base_url=base_url,
+            ingress_url=ingress_url,
             custom_relations=custom_relations,
             env_templates=env_templates,
             app_name=app_name,

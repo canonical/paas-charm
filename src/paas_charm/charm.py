@@ -241,6 +241,10 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             result["openfga"] = set(OpenfgaProviderAppData.model_fields)
         if self._http_proxy is not None:
             result["http-proxy"] = {f.name for f in fields(ProxyConfig)}
+        if "ingress" in requires and requires["ingress"].interface_name == "ingress":
+            result["ingress"] = {"url"}
+        if "peers" in self.framework.meta.peers:
+            result["peers"] = {"fqdns"}
         for name in self._database_requirers:
             result[name] = set(PaaSDatabaseRelationData.model_fields) | db_fields
         if self._oauth is not None:
@@ -793,6 +797,7 @@ class PaasCharm(abc.ABC, ops.CharmBase):  # pylint: disable=too-many-instance-at
             ),
             custom_relations=self._custom_relations,
             base_url=self._base_url,
+            ingress_url=self._ingress.url,
             env_templates=self._paas_config.env,
             app_name=self.app.name,
         )

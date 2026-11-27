@@ -251,7 +251,7 @@ OPTIONS = {"level": {"type": "string"}, "creds": {"type": "secret"}}
     "template, diagnostic",
     [
         ("{{ relations.redis.url }}", "unknown"),
-        ("{{ relations.ingress.url }}", "relation does not expose template fields"),
+        ("{{ relations.logging.url }}", "relation does not expose template fields"),
         ("{{ app.host }}", "unknown"),
         ("{{ config.creds }}", "secret option 'creds' requires one content key"),
         ("{{ config.creds.user.extra }}", "secret option 'creds' requires one content key"),
@@ -263,7 +263,7 @@ def test_validate_env_templates_invalid(template, diagnostic):
     """Reject references to unknown namespaces and fields."""
     with pytest.raises(PaasConfigError, match=diagnostic):
         env_templates.validate_env_templates(
-            {"A": template}, endpoints={"ingress": set()}, config_options=OPTIONS
+            {"A": template}, endpoints={"logging": set()}, config_options=OPTIONS
         )
 
 
@@ -307,6 +307,8 @@ def test_unknown_config_with_default(option, hint):
         "rabbitmq",
         "http-proxy",
         "tracing",
+        "ingress",
+        "peers",
     ],
 )
 def test_charm_rejects_invalid_reference(context_factory, flask_base_state, endpoint):
@@ -318,6 +320,67 @@ def test_charm_rejects_invalid_reference(context_factory, flask_base_state, endp
     assert isinstance(exc_info.value.__cause__, PaasConfigError)
     assert "env.A" in str(exc_info.value.__cause__)
     assert "unknown built-in relation field" in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize("endpoint", ["logging", "grafana-dashboard", "metrics-endpoint"])
+def test_unsupported_endpoints_rejected_with_default(context_factory, flask_base_state, endpoint):
+    """Reject observability endpoints that do not expose template fields, even with a default."""
+    template = "{{ relations['" + endpoint + "'].url | default('ok') }}"
+    context = context_factory(FlaskCharm, paas_config=PaasConfig(env={"A": template}))
+    with pytest.raises(testing.errors.UncaughtCharmError) as exc_info:
+        context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    assert isinstance(exc_info.value.__cause__, PaasConfigError)
+    assert "env.A" in str(exc_info.value.__cause__)
+
+
+def test_ingress_and_peers_templates(context_factory, flask_base_state):
+    """Expose relations.ingress.url and relations.peers.fqdns only when available."""
+    paas_config = PaasConfig(
+        env={
+            "PUBLIC_URL": "{{ relations.ingress.url }}",
+            "PUBLIC_URL_DEFAULT": "{{ relations.ingress.url | default('none') }}",
+            "BASE_URL": "{{ app.base_url }}",
+            "PEER_LIST": "{{ relations.peers.fqdns }}",
+            "PEER_LIST_DEFAULT": "{{ relations.peers.fqdns | default('solo') }}",
+        }
+    )
+    context = context_factory(FlaskCharm, paas_config=paas_config)
+
+    out_absent = context.run(context.on.config_changed(), testing.State(**flask_base_state))
+    env_absent = out_absent.get_container("app").plan.services["flask"].environment
+    assert "PUBLIC_URL" not in env_absent
+    assert env_absent["PUBLIC_URL_DEFAULT"] == "none"
+    assert env_absent["BASE_URL"] == "http://flask-k8s.test-model:8000"
+    assert "PEER_LIST" not in env_absent
+    assert env_absent["PEER_LIST_DEFAULT"] == "solo"
+
+    ingress = testing.Relation(
+        endpoint="ingress",
+        interface="ingress",
+        remote_app_data={"ingress": '{"url": "https://public.example.com/"}'},
+    )
+    peers = testing.PeerRelation(
+        endpoint="peers",
+        interface="peers",
+        peers_data={2: {}, 1: {}},
+    )
+    relations = [r for r in flask_base_state["relations"] if r.endpoint != "peers"] + [
+        ingress,
+        peers,
+    ]
+    out_ready = context.run(
+        context.on.relation_changed(ingress),
+        testing.State(**{**flask_base_state, "relations": relations}),
+    )
+    env_ready = out_ready.get_container("app").plan.services["flask"].environment
+    assert env_ready["PUBLIC_URL"] == "https://public.example.com/"
+    assert env_ready["PUBLIC_URL_DEFAULT"] == "https://public.example.com/"
+    assert env_ready["BASE_URL"] == "https://public.example.com/"
+    assert env_ready["PEER_LIST"] == (
+        "flask-k8s-1.flask-k8s-endpoints.test-model.svc.cluster.local,"
+        "flask-k8s-2.flask-k8s-endpoints.test-model.svc.cluster.local"
+    )
+    assert env_ready["PEER_LIST_DEFAULT"] == env_ready["PEER_LIST"]
 
 
 def test_charm_environment(context_factory, charm_root, django_base_state):
