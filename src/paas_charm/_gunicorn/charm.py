@@ -13,6 +13,7 @@ from paas_charm._gunicorn.wsgi_app import WsgiApp
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.charm import PaasCharm
 from paas_charm.exceptions import CharmConfigInvalidError
+from paas_charm.tracing import TracingRelation
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +24,19 @@ class GunicornBase(PaasCharm):
     @property
     def _workload_config(self) -> WorkloadConfig:
         """Return a WorkloadConfig instance."""
+        tracing_relation = next(
+            (
+                relation
+                for relation in self._custom_relations
+                if isinstance(relation, TracingRelation)
+            ),
+            None,
+        )
         return create_workload_config(
             framework_name=self._framework_name,
             unit_name=self.unit.name,
             state_dir=self._state_dir,
-            tracing_enabled=bool(self._tracing and self._tracing.is_ready()),
+            tracing_enabled=bool(tracing_relation and tracing_relation.is_ready()),
             paas_config=self._paas_config,
         )
 

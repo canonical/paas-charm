@@ -20,8 +20,10 @@ from paas_charm.springboot.charm import (
     SpringS3Relation,
     SpringSamlRelation,
     SpringSmtpRelation,
+    SpringTracingRelation,
     SpringValkeyRelation,
 )
+from paas_charm.tracing import TracingRelation
 from paas_charm.valkey import ValkeyRelation
 
 
@@ -169,12 +171,14 @@ def test_builtin_relations():
         SpringS3Relation,
         SpringSamlRelation,
         SpringSmtpRelation,
+        SpringTracingRelation,
     ]
     assert PaasCharm.builtin_relations == [
         ValkeyRelation,
         S3Relation,
         SamlRelation,
         SmtpRelation,
+        TracingRelation,
     ]
 
 

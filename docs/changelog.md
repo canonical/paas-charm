@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+* refactor: Move the tracing relation to the custom relations framework. A built-in `tracing`
+  endpoint declared with an interface other than `tracing` now raises
+  `InvalidRelationInterfaceError`.
+
 ## 2.0.0b3 - 2026-11-25
 
 * breaking: Move the static OAuth `<endpoint>-redirect-path` and `<endpoint>-scopes` charm

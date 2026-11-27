@@ -13,6 +13,7 @@ from paas_charm.exceptions import RelationDataError
 from paas_charm.s3 import InvalidS3RelationDataError, S3Relation
 from paas_charm.saml import InvalidSAMLRelationDataError, SamlRelation
 from paas_charm.smtp import InvalidSmtpRelationDataError, SmtpRelation
+from paas_charm.tracing import InvalidTracingRelationDataError, TracingRelation
 from paas_charm.valkey import (
     InvalidValkeyRelationDataError,
     ValkeyMultipleRelationsNotSupportedError,
@@ -296,5 +297,65 @@ def test_smtp_relation_ensure_ready_wraps_invalid_data(error):
     assert exc.value.relation == "smtp"
     assert isinstance(exc.value.__cause__, InvalidSmtpRelationDataError)
     assert exc.value.__cause__.__cause__ is error
+    assert relation.get_relation_data() is None
+    assert relation.gen_environment() == {}
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_tracing_relation_ensure_ready_with_data(optional):
+    """
+    arrange: A TracingRelation containing tracing data.
+    act: Call ensure_ready.
+    assert: Returns None without raising an exception.
+    """
+    relation = _make_relation(MagicMock(), TracingRelation, "tracing", optional=optional)
+    relation._requirer = MagicMock()
+    assert relation.ensure_ready() is None
+    relation._requirer.to_relation_data.assert_called_once_with()
+
+
+@pytest.mark.parametrize("optional", [True, False])
+def test_tracing_relation_not_ready_without_data(optional):
+    """
+    arrange: A configured TracingRelation with no tracing data.
+    act: Call ensure_ready.
+    assert: Raises RelationDataError identifying the tracing endpoint.
+    """
+    relation = _make_relation(MagicMock(), TracingRelation, "tracing", optional=optional)
+    relation._requirer = MagicMock()
+    relation._requirer.to_relation_data.return_value = None
+    with pytest.raises(RelationDataError, match="Tracing relation data is not ready") as exc:
+        relation.ensure_ready()
+    assert exc.value.relation == "tracing"
+
+
+def test_tracing_relation_ensure_ready_when_not_configured():
+    """
+    arrange: A TracingRelation without a configured requirer.
+    act: Call ensure_ready, is_ready and gen_environment.
+    assert: ensure_ready returns None, is_ready is False, and no environment is generated.
+    """
+    relation = _make_relation(MagicMock(), TracingRelation, "tracing")
+    assert relation.ensure_ready() is None
+    assert relation.is_ready() is False
+    assert relation.gen_environment() == {}
+
+
+def test_tracing_relation_ensure_ready_wraps_invalid_data():
+    """
+    arrange: A TracingRelation whose requirer rejects invalid data.
+    act: Call ensure_ready and gen_environment.
+    assert: ensure_ready raises RelationDataError preserving the message, endpoint, and cause,
+        while get_relation_data and gen_environment do not raise.
+    """
+    relation = _make_relation(MagicMock(), TracingRelation, "tracing")
+    relation._requirer = MagicMock()
+    error = InvalidTracingRelationDataError("Invalid tracing data")
+    relation._requirer.to_relation_data.side_effect = error
+    with pytest.raises(RelationDataError, match="Invalid tracing data") as exc:
+        relation.ensure_ready()
+    assert type(exc.value) is RelationDataError
+    assert exc.value.relation == "tracing"
+    assert exc.value.__cause__ is error
     assert relation.get_relation_data() is None
     assert relation.gen_environment() == {}

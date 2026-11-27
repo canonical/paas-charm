@@ -14,12 +14,12 @@ from pydantic import ConfigDict, Field
 
 from paas_charm.app import App, WorkloadConfig
 from paas_charm.app import generate_db_env as base_generate_db_env
-from paas_charm.app import generate_tempo_env as base_generate_tempo_env
 from paas_charm.charm import PaasCharm
 from paas_charm.framework import FrameworkConfig
 from paas_charm.s3 import S3Relation
 from paas_charm.saml import SamlRelation
 from paas_charm.smtp import SmtpRelation
+from paas_charm.tracing import TracingRelation
 from paas_charm.valkey import ValkeyRelation
 
 if typing.TYPE_CHECKING:
@@ -200,23 +200,33 @@ def generate_rabbitmq_env(
     }
 
 
-def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from TempoRelationData.
+class SpringTracingRelation(TracingRelation):
+    """Modified `TracingRelation` to produce environment vars for Spring framework."""
 
-    Metrics are exposed to Prometheus through the actuator endpoint and logs are sent to Loki,
-    so the OTEL metrics and logs exporters are always disabled and only traces are exported.
+    @staticmethod
+    def _generate_tracing_env(
+        relation_data: "PaaSTracingRelationData | None" = None,
+    ) -> dict[str, str]:
+        """Generate environment variables from Tracing relation data.
 
-    Args:
-        relation_data: The charm Tempo integration relation data.
+        Metrics are exposed to Prometheus through the actuator endpoint and logs are sent to Loki,
+        so the OTEL metrics and logs exporters are always disabled and only traces are exported.
 
-    Returns:
-        Tempo tracing environment mappings if TempoRelationData is available, with the OTEL
-        metrics and logs exporters always disabled.
-    """
-    env = {"OTEL_METRICS_EXPORTER": "none", "OTEL_LOGS_EXPORTER": "none"}
-    if not relation_data:
-        return {**env, "OTEL_TRACES_EXPORTER": "none"}
-    return {**env, "OTEL_TRACES_EXPORTER": "otlp", **base_generate_tempo_env(relation_data)}
+        Args:
+            relation_data: The charm tracing integration relation data.
+
+        Returns:
+            Tempo tracing environment mappings if relation data is available, with the OTEL
+            metrics and logs exporters always disabled.
+        """
+        env = {"OTEL_METRICS_EXPORTER": "none", "OTEL_LOGS_EXPORTER": "none"}
+        if not relation_data:
+            return {**env, "OTEL_TRACES_EXPORTER": "none"}
+        return {
+            **env,
+            "OTEL_TRACES_EXPORTER": "otlp",
+            **TracingRelation._generate_tracing_env(relation_data),
+        }
 
 
 class SpringValkeyRelation(ValkeyRelation):
@@ -392,7 +402,6 @@ class SpringBootApp(App):
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_tempo_env: Maps Tracing connection information to environment variables.
         generate_prometheus_env: Maps Prometheus connection information to environment variables.
         generate_oauth_env: Maps Oauth connection information to environment variables.
     """
@@ -400,7 +409,6 @@ class SpringBootApp(App):
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
 
@@ -442,6 +450,7 @@ class Charm(PaasCharm):
         SpringS3Relation,
         SpringSamlRelation,
         SpringSmtpRelation,
+        SpringTracingRelation,
     ]
     paas_config_framework_fields = {
         "server_port": "port",

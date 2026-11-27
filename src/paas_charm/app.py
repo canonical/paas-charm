@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from paas_charm.databases import PaaSDatabaseRelationData
     from paas_charm.oauth import PaaSOAuthRelationData
     from paas_charm.rabbitmq import PaaSRabbitMQRelationData
-    from paas_charm.tracing import PaaSTracingRelationData
 
 WORKER_SUFFIX = "-worker"
 SCHEDULER_SUFFIX = "-scheduler"
@@ -151,40 +150,6 @@ def generate_rabbitmq_env(
     return envvars
 
 
-def generate_tempo_env(relation_data: "PaaSTracingRelationData | None" = None) -> dict[str, str]:
-    """Generate environment variable from TempoRelationData.
-
-    The tracing integration only provides a traces backend, so the signal specific
-    ``OTEL_EXPORTER_OTLP_TRACES_*`` variables are used. Signal specific endpoints are used
-    as-is by the SDKs, so the ``/v1/traces`` path is appended to the endpoint path here,
-    preserving any query string and fragment.
-
-    Args:
-        relation_data: The charm Tempo integration relation data.
-
-    Returns:
-        Default Tempo tracing environment mappings if TempoRelationData is available, empty
-        dictionary otherwise.
-    """
-    if not relation_data:
-        return {}
-    endpoint = urllib.parse.urlsplit(str(relation_data.endpoint))
-    traces_endpoint = urllib.parse.urlunsplit(
-        (
-            endpoint.scheme,
-            endpoint.netloc,
-            f"{endpoint.path.rstrip('/')}/v1/traces",
-            endpoint.query,
-            endpoint.fragment,
-        )
-    )
-    return {
-        "OTEL_SERVICE_NAME": relation_data.service_name,
-        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": traces_endpoint,
-        "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": "http/protobuf",
-    }
-
-
 # No need to create specific environment variables in most of the
 # frameworks so the default function needs to return {}.
 # pylint: disable=unused-argument
@@ -264,7 +229,6 @@ class App:  # pylint: disable=too-many-instance-attributes
         generate_db_env: Maps database connection information to environment variables.
         generate_openfga_env: Maps OpenFGA connection information to environment variables.
         generate_rabbitmq_env: Maps RabbitMQ connection information to environment variables.
-        generate_tempo_env: Maps tempo tracing connection information to environment variables.
         generate_prometheus_env: Maps prometheus connection information to environment variables.
         generate_oauth_env: Maps OAuth connection information to environment variables.
     """
@@ -272,7 +236,6 @@ class App:  # pylint: disable=too-many-instance-attributes
     generate_db_env = staticmethod(generate_db_env)
     generate_openfga_env = staticmethod(generate_openfga_env)
     generate_rabbitmq_env = staticmethod(generate_rabbitmq_env)
-    generate_tempo_env = staticmethod(generate_tempo_env)
     generate_prometheus_env = staticmethod(generate_prometheus_env)
     generate_oauth_env = staticmethod(generate_oauth_env)
 
@@ -559,7 +522,6 @@ class App:  # pylint: disable=too-many-instance-attributes
             db_relation_data,
         ) in self._charm_state.integrations.databases_relation_data.items():
             env.update(self.generate_db_env(database_name, db_relation_data))
-        env.update(self.generate_tempo_env(relation_data=self._charm_state.integrations.tracing))
         env.update(self.generate_prometheus_env(self._workload_config))
         env.update(
             self.generate_oauth_env(
